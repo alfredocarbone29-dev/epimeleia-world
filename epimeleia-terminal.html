@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EPIMELEIA — Terminal</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=VT323&family=Inconsolata:wght@300;400;700&display=swap');
+
+  :root {
+    --bg: #030a06;
+    --bg2: #060f08;
+    --green: #00ff41;
+    --green-dim: #00c832;
+    --green-dark: #003d0f;
+    --green-faint: rgba(0,255,65,0.06);
+    --amber: #ffb300;
+    --red: #ff3232;
+    --white: #d4f5d4;
+    --grey: #4a7a4a;
+    --border: rgba(0,255,65,0.18);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--green);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* SCAN LINE EFFECT */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.08) 2px,
+      rgba(0,0,0,0.08) 4px
+    );
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  /* PHOSPHOR GLOW */
+  .glow { text-shadow: 0 0 8px var(--green), 0 0 20px rgba(0,255,65,0.4); }
+  .glow-dim { text-shadow: 0 0 4px var(--green-dim); }
+  .amber { color: var(--amber); text-shadow: 0 0 6px rgba(255,179,0,0.5); }
+  .red { color: var(--red); text-shadow: 0 0 6px rgba(255,50,50,0.5); }
+  .grey { color: var(--grey); }
+  .white { color: var(--white); }
+
+  /* HEADER */
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--bg2);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .logo {
+    font-family: 'VT323', monospace;
+    font-size: 28px;
+    letter-spacing: 4px;
+    color: var(--green);
+    text-shadow: 0 0 12px var(--green), 0 0 30px rgba(0,255,65,0.3);
+  }
+
+  .logo span { color: var(--grey); font-size: 14px; letter-spacing: 2px; margin-left: 12px; vertical-align: middle; }
+
+  .header-status {
+    display: flex;
+    gap: 24px;
+    align-items: center;
+  }
+
+  .status-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 8px var(--green);
+    animation: pulse 2s infinite;
+    display: inline-block;
+    margin-right: 6px;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  .network-badge {
+    border: 1px solid var(--border);
+    padding: 3px 10px;
+    font-size: 11px;
+    letter-spacing: 1px;
+    color: var(--grey);
+  }
+
+  /* LAYOUT */
+  .terminal-grid {
+    display: grid;
+    grid-template-columns: 280px 1fr 300px;
+    grid-template-rows: auto 1fr;
+    min-height: calc(100vh - 57px);
+  }
+
+  /* LEFT PANEL — EMPRESA REGISTRY */
+  .panel-left {
+    border-right: 1px solid var(--border);
+    padding: 0;
+    overflow-y: auto;
+  }
+
+  .panel-header {
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--grey);
+    background: var(--green-faint);
+  }
+
+  .company-entry {
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(0,255,65,0.07);
+    cursor: pointer;
+    transition: background 0.1s;
+  }
+
+  .company-entry:hover { background: var(--green-faint); }
+  .company-entry.active { background: rgba(0,255,65,0.1); border-left: 2px solid var(--green); }
+
+  .company-name { font-size: 12px; color: var(--white); margin-bottom: 4px; }
+  .company-wallet { font-size: 10px; color: var(--grey); }
+  .company-level {
+    display: inline-block;
+    font-size: 9px;
+    padding: 1px 6px;
+    border: 1px solid;
+    margin-top: 4px;
+    letter-spacing: 1px;
+  }
+  .level-l1 { border-color: var(--grey); color: var(--grey); }
+  .level-l2 { border-color: var(--green-dim); color: var(--green-dim); }
+  .level-l3 { border-color: var(--green); color: var(--green); }
+
+  .cert-status {
+    float: right;
+    font-size: 9px;
+    margin-top: 2px;
+  }
+  .cert-ok { color: var(--green); }
+  .cert-gap { color: var(--red); }
+  .cert-pending { color: var(--amber); }
+
+  /* CENTER — LOG FEED */
+  .panel-center {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .log-controls {
+    padding: 8px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    background: var(--bg2);
+  }
+
+  .filter-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--grey);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    padding: 3px 10px;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: all 0.1s;
+  }
+  .filter-btn:hover, .filter-btn.active {
+    border-color: var(--green);
+    color: var(--green);
+    background: var(--green-faint);
+  }
+
+  .log-feed {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 0;
+    font-size: 11.5px;
+    line-height: 1.7;
+  }
+
+  .log-feed::-webkit-scrollbar { width: 4px; }
+  .log-feed::-webkit-scrollbar-track { background: transparent; }
+  .log-feed::-webkit-scrollbar-thumb { background: var(--green-dark); }
+
+  .log-line {
+    padding: 2px 16px;
+    display: flex;
+    gap: 12px;
+    align-items: baseline;
+    animation: fadein 0.3s ease;
+  }
+
+  @keyframes fadein {
+    from { opacity: 0; transform: translateX(-4px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  .log-line:hover { background: var(--green-faint); }
+
+  .log-ts { color: var(--grey); min-width: 80px; font-size: 10px; }
+  .log-type {
+    min-width: 70px;
+    font-size: 9px;
+    letter-spacing: 1px;
+    padding: 1px 4px;
+    text-align: center;
+  }
+  .type-cert { border: 1px solid var(--green); color: var(--green); }
+  .type-oracle { border: 1px solid var(--green-dim); color: var(--green-dim); }
+  .type-payment { border: 1px solid var(--amber); color: var(--amber); }
+  .type-gap { border: 1px solid var(--red); color: var(--red); }
+  .type-system { border: 1px solid var(--grey); color: var(--grey); }
+  .type-suspend { border: 1px solid var(--amber); color: var(--amber); }
+
+  .log-msg { flex: 1; color: var(--white); }
+  .log-hash { color: var(--grey); font-size: 10px; }
+
+  /* DETAIL PANEL */
+  .detail-block {
+    padding: 10px 16px;
+    border-bottom: 1px solid rgba(0,255,65,0.07);
+  }
+  .detail-label { font-size: 9px; color: var(--grey); letter-spacing: 2px; margin-bottom: 4px; }
+  .detail-value { font-size: 12px; color: var(--white); word-break: break-all; }
+  .detail-value.highlight { color: var(--green); font-size: 13px; }
+
+  .metric-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(0,255,65,0.05);
+    font-size: 11px;
+  }
+  .metric-key { color: var(--grey); }
+  .metric-val { color: var(--white); }
+  .metric-val.ok { color: var(--green); }
+  .metric-val.warn { color: var(--amber); }
+  .metric-val.bad { color: var(--red); }
+
+  /* PV LEVEL INDICATOR */
+  .pv-bar {
+    display: flex;
+    gap: 4px;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg2);
+  }
+
+  .pv-seg {
+    flex: 1;
+    padding: 6px 4px;
+    text-align: center;
+    font-size: 9px;
+    letter-spacing: 1px;
+    border: 1px solid var(--border);
+    color: var(--grey);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .pv-seg.active {
+    border-color: var(--green);
+    color: var(--green);
+    background: var(--green-faint);
+    box-shadow: 0 0 8px rgba(0,255,65,0.15);
+  }
+  .pv-seg .pv-label { display: block; font-size: 11px; margin-bottom: 2px; font-family: 'VT323', monospace; }
+
+  /* RIGHT PANEL */
+  .panel-right {
+    border-left: 1px solid var(--border);
+    overflow-y: auto;
+  }
+
+  /* CONTINUITY WALL */
+  .continuity-grid {
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+    gap: 3px;
+    padding: 12px 16px;
+  }
+
+  .day-block {
+    aspect-ratio: 1;
+    border: 1px solid rgba(0,255,65,0.15);
+    cursor: pointer;
+    transition: all 0.1s;
+    position: relative;
+  }
+  .day-block.ok { background: rgba(0,255,65,0.25); border-color: var(--green-dim); }
+  .day-block.gap { background: rgba(255,50,50,0.25); border-color: var(--red); animation: blink 1.5s infinite; }
+  .day-block.pending { background: rgba(255,179,0,0.15); border-color: var(--amber); }
+  .day-block.empty { background: transparent; }
+  .day-block:hover { transform: scale(1.2); z-index: 10; }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  /* COMMAND LINE */
+  .cmd-line {
+    border-top: 1px solid var(--border);
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--bg2);
+    grid-column: 1 / -1;
+  }
+
+  .cmd-prompt { color: var(--green); }
+  .cmd-input {
+    flex: 1;
+    background: none;
+    border: none;
+    outline: none;
+    color: var(--white);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px;
+    caret-color: var(--green);
+  }
+
+  /* SCROLLBAR GLOBAL */
+  ::-webkit-scrollbar { width: 3px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--green-dark); }
+
+  /* SUSPEND BANNER */
+  .suspend-banner {
+    display: none;
+    background: rgba(255,179,0,0.1);
+    border: 1px solid var(--amber);
+    color: var(--amber);
+    padding: 8px 16px;
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-align: center;
+    animation: fadein 0.3s;
+    grid-column: 1 / -1;
+  }
+  .suspend-banner.visible { display: block; }
+
+  .tag { 
+    display: inline-block; 
+    font-size: 9px; 
+    padding: 1px 5px; 
+    border: 1px solid var(--grey); 
+    color: var(--grey); 
+    margin-right: 4px;
+    letter-spacing: 1px;
+  }
+
+  /* OPACITY GAP ALERT */
+  .opacity-gap {
+    margin: 8px 16px;
+    padding: 8px 12px;
+    border: 1px solid var(--red);
+    background: rgba(255,50,50,0.05);
+    font-size: 11px;
+  }
+  .opacity-gap .gap-title { color: var(--red); letter-spacing: 1px; margin-bottom: 4px; font-size: 10px; }
+  .opacity-gap .gap-detail { color: var(--grey); }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
+</head>
+<body>
+
+<header>
+  <div class="logo">EPIMELEIA <span>// NOTARIO DIGITAL v3.1</span></div>
+  <div class="header-status">
+    <span><span class="status-dot"></span><span class="grey" style="font-size:11px">POLYGON MAINNET</span></span>
+    <span class="network-badge">CHAIN ID: 137</span>
+    <span class="network-badge amber">BLOCK #<span id="blockNum">58,204,917</span></span>
+    <span class="network-badge" style="color:var(--green);border-color:var(--green-dim)"><span class="status-dot"></span>ORACLE ACTIVO</span>
+  </div>
+</header>
+
+<!-- PV LEVEL BAR -->
+<div class="pv-bar">
+  <div class="pv-seg" onclick="setPV(1,this)">
+    <span class="pv-label">PV-L1</span>SEMANAL · SENTINEL
+  </div>
+  <div class="pv-seg active" onclick="setPV(2,this)">
+    <span class="pv-label">PV-L2</span>DIARIO · IoT+SAT
+  </div>
+  <div class="pv-seg" onclick="setPV(3,this)">
+    <span class="pv-label">PV-L3</span>TIEMPO REAL · REDUNDANTE
+  </div>
+  <div style="flex:2; padding:6px 12px; font-size:10px; color:var(--grey); border:1px solid var(--border);">
+    NIVEL ACTIVO: <span class="green glow" style="font-size:11px" id="pvLabel">PV-L2 — Híbrido IoT + Satélite · Reporte Descriptivo Diario</span>
+  </div>
+</div>
+
+<div class="suspend-banner" id="suspendBanner">
+  ⚠ MODO SUSPENSIÓN ACTIVO — Fallo de infraestructura externa detectado. Registros en espera. Inmutabilidad preservada.
+</div>
+
+<div class="terminal-grid">
+
+  <!-- LEFT: REGISTRY -->
+  <div class="panel-left">
+    <div class="panel-header">// EMPRESAS REGISTRADAS [<span id="compCount">6</span>]</div>
+
+    <div class="company-entry active" onclick="selectCompany(this,'DATACORE LATAM S.A.','0x7f3a...c891','PV-L2','ok')">
+      <div class="company-name">DATACORE LATAM S.A. <span class="cert-status cert-ok">● CERT</span></div>
+      <div class="company-wallet">0x7f3a...c891</div>
+      <span class="company-level level-l2">PV-L2</span>
+    </div>
+
+    <div class="company-entry" onclick="selectCompany(this,'ANDES MINING GROUP','0x2b1c...f044','PV-L3','ok')">
+      <div class="company-name">ANDES MINING GROUP <span class="cert-status cert-ok">● CERT</span></div>
+      <div class="company-wallet">0x2b1c...f044</div>
+      <span class="company-level level-l3">PV-L3</span>
+    </div>
+
+    <div class="company-entry" onclick="selectCompany(this,'NEXUS AI SYSTEMS','0x9d7e...a203','PV-L2','gap')">
+      <div class="company-name">NEXUS AI SYSTEMS <span class="cert-status cert-gap">■ GAP</span></div>
+      <div class="company-wallet">0x9d7e...a203</div>
+      <span class="company-level level-l2">PV-L2</span>
+    </div>
+
+    <div class="company-entry" onclick="selectCompany(this,'THERMAL ENERGY CORP','0x4a8b...7721','PV-L1','pending')">
+      <div class="company-name">THERMAL ENERGY CORP <span class="cert-status cert-pending">◌ PEND</span></div>
+      <div class="company-wallet">0x4a8b...7721</div>
+      <span class="company-level level-l1">PV-L1</span>
+    </div>
+
+    <div class="company-entry" onclick="selectCompany(this,'HYDRO NORTE S.R.L.','0x1f6d...cc50','PV-L1','ok')">
+      <div class="company-name">HYDRO NORTE S.R.L. <span class="cert-status cert-ok">● CERT</span></div>
+      <div class="company-wallet">0x1f6d...cc50</div>
+      <span class="company-level level-l1">PV-L1</span>
+    </div>
+
+    <div class="company-entry" onclick="selectCompany(this,'PACIFIC CLOUD INC','0x8c3f...b119','PV-L3','ok')">
+      <div class="company-name">PACIFIC CLOUD INC <span class="cert-status cert-ok">● CERT</span></div>
+      <div class="company-wallet">0x8c3f...b119</div>
+      <span class="company-level level-l3">PV-L3</span>
+    </div>
+  </div>
+
+  <!-- CENTER: LOG FEED -->
+  <div class="panel-center">
+    <div class="log-controls">
+      <span style="font-size:10px;color:var(--grey);letter-spacing:1px">// FILTRO:</span>
+      <button class="filter-btn active" onclick="filterLog('ALL',this)">ALL</button>
+      <button class="filter-btn" onclick="filterLog('CERT',this)">CERT</button>
+      <button class="filter-btn" onclick="filterLog('ORACLE',this)">ORACLE</button>
+      <button class="filter-btn" onclick="filterLog('PAYMENT',this)">PAYMENT</button>
+      <button class="filter-btn" onclick="filterLog('GAP',this)">GAP</button>
+      <button class="filter-btn" onclick="filterLog('SYSTEM',this)">SYSTEM</button>
+      <span style="margin-left:auto;font-size:10px;color:var(--grey)">AUTO-SCROLL <span class="green">ON</span></span>
+    </div>
+
+    <div class="log-feed" id="logFeed">
+      <!-- populated by JS -->
+    </div>
+  </div>
+
+  <!-- RIGHT: DETAIL + CONTINUITY -->
+  <div class="panel-right">
+    <div class="panel-header">// EMPRESA SELECCIONADA</div>
+
+    <div class="detail-block">
+      <div class="detail-label">RAZÓN SOCIAL</div>
+      <div class="detail-value highlight" id="dName">DATACORE LATAM S.A.</div>
+    </div>
+
+    <div class="detail-block">
+      <div class="detail-label">WALLET</div>
+      <div class="detail-value" id="dWallet" style="font-size:10px">0x7f3a4b8c2d1e9f0a3c7b5e2d8f1a4c9e2b7d3f8c891</div>
+    </div>
+
+    <div class="detail-block">
+      <div class="detail-label">NIVEL DE VALIDACIÓN</div>
+      <div class="detail-value" id="dLevel"><span class="company-level level-l2" style="font-size:11px">PV-L2</span></div>
+    </div>
+
+    <div class="detail-block">
+      <div class="detail-label">MÉTRICAS ACTUALES</div>
+      <div class="metric-row"><span class="metric-key">CONSUMO AGUA</span><span class="metric-val ok" id="mWater">12.4 m³/día</span></div>
+      <div class="metric-row"><span class="metric-key">CONSUMO ENERGÍA</span><span class="metric-val ok" id="mEnergy">847 kWh/día</span></div>
+      <div class="metric-row"><span class="metric-key">COORD. SATELITAL</span><span class="metric-val" id="mCoord">-34.6037, -58.3816</span></div>
+      <div class="metric-row"><span class="metric-key">ÚLTIMO ORACLE</span><span class="metric-val ok" id="mOracle">hace 4 min</span></div>
+      <div class="metric-row"><span class="metric-key">CERT. TRIMESTRAL</span><span class="metric-val ok" id="mCert">Q1-2026 ✓</span></div>
+      <div class="metric-row"><span class="metric-key">BILLING</span><span class="metric-val ok" id="mBilling">Al día</span></div>
+      <div class="metric-row"><span class="metric-key">DÍAS CONTINUIDAD</span><span class="metric-val ok" id="mDays">87/90</span></div>
+    </div>
+
+    <div class="panel-header" style="margin-top:4px">// MURO DE CONTINUIDAD [90 DÍAS]</div>
+    <div id="gapAlert"></div>
+    <div class="continuity-grid" id="continuityGrid"></div>
+
+    <div class="detail-block">
+      <div class="detail-label">ÚLTIMO HASH POLYGON</div>
+      <div class="detail-value" style="font-size:9px;color:var(--grey)" id="dHash">0x3f8a2b1c9d4e7f0a3b5c8d2e1f4a7b0c3d6e9f2a5b8c1d4e7f0a3b6c9d2e5f8a</div>
+    </div>
+
+    <div class="detail-block">
+      <div class="detail-label">PRIVACIDAD</div>
+      <div class="detail-value" style="font-size:10px;color:var(--grey)">
+        Identidad legal: <span style="color:var(--amber)">CIFRADA [admin]</span><br>
+        Wallet + métricas: <span style="color:var(--green)">PÚBLICO [terminal]</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- COMMAND LINE -->
+  <div class="cmd-line">
+    <span class="cmd-prompt">epimeleia:~$</span>
+    <input class="cmd-input" id="cmdInput" type="text" placeholder="lookup [wallet] | status [empresa] | history [Q] | suspend [on/off] | help" autocomplete="off" onkeydown="handleCmd(event)">
+  </div>
+
+</div>
+
+<script>
+// ─── DATA ───────────────────────────────────────────────
+const LOG_DATA = [
+  { ts:'16:04:31', type:'CERT',    msg:'CertificaciónQ confirmada · DATACORE LATAM S.A.', hash:'0x3f8a...5f8a', cat:'CERT' },
+  { ts:'16:03:18', type:'ORACLE',  msg:'Firma oráculo recibida · 847kWh · 12.4m³ · coord OK', hash:'0x9c2d...1a4f', cat:'ORACLE' },
+  { ts:'16:01:55', type:'PAYMENT', msg:'Billing mensual debitado · ANDES MINING GROUP · 0.8 MATIC', hash:'0x1b7e...c3a2', cat:'PAYMENT' },
+  { ts:'15:58:42', type:'GAP',     msg:'HUECO DE OPACIDAD registrado · NEXUS AI SYSTEMS · día 23', hash:'0x4d2f...8b1c', cat:'GAP' },
+  { ts:'15:57:11', type:'ORACLE',  msg:'Firma oráculo recibida · ANDES MINING GROUP · 2341kWh · 89.1m³', hash:'0x7a3c...2e9d', cat:'ORACLE' },
+  { ts:'15:55:30', type:'SYSTEM',  msg:'Chainlink Automation ejecutada · billing cycle #14', hash:'0x2e8f...7a1b', cat:'SYSTEM' },
+  { ts:'15:52:04', type:'CERT',    msg:'CertificaciónQ confirmada · PACIFIC CLOUD INC', hash:'0x5c1a...3d8e', cat:'CERT' },
+  { ts:'15:49:17', type:'ORACLE',  msg:'Sentinel API · THERMAL ENERGY CORP · imagen sat procesada', hash:'0x8b4d...9c2f', cat:'ORACLE' },
+  { ts:'15:44:33', type:'PAYMENT', msg:'Billing mensual debitado · HYDRO NORTE S.R.L. · 0.5 MATIC', hash:'0x6f2a...4e7c', cat:'PAYMENT' },
+  { ts:'15:41:09', type:'GAP',     msg:'Señal IoT interrumpida · NEXUS AI SYSTEMS · contador día 22', hash:'0x3a9e...1b5d', cat:'GAP' },
+  { ts:'15:38:52', type:'ORACLE',  msg:'Firma oráculo recibida · PACIFIC CLOUD INC · 1203kWh', hash:'0x9d7b...6c3a', cat:'ORACLE' },
+  { ts:'15:35:14', type:'SYSTEM',  msg:'Nuevo registro · THERMAL ENERGY CORP · nivel PV-L1 asignado', hash:'0x4c8e...2f1a', cat:'SYSTEM' },
+  { ts:'15:31:27', type:'CERT',    msg:'CertificaciónQ confirmada · ANDES MINING GROUP', hash:'0x1e5c...8a4d', cat:'CERT' },
+  { ts:'15:28:40', type:'ORACLE',  msg:'Copernicus/Sentinel sync OK · 6 empresas · lat/lon validados', hash:'0x7f3b...5c2e', cat:'ORACLE' },
+  { ts:'15:25:03', type:'SYSTEM',  msg:'Bloque Polygon #58,204,891 · 3 txs Epimeleia incluidas', hash:'0x2a6d...9e4b', cat:'SYSTEM' },
+];
+
+let currentFilter = 'ALL';
+let activeCompany = 'DATACORE LATAM S.A.';
+
+// ─── RENDER LOGS ─────────────────────────────────────────
+function renderLogs(filter) {
+  const feed = document.getElementById('logFeed');
+  const lines = filter === 'ALL' ? LOG_DATA : LOG_DATA.filter(l => l.cat === filter);
+  feed.innerHTML = lines.map(l => `
+    <div class="log-line">
+      <span class="log-ts">${l.ts}</span>
+      <span class="log-type type-${l.type.toLowerCase()}">${l.type}</span>
+      <span class="log-msg">${l.msg}</span>
+      <span class="log-hash">${l.hash}</span>
+    </div>
+  `).join('');
+  feed.scrollTop = feed.scrollHeight;
+}
+
+function filterLog(f, btn) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderLogs(f);
+}
+
+// ─── CONTINUITY WALL ─────────────────────────────────────
+const companies = {
+  'DATACORE LATAM S.A.': { gaps: [], pending: [], days: 87 },
+  'ANDES MINING GROUP':  { gaps: [], pending: [], days: 90 },
+  'NEXUS AI SYSTEMS':    { gaps: [22,23], pending: [24], days: 21 },
+  'THERMAL ENERGY CORP': { gaps: [], pending: [1,2,3,4,5], days: 0 },
+  'HYDRO NORTE S.R.L.':  { gaps: [], pending: [], days: 90 },
+  'PACIFIC CLOUD INC':   { gaps: [], pending: [], days: 90 },
+};
+
+function buildContinuityWall(name) {
+  const grid = document.getElementById('continuityGrid');
+  const alertEl = document.getElementById('gapAlert');
+  const data = companies[name] || { gaps:[], pending:[], days:90 };
+
+  grid.innerHTML = '';
+  for (let i = 1; i <= 90; i++) {
+    const div = document.createElement('div');
+    div.className = 'day-block';
+    if (data.gaps.includes(i)) div.classList.add('gap');
+    else if (data.pending.includes(i)) div.classList.add('pending');
+    else if (i <= data.days) div.classList.add('ok');
+    else div.classList.add('empty');
+    div.title = `Día ${i}`;
+    grid.appendChild(div);
+  }
+
+  if (data.gaps.length > 0) {
+    alertEl.innerHTML = `
+      <div class="opacity-gap">
+        <div class="gap-title">■ HUECO DE OPACIDAD REGISTRADO</div>
+        <div class="gap-detail">Días afectados: ${data.gaps.join(', ')} · Interrupción humana confirmada · Registro imborrable en Polygon</div>
+      </div>`;
+  } else {
+    alertEl.innerHTML = '';
+  }
+}
+
+// ─── SELECT COMPANY ──────────────────────────────────────
+const companyData = {
+  'DATACORE LATAM S.A.': { wallet:'0x7f3a4b8c2d1e9f0a3c7b5e2d8f1a4c9e2b7d3f8c891', level:'PV-L2', water:'12.4 m³/día', energy:'847 kWh/día', coord:'-34.6037, -58.3816', cert:'Q1-2026 ✓', days:'87/90', hash:'0x3f8a2b1c9d4e7f0a3b5c8d2e1f4a7b0c3d6e9f2a5b8c1d4e7f0a3b6c9d2e5f8a' },
+  'ANDES MINING GROUP':  { wallet:'0x2b1c8a4d9e7f3c1b5a8d2e4f7c9a3b6d8e1f4a7c2b5d8e1f4c7a0b3d6e9f2c5f044', level:'PV-L3', water:'341.2 m³/día', energy:'4,821 kWh/día', coord:'-27.4698, -65.7852', cert:'Q1-2026 ✓', days:'90/90', hash:'0x9c2d4f8a1b3e7c2d5f8a0b3c6d9e2f5a8b1c4d7e0f3a6b9c2d5e8f1a4b7c0d3e6f' },
+  'NEXUS AI SYSTEMS':    { wallet:'0x9d7e2c4f8a1b3e6c9d2f5a8b1c4d7e0f3a6b9c2d5e8f1a4b7c0d3e6f9a2b5c8d1e4f7a203', level:'PV-L2', water:'N/A [GAP]', energy:'N/A [GAP]', coord:'-33.8688, 151.2093', cert:'Q4-2025 ✓', days:'21/90', hash:'0x4d2f8a1b3c6d9e2f5a8b1c4d7e0f3a6b9c2d5e8f1a4b7c0d3e6f9a2b5c8d1e4f7' },
+  'THERMAL ENERGY CORP': { wallet:'0x4a8b1c4d7e0f3a6b9c2d5e8f1a4b7c0d3e6f9a2b5c8d1e4f7a0b3c6d9e2f5a8b7721', level:'PV-L1', water:'—', energy:'—', coord:'-19.9191, -43.9386', cert:'PENDIENTE', days:'0/90', hash:'—' },
+  'HYDRO NORTE S.R.L.':  { wallet:'0x1f6d9a2b5c8d1e4f7a0b3c6d9e2f5a8b1c4d7e0f3a6b9c2d5e8f1a4b7c0d3e6f9acc50', level:'PV-L1', water:'2,140 m³/día', energy:'312 kWh/día', coord:'-12.0464, -77.0428', cert:'Q1-2026 ✓', days:'90/90', hash:'0x6f2a8b1c4d7e0f3a6b9c2d5e8f1a4b7c0d3e6f9a2b5c8d1e4f7a0b3c6d9e2f5a8' },
+  'PACIFIC CLOUD INC':   { wallet:'0x8c3f6a9b2c5d8e1f4a7b0c3d6e9f2a5b8c1d4e7f0a3b6c9d2e5f8a1b4c7d0e3f6b119', level:'PV-L3', water:'89.7 m³/día', energy:'2,103 kWh/día', coord:'37.7749, -122.4194', cert:'Q1-2026 ✓', days:'90/90', hash:'0x5c1a7b0c3d6e9f2a5b8c1d4e7f0a3b6c9d2e5f8a1b4c7d0e3f6b9c2d5e8f1a4b7' },
+};
+
+function selectCompany(el, name, wallet, level, status) {
+  document.querySelectorAll('.company-entry').forEach(e => e.classList.remove('active'));
+  el.classList.add('active');
+  activeCompany = name;
+  const d = companyData[name];
+  if (!d) return;
+  document.getElementById('dName').textContent = name;
+  document.getElementById('dWallet').textContent = d.wallet;
+  document.getElementById('dLevel').innerHTML = `<span class="company-level level-${level.toLowerCase().replace('-','')}" style="font-size:11px">${d.level}</span>`;
+  document.getElementById('mWater').textContent = d.water;
+  document.getElementById('mEnergy').textContent = d.energy;
+  document.getElementById('mCoord').textContent = d.coord;
+  document.getElementById('mCert').textContent = d.cert;
+  document.getElementById('mDays').textContent = d.days;
+  document.getElementById('dHash').textContent = d.hash;
+  // color metrics
+  document.getElementById('mWater').className = 'metric-val ' + (d.water.includes('N/A') || d.water === '—' ? 'bad' : 'ok');
+  document.getElementById('mEnergy').className = 'metric-val ' + (d.energy.includes('N/A') || d.energy === '—' ? 'bad' : 'ok');
+  document.getElementById('mCert').className = 'metric-val ' + (d.cert === 'PENDIENTE' ? 'warn' : 'ok');
+  buildContinuityWall(name);
+}
+
+// ─── PV LEVEL ─────────────────────────────────────────────
+const pvLabels = {
+  1: 'PV-L1 — Validación macro semanal · Copernicus/Sentinel',
+  2: 'PV-L2 — Híbrido IoT + Satélite · Reporte Descriptivo Diario',
+  3: 'PV-L3 — Tiempo real bloque a bloque · Alta resolución satelital + sensores redundantes'
+};
+function setPV(n, el) {
+  document.querySelectorAll('.pv-seg').forEach(s => s.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('pvLabel').textContent = pvLabels[n];
+}
+
+// ─── COMMAND LINE ─────────────────────────────────────────
+const cmdResponses = {
+  'help': '// Comandos: lookup [wallet] | status [empresa] | history [Q1..Q4] | suspend on | suspend off | clear | polygonscan',
+  'suspend on':  '// MODO SUSPENSIÓN ACTIVADO — Registros en espera. Inmutabilidad preservada.',
+  'suspend off': '// MODO SUSPENSIÓN DESACTIVADO — Flujo de datos normalizado.',
+  'clear': '__CLEAR__',
+  'polygonscan': '// PolygonScan: https://polygonscan.com — Contrato EpimeleiaV31 verificado.',
+};
+
+function handleCmd(e) {
+  if (e.key !== 'Enter') return;
+  const input = document.getElementById('cmdInput');
+  const cmd = input.value.trim().toLowerCase();
+  input.value = '';
+
+  const feed = document.getElementById('logFeed');
+
+  if (cmd === 'suspend on') {
+    document.getElementById('suspendBanner').classList.add('visible');
+  } else if (cmd === 'suspend off') {
+    document.getElementById('suspendBanner').classList.remove('visible');
+  }
+
+  if (cmdResponses[cmd] === '__CLEAR__') {
+    feed.innerHTML = '';
+    return;
+  }
+
+  const reply = cmdResponses[cmd] || 
+    (cmd.startsWith('lookup') ? `// Wallet ${cmd.split(' ')[1] || '?'} — Buscando en registro Polygon...` :
+     cmd.startsWith('status') ? `// Estado: ${cmd.replace('status','').trim() || activeCompany} — Ver panel derecho.` :
+     cmd.startsWith('history') ? `// Certificaciones ${cmd.replace('history','').trim().toUpperCase()}: Ver registros en PolygonScan.` :
+     `// Comando no reconocido: "${cmd}" — Escribí help`);
+
+  const div = document.createElement('div');
+  div.className = 'log-line';
+  div.innerHTML = `<span class="log-ts">${new Date().toTimeString().slice(0,8)}</span><span class="log-type type-system">CMD</span><span class="log-msg">${reply}</span>`;
+  feed.appendChild(div);
+  feed.scrollTop = feed.scrollHeight;
+}
+
+// ─── LIVE BLOCK COUNTER ──────────────────────────────────
+let block = 58204917;
+setInterval(() => {
+  block += Math.floor(Math.random() * 3) + 1;
+  document.getElementById('blockNum').textContent = block.toLocaleString();
+}, 2300);
+
+// ─── AUTO-LOG STREAM ─────────────────────────────────────
+const autoLogs = [
+  { type:'ORACLE', msg:'Firma oráculo recibida · HYDRO NORTE S.R.L. · 2140m³ · coord OK', cat:'ORACLE' },
+  { type:'SYSTEM', msg:'Chainlink Automation heartbeat · próximo billing en 14 días', cat:'SYSTEM' },
+  { type:'ORACLE', msg:'Sentinel API sync · PACIFIC CLOUD INC · imagen procesada', cat:'ORACLE' },
+  { type:'CERT',   msg:'CertificaciónQ iniciada · ANDES MINING GROUP · esperando oráculo', cat:'CERT' },
+  { type:'SYSTEM', msg:`Bloque Polygon #${block} · Epimeleia tx confirmada`, cat:'SYSTEM' },
+];
+let autoIdx = 0;
+setInterval(() => {
+  const feed = document.getElementById('logFeed');
+  const l = autoLogs[autoIdx % autoLogs.length];
+  const hash = '0x' + Math.random().toString(16).slice(2,6) + '...' + Math.random().toString(16).slice(2,6);
+  const div = document.createElement('div');
+  div.className = 'log-line';
+  const now = new Date().toTimeString().slice(0,8);
+  div.innerHTML = `<span class="log-ts">${now}</span><span class="log-type type-${l.type.toLowerCase()}">${l.type}</span><span class="log-msg">${l.msg}</span><span class="log-hash">${hash}</span>`;
+  if (currentFilter === 'ALL' || currentFilter === l.cat) {
+    feed.appendChild(div);
+    feed.scrollTop = feed.scrollHeight;
+  }
+  autoIdx++;
+}, 4500);
+
+// ─── INIT ─────────────────────────────────────────────────
+renderLogs('ALL');
+buildContinuityWall('DATACORE LATAM S.A.');
+</script>
+</body>
+</html>
+
+<script>
+// ─── METAMASK + CONTRATO REAL ─────────────────────────────
+const CONTRACT_ADDRESS = "0x22E13Cfaef053441d4eA87f5b5C1df30ff42e676";
+const CONTRACT_ABI = [
+  "function registrarEmpresa(uint8 nivel) external payable",
+  "function cargarSaldo() external payable",
+  "function cancelarEmpresa() external",
+  "function getEmpresaInfo(address wallet) external view returns (bool, uint8, uint256, uint256, uint8, uint256)",
+  "function getCertificaciones(address wallet) external view returns (tuple(uint256,bytes32,address,uint8,string,bool)[])",
+  "function getHuecos(address wallet) external view returns (tuple(uint256,uint256,uint256,string)[])",
+  "function getTotalEmpresas() external view returns (uint256)",
+  "function listaEmpresas(uint256) external view returns (address)",
+  "function modeSuspension() external view returns (bool)",
+  "function founder() external view returns (address)",
+  "event CertificacionRealizada(address indexed wallet, bytes32 hashEvidencia, uint256 trimestre, uint256 timestamp)",
+  "event HuecoOpacidadRegistrado(address indexed wallet, uint256 dia, string causa, uint256 timestamp)",
+  "event BillingEjecutado(address indexed wallet, uint256 monto, uint256 timestamp)",
+  "event EmpresaRegistrada(address indexed wallet, uint8 nivel, uint256 timestamp)",
+];
+
+let provider_web3 = null;
+let signer_web3 = null;
+let contrato_web3 = null;
+
+async function conectarMetaMask() {
+  if (!window.ethereum) {
+    appendLog('SYSTEM', 'MetaMask no detectado. Instalá MetaMask para conectar.');
+    return;
+  }
+  try {
+    await window.ethereum.request({ method: 'eth_requestAccounts' });
+    provider_web3 = new ethers.BrowserProvider(window.ethereum);
+    signer_web3 = await provider_web3.getSigner();
+    const address = await signer_web3.getAddress();
+    contrato_web3 = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer_web3);
+
+    // Verificar red Polygon
+    const network = await provider_web3.getNetwork();
+    if (network.chainId !== 137n) {
+      appendLog('SYSTEM', 'Red incorrecta. Cambiá a Polygon Mainnet (Chain ID: 137).');
+      await window.ethereum.request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: '0x89' }]
+      });
+    }
+
+    appendLog('ORACLE', `Wallet conectada: ${address}`);
+    document.getElementById('walletBtn').textContent = address.slice(0,6)+'...'+address.slice(-4);
+    document.getElementById('walletBtn').style.color = 'var(--green)';
+    document.getElementById('walletBtn').style.borderColor = 'var(--green)';
+
+    // Leer estado del contrato real
+    await leerEstadoContrato();
+
+  } catch(err) {
+    appendLog('SYSTEM', 'Conexión MetaMask fallida: ' + err.message);
+  }
+}
+
+async function leerEstadoContrato() {
+  if (!contrato_web3) return;
+  try {
+    const total = await contrato_web3.getTotalEmpresas();
+    const suspension = await contrato_web3.modeSuspension();
+    appendLog('SYSTEM', `Empresas registradas en chain: ${total}`);
+    if (suspension) {
+      document.getElementById('suspendBanner').classList.add('visible');
+      appendLog('SYSTEM', 'MODO SUSPENSIÓN ACTIVO en contrato');
+    }
+    document.getElementById('compCount').textContent = total.toString();
+  } catch(err) {
+    appendLog('SYSTEM', 'Error leyendo contrato: ' + err.message);
+  }
+}
+
+function appendLog(tipo, msg) {
+  const feed = document.getElementById('logFeed');
+  const div = document.createElement('div');
+  div.className = 'log-line';
+  const now = new Date().toTimeString().slice(0,8);
+  div.innerHTML = `<span class="log-ts">${now}</span><span class="log-type type-${tipo.toLowerCase()}">${tipo}</span><span class="log-msg">${msg}</span>`;
+  feed.appendChild(div);
+  feed.scrollTop = feed.scrollHeight;
+}
+
+// Agregar botón conectar wallet al header
+window.addEventListener('DOMContentLoaded', () => {
+  const hdr = document.querySelector('.header-status');
+  const btn = document.createElement('button');
+  btn.id = 'walletBtn';
+  btn.textContent = 'CONECTAR WALLET';
+  btn.style.cssText = 'background:none;border:1px solid var(--grey);color:var(--grey);font-family:Share Tech Mono,monospace;font-size:10px;padding:4px 12px;cursor:pointer;letter-spacing:1px;';
+  btn.onclick = conectarMetaMask;
+  hdr.appendChild(btn);
+});
+</script>
