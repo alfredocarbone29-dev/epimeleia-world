@@ -2,11 +2,10 @@
 pragma solidity ^0.8.19;
 
 /**
- * EPIMELEIA V3.1 — "Blindaje Digital"
+ * EPIMELEIA V3.2 — "Blindaje Digital"
  * Notario Digital de Conducta Ambiental Corporativa
  * Red: Polygon Mainnet (Chain ID: 137)
- * Contrato: 0x22E13Cfaef053441d4eA87f5b5C1df30ff42e676
- * 
+ *
  * Módulos:
  * 1. Registro voluntario de empresas
  * 2. Billing mensual automático (Chainlink Automation compatible)
@@ -14,11 +13,15 @@ pragma solidity ^0.8.19;
  * 4. Gestión de oráculos autorizados
  * 5. Sucesión del fundador (2 pasos)
  * 6. Cancelación instantánea con reembolso
- * 
- * Niveles de Validación:
- * PV-L1: Macro semanal — satélites públicos (Copernicus/Sentinel)
- * PV-L2: Diario híbrido — IoT + Satélite
- * PV-L3: Tiempo real bloque a bloque — alta resolución + sensores redundantes
+ *
+ * Niveles de Validación (certificación trimestral en todos):
+ * PV-L1: Datos satelitales públicos Sentinel/Copernicus. Nivel de entrada.
+ * PV-L2: Satelital comercial alta resolución (Planet Labs o equiv.)
+ *         + validación cruzada con fuentes públicas.
+ *         El oráculo firma solo cuando ambas fuentes son consistentes.
+ * PV-L3: Tres fuentes independientes: satelital comercial premium
+ *         + sensores IoT en sitio + validación cruzada pública.
+ *         Máxima credibilidad auditable.
  */
 
 interface AutomationCompatibleInterface {
@@ -26,7 +29,7 @@ interface AutomationCompatibleInterface {
     function performUpkeep(bytes calldata performData) external;
 }
 
-contract EpimeleiaV31 is AutomationCompatibleInterface {
+contract EpimeleiaV32 is AutomationCompatibleInterface {
 
     // ─── OWNER ───────────────────────────────────────────
     address public founder;
@@ -41,6 +44,13 @@ contract EpimeleiaV31 is AutomationCompatibleInterface {
     // ─── ENUMS ───────────────────────────────────────────
     enum PVLevel { L1, L2, L3 }
     enum CertStatus { PENDIENTE, CERTIFICADO, HUECO_OPACIDAD }
+
+    // ─── NIVEL DESCRIPTIONS (on-chain) ───────────────────
+    // Estas constantes quedan grabadas en el contrato para
+    // que cualquier verificador externo pueda consultarlas.
+    string public constant PV_L1_DESC = "Certificacion trimestral con datos satelitales publicos Sentinel/Copernicus. Nivel de entrada.";
+    string public constant PV_L2_DESC = "Certificacion trimestral con satelital comercial alta resolucion (Planet Labs o equiv.) + validacion cruzada con fuentes publicas. El oraculo firma solo cuando ambas fuentes son consistentes.";
+    string public constant PV_L3_DESC = "Certificacion trimestral con tres fuentes independientes: satelital comercial premium + sensores IoT en sitio + validacion cruzada publica. Maxima credibilidad auditable.";
 
     // ─── STRUCTS ─────────────────────────────────────────
     struct Empresa {
@@ -67,7 +77,7 @@ contract EpimeleiaV31 is AutomationCompatibleInterface {
         uint256 diaInicio;
         uint256 diaFin;
         uint256 timestamp;
-        string causa;                // "IOT_INTERRUPTION" | "SATELLITE_LOSS" | "HUMAN_CAUSE"
+        string causa;                // "SATELLITE_LOSS" | "IOT_INTERRUPTION" | "HUMAN_CAUSE"
     }
 
     // ─── STORAGE ─────────────────────────────────────────
@@ -148,8 +158,6 @@ contract EpimeleiaV31 is AutomationCompatibleInterface {
         });
 
         listaEmpresas.push(msg.sender);
-
-        // Fee de registro va al founder
         _transferirFounder(registrationFee);
 
         emit EmpresaRegistrada(msg.sender, nivel, block.timestamp);
@@ -194,7 +202,6 @@ contract EpimeleiaV31 is AutomationCompatibleInterface {
             _transferirFounder(fee);
             emit BillingEjecutado(wallet, fee, block.timestamp);
         } else {
-            // Saldo insuficiente — cancelación automática
             _cancelarEmpresa(wallet);
         }
     }
@@ -213,6 +220,10 @@ contract EpimeleiaV31 is AutomationCompatibleInterface {
      * El oráculo firma y entrega el hash de evidencia.
      * El contrato solo vincula — no juzga.
      * hashEvidencia = keccak256(reporte_completo)
+     *
+     * PV-L1: el oráculo valida con datos Sentinel/Copernicus públicos.
+     * PV-L2: el oráculo valida solo si satelital comercial + fuente pública son consistentes.
+     * PV-L3: el oráculo valida solo si satelital comercial + IoT en sitio + fuente pública son consistentes.
      */
     function certificarQ(
         address wallet,
@@ -238,8 +249,8 @@ contract EpimeleiaV31 is AutomationCompatibleInterface {
 
     /**
      * Registrar Hueco de Opacidad.
-     * Si la señal IoT o satelital se interrumpe por causa humana,
-     * se graba un registro imborrable.
+     * Si la señal satelital o IoT se interrumpe por causa humana,
+     * se graba un registro imborrable en blockchain.
      */
     function registrarHuecoOpacidad(
         address wallet,
@@ -256,7 +267,7 @@ contract EpimeleiaV31 is AutomationCompatibleInterface {
         }));
 
         empresas[wallet].estadoCert = CertStatus.HUECO_OPACIDAD;
-        empresas[wallet].diasContinuidad = 0; // Reset contador
+        empresas[wallet].diasContinuidad = 0;
 
         emit HuecoOpacidadRegistrado(wallet, diaInicio, causa, block.timestamp);
     }
@@ -364,6 +375,18 @@ contract EpimeleiaV31 is AutomationCompatibleInterface {
     ) {
         Empresa storage e = empresas[wallet];
         return (e.activa, e.nivel, e.saldo, e.diasContinuidad, e.estadoCert, e.ultimaCertQ);
+    }
+
+    /**
+     * Retorna la descripción on-chain del nivel PV de una empresa.
+     * Cualquier verificador externo puede consultarlo sin depender
+     * de documentación externa.
+     */
+    function getNivelDesc(address wallet) external view returns (string memory) {
+        PVLevel nivel = empresas[wallet].nivel;
+        if (nivel == PVLevel.L1) return PV_L1_DESC;
+        if (nivel == PVLevel.L2) return PV_L2_DESC;
+        return PV_L3_DESC;
     }
 
     // ═══════════════════════════════════════════════════
