@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EPIMELEIA — Notario Digital Ambiental</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #0f1a0f;
+    --paper: #f4f0e8;
+    --paper2: #ece8df;
+    --green: #1a4a1a;
+    --green-light: #2d6e2d;
+    --accent: #4a7c4a;
+    --muted: #8a9e8a;
+    --border: rgba(26,74,26,0.15);
+    --amber: #8a6a1a;
+    --red: #7a2a1a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    line-height: 1.7;
+  }
+
+  /* HEADER */
+  header {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 20px 48px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .logo-text {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 26px;
+    font-weight: 600;
+    letter-spacing: 4px;
+  }
+
+  .logo-sub {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    margin-top: 2px;
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+  }
+
+  .header-network {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 1px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .dot-live {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: #4aaa4a;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  .header-email {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--paper);
+    text-decoration: none;
+    border: 1px solid rgba(244,240,232,0.2);
+    padding: 6px 14px;
+    transition: all 0.2s;
+  }
+
+  .header-email:hover { background: rgba(244,240,232,0.1); }
+
+  /* SECTIONS */
+  .hero {
+    padding: 96px 48px 80px;
+    max-width: 900px;
+    margin: 0 auto;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section {
+    padding: 64px 48px;
+    max-width: 900px;
+    margin: 0 auto;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--muted);
+    margin-bottom: 24px;
+  }
+
+  .section h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 32px;
+    font-weight: 400;
+    color: var(--ink);
+    margin-bottom: 20px;
+  }
+
+  .section p, .hero p { color: #3a4a3a; margin-bottom: 16px; max-width: 700px; }
+
+  .hero-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--muted);
+    margin-bottom: 32px;
+  }
+
+  .hero h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(36px, 5vw, 58px);
+    font-weight: 300;
+    line-height: 1.2;
+    margin-bottom: 32px;
+  }
+
+  .hero h1 em { font-style: italic; color: var(--green-light); }
+
+  .hero-body { font-size: 16px; line-height: 1.8; }
+  .hero-body strong { color: var(--ink); font-weight: 500; }
+
+  .hero-tagline {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px;
+    font-style: italic;
+    color: var(--green-light);
+    border-left: 3px solid var(--accent);
+    padding-left: 20px;
+    margin-top: 32px;
+  }
+
+  /* CARDS */
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 20px;
+    margin-top: 32px;
+  }
+
+  .card {
+    background: var(--paper2);
+    border: 1px solid var(--border);
+    padding: 28px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+  }
+
+  .card:hover {
+    border-color: var(--accent);
+    background: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(26,74,26,0.08);
+  }
+
+  .card-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+
+  .card h3 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 10px;
+  }
+
+  .card p { font-size: 13px; color: #5a6a5a; line-height: 1.6; margin: 0; }
+
+  .card-badge {
+    display: inline-block;
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 1px;
+    padding: 4px 10px;
+    margin-top: 14px;
+    border: 1px solid;
+  }
+
+  .badge-green { color: var(--green-light); border-color: var(--green-light); background: rgba(45,110,45,0.06); }
+  .badge-amber { color: var(--amber); border-color: var(--amber); background: rgba(138,106,26,0.06); }
+
+  /* LEVELS TABLE */
+  .levels-table { margin-top: 32px; border: 1px solid var(--border); }
+
+  .level-row {
+    display: grid;
+    grid-template-columns: 120px 1fr 160px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .level-row:last-child { border-bottom: none; }
+  .level-row:hover { background: #fff; }
+
+  .level-id {
+    padding: 24px;
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .level-id strong { font-family: 'DM Mono', monospace; font-size: 14px; color: var(--ink); }
+  .level-id span { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--muted); margin-top: 4px; letter-spacing: 1px; }
+
+  .level-desc { padding: 24px; border-right: 1px solid var(--border); }
+  .level-desc h4 { font-size: 14px; font-weight: 500; color: var(--ink); margin-bottom: 6px; }
+  .level-desc p { font-size: 12px; color: #5a6a5a; margin: 0; line-height: 1.6; }
+
+  .level-status { padding: 24px; display: flex; align-items: center; justify-content: center; }
+
+  /* REGISTER */
+  .register-box {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 48px;
+    margin-top: 32px;
+  }
+
+  .register-box h3 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 28px;
+    font-weight: 300;
+    margin-bottom: 16px;
+  }
+
+  .register-box p { color: rgba(244,240,232,0.7); font-size: 14px; max-width: 500px; margin-bottom: 32px; }
+
+  .register-btn {
+    background: var(--paper);
+    color: var(--ink);
+    border: none;
+    padding: 14px 32px;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .register-btn:hover { background: var(--paper2); transform: translateY(-1px); }
+
+  /* FOOTER */
+  footer {
+    background: var(--ink);
+    color: rgba(244,240,232,0.5);
+    padding: 40px 48px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .footer-logo {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px;
+    letter-spacing: 4px;
+    color: var(--paper);
+  }
+
+  footer p { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 1px; }
+  footer a { color: rgba(244,240,232,0.7); text-decoration: none; font-family: 'DM Mono', monospace; font-size: 11px; }
+  footer a:hover { color: var(--paper); }
+
+  /* MODAL */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(15,26,15,0.85);
+    z-index: 9999;
+    overflow-y: auto;
+    padding: 40px 20px;
+  }
+
+  .modal-overlay.active { display: flex; align-items: flex-start; justify-content: center; }
+
+  .modal-box {
+    background: var(--paper);
+    max-width: 580px;
+    width: 100%;
+    padding: 48px;
+    position: relative;
+    animation: modalIn 0.25s ease;
+  }
+
+  @keyframes modalIn { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+
+  .modal-close {
+    position: absolute;
+    top: 20px; right: 24px;
+    background: none; border: none;
+    font-size: 22px; cursor: pointer;
+    color: var(--muted);
+  }
+
+  .modal-label { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 3px; color: var(--muted); margin-bottom: 16px; }
+
+  .modal-box h3 { font-family: 'Cormorant Garamond', serif; font-size: 28px; font-weight: 400; color: var(--ink); margin-bottom: 20px; }
+  .modal-box p { font-size: 13px; color: #3a4a3a; line-height: 1.8; margin-bottom: 14px; }
+
+  .modal-price {
+    background: var(--paper2);
+    border: 1px solid var(--border);
+    padding: 20px 24px;
+    margin: 20px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .modal-price-label { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); letter-spacing: 1px; }
+  .modal-price-value { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 600; color: var(--ink); }
+
+  .modal-disclaimer {
+    background: #f0ece0;
+    border-left: 3px solid var(--muted);
+    padding: 14px 18px;
+    margin: 16px 0;
+    font-size: 11px;
+    color: #5a6a5a;
+    line-height: 1.7;
+  }
+
+  .modal-contact { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--green-light); margin-top: 8px; }
+
+  .modal-actions { display: flex; gap: 12px; margin-top: 28px; flex-wrap: wrap; }
+  .modal-hr { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
+
+  .btn-primary {
+    background: var(--ink); color: var(--paper);
+    border: none; padding: 12px 28px;
+    font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 2px;
+    cursor: pointer; transition: all 0.2s; flex: 1;
+  }
+  .btn-primary:hover { background: var(--green); }
+
+  .btn-secondary {
+    background: transparent; color: var(--ink);
+    border: 1px solid var(--border); padding: 12px 28px;
+    font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 2px;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .btn-secondary:hover { border-color: var(--accent); }
+
+  .btn-transak {
+    background: var(--green); color: var(--paper);
+    border: none; padding: 12px 28px;
+    font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 1px;
+    cursor: pointer; transition: all 0.2s; width: 100%; margin-top: 8px;
+  }
+  .btn-transak:hover { background: var(--green-light); }
+
+  @media (max-width: 700px) {
+    header { padding: 16px 20px; }
+    .hero, .section { padding: 48px 20px; }
+    .level-row { grid-template-columns: 1fr; }
+    .level-id, .level-desc { border-right: none; }
+    .level-status { justify-content: flex-start; padding-top: 0; padding-bottom: 20px; }
+    footer { padding: 32px 20px; flex-direction: column; align-items: flex-start; }
+    .register-box { padding: 32px 20px; }
+    .modal-box { padding: 32px 20px; }
+    .header-network { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="logo-text">EPIMELEIA</div>
+    <div class="logo-sub">NOTARIO DIGITAL AMBIENTAL · V3.2 · POLYGON MAINNET</div>
+  </div>
+  <div class="header-right">
+    <div class="header-network">
+      <span class="dot-live"></span>
+      ORACLE ACTIVO · CHAIN ID 137
+    </div>
+    <a href="mailto:info@epimeleia.world" class="header-email">info@epimeleia.world</a>
+  </div>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-label">// ORIGEN Y PROPÓSITO</div>
+  <h1>Ante la ausencia de una herramienta<br>verdaderamente <em>tecnológica</em>,<br>nace Epimeleia.</h1>
+  <p class="hero-body">El consumo de recursos naturales — agua, energía, emisiones — siempre fue medido por humanos, auditado por humanos, certificado por humanos. El sesgo era inevitable.</p>
+  <p class="hero-body">Epimeleia elimina ese sesgo. Es un <strong>notario digital de conducta ambiental corporativa</strong>: captura datos vía oráculos satelitales e IoT, los firma criptográficamente, y los graba de forma <strong>permanente e inalterable</strong> en blockchain Polygon. Sin intervención humana. Sin posibilidad de edición retroactiva.</p>
+  <p class="hero-body">Epimeleia no juzga ni califica. <strong>Registra.</strong> El silencio también es un dato.</p>
+  <p class="hero-body">Diseñada para empresas <strong>mineras, navieras, forestales, de inteligencia artificial, data centers</strong> y cualquier industria que opere bajo presión regulatoria o reputacional.</p>
+  <div class="hero-tagline">El diferencial es cero sesgo humano.</div>
+</section>
+
+<!-- FEE -->
+<section class="section">
+  <div class="section-label">// 01 · FEE DE REGISTRO Y MANTENIMIENTO</div>
+  <h2>¿Por qué existe un fee?</h2>
+  <p>Epimeleia opera sobre infraestructura real: nodos en blockchain Polygon, oráculos satelitales, procesamiento de datos y mantenimiento continuo del sistema. Sin un fee, Epimeleia no puede existir ni garantizar la continuidad del servicio.</p>
+  <p>El fee no es una ganancia arbitraria — es la condición de subsistencia del protocolo y la garantía de que el registro de tu empresa seguirá siendo accesible y verificable en el tiempo.</p>
+  <div class="cards">
+    <div class="card" onclick="abrirModal('fee-registro')">
+      <div class="card-label">FEE ÚNICO</div>
+      <h3>Registro de Empresa</h3>
+      <p>Incorporación al protocolo. Pago único, no renovable. Incluye alta en blockchain y asignación de nivel de validación.</p>
+      <span class="card-badge badge-green">VER PRECIO →</span>
+    </div>
+    <div class="card" onclick="abrirModal('fee-mensual')">
+      <div class="card-label">FEE TRIMESTRAL</div>
+      <h3>Certificación Q1/4</h3>
+      <p>Sostenimiento del nodo oracle, continuidad del registro en blockchain y certificación trimestral de conducta ambiental.</p>
+      <span class="card-badge badge-green">VER PRECIO →</span>
+    </div>
+  </div>
+</section>
+
+<!-- Q1/4 -->
+<section class="section">
+  <div class="section-label">// 02 · CERTIFICACIÓN TRIMESTRAL Q1/4</div>
+  <h2>¿Cómo funciona la certificación?</h2>
+  <p>Epimeleia sigue el ciclo natural de resultados corporativos: <strong>trimestral</strong>. Cada 90 días, el oráculo captura, procesa y graba en blockchain un reporte certificado de la actividad ambiental de la empresa.</p>
+  <p>La ventana de 90 días no es arbitraria: permite medir ciclos completos de operación para mineras, navieras, forestales, data centers e industria de IA, alineando el reporte ambiental con el ciclo natural de resultados corporativos.</p>
+  <p>El resultado es un <strong>hash de evidencia inmutable</strong> — la huella criptográfica del reporte completo, firmada por el oráculo y grabada en Polygon. Cualquier verificador externo puede consultarlo sin depender de Epimeleia.</p>
+  <div class="cards">
+    <div class="card" onclick="abrirModal('q-info')">
+      <div class="card-label">CERTIFICACIÓN Q</div>
+      <h3>¿Qué certifica exactamente?</h3>
+      <p>Consumo de agua, energía, emisiones y coordenadas satelitales del área operativa. Datos firmados por oráculo autorizado.</p>
+      <span class="card-badge badge-green">VER DETALLE →</span>
+    </div>
+    <div class="card" onclick="abrirModal('opacidad')">
+      <div class="card-label">HUECO DE OPACIDAD</div>
+      <h3>Cuando la señal se interrumpe</h3>
+      <p>Si los datos no llegan — por causa técnica o humana — queda grabado. Permanentemente. El silencio también es un dato.</p>
+      <span class="card-badge badge-amber">ENTENDER CONSECUENCIAS →</span>
+    </div>
+  </div>
+</section>
+
+<!-- NIVELES -->
+<section class="section">
+  <div class="section-label">// 03 · NIVELES DE VALIDACIÓN</div>
+  <h2>Tres niveles de certeza</h2>
+  <p>Cada empresa elige el nivel de validación según sus necesidades operativas y regulatorias. Todos tienen frecuencia trimestral.</p>
+  <div class="levels-table">
+    <div class="level-row" onclick="abrirModal('l1')">
+      <div class="level-id"><strong>PV-L1</strong><span>ENTRADA</span></div>
+      <div class="level-desc">
+        <h4>Sentinel / Copernicus</h4>
+        <p>Validación trimestral con datos satelitales públicos de la ESA. Cobertura global. Ideal para empresas que inician su certificación ambiental.</p>
+      </div>
+      <div class="level-status"><span class="card-badge badge-green">OPERATIVO HOY</span></div>
+    </div>
+    <div class="level-row" onclick="abrirModal('l2')">
+      <div class="level-id"><strong>PV-L2</strong><span>AVANZADO</span></div>
+      <div class="level-desc">
+        <h4>Satelital Comercial + Validación Cruzada</h4>
+        <p>Datos de alta resolución (Planet Labs o equiv.) validados contra fuentes públicas. El oráculo firma solo cuando ambas fuentes son consistentes.</p>
+      </div>
+      <div class="level-status"><span class="card-badge badge-amber">BAJO ACUERDO</span></div>
+    </div>
+    <div class="level-row" onclick="abrirModal('l3')">
+      <div class="level-id"><strong>PV-L3</strong><span>PREMIUM</span></div>
+      <div class="level-desc">
+        <h4>Triple Fuente Independiente</h4>
+        <p>Satelital comercial premium + sensores IoT en sitio + validación cruzada pública. Máxima credibilidad auditable para industrias de alto impacto.</p>
+      </div>
+      <div class="level-status"><span class="card-badge badge-amber">BAJO ACUERDO</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- REGISTRO -->
+<section class="section">
+  <div class="section-label">// 04 · REGISTRAR EMPRESA</div>
+  <h2>Comenzar es simple</h2>
+  <p>El registro es voluntario, público y permanente. Una vez registrada, la empresa aparece en el protocolo Epimeleia con su historial de certificaciones visible para cualquier verificador externo.</p>
+  <p>Se requiere una wallet Polygon (MetaMask u otra compatible) y el fee de registro en POL. Si tu empresa no opera con crypto, podés coordinar el pago por otros medios directamente desde el formulario de registro.</p>
+  <div class="register-box">
+    <h3>¿Tu empresa está lista para registrarse?</h3>
+    <p>El registro implica la aceptación de los términos del protocolo Epimeleia. Leé los términos antes de proceder.</p>
+    <button class="register-btn" onclick="abrirModal('registro')">INICIAR REGISTRO →</button>
+  </div>
+</section>
+
+<footer>
+  <div>
+    <div class="footer-logo">EPIMELEIA</div>
+    <p style="margin-top:8px;">Notario Digital de Conducta Ambiental Corporativa · Polygon Mainnet</p>
+    <p style="margin-top:4px;">Contrato: 0xEfEE680Da362890cdF5ab20a20BB42718e29DBc0</p>
+  </div>
+  <div style="text-align:right">
+    <a href="mailto:info@epimeleia.world">info@epimeleia.world</a>
+    <p style="margin-top:8px;">© 2025 Epimeleia · MIT License</p>
+  </div>
+</footer>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="cerrarModal()">×</button>
+    <div id="modal-inner"></div>
+  </div>
+</div>
+
+<script>
+const CONTRACT_ADDRESS = "0xEfEE680Da362890cdF5ab20a20BB42718e29DBc0";
+const TRANSAK_API_KEY = "8f495950-b809-49ce-89d2-cd380605237e";
+const FEE_REGISTRO_USD = 1500;
+const FEE_TRIMESTRAL_USD = 450;
+
+const DISCLAIMER = `<div class="modal-disclaimer"><strong>Deslinde de responsabilidad:</strong> Epimeleia es una herramienta tecnológica de notaría digital. No garantiza resultados regulatorios ni reputacionales derivados del uso del protocolo. El registro es voluntario y las transacciones en blockchain son irreversibles.</div><p class="modal-contact">Consultas: info@epimeleia.world</p>`;
+
+const modales = {
+
+'fee-registro': `
+  <div class="modal-label">FEE ÚNICO DE REGISTRO</div>
+  <h3>Incorporación al Protocolo</h3>
+  <p>El fee de registro cubre la incorporación de tu empresa al protocolo Epimeleia en blockchain Polygon. Es un pago único, no renovable.</p>
+  <div class="modal-price">
+    <div><div class="modal-price-label">FEE DE REGISTRO</div><div style="font-size:11px;color:#8a9e8a;font-family:'DM Mono',monospace;margin-top:2px;">PAGO ÚNICO · NO REEMBOLSABLE</div></div>
+    <div class="modal-price-value">USD ${FEE_REGISTRO_USD.toLocaleString()}</div>
+  </div>
+  ${DISCLAIMER}
+  <hr class="modal-hr">
+  <p style="font-size:12px;color:#5a6a5a;">Aceptamos tarjeta de crédito y transferencia bancaria. El procesamiento es seguro a través de Transak.</p>
+  <button class="btn-transak" onclick="abrirTransak()">💳 PAGAR CON TARJETA O TRANSFERENCIA BANCARIA</button>
+  <div style="text-align:center;font-size:10px;color:#8a9e8a;font-family:'DM Mono',monospace;margin-top:8px;">Powered by Transak · Tarjeta de crédito · Transferencia bancaria</div>`,
+
+'fee-mensual': `
+  <div class="modal-label">FEE TRIMESTRAL — Q1/4</div>
+  <h3>Mantenimiento Activo del Registro</h3>
+  <p>El fee trimestral sostiene la infraestructura del oráculo, el nodo de validación y el acceso continuo al registro público. Sin este fee, el registro se suspende automáticamente con reembolso del saldo disponible.</p>
+  <div class="modal-price">
+    <div><div class="modal-price-label">FEE TRIMESTRAL Q1/4</div><div style="font-size:11px;color:#8a9e8a;font-family:'DM Mono',monospace;margin-top:2px;">DÉBITO AUTOMÁTICO · CADA 90 DÍAS</div></div>
+    <div class="modal-price-value">USD ${FEE_TRIMESTRAL_USD.toLocaleString()}</div>
+  </div>
+  <p style="font-size:13px;color:#5a6a5a;">El saldo se carga de forma prepagada. Chainlink Automation ejecuta el débito automáticamente cada trimestre. Si el saldo es insuficiente, la empresa se cancela con reembolso inmediato del remanente.</p>
+  <div class="modal-disclaimer"><strong>Nota:</strong> Los precios para L2 y L3 se determinan en acuerdo previo con Epimeleia según las necesidades de cada empresa. Contactar: info@epimeleia.world</div>
+  <p class="modal-contact">Consultas: info@epimeleia.world</p>`,
+
+'q-info': `
+  <div class="modal-label">CERTIFICACIÓN TRIMESTRAL Q1/4</div>
+  <h3>¿Qué registra cada Q?</h3>
+  <p>Cada 90 días el oráculo genera un reporte que incluye:</p>
+  <ul style="font-size:13px;color:#3a4a3a;padding-left:20px;line-height:2;margin-bottom:16px;">
+    <li>Consumo de agua (m³)</li>
+    <li>Consumo de energía (kWh)</li>
+    <li>Coordenadas satelitales del área operativa</li>
+    <li>Timestamp de inicio y fin del período</li>
+    <li>Firma criptográfica del oráculo autorizado</li>
+    <li>Hash de evidencia (keccak256 del reporte completo)</li>
+    <li>URI IPFS del reporte completo</li>
+  </ul>
+  <p style="font-size:13px;color:#3a4a3a;">Este registro queda grabado en Polygon y es accesible públicamente para siempre. Cualquier inversor, regulador o ciudadano puede verificarlo sin intermediarios.</p>
+  <div class="modal-disclaimer"><strong>Ventana de 90 días:</strong> Permite capturar ciclos completos de operación para mineras, navieras, forestales, data centers e industria de IA, alineando el reporte ambiental con el ciclo natural de resultados corporativos.</div>
+  <div class="modal-disclaimer"><strong>Deslinde de responsabilidad:</strong> Epimeleia registra lo que el oráculo firma. La veracidad de los datos es responsabilidad del oráculo autorizado. Epimeleia es una herramienta de notaría, no un auditor.</div>
+  <p class="modal-contact">Consultas: info@epimeleia.world</p>`,
+
+'opacidad': `
+  <div class="modal-label">HUECO DE OPACIDAD</div>
+  <h3>Cuando la señal se interrumpe</h3>
+  <p>Si durante un período de certificación la señal satelital o IoT se interrumpe — por cualquier causa — Epimeleia no certifica. En cambio, registra un <strong>Hueco de Opacidad</strong>.</p>
+  <p style="font-size:13px;color:#3a4a3a;">Contiene: fecha de inicio, fecha de fin, causa (SATELLITE_LOSS / IOT_INTERRUPTION / HUMAN_CAUSE) y timestamp inmutable en blockchain.</p>
+  <div style="background:#1a0f0f;border-left:3px solid #7a2a1a;padding:20px 24px;margin:20px 0;">
+    <p style="color:#c0a8a8;font-size:13px;margin:0;line-height:1.7;">Un Hueco de Opacidad <strong style="color:#e0b8b8;">no es una penalización</strong>. Es la verdad grabada para siempre. No puede borrarse, no puede modificarse. Una empresa con huecos visibles pero explicados es más confiable que una sin historial verificable.</p>
+  </div>
+  <div class="modal-disclaimer"><strong>Deslinde de responsabilidad:</strong> Epimeleia registra la interrupción sin juzgar su causa. El registro en blockchain es inalterable.</div>
+  <p class="modal-contact">Consultas: info@epimeleia.world</p>`,
+
+'l1': `
+  <div class="modal-label">NIVEL PV-L1 — OPERATIVO HOY</div>
+  <h3>Sentinel / Copernicus</h3>
+  <p>Validación trimestral con datos satelitales públicos de la Agencia Espacial Europea (ESA). Cobertura global sin costo de proveedor externo.</p>
+  <p style="font-size:13px;color:#3a4a3a;"><strong>¿Cómo funciona?</strong> El oráculo consulta automáticamente el API de Copernicus para el área geográfica de la empresa, procesa la imagen satelital, genera el hash de evidencia y lo graba en Polygon cada trimestre.</p>
+  <p style="font-size:13px;color:#3a4a3a;"><strong>¿Para quién es?</strong> Empresas que inician su camino de certificación ambiental y necesitan un registro verificable, independiente y profesional.</p>
+  <div class="modal-price">
+    <div><div class="modal-price-label">FEE TRIMESTRAL L1</div><div style="font-size:11px;color:#8a9e8a;font-family:'DM Mono',monospace;margin-top:2px;">CERTIFICACIÓN CADA 90 DÍAS</div></div>
+    <div class="modal-price-value">USD ${FEE_TRIMESTRAL_USD.toLocaleString()}</div>
+  </div>
+  ${DISCLAIMER}
+  <button class="btn-transak" onclick="abrirTransak()">💳 PAGAR CON TARJETA O TRANSFERENCIA BANCARIA</button>
+  <div style="text-align:center;font-size:10px;color:#8a9e8a;font-family:'DM Mono',monospace;margin-top:6px;">Powered by Transak · Tarjeta de crédito · Transferencia bancaria</div>
+  <div class="modal-actions" style="margin-top:16px;">
+    <button class="btn-primary" onclick="cerrarModal(); abrirModal('registro')">REGISTRAR EMPRESA →</button>
+    <button class="btn-secondary" onclick="cerrarModal()">CERRAR</button>
+  </div>`,
+
+'l2': `
+  <div class="modal-label">NIVEL PV-L2 — DISPONIBLE BAJO ACUERDO PREVIO</div>
+  <h3>Satelital Comercial + Validación Cruzada</h3>
+  <p>Datos de alta resolución (Planet Labs o equivalente) validados contra fuentes públicas. El oráculo firma <strong>solo cuando ambas fuentes son consistentes</strong>. Mayor precisión y credibilidad auditable.</p>
+  <p style="font-size:13px;color:#3a4a3a;"><strong>¿Por qué requiere acuerdo previo?</strong> El costo de datos satelitales comerciales varía según ubicación geográfica, frecuencia de cobertura y proveedor disponible. Este costo se determina en conjunto con Epimeleia antes de activar el nivel.</p>
+  <div style="background:#f4f0e0;border-left:3px solid #8a6a1a;padding:20px 24px;margin:20px 0;">
+    <p style="color:#5a4a1a;font-size:13px;margin:0;line-height:1.7;">El precio de L2 <strong>no está predefinido</strong> porque depende de las necesidades específicas de cada empresa y zona geográfica. Contactanos para evaluar tu caso.</p>
+  </div>
+  <div class="modal-disclaimer"><strong>Deslinde de responsabilidad:</strong> Epimeleia no es responsable de la disponibilidad ni precisión de los datos del proveedor satelital comercial. El oráculo firma la evidencia tal como la recibe de las fuentes autorizadas.</div>
+  <p class="modal-contact">Para iniciar el proceso: info@epimeleia.world</p>
+  <div class="modal-actions">
+    <button class="btn-primary" onclick="window.location='mailto:info@epimeleia.world?subject=Consulta PV-L2'">CONTACTAR →</button>
+    <button class="btn-secondary" onclick="cerrarModal()">CERRAR</button>
+  </div>`,
+
+'l3': `
+  <div class="modal-label">NIVEL PV-L3 — DISPONIBLE BAJO ACUERDO PREVIO</div>
+  <h3>Triple Fuente Independiente</h3>
+  <p>El nivel de máxima certeza. Tres fuentes independientes deben coincidir: satelital comercial premium + sensores IoT instalados en sitio + validación cruzada con datos públicos.</p>
+  <p style="font-size:13px;color:#3a4a3a;"><strong>¿Para quién es?</strong> Grandes mineras, navieras de larga distancia, forestales a escala industrial, data centers de alta densidad e industria de IA con alta exposición regulatoria.</p>
+  <p style="font-size:13px;color:#3a4a3a;"><strong>¿Por qué requiere acuerdo previo?</strong> Además del costo satelital, L3 requiere instalación y certificación de sensores IoT en sitio, lo que implica coordinación logística y técnica específica para cada empresa.</p>
+  <div style="background:#f4f0e0;border-left:3px solid #8a6a1a;padding:20px 24px;margin:20px 0;">
+    <p style="color:#5a4a1a;font-size:13px;margin:0;line-height:1.7;">El precio y la logística de L3 se definen <strong>en conjunto</strong> entre Epimeleia y la empresa. No hay precio estándar porque no hay operación estándar.</p>
+  </div>
+  <div class="modal-disclaimer"><strong>Deslinde de responsabilidad:</strong> Epimeleia no es responsable del funcionamiento de sensores IoT instalados por terceros ni de la disponibilidad de cobertura satelital en zonas remotas.</div>
+  <p class="modal-contact">Para iniciar el proceso: info@epimeleia.world</p>
+  <div class="modal-actions">
+    <button class="btn-primary" onclick="window.location='mailto:info@epimeleia.world?subject=Consulta PV-L3'">CONTACTAR →</button>
+    <button class="btn-secondary" onclick="cerrarModal()">CERRAR</button>
+  </div>`,
+
+'registro': `
+  <div class="modal-label">REGISTRAR EMPRESA</div>
+  <h3>Términos del Protocolo Epimeleia</h3>
+  <p>Antes de registrar tu empresa, leé y aceptá los siguientes términos:</p>
+  <div style="font-size:12px;color:#3a4a3a;line-height:1.9;max-height:220px;overflow-y:auto;border:1px solid var(--border);padding:16px;margin-bottom:20px;">
+    <strong>Naturaleza del registro:</strong> Epimeleia actúa como notario digital, no como auditor. El protocolo vincula evidencia sin emitir juicio sobre su contenido.<br><br>
+    <strong>Irrevocabilidad:</strong> Todo registro grabado en blockchain Polygon es permanente e inalterable. No existe mecanismo de borrado ni modificación retroactiva.<br><br>
+    <strong>Validez del hash:</strong> El hash de evidencia representa la huella criptográfica del reporte firmado por el oráculo. Cualquier alteración invalida la verificación.<br><br>
+    <strong>Modelo de transacción:</strong> El registro implica el pago de un fee único de registro y un fee mensual prepagado en POL. El saldo insuficiente genera cancelación automática con reembolso del remanente.<br><br>
+    <strong>Huecos de Opacidad:</strong> Toda interrupción de señal queda registrada permanentemente como Hueco de Opacidad, visible públicamente.<br><br>
+    <strong>Transparencia pública:</strong> El registro de tu empresa y su historial son visibles públicamente en blockchain. No existe registro privado.<br><br>
+    <strong>Deslinde de responsabilidad:</strong> Epimeleia es una herramienta tecnológica de notaría digital. No garantiza resultados regulatorios, reputacionales ni comerciales. La empresa es responsable de la veracidad de sus datos operativos.<br><br>
+    <strong>Jurisdicción:</strong> El protocolo opera en blockchain Polygon (Chain ID: 137). Las transacciones son irreversibles una vez confirmadas.
+  </div>
+  <div class="modal-price">
+    <div><div class="modal-price-label">FEE DE REGISTRO</div><div style="font-size:11px;color:#8a9e8a;font-family:'DM Mono',monospace;margin-top:2px;">PAGO ÚNICO · NO REEMBOLSABLE</div></div>
+    <div class="modal-price-value">USD ${FEE_REGISTRO_USD.toLocaleString()}</div>
+  </div>
+  <p style="font-size:12px;color:#5a6a5a;">Aceptamos tarjeta de crédito y transferencia bancaria a través de nuestro procesador seguro.</p>
+  <button class="btn-transak" onclick="abrirTransak()">💳 PAGAR CON TARJETA O TRANSFERENCIA BANCARIA</button>
+  <div style="text-align:center;font-size:10px;color:#8a9e8a;font-family:'DM Mono',monospace;margin-top:6px;">Powered by Transak · Tarjeta de crédito · Transferencia bancaria</div>
+  <div class="modal-actions" style="margin-top:20px;">
+    <button class="btn-secondary" onclick="cerrarModal()">CANCELAR</button>
+  </div>
+  <p class="modal-contact" style="margin-top:16px;">Consultas: info@epimeleia.world</p>`
+};
+
+function abrirModal(id) {
+  document.getElementById('modal-inner').innerHTML = modales[id] || '';
+  document.getElementById('modal').classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+
+function cerrarModal() {
+  document.getElementById('modal').classList.remove('active');
+  document.body.style.overflow = '';
+}
+
+document.getElementById('modal').addEventListener('click', function(e) {
+  if (e.target === this) cerrarModal();
+});
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') cerrarModal(); });
+
+function abrirTransak() {
+  const url = `https://global.transak.com/?apiKey=${TRANSAK_API_KEY}&walletAddress=${CONTRACT_ADDRESS}&disableWalletAddressForm=true&paymentMethod=credit_debit_card,sepa_bank_transfer,gbp_bank_transfer&hideMenu=true&defaultFiatCurrency=USD`;
+  window.open(url, '_blank', 'width=450,height=650');
+}
+</script>
+</body>
+</html>
