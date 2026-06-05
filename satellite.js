@@ -2,9 +2,7 @@
  * EPIMELEIA V3.4 — Oracle Node · satellite.js
  * ─────────────────────────────────────────────
  * Toda la lógica de consulta a Sentinel/Copernicus (PV-L1).
- * Evalúa nubosidad, descarga datos y empaqueta el reporte científico.
- * Ajuste 14: satélite, banda espectral, nubosidad.
- * Ajuste 20: URL de descarga de datos raw disponible para el usuario.
+ * Ajuste 21: OAuth client_credentials (nuevo método Copernicus 2026).
  */
 
 const axios    = require('axios');
@@ -14,22 +12,16 @@ const { log }    = require('./logger');
 
 // ─── PV-L1: Sentinel / Copernicus ──────────────────────────────
 
-/**
- * Consulta Sentinel/Copernicus para las coordenadas de un activo.
- * @param {Object} datosActivo - { activoId, latitud, longitud, radioKm, tipo }
- * @returns {Object|null} Reporte satelital completo o null si no hay datos.
- */
 async function consultarSentinel(datosActivo) {
   const { activoId, latitud, longitud, radioKm, tipo } = datosActivo;
 
   log('SAT-L1', `Consultando Sentinel/Copernicus`, { activoId, latitud, longitud, radioKm });
 
-  const delta = radioKm / 111; // 1 grado ≈ 111 km
+  const delta = radioKm / 111;
   const bbox  = `${longitud - delta},${latitud - delta},${longitud + delta},${latitud + delta}`;
   const indicadores = config.indicadoresPorTipo[tipo] || config.indicadoresPorTipo[7];
 
   try {
-    // Consulta OData API de Copernicus (nueva API recomendada por ESA)
     const url = 'https://catalogue.dataspace.copernicus.eu/odata/v1/Products';
     const params = {
       '$filter': `OData.CSC.Intersects(area=geography'SRID=4326;POLYGON((${_bboxToWkt(bbox)}))') and ContentDate/Start gt ${_hace90dias()} and Name eq 'SENTINEL-2'`,
@@ -53,7 +45,6 @@ async function consultarSentinel(datosActivo) {
       return null;
     }
 
-    // Seleccionar el producto con menor nubosidad
     const producto = _seleccionarMejorProducto(productos);
 
     if (!producto) {
@@ -97,7 +88,6 @@ async function consultarSentinel(datosActivo) {
   } catch (err) {
     log('ERROR', `Sentinel consulta fallida: ${err.message}`, { activoId });
 
-    // Detectar si es error de red (fuerza mayor)
     const esFuerzaMayor = ['ENOTFOUND','ETIMEDOUT','ECONNRESET','ECONNREFUSED']
       .some(code => err.code === code || err.message?.includes(code));
 
@@ -109,11 +99,6 @@ async function consultarSentinel(datosActivo) {
   }
 }
 
-/**
- * Evalúa el reporte satelital y determina si se puede certificar.
- * Ajuste 1: si nubosidad > umbral → no certifica, causa climática.
- * @returns {{ puedesCertificar: bool, causa: string }}
- */
 function evaluarNubosidad(reporte) {
   if (!reporte) {
     return { puedeCertificar: false, causa: 'SATELLITE_LOSS: Sin datos satelitales disponibles.' };
@@ -130,9 +115,6 @@ function evaluarNubosidad(reporte) {
   return { puedeCertificar: true, causa: null, esClimatica: false };
 }
 
-/**
- * Genera el hash de evidencia (keccak256 del reporte serializado).
- */
 function generarHashEvidencia(reporte) {
   const { ethers } = require('ethers');
   const str = JSON.stringify({
@@ -147,23 +129,10 @@ function generarHashEvidencia(reporte) {
   return ethers.keccak256(ethers.toUtf8Bytes(str));
 }
 
-/**
- * Genera el URI de metadata IPFS para una certificación.
- * En producción, aquí se subiría el reporte a IPFS/Arweave.
- */
 function generarMetadataURI(reporte, trimestre) {
-  // En producción: subir JSON a IPFS y retornar el CID real
-  // Por ahora: URI descriptivo con identificadores únicos
   return `ipfs://QmEpimeleia_${reporte.activoId}_Q${trimestre}_${reporte.nivel}_${reporte.uuid?.slice(0,8) || 'pending'}`;
 }
 
-// ─── PV-L2: Satelital comercial + validación cruzada ────────────
-
-/**
- * Consulta proveedor comercial (Planet Labs, Satellogic, etc.) bajo acuerdo previo.
- * @param {Object} datosActivo - Datos del activo
- * @param {string} endpoint    - Endpoint específico del proveedor acordado
- */
 async function consultarSatelitalComercial(datosActivo, endpoint) {
   const { activoId } = datosActivo;
   log('SAT-L2', `Consultando satelital comercial`, { activoId, endpoint });
@@ -200,14 +169,6 @@ async function consultarSatelitalComercial(datosActivo, endpoint) {
   }
 }
 
-// ─── PV-L3: Triple fuente independiente ─────────────────────────
-
-/**
- * Consulta tres fuentes independientes (satelital premium + IoT + validación pública).
- * Todas deben ser consistentes para certificar.
- * @param {Object} datosActivo
- * @param {Array}  fuentes - [{ nombre, endpoint }]
- */
 async function consultarTripleFuente(datosActivo, fuentes) {
   const { activoId } = datosActivo;
   log('SAT-L3', `Consultando triple fuente independiente`, { activoId, totalFuentes: fuentes.length });
@@ -224,19 +185,10 @@ async function consultarTripleFuente(datosActivo, fuentes) {
   const exitosas = resultados.filter(r => r.status === 'fulfilled').map(r => r.value);
   const fallidas = resultados.filter(r => r.status === 'rejected');
 
-  log('SAT-L3', `Resultado triple fuente`, {
-    activoId,
-    exitosas: exitosas.length,
-    fallidas: fallidas.length
-  });
+  log('SAT-L3', `Resultado triple fuente`, { activoId, exitosas: exitosas.length, fallidas: fallidas.length });
 
-  if (exitosas.length === 0) {
-    return null;
-  }
-
-  if (fallidas.length > 0) {
-    log('WARN', `${fallidas.length} fuentes sin respuesta en L3`, { activoId });
-  }
+  if (exitosas.length === 0) return null;
+  if (fallidas.length > 0) log('WARN', `${fallidas.length} fuentes sin respuesta en L3`, { activoId });
 
   const indicadores = config.indicadoresPorTipo[datosActivo.tipo] || config.indicadoresPorTipo[7];
 
@@ -261,18 +213,16 @@ async function consultarTripleFuente(datosActivo, fuentes) {
 // ─── Helpers privados ───────────────────────────────────────────
 
 async function _getTokenCopernicus() {
-  // En producción: obtener token OAuth de Copernicus Identity Service
-  // https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token
   if (config.modoTest) return 'test_token_mock';
 
   try {
+    // AJUSTE 21: client_credentials con OAuth client creado en Sentinel Hub
     const resp = await axios.post(
       'https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token',
       new URLSearchParams({
-        grant_type: 'password',
-        username:   config.sentinel.apiUser,
-        password:   config.sentinel.apiKey,
-        client_id:  'cdse-public',
+        grant_type:    'client_credentials',
+        client_id:     config.sentinel.apiUser,
+        client_secret: config.sentinel.apiKey,
       }),
       { headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, timeout: 10000 }
     );
@@ -294,25 +244,21 @@ function _hace90dias() {
 }
 
 function _seleccionarMejorProducto(productos) {
-  // Ordenar por menor nubosidad y seleccionar el mejor
   const conNubosidad = productos.map(p => ({
     ...p,
     _nubosidad: _extraerNubosidad(p)
   })).sort((a, b) => a._nubosidad - b._nubosidad);
 
-  // Retornar el de menor nubosidad que no supere el umbral
   return conNubosidad.find(p => p._nubosidad <= config.sentinel.umbralNubosidad) || null;
 }
 
 function _extraerNubosidad(producto) {
-  // Intentar extraer nubosidad de los atributos del producto Sentinel
   if (producto.Attributes?.value) {
     const attr = producto.Attributes.value.find(
       a => a.Name === 'cloudCover' || a.Name === 'cloudcoverpercentage'
     );
     if (attr) return Math.round(parseFloat(attr.Value));
   }
-  // Fallback: asumir 50% si no hay dato
   return 50;
 }
 
