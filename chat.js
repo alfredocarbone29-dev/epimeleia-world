@@ -6,7 +6,7 @@ async function memoriaGet(clave) {
     const url = `${process.env.KV_REST_API_URL}/get/${encodeURIComponent(clave)}`;
     const resp = await fetch(url, {
       headers: { Authorization: `Bearer ${process.env.KV_REST_API_TOKEN}` }
-    });
+    });vv
     const data = await resp.json();
     return data.result ? JSON.parse(data.result) : null;
   } catch { return null; }
