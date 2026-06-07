@@ -1,4 +1,4 @@
-const Anthropic = require("@anthropic-ai/sdk");
+const Anthropic = require("@anthropic-ai/sdk");v
 
 // ─── MEMORIA CON UPSTASH REDIS ────────────────────────────────────────────────
 async function memoriaGet(clave) {
