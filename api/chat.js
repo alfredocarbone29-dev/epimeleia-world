@@ -875,7 +875,7 @@ module.exports = async (req, res) => {
 
     for (let turno = 0; turno < 8; turno++) {
       const response = await client.messages.create({
-        model: "claude-sonnet-4-20250514",
+        model: "claude-sonnet-4-6",
         max_tokens: 4096,
         system: systemPrompt,
         tools: TOOLS,
@@ -906,7 +906,7 @@ module.exports = async (req, res) => {
     // Fallback con tools para mantener comportamiento consistente
     if (!respuestaFinal) {
       respuestaFinal = await client.messages.create({
-        model: "claude-sonnet-4-20250514",
+        model: "claude-sonnet-4-6",
         max_tokens: 4096,
         system: systemPrompt,
         tools: TOOLS,
