@@ -74,10 +74,10 @@ const config = {
 
   // ── Gas settings ──────────────────────────────────
   gas: {
-    certificar:     300000,
-    hueco:          200000,
-    continuidad:    80000,
-    transferencia:  150000,
+    certificar:     600000,
+    hueco:          500000,
+    continuidad:    300000,
+    transferencia:  400000,
   },
 
   // ── Indicadores satelitales por tipo de actividad ─
