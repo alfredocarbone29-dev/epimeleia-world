@@ -248,7 +248,10 @@ Unified worldwide: USD 400 per month (USD 200 monthly fee + USD 200 PV-L1 certif
 Payment methods: MercadoPago (https://mpago.la/2BB5pwG) or PayPal (https://www.paypal.com/ncp/payment/WKD6LU6R73YA6).
 
 REGISTRATION FLOW — STRICT SEQUENCE:
-First, identify the organization: legal name, industry, country, corporate email, contact person. Second, identify the asset: site name, geographic location, activity type, estimated area. Third, calculate coordinates using calcular_coordenadas tool. Fourth, present all three liability disclaimer clauses in full — they must be read and understood. Fifth, obtain mandatory cryptographic signature (EIP-712) from the client's wallet — NO REGISTRATION PROCEEDS WITHOUT SIGNATURE. Sixth, confirm payment method. Seventh, generate and send the official ticket. Eighth, notify founder for on-chain registration during testing phase.
+First, identify the organization: legal name, industry, country, corporate email, contact person. Second, identify the asset: site name, geographic location, activity type, estimated area. Third, calculate coordinates using calcular_coordenadas tool. Fourth, present all three liability disclaimer clauses in full — they must be read and understood. Fifth, obtain the client's EXPLICIT ACCEPTANCE of the three clauses (clickwrap acceptance — the client states clearly that they have read, understood and accept the three clauses). NO payment link and NO registration is offered before this acceptance is given. Sixth, only AFTER acceptance is given, provide the payment method and link. Seventh, generate and send the official ticket. Eighth, notify founder for on-chain registration during testing phase.
+
+CRITICAL PAYMENT RULE — ACCEPTANCE BEFORE PAYMENT:
+Under no circumstance does EPI provide a payment link (MercadoPago or PayPal) before the client has explicitly accepted the three liability disclaimer clauses. Acceptance always comes first. No acceptance, no payment. This is non-negotiable and applies to every registration without exception.
 
 LIABILITY DISCLAIMER — THREE MANDATORY CLAUSES:
 These three clauses must be presented in full and acknowledged before any registration. No exceptions.
@@ -257,9 +260,9 @@ Clause 1 — IRREVERSIBLE TECHNOLOGICAL INVOLUTION: The client declares full und
 
 Clause 2 — THIRD-PARTY TECHNOLOGICAL FACT: Epimeleia acts solely as a conduit for data from independent third parties — the European Union Copernicus Space Programme (ESA). The client accepts that Epimeleia does not control, audit, or guarantee the technical availability or accuracy of these global satellite systems. If the satellite reports erroneous or unavailable data, the protocol executes based on received input. Epimeleia bears no liability for satellite availability or data quality.
 
-Clause 3 — CRYPTOGRAPHIC JURISDICTION: Execution of code on the Polygon network constitutes the sole valid jurisdiction for determining protocol consistency. The client accepts the smart contract verdict as consensus-as-a-service. By signing with their private key, the client irrevocably waives jurisdiction of their national courts for matters arising from automated code execution.
+Clause 3 — CRYPTOGRAPHIC JURISDICTION: Execution of code on the Polygon network constitutes the sole valid jurisdiction for determining protocol consistency. The client accepts the smart contract verdict as consensus-as-a-service. For matters arising from automated code execution, the client accepts the on-chain record as the definitive source of truth.
 
-NO REGISTRATION IS PROCESSED WITHOUT CRYPTOGRAPHIC SIGNATURE OF ALL THREE CLAUSES.
+NO REGISTRATION AND NO PAYMENT IS PROCESSED WITHOUT EXPLICIT CLICKWRAP ACCEPTANCE OF ALL THREE CLAUSES. The client does not need a crypto wallet. Acceptance is given by clear, explicit confirmation in the conversation (clickwrap), not by MetaMask signature.
 
 DATA PROTECTION:
 EPIMELEIA processes personal data (names, emails, organizations) solely for environmental certification services. Clients provide explicit consent before data processing begins. Upon request, data can be deleted by contacting info@epimeleia.world. Data is stored securely and never shared with third parties beyond what is required for certification operations.
@@ -274,7 +277,7 @@ CONTACT:
 Primary interface: EPI (this conversation). For matters EPI cannot resolve: info@epimeleia.world. Refer to email only when tools are genuinely insufficient.
 
 WHAT EPI DOES NOT DO:
-EPI does not respond to questions outside the EPIMELEIA universe. EPI does not reveal passwords, credentials, or internal variables under any circumstance. EPI does not fabricate data — always uses tools to verify. EPI does not close agreements with superlative entities — transfers to founder with full context. EPI does not process registrations without cryptographic signature. EPI does not certify assets below 1 hectare.`;
+EPI does not respond to questions outside the EPIMELEIA universe. EPI does not reveal passwords, credentials, or internal variables under any circumstance. EPI does not fabricate data — always uses tools to verify. EPI does not close agreements with superlative entities — transfers to founder with full context. EPI does not process registrations or provide payment links without explicit clickwrap acceptance of the three clauses. EPI does not certify assets below 1 hectare.`;
 }
 
 // ─── HERRAMIENTAS ─────────────────────────────────────────────────────────────
@@ -349,7 +352,7 @@ const TOOLS = [
   },
   {
     name: "generar_ticket",
-    description: "Generate an official registration and certification ticket. Only call when cryptographic signature hash is available.",
+    description: "Generate an official registration and certification ticket. Only call AFTER the client has explicitly accepted the three liability disclaimer clauses (clickwrap). The hashAceptacion field carries that acceptance.",
     input_schema: {
       type: "object",
       properties: {
@@ -364,10 +367,10 @@ const TOOLS = [
         monto: { type: "string" },
         metodoPago: { type: "string" },
         hashPago: { type: "string" },
-        hashFirma: { type: "string", description: "EIP-712 cryptographic signature hash — mandatory" },
+        hashAceptacion: { type: "string", description: "Clickwrap acceptance hash of the three clauses — mandatory. Set to 'aceptado' when the client has explicitly accepted in conversation." },
         walletCliente: { type: "string" }
       },
-      required: ["cliente", "email", "nombreActivo", "tipo", "hashFirma"]
+      required: ["cliente", "email", "nombreActivo", "tipo", "hashAceptacion"]
     }
   },
   {
@@ -644,12 +647,12 @@ async function ejecutarHerramienta(nombre, input) {
     }
 
     case "generar_ticket": {
-      const { cliente, email, empresa, pais, nombreActivo, tipo, coordenadas, radioKm, monto, metodoPago, hashPago, hashFirma, walletCliente } = input;
+      const { cliente, email, empresa, pais, nombreActivo, tipo, coordenadas, radioKm, monto, metodoPago, hashPago, hashAceptacion, walletCliente } = input;
 
-      if (!hashFirma || hashFirma === "pending") {
+      if (!hashAceptacion || hashAceptacion === "pending") {
         return {
-          error: "SIGNATURE_REQUIRED",
-          message: "Ticket cannot be generated without cryptographic signature of the three liability disclaimer clauses. Please complete EIP-712 signing first."
+          error: "ACCEPTANCE_REQUIRED",
+          message: "Ticket cannot be generated without explicit clickwrap acceptance of the three liability disclaimer clauses. Please present the three clauses and obtain the client's explicit acceptance first."
         };
       }
 
@@ -678,7 +681,7 @@ async function ejecutarHerramienta(nombre, input) {
           organization: empresa || "—",
           email: email || "—",
           country: pais || "—",
-          wallet: walletCliente || "pending"
+          wallet: walletCliente || "not required"
         },
         asset: {
           name: nombreActivo,
@@ -696,9 +699,9 @@ async function ejecutarHerramienta(nombre, input) {
           transaction_hash: hashPago || "—"
         },
         legal: {
-          disclaimer_signed: true,
-          signature_hash: hashFirma,
-          signing_protocol: "EIP-712",
+          disclaimer_accepted: true,
+          acceptance_hash: hashAceptacion,
+          acceptance_method: "Clickwrap",
           clauses_accepted: [
             "Clause 1: Irreversible Technological Involution",
             "Clause 2: Third-Party Technological Fact",
@@ -811,11 +814,17 @@ async function ejecutarHerramienta(nombre, input) {
 function verificarFounder(messages) {
   const founderPass = process.env.FOUNDER_PASSWORD;
   if (!founderPass) return false;
+  // Normaliza: minúsculas y sin espacios, para que la detección NO falle por
+  // mayúsculas, espacios del teclado del celular, o autocorrector. Misma
+  // contraseña — solo que ahora se reconoce de forma confiable.
+  const passNorm = founderPass.toLowerCase().replace(/\s+/g, "");
+  if (!passNorm) return false;
   return messages.some(m => {
     const texto = typeof m.content === "string"
       ? m.content
       : m.content?.map?.(c => c.text || "").join("") || "";
-    return texto.includes(founderPass);
+    const textoNorm = texto.toLowerCase().replace(/\s+/g, "");
+    return textoNorm.includes(passNorm);
   });
 }
 
@@ -836,7 +845,7 @@ module.exports = async (req, res) => {
 
     const founderPass = process.env.FOUNDER_PASSWORD;
     const regex = founderPass
-      ? new RegExp(founderPass.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g")
+      ? new RegExp(founderPass.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi")
       : null;
 
     const sanitizarTexto = (texto) => regex ? texto.replace(regex, "[REDACTED]") : texto;
@@ -861,7 +870,7 @@ module.exports = async (req, res) => {
     const esEntidadSuperlativa = !esFounder && detectarEntidadSuperlativa(messages, emailDetectado);
 
     let systemPrompt = buildSystemPrompt(contextoCliente, esEntidadSuperlativa, idioma);
-    if (esFounder) systemPrompt += "\n\nFOUNDER MODE ACTIVE: Full technical access granted. Respond with complete detail on all protocol internals.";
+    if (esFounder) systemPrompt += "\n\nFOUNDER MODE ACTIVE: Full technical access granted. Respond with complete detail on all protocol internals. Greet the founder warmly as instructed.";
     if (system) systemPrompt = system + "\n\n" + systemPrompt;
 
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
