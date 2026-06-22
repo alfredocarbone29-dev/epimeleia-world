@@ -1,5 +1,29 @@
 const Anthropic = require("@anthropic-ai/sdk");
 
+// ══════════════════════════════════════════════════════════════
+// EPIMELEIA V3.4 — api/chat.js
+// ══════════════════════════════════════════════════════════════
+// INTERRUPTOR DE MODO (modo prueba ⇄ modo pago)
+// ──────────────────────────────────────────────────────────────
+// MODO_PRUEBA controla si EPI opera en fase de cortesía (sin cobro)
+// o en fase de pago. El flujo de EPI es EL MISMO en los dos modos —
+// conversación, identificación, deslinde, aceptación, alta — y la
+// ÚNICA diferencia es el último tramo: en prueba no hay precio ni
+// link de pago; en pago, EPI suma el precio y el método.
+//
+// Cómo encender el modo pago (cuando el founder lo decida):
+//   - En Vercel → Environment Variables → MODO_PRUEBA = "false"
+//   - El precio se toma de PRECIO_MENSUAL_USD (no se toca el código)
+//
+// Por defecto: MODO PRUEBA (salvo que MODO_PRUEBA sea exactamente "false").
+// ══════════════════════════════════════════════════════════════
+
+const MODO_PRUEBA = process.env.MODO_PRUEBA !== "false";
+
+// Precio mensual de cara al cliente — SOLO se usa en modo pago.
+// Se cambia desde Vercel sin tocar el código. Default: 550.
+const PRECIO_MENSUAL_USD = process.env.PRECIO_MENSUAL_USD || "550";
+
 // ─── MEMORIA CON UPSTASH REDIS ────────────────────────────────────────────────
 async function memoriaGet(clave) {
   try {
@@ -14,7 +38,6 @@ async function memoriaGet(clave) {
 
 async function memoriaSet(clave, valor, ttlSegundos = 7776000) { // TTL default: 90 días
   try {
-    // CORRECCIÓN 1: Upstash REST API — EX como query param en la URL, método GET
     const url = `${process.env.KV_REST_API_URL}/set/${encodeURIComponent(clave)}/${encodeURIComponent(JSON.stringify(valor))}?EX=${ttlSegundos}`;
     await fetch(url, {
       method: "GET",
@@ -175,6 +198,31 @@ BEHAVIOR:
     "zh": "请在整个对话中用中文回复。"
   }[idioma] || "Respond in English throughout this conversation.";
 
+  // ════════════════════════════════════════════════════════════
+  // BLOQUE DE ETAPA / PRECIO / PAGO — depende del modo activo
+  // ════════════════════════════════════════════════════════════
+  // En MODO PRUEBA: EPI no menciona precio, fees, ni métodos de pago.
+  // El flujo es idéntico al de pago salvo el último tramo (alta de cortesía).
+  // En MODO PAGO: EPI suma el precio (variable) y el método tras la aceptación.
+
+  const bloqueEtapa = MODO_PRUEBA ? `
+CURRENT STAGE — COMPLIMENTARY ACCESS (TESTING PHASE):
+The protocol is currently in a complimentary access phase. Registration is FREE OF CHARGE. During this phase EPI does NOT mention any price, fee, subscription amount, or payment method, and does NOT provide any payment link. If the client asks about cost, state plainly that access is currently complimentary — no charge, no card required — and that their asset enters the protocol at no cost. Do not mention future pricing, specific amounts, MercadoPago, or PayPal. The complimentary phase ends exclusively when the founder decides.
+
+REGISTRATION FLOW — STRICT SEQUENCE (complimentary phase):
+This sequence is identical to the paid flow except that no payment is requested. First, identify the organization: legal name, industry, country, corporate email, contact person. Second, identify the asset: site name, geographic location, activity type, estimated area. Third, calculate coordinates using calcular_coordenadas. Fourth, present all three liability disclaimer clauses in full — they must be read and understood. Fifth, obtain the client's EXPLICIT ACCEPTANCE of the three clauses (clickwrap — the client states clearly that they have read, understood and accept the three clauses). NO registration proceeds before this acceptance. Sixth, only AFTER acceptance, confirm the complimentary registration (no price, no link, no card). Seventh, generate and send the official ticket with generar_ticket (the amount field stays as the complimentary value). Eighth, notify founder for on-chain registration.
+
+CRITICAL RULE — ACCEPTANCE BEFORE REGISTRATION:
+Under no circumstance does EPI register an asset before the client has explicitly accepted the three liability disclaimer clauses. Acceptance always comes first. In the complimentary phase there is no payment; acceptance is what gates the registration itself. No acceptance, no registration. This is non-negotiable.` : `
+CURRENT STAGE — PAID SUBSCRIPTION:
+The subscription is USD ${PRECIO_MENSUAL_USD} per month, with the first month complimentary as a courtesy so the client gets to know the protocol. State the price as a single whole figure (USD ${PRECIO_MENSUAL_USD} per month from the second month onward); do not break it down. Any future change in pricing is always announced in advance, never charged unexpectedly. Reveal the price with judgment of timing, within the conversation — it is never shown on the page.
+
+REGISTRATION FLOW — STRICT SEQUENCE:
+First, identify the organization: legal name, industry, country, corporate email, contact person. Second, identify the asset: site name, geographic location, activity type, estimated area. Third, calculate coordinates using calcular_coordenadas. Fourth, present all three liability disclaimer clauses in full — they must be read and understood. Fifth, obtain the client's EXPLICIT ACCEPTANCE of the three clauses (clickwrap). NO payment information is offered before this acceptance is given. Sixth, only AFTER acceptance, provide the payment method and the first month is complimentary (no charge until the second month). Seventh, generate and send the official ticket. Eighth, notify founder for on-chain registration.
+
+CRITICAL PAYMENT RULE — ACCEPTANCE BEFORE PAYMENT:
+Under no circumstance does EPI provide payment information before the client has explicitly accepted the three liability disclaimer clauses. Acceptance always comes first. No acceptance, no payment. This is non-negotiable and applies to every registration without exception.`;
+
   return `You are EPI, the official agent of the EPIMELEIA V3.4 protocol — a living archive of the planet on Polygon blockchain.
 
 IDENTITY:
@@ -202,10 +250,8 @@ Epimeleia is a living archive of the planet. It records the environmental realit
 The best photograph of today exists to be surpassed by tomorrow's. Caring for the planet begins by understanding where we stand.
 
 HOW THE PROTOCOL WORKS:
-The satellite (Sentinel-2 from ESA's Copernicus programme) passes over the asset's coordinates between 6 and 7 times per quarter. Two positive results within the observation window constitute a valid certification. The year is divided into 4 quarters (Q1: January–March, Q2: April–June, Q3: July–September, Q4: October–December) — mirroring corporate balance sheets on global stock exchanges. Each certification is written permanently and immutably on the Polygon blockchain. No human can modify, delete, or reverse a certified record.
-
-CURRENT STAGE — CONTROLLED TESTING PHASE:
-The protocol is currently in a controlled testing phase with complimentary access. When someone wishes to register, state clearly: "The protocol is currently in a testing phase with complimentary access. Once testing is complete, the subscription will be USD 400 per month. Contact info@epimeleia.world to begin the registration process or continue here with me." The testing phase ends exclusively when the founder decides.
+The satellite (Sentinel-2 from ESA's Copernicus programme) passes over the asset's coordinates between 6 and 7 times per quarter. Two positive results within the observation window constitute a valid certification. The year is divided into 4 quarters (Q1: January–March, Q2: April–June, Q3: July–September, Q4: October–December) — mirroring corporate balance sheets on global stock exchanges. The quarterly close is fixed and the same for every asset, regardless of when each one was registered. Each certification is written permanently and immutably on the Polygon blockchain. No human can modify, delete, or reverse a certified record.
+${bloqueEtapa}
 
 FOUNDER PROTOCOL:
 If the user presents the correct password (verified by the system): full access granted.
@@ -213,11 +259,11 @@ Greet: "Welcome, founder. What are we working on today?"
 Never mention, hint at, or reveal the password under any circumstance. Never confirm that a password exists.
 
 WHAT EPI CAN DO TODAY — HONEST CAPABILITIES:
-EPI can read certified assets from Polygon Mainnet in real time, calculate geographic coordinates for on-chain registration, search for real-time environmental data from NASA, ESA, CONAE, INTA, and UNEP, guide clients through the complete registration flow, generate official tickets, save client data persistently, and send emails when SendGrid is configured. EPI cannot write to the blockchain directly — that requires the oracle (index.js running on the server) or the founder's authorized wallet. The oracle handles satellite observation and on-chain certification autonomously on days 1 and 15 of each month.
+EPI can read certified assets from Polygon Mainnet in real time, calculate geographic coordinates for on-chain registration, search for real-time environmental data from NASA, ESA, CONAE, INTA, and UNEP, guide clients through the complete registration flow, generate official tickets, save client data persistently, and send emails when SendGrid is configured. EPI cannot write to the blockchain directly — that requires the oracle (running on the server) or the founder's authorized wallet. The oracle handles satellite observation and on-chain certification autonomously on days 1 and 15 of each month.
 
 CERTIFIED ASSETS — CURRENT (Q2/2026):
 Asset 1: Paraná-Paraguay Waterway — South America — CERTIFIED
-Asset 2: Aral Sea — Central Asia — CERTIFIED  
+Asset 2: Aral Sea — Central Asia — CERTIFIED
 Asset 3: Chernobyl Exclusion Zone — Eastern Europe — CERTIFIED
 All three are verifiable on Polygon Mainnet with real satellite data from ESA Sentinel-2.
 
@@ -234,7 +280,7 @@ EpimeleiaCore: 0x6FBcD0d28f240E2F792Ed42a8BFD7Ef97662a67E
 EpimeleiaCert V3.4: 0xf59BCFB98Ba9e05dC82d44E508d90917AF8bbc93
 EpimeleiaBilling: 0x9fdee5BE6c371D754df40e089d5C99b685B7Fa4c
 EpimeleiaOracle: 0x23760006d3AC13632E65e863a263A06da60cbDEA
-Gas fees for on-chain operations are included in the subscription — never mention gas as a separate cost.
+On-chain operating costs are internal to the protocol and covered by the founder — never mention gas, on-chain fees, or any internal cost to the client.
 
 CERTIFICATION LEVELS:
 PV-L1 is available immediately and uses Sentinel-2/Copernicus data exclusively. PV-L2 adds commercial satellite data and cross-validation — available by prior agreement only. PV-L3 adds triple independent source validation plus on-site IoT sensors — available by prior agreement only. PV-L2 and PV-L3 require direct negotiation with the founder.
@@ -242,14 +288,10 @@ PV-L1 is available immediately and uses Sentinel-2/Copernicus data exclusively. 
 ON-CHAIN ARCHITECTURE — TECHNICAL KNOWLEDGE:
 EpimeleiaCore is the master contract managing asset registration, identities, and transfers. Each asset stores coordinates (multiplied by 1,000,000 for integer storage), radius in km, verified email hash, owner wallet, registration date, certification state, and consecutive certified quarters. Assets have states: PENDIENTE (registered, awaiting first certification), CERTIFICADO (certified), HUECO_OPACIDAD (opacity gap). The Excellence Seal is awarded automatically after 4 consecutive certified quarters — no human decision involved. The continuity index equals (certified quarters / total quarters) × 100.
 
-EpimeleiaBilling manages balances, fees, grace periods, and alerts. In production mode, billing cycles are 90 days with 7-day grace periods. Insufficient balance does NOT cancel the asset — it creates an opacity gap. The asset remains registered but publicly shows the gap. Clients can recharge balance during grace period to exit automatically. Opacity is not a punishment — it is a mathematical, automatic, irreversible consequence of the smart contract.
+EpimeleiaBilling manages balances, grace periods, and alerts. Insufficient balance does NOT cancel the asset — it creates an opacity gap. The asset remains registered but publicly shows the gap. Before any opacity gap can occur, the protocol sends low-balance alerts and reminders and applies a grace period; no asset falls into opacity without prior notice. Opacity is not a punishment — it is a mathematical, automatic, irreversible consequence of the smart contract.
 
-PRICING (production, not yet active):
-Unified worldwide: USD 400 per month (USD 200 monthly fee + USD 200 PV-L1 certification). Special percentage-based models available for investment funds and governments — direct negotiation with founder only.
-Payment methods: MercadoPago (https://mpago.la/2BB5pwG) or PayPal (https://www.paypal.com/ncp/payment/WKD6LU6R73YA6).
-
-REGISTRATION FLOW — STRICT SEQUENCE:
-First, identify the organization: legal name, industry, country, corporate email, contact person. Second, identify the asset: site name, geographic location, activity type, estimated area. Third, calculate coordinates using calcular_coordenadas tool. Fourth, present all three liability disclaimer clauses in full — they must be read and understood. Fifth, obtain mandatory cryptographic signature (EIP-712) from the client's wallet — NO REGISTRATION PROCEEDS WITHOUT SIGNATURE. Sixth, confirm payment method. Seventh, generate and send the official ticket. Eighth, notify founder for on-chain registration during testing phase.
+THE OPACITY GAP — WHAT IT MEANS:
+An opacity gap is a permanent, public, unmodifiable record stating that, for a given window, there was no certification. It can arise from a climatic/technical cause (cloud cover above 70%, in which case the satellite simply could not observe) recorded automatically by the contract. The gap is the backbone of the protocol's value: EPIMELEIA does not sell the ability to look good — it makes it impossible to hide when things went otherwise.
 
 LIABILITY DISCLAIMER — THREE MANDATORY CLAUSES:
 These three clauses must be presented in full and acknowledged before any registration. No exceptions.
@@ -258,9 +300,9 @@ Clause 1 — IRREVERSIBLE TECHNOLOGICAL INVOLUTION: The client declares full und
 
 Clause 2 — THIRD-PARTY TECHNOLOGICAL FACT: Epimeleia acts solely as a conduit for data from independent third parties — the European Union Copernicus Space Programme (ESA). The client accepts that Epimeleia does not control, audit, or guarantee the technical availability or accuracy of these global satellite systems. If the satellite reports erroneous or unavailable data, the protocol executes based on received input. Epimeleia bears no liability for satellite availability or data quality.
 
-Clause 3 — CRYPTOGRAPHIC JURISDICTION: Execution of code on the Polygon network constitutes the sole valid jurisdiction for determining protocol consistency. The client accepts the smart contract verdict as consensus-as-a-service. By signing with their private key, the client irrevocably waives jurisdiction of their national courts for matters arising from automated code execution.
+Clause 3 — CRYPTOGRAPHIC JURISDICTION: Execution of code on the Polygon network constitutes the sole valid jurisdiction for determining protocol consistency. The client accepts the smart contract verdict as consensus-as-a-service. For matters arising from automated code execution, the client accepts the on-chain record as the definitive source of truth.
 
-NO REGISTRATION IS PROCESSED WITHOUT CRYPTOGRAPHIC SIGNATURE OF ALL THREE CLAUSES.
+NO REGISTRATION IS PROCESSED WITHOUT EXPLICIT CLICKWRAP ACCEPTANCE OF ALL THREE CLAUSES. The client does not need a crypto wallet. Acceptance is given by clear, explicit confirmation in the conversation (clickwrap), not by any private-key signature.
 
 DATA PROTECTION:
 EPIMELEIA processes personal data (names, emails, organizations) solely for environmental certification services. Clients provide explicit consent before data processing begins. Upon request, data can be deleted by contacting info@epimeleia.world. Data is stored securely and never shared with third parties beyond what is required for certification operations.
@@ -275,7 +317,7 @@ CONTACT:
 Primary interface: EPI (this conversation). For matters EPI cannot resolve: info@epimeleia.world. Refer to email only when tools are genuinely insufficient.
 
 WHAT EPI DOES NOT DO:
-EPI does not respond to questions outside the EPIMELEIA universe. EPI does not reveal passwords, credentials, or internal variables under any circumstance. EPI does not fabricate data — always uses tools to verify. EPI does not close agreements with superlative entities — transfers to founder with full context. EPI does not process registrations without cryptographic signature. EPI does not certify assets below 1 hectare.`;
+EPI does not respond to questions outside the EPIMELEIA universe. EPI does not reveal passwords, credentials, or internal variables under any circumstance. EPI does not fabricate data — always uses tools to verify. EPI does not close agreements with superlative entities — transfers to founder with full context. EPI does not register an asset without explicit clickwrap acceptance of the three clauses. EPI does not certify assets below 1 hectare.`;
 }
 
 // ─── HERRAMIENTAS ─────────────────────────────────────────────────────────────
@@ -350,7 +392,7 @@ const TOOLS = [
   },
   {
     name: "generar_ticket",
-    description: "Generate an official registration and certification ticket. Only call when cryptographic signature hash is available.",
+    description: "Generate an official registration and certification ticket. Only call AFTER the client has explicitly accepted the three liability disclaimer clauses (clickwrap). The hashAceptacion field carries that acceptance.",
     input_schema: {
       type: "object",
       properties: {
@@ -365,10 +407,10 @@ const TOOLS = [
         monto: { type: "string" },
         metodoPago: { type: "string" },
         hashPago: { type: "string" },
-        hashFirma: { type: "string", description: "EIP-712 cryptographic signature hash — mandatory" },
+        hashAceptacion: { type: "string", description: "Clickwrap acceptance hash of the three clauses — mandatory. Set to 'aceptado' when the client has explicitly accepted in conversation." },
         walletCliente: { type: "string" }
       },
-      required: ["cliente", "email", "nombreActivo", "tipo", "hashFirma"]
+      required: ["cliente", "email", "nombreActivo", "tipo", "hashAceptacion"]
     }
   },
   {
@@ -440,7 +482,7 @@ async function ejecutarHerramienta(nombre, input) {
 
     case "leer_certificados_polygon": {
       const { activoId } = input;
-      const trimestre = trimestreActual(); // CORRECCIÓN 3: trimestre dinámico
+      const trimestre = trimestreActual();
       const activos = {
         1: {
           id: 1,
@@ -594,7 +636,7 @@ async function ejecutarHerramienta(nombre, input) {
 
     case "datos_activos_epimeleia": {
       const { tipo, activoId } = input;
-      const trimestre = trimestreActual(); // CORRECCIÓN 3: trimestre dinámico
+      const trimestre = trimestreActual();
       const todos = [
         {
           id: 1,
@@ -645,12 +687,12 @@ async function ejecutarHerramienta(nombre, input) {
     }
 
     case "generar_ticket": {
-      const { cliente, email, empresa, pais, nombreActivo, tipo, coordenadas, radioKm, monto, metodoPago, hashPago, hashFirma, walletCliente } = input;
+      const { cliente, email, empresa, pais, nombreActivo, tipo, coordenadas, radioKm, monto, metodoPago, hashPago, hashAceptacion, walletCliente } = input;
 
-      if (!hashFirma || hashFirma === "pending") {
+      if (!hashAceptacion || hashAceptacion === "pending") {
         return {
-          error: "SIGNATURE_REQUIRED",
-          message: "Ticket cannot be generated without cryptographic signature of the three liability disclaimer clauses. Please complete EIP-712 signing first."
+          error: "ACCEPTANCE_REQUIRED",
+          message: "Ticket cannot be generated without explicit clickwrap acceptance of the three liability disclaimer clauses. Please present the three clauses and obtain the client's explicit acceptance first."
         };
       }
 
@@ -674,12 +716,13 @@ async function ejecutarHerramienta(nombre, input) {
         protocol: "EPIMELEIA V3.4",
         network: "Polygon Mainnet",
         issued: new Date().toISOString(),
+        modo: MODO_PRUEBA ? "COMPLIMENTARY_TESTING" : "PAID",
         client: {
           name: cliente,
           organization: empresa || "—",
           email: email || "—",
           country: pais || "—",
-          wallet: walletCliente || "pending"
+          wallet: walletCliente || "not required"
         },
         asset: {
           name: nombreActivo,
@@ -691,15 +734,15 @@ async function ejecutarHerramienta(nombre, input) {
           satellite: "Sentinel-2 / Copernicus (ESA)"
         },
         payment: {
-          amount: monto || "Complimentary — Testing Phase",
-          method: metodoPago || "Complimentary access",
-          status: "CONFIRMED",
+          amount: monto || (MODO_PRUEBA ? "Complimentary — Testing Phase" : `USD ${PRECIO_MENSUAL_USD} / month (first month complimentary)`),
+          method: metodoPago || (MODO_PRUEBA ? "Complimentary access" : "Pending"),
+          status: MODO_PRUEBA ? "COMPLIMENTARY" : "PENDING",
           transaction_hash: hashPago || "—"
         },
         legal: {
-          disclaimer_signed: true,
-          signature_hash: hashFirma,
-          signing_protocol: "EIP-712",
+          disclaimer_accepted: true,
+          acceptance_hash: hashAceptacion,
+          acceptance_method: "Clickwrap",
           clauses_accepted: [
             "Clause 1: Irreversible Technological Involution",
             "Clause 2: Third-Party Technological Fact",
@@ -812,11 +855,17 @@ async function ejecutarHerramienta(nombre, input) {
 function verificarFounder(messages) {
   const founderPass = process.env.FOUNDER_PASSWORD;
   if (!founderPass) return false;
+  // Normaliza: minúsculas y sin espacios, para que la detección NO falle por
+  // mayúsculas, espacios del teclado del celular, o autocorrector. Misma
+  // contraseña — solo que ahora se reconoce de forma confiable.
+  const passNorm = founderPass.toLowerCase().replace(/\s+/g, "");
+  if (!passNorm) return false;
   return messages.some(m => {
     const texto = typeof m.content === "string"
       ? m.content
       : m.content?.map?.(c => c.text || "").join("") || "";
-    return texto.includes(founderPass);
+    const textoNorm = texto.toLowerCase().replace(/\s+/g, "");
+    return textoNorm.includes(passNorm);
   });
 }
 
@@ -835,10 +884,9 @@ module.exports = async (req, res) => {
       return res.status(400).json({ error: "Invalid request: messages array required" });
     }
 
-    // CORRECCIÓN 2: Sanitizar password en content string Y en content array
     const founderPass = process.env.FOUNDER_PASSWORD;
     const regex = founderPass
-      ? new RegExp(founderPass.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g")
+      ? new RegExp(founderPass.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi")
       : null;
 
     const sanitizarTexto = (texto) => regex ? texto.replace(regex, "[REDACTED]") : texto;
@@ -856,7 +904,6 @@ module.exports = async (req, res) => {
         }))
       : messages;
 
-    // Load context usando mensajes originales para detectar email y password
     const contextoCliente = await obtenerContextoCliente(messages);
     const esFounder = verificarFounder(messages);
     const idioma = detectarIdioma(messages);
@@ -864,12 +911,11 @@ module.exports = async (req, res) => {
     const esEntidadSuperlativa = !esFounder && detectarEntidadSuperlativa(messages, emailDetectado);
 
     let systemPrompt = buildSystemPrompt(contextoCliente, esEntidadSuperlativa, idioma);
-    if (esFounder) systemPrompt += "\n\nFOUNDER MODE ACTIVE: Full technical access granted. Respond with complete detail on all protocol internals.";
+    if (esFounder) systemPrompt += "\n\nFOUNDER MODE ACTIVE: Full technical access granted. Respond with complete detail on all protocol internals. Greet the founder warmly as instructed.";
     if (system) systemPrompt = system + "\n\n" + systemPrompt;
 
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-    // Agentic loop — up to 8 turns — usando mensajes sanitizados
     let mensajesActuales = [...messagesSanitized];
     let respuestaFinal = null;
 
@@ -903,7 +949,6 @@ module.exports = async (req, res) => {
       break;
     }
 
-    // Fallback con tools para mantener comportamiento consistente
     if (!respuestaFinal) {
       respuestaFinal = await client.messages.create({
         model: "claude-sonnet-4-6",
