@@ -56,8 +56,23 @@ async function iniciar() {
     process.exit(1);
   }
 
-  // ── Iniciar escucha de eventos ───────────────────────────────
-  scheduler.iniciarEscuchaEventos();
+  // ── Escucha de eventos en vivo: DESACTIVADA ──────────────────
+  // La escucha en vivo (blockchain.escucharReportesTrimestrales / escucharAlertasSaldo)
+  // mantenía filtros abiertos contra el RPC con eth_getFilterChanges. Con el correr
+  // del tiempo el rango de bloques consultado superaba el límite del proveedor y
+  // devolvía "invalid block range params" en bucle (miles de requests inválidas por
+  // hora en Alchemy), sin aportar valor: los emails reales a clientes (recordatorios
+  // de vencimiento) los maneja api/scheduler.js en Vercel leyendo Supabase, no esta
+  // escucha (que apuntaba a EMAIL_ACTIVO_X / ADMIN_EMAIL, normalmente sin configurar).
+  //
+  // Por eso se desactiva. El oráculo conserva intactas sus funciones centrales:
+  // la ventana satelital (certificación / huecos) y el healthcheck horario.
+  //
+  // Si en el futuro se quiere reactivar la escucha en vivo, primero hay que acotar
+  // el rango de bloques de los filtros en blockchain.js para no superar el límite
+  // del RPC. Mientras tanto, queda desactivada.
+  //
+  // scheduler.iniciarEscuchaEventos();
 
   // ── Iniciar schedulers cron ──────────────────────────────────
   scheduler.iniciarSchedulers();
@@ -76,7 +91,7 @@ async function iniciar() {
   });
 
   log('SYSTEM', `══ ORACLE EPIMELEIA V3.4 ACTIVO ══`);
-  log('SYSTEM', `Escuchando eventos · Ventanas satelitales programadas`);
+  log('SYSTEM', `Ventanas satelitales programadas · Healthcheck horario`);
   log('SYSTEM', `Primer certificado: Hidrovía Paraná-Paraguay`);
   console.log('');
 }
