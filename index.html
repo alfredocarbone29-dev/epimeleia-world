@@ -26,201 +26,113 @@
   --white:   #F4F0E8;
   --glacier: #7AB8C8;
 }
-
 *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
 html { scroll-behavior:smooth; }
-
-body {
-  background: var(--corp-bg);
-  color: var(--text);
-  font-family: 'Crimson Pro', Georgia, serif;
-  font-size: 17px;
-  line-height: 1.7;
-}
-
-body::after {
-  content:'';
-  position:fixed;
-  inset:0;
-  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.032'/%3E%3C/svg%3E");
-  pointer-events:none;
-  z-index:9999;
-}
-
-.app {
-  display: grid;
-  grid-template-rows: 56px 1fr;
-  height: 100vh;
-  overflow: hidden;
-}
+body { background: var(--corp-bg); color: var(--text); font-family: 'Crimson Pro', Georgia, serif; font-size: 17px; line-height: 1.7; }
+body::after { content:''; position:fixed; inset:0; background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.032'/%3E%3C/svg%3E"); pointer-events:none; z-index:9999; }
+.app { display: grid; grid-template-rows: 56px 1fr; height: 100vh; overflow: hidden; }
 #parteDos { scroll-margin-top:0; }
-
-header {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  align-items: center;
-  padding: 0 36px;
-  border-bottom: 1px solid var(--line);
-  background: rgba(4,9,4,0.96);
-  backdrop-filter: blur(24px);
-  z-index: 100;
-}
-
+header { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 0 36px; border-bottom: 1px solid var(--line); background: rgba(4,9,4,0.96); backdrop-filter: blur(24px); z-index: 100; }
 .logo { font-family:'Playfair Display',serif; font-size:16px; font-weight:700; letter-spacing:7px; color:var(--white); display:block; }
 .logo-sub { font-family:'JetBrains Mono',monospace; font-size:7px; color:var(--dim); letter-spacing:2px; margin-top:1px; }
-
 .header-center { display:flex; align-items:center; gap:8px; }
-
 .pulse-dot { width:5px; height:5px; border-radius:50%; background:var(--emerald); flex-shrink:0; animation:pulse 2.5s ease-in-out infinite; }
 @keyframes pulse { 0%,100%{box-shadow:0 0 0 0 rgba(95,173,95,0.5);} 50%{box-shadow:0 0 0 5px rgba(95,173,95,0);} }
-
 .header-status { font-family:'JetBrains Mono',monospace; font-size:8px; color:var(--muted); letter-spacing:2px; }
-
 .header-right { display:flex; align-items:center; justify-content:flex-end; gap:20px; }
-
 .counter-pair { display:flex; gap:16px; align-items:center; }
 .counter-item { text-align:center; }
 .counter-num { font-family:'JetBrains Mono',monospace; font-size:14px; font-weight:500; color:var(--white); line-height:1; }
 .counter-lbl { font-family:'JetBrains Mono',monospace; font-size:6px; color:var(--dim); letter-spacing:1px; margin-top:2px; }
 .divider-v { width:1px; height:24px; background:var(--line2); }
-
 .founder-badge { display:none; font-family:'JetBrains Mono',monospace; font-size:8px; letter-spacing:2px; color:var(--gold); background:rgba(200,168,75,0.08); border:1px solid rgba(200,168,75,0.25); padding:3px 10px; animation:badgeIn 0.4s ease; }
 @keyframes badgeIn { from{opacity:0;transform:scale(0.9);} to{opacity:1;transform:scale(1);} }
 .founder-badge.visible { display:block; }
-
 .main { display:grid; grid-template-columns:1fr minmax(300px, 22vw); overflow:hidden; }
-
-.soul {
-  overflow-y: auto;
-  overflow-x: hidden;
-  background:
-    radial-gradient(ellipse 80% 40% at 10% 10%, rgba(58,138,122,0.06) 0%, transparent 55%),
-    radial-gradient(ellipse 60% 50% at 90% 90%, rgba(74,138,74,0.04) 0%, transparent 50%),
-    var(--deep);
-  display: flex;
-  flex-direction: column;
-}
-
+.soul { overflow-y: auto; overflow-x: hidden; background: radial-gradient(ellipse 80% 40% at 10% 10%, rgba(58,138,122,0.06) 0%, transparent 55%), radial-gradient(ellipse 60% 50% at 90% 90%, rgba(74,138,74,0.04) 0%, transparent 50%), var(--deep); display: flex; flex-direction: column; }
 .soul::-webkit-scrollbar { width:2px; }
 .soul::-webkit-scrollbar-thumb { background:var(--dim); }
 
-.soul-hero { padding:48px clamp(36px,5vw,72px) 36px; border-bottom:1px solid var(--line); }
-.soul-eyebrow { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:4px; color:var(--teal); margin-bottom:22px; display:flex; align-items:center; gap:10px; }
-.soul-eyebrow::before { content:''; width:16px; height:1px; background:var(--teal); }
-.soul-title { font-family:'Playfair Display',serif; font-size:clamp(30px,3vw,46px); font-weight:400; line-height:1.22; color:var(--white); margin-bottom:24px; max-width:26ch; }
-.soul-title em { font-style:italic; color:var(--emerald); }
-.soul-body { font-size:clamp(17px,1.25vw,21px); color:rgba(232,228,218,0.7); line-height:1.8; max-width:74ch; }
-.soul-body p { margin-bottom:18px; }
-.soul-body p:last-child { margin-bottom:0; }
-.soul-body strong { color:rgba(232,228,218,0.9); font-weight:400; }
-
-.origin-block { padding:36px clamp(36px,5vw,72px); border-bottom:1px solid var(--line); background:var(--surface); }
-.origin-eyebrow { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:4px; color:var(--gold); margin-bottom:18px; }
-.origin-body { font-size:clamp(16px,1.2vw,19px); color:rgba(232,228,218,0.68); line-height:1.85; max-width:74ch; }
-.origin-body p { margin-bottom:14px; }
-.origin-body p:last-child { margin-bottom:0; }
-.origin-body strong { color:var(--gold2); font-weight:400; }
-
-.closing-question { padding:32px clamp(36px,5vw,72px); border-bottom:1px solid var(--line); background:linear-gradient(135deg,var(--card),rgba(200,168,75,0.03)); }
-.closing-text { font-family:'Playfair Display',serif; font-size:clamp(19px,2vw,26px); font-style:italic; color:var(--white); line-height:1.5; text-align:center; }
-
+/* RECURSOS — ahora clickeables como ventanas */
 .recursos { padding:32px clamp(36px,5vw,72px); border-bottom:1px solid var(--line); }
-.recursos-label { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:3px; color:var(--muted); margin-bottom:18px; }
+.recursos-label { font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:3px; color:var(--teal); margin-bottom:18px; }
 .recursos-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:8px; }
-.recurso-item { background:var(--card); border:1px solid var(--line); padding:14px 18px; display:flex; align-items:center; gap:12px; transition:border-color 0.2s; }
-.recurso-item:hover { border-color:var(--line2); }
-.recurso-icon { font-size:18px; flex-shrink:0; }
+.recurso-item { background:var(--card); border:1px solid var(--line); padding:16px 18px; display:flex; align-items:center; gap:12px; transition:border-color 0.2s, background 0.2s, transform 0.15s; cursor:pointer; text-align:left; width:100%; font-family:inherit; }
+.recurso-item:hover { border-color:var(--teal); background:var(--panel); transform:translateY(-1px); }
+.recurso-icon { font-size:20px; flex-shrink:0; }
 .recurso-text { font-family:'JetBrains Mono',monospace; font-size:9px; color:var(--muted); letter-spacing:1px; line-height:1.4; }
 .recurso-text strong { display:block; color:var(--text); font-size:11px; margin-bottom:2px; }
+.recurso-item.tu-compania { border-color:rgba(200,168,75,0.35); background:linear-gradient(135deg,var(--card),rgba(200,168,75,0.04)); }
+.recurso-item.tu-compania:hover { border-color:var(--gold); }
+.recurso-item.tu-compania .recurso-text strong { color:var(--gold2); }
+.recurso-item.tu-compania .recurso-icon { color:var(--gold); }
 
+/* ACTIVOS — ahora botones clickeables */
 .activos-block { padding:24px 36px; border-bottom:1px solid var(--line); }
-.block-label { font-family:'JetBrains Mono',monospace; font-size:7px; letter-spacing:3px; color:var(--muted); margin-bottom:14px; }
-
-.activo-card { background:var(--card); border:1px solid var(--line2); border-left:2px solid var(--teal); padding:18px 20px; margin-bottom:8px; }
+.block-label { font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:3px; color:var(--teal); margin-bottom:14px; }
+.activo-card { background:var(--card); border:1px solid var(--line2); border-left:2px solid var(--teal); padding:18px 20px; margin-bottom:8px; cursor:pointer; transition:border-color 0.2s, background 0.2s, transform 0.15s; width:100%; text-align:left; font-family:inherit; display:flex; align-items:center; justify-content:space-between; gap:12px; }
 .activo-card:last-child { margin-bottom:0; }
-.activo-card.gold-border { border-left-color:var(--gold); }
+.activo-card:hover { border-left-color:var(--gold); background:var(--panel); transform:translateY(-1px); }
+.activo-card-main { display:flex; flex-direction:column; gap:4px; }
+.activo-name { font-family:'Playfair Display',serif; font-size:17px; color:var(--white); }
+.activo-meta { font-family:'JetBrains Mono',monospace; font-size:8px; color:var(--muted); letter-spacing:1px; }
+.activo-arrow { font-family:'JetBrains Mono',monospace; font-size:14px; color:var(--teal); flex-shrink:0; }
 
-.activo-name { font-family:'Playfair Display',serif; font-size:15px; color:var(--white); margin-bottom:10px; }
-
-.data-rows { display:flex; flex-direction:column; gap:1px; }
-.data-row { display:flex; justify-content:space-between; align-items:baseline; padding:5px 0; border-bottom:1px solid var(--line); gap:8px; }
+/* dentro del modal de activo */
+.data-rows { display:flex; flex-direction:column; gap:1px; margin-top:8px; }
+.data-row { display:flex; justify-content:space-between; align-items:baseline; padding:7px 0; border-bottom:1px solid var(--line); gap:8px; }
 .data-row:last-child { border-bottom:none; }
-.data-key { font-family:'JetBrains Mono',monospace; font-size:7px; color:var(--muted); letter-spacing:1px; flex-shrink:0; }
-.data-val { font-family:'JetBrains Mono',monospace; font-size:9px; color:var(--text); text-align:right; word-break:break-all; }
+.data-key { font-family:'JetBrains Mono',monospace; font-size:8px; color:var(--muted); letter-spacing:1px; flex-shrink:0; }
+.data-val { font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text); text-align:right; word-break:break-all; }
 .data-val.teal  { color:var(--teal); }
 .data-val.green { color:var(--emerald); }
-.data-val.gold  { color:var(--gold); }
-
-.blockscout-link { display:inline-flex; align-items:center; gap:5px; font-family:'JetBrains Mono',monospace; font-size:7px; letter-spacing:2px; color:var(--teal); text-decoration:none; margin-top:12px; transition:color 0.2s; }
+.blockscout-link { display:inline-flex; align-items:center; gap:5px; font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:2px; color:var(--teal); text-decoration:none; margin-top:16px; transition:color 0.2s; }
 .blockscout-link:hover { color:var(--glacier); }
 
-.niveles-block { padding:24px 36px; border-bottom:1px solid var(--line); }
-.nivel-row { display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-bottom:1px solid var(--line); }
+/* NIVELES — título con protagonismo */
+.niveles-block { padding:28px 36px; border-bottom:1px solid var(--line); }
+.section-title-big { font-family:'Playfair Display',serif; font-size:22px; font-weight:400; color:var(--white); margin-bottom:4px; letter-spacing:1px; }
+.section-title-sub { font-family:'JetBrains Mono',monospace; font-size:8px; letter-spacing:3px; color:var(--teal); margin-bottom:18px; }
+.nivel-row { display:flex; justify-content:space-between; align-items:center; padding:11px 0; border-bottom:1px solid var(--line); }
 .nivel-row:last-child { border-bottom:none; }
-.nivel-code { font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--white); letter-spacing:1px; width:48px; flex-shrink:0; }
-.nivel-desc { font-family:'JetBrains Mono',monospace; font-size:8px; color:var(--muted); flex:1; padding:0 12px; }
-.tag { font-family:'JetBrains Mono',monospace; font-size:7px; letter-spacing:1px; padding:3px 8px; border:1px solid; flex-shrink:0; }
+.nivel-code { font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--white); letter-spacing:1px; width:54px; flex-shrink:0; }
+.nivel-desc { font-family:'JetBrains Mono',monospace; font-size:9px; color:var(--muted); flex:1; padding:0 12px; }
+.tag { font-family:'JetBrains Mono',monospace; font-size:8px; letter-spacing:1px; padding:4px 9px; border:1px solid; flex-shrink:0; }
 .tag-green { color:var(--emerald); border-color:rgba(95,173,95,0.35); }
 .tag-amber { color:#C87A2A; border-color:rgba(200,122,42,0.35); }
 
-.sello-block { padding:20px 36px; border-bottom:1px solid var(--line); }
-.sello-inner { background:linear-gradient(135deg,var(--card),rgba(200,168,75,0.04)); border:1px solid rgba(200,168,75,0.18); padding:16px 20px; display:flex; align-items:center; gap:14px; }
-.sello-icon { font-size:24px; filter:drop-shadow(0 0 6px rgba(200,168,75,0.5)); }
-.sello-title { font-family:'Playfair Display',serif; font-size:14px; font-style:italic; color:var(--gold); margin-bottom:3px; }
-.sello-sub { font-family:'JetBrains Mono',monospace; font-size:7px; color:var(--muted); letter-spacing:1px; line-height:1.5; }
+/* SELLO — con protagonismo */
+.sello-block { padding:24px 36px; border-bottom:1px solid var(--line); }
+.sello-inner { background:linear-gradient(135deg,var(--card),rgba(200,168,75,0.06)); border:1px solid rgba(200,168,75,0.22); padding:22px 24px; display:flex; align-items:center; gap:18px; }
+.sello-icon { font-size:34px; filter:drop-shadow(0 0 8px rgba(200,168,75,0.5)); flex-shrink:0; }
+.sello-title { font-family:'Playfair Display',serif; font-size:22px; font-style:italic; color:var(--gold2); margin-bottom:5px; }
+.sello-sub { font-family:'JetBrains Mono',monospace; font-size:8px; color:var(--muted); letter-spacing:1px; line-height:1.6; }
 
-/* FAQ ACCORDION */
-.faq-block { padding:24px 36px; border-bottom:1px solid var(--line); }
-.faq-item { border-bottom:1px solid var(--line); }
-.faq-item:last-child { border-bottom:none; }
-.faq-question {
-  width:100%; text-align:left; background:none; border:none; cursor:pointer;
-  padding:14px 0; display:flex; justify-content:space-between; align-items:center; gap:12px;
-  font-family:'Crimson Pro',serif; font-size:14.5px; color:rgba(232,228,218,0.78);
-  transition:color 0.2s;
-}
-.faq-question:hover { color:var(--white); }
-.faq-icon { font-family:'JetBrains Mono',monospace; font-size:13px; color:var(--teal); flex-shrink:0; transition:transform 0.25s ease; }
-.faq-item.open .faq-icon { transform:rotate(45deg); }
-.faq-answer {
-  max-height:0; overflow:hidden; transition:max-height 0.3s ease, padding 0.3s ease;
-  font-size:13.5px; color:rgba(232,228,218,0.5); line-height:1.75;
-}
-.faq-item.open .faq-answer { max-height:300px; padding-bottom:16px; }
-
-.activos-block .body-text { font-size:14px; color:rgba(232,228,218,0.6); line-height:1.85; padding:4px 0; }
-.activos-block .body-text p { margin-bottom:12px; }
-.activos-block .body-text p:last-child { margin-bottom:0; }
-.activos-block .body-text strong { color:rgba(232,228,218,0.85); font-weight:400; }
-
+/* PIE — ahora botones visibles */
 .soul-footer { padding:24px 36px; margin-top:auto; }
-.contact-line { font-family:'JetBrains Mono',monospace; font-size:9px; color:var(--muted); letter-spacing:0.5px; line-height:1.8; margin-bottom:14px; }
-.contact-line a { color:var(--teal); text-decoration:none; transition:color 0.2s; }
-.contact-line a:hover { color:var(--glacier); }
-.soul-footer-text { font-family:'JetBrains Mono',monospace; font-size:7px; color:var(--dim); letter-spacing:1px; line-height:2; }
+.footer-contact-line { font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--muted); letter-spacing:0.5px; line-height:1.8; margin-bottom:16px; }
+.footer-btns { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px; }
+.footer-btn { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:2px; color:var(--text); background:var(--card); border:1px solid var(--line2); padding:11px 16px; cursor:pointer; transition:border-color 0.2s, background 0.2s; }
+.footer-btn:hover { border-color:var(--teal); background:var(--panel); }
+.soul-footer-text { font-family:'JetBrains Mono',monospace; font-size:8px; color:var(--dim); letter-spacing:1px; line-height:2; }
 .soul-footer-text a { color:var(--muted); text-decoration:none; transition:color 0.2s; }
 .soul-footer-text a:hover { color:var(--white); }
 
 /* AGENT PANEL */
 .agent-panel { display:flex; flex-direction:column; background:var(--void); overflow:hidden; position:relative; border-left:1px solid var(--line); }
 .agent-panel::before { content:''; position:absolute; inset:0; background: radial-gradient(ellipse 60% 40% at 50% 0%, rgba(58,138,122,0.04) 0%, transparent 50%), radial-gradient(ellipse 40% 60% at 100% 100%, rgba(74,138,74,0.03) 0%, transparent 50%); pointer-events:none; }
-
 .agent-topbar { flex-shrink:0; padding:16px 32px; border-bottom:1px solid var(--line); display:flex; align-items:center; justify-content:space-between; background:rgba(4,9,4,0.6); backdrop-filter:blur(10px); position:relative; z-index:2; }
 .agent-title { font-family:'JetBrains Mono',monospace; font-size:8px; letter-spacing:3px; color:var(--muted); }
 .agent-powered { font-family:'JetBrains Mono',monospace; font-size:7px; color:var(--dim); letter-spacing:1px; }
-
 .chat-messages { flex:1; overflow-y:auto; padding:22px 18px; display:flex; flex-direction:column; gap:20px; position:relative; z-index:1; }
 .chat-messages::-webkit-scrollbar { width:2px; }
 .chat-messages::-webkit-scrollbar-thumb { background:var(--dim); border-radius:1px; }
-
 .msg { display:flex; gap:10px; animation:msgIn 0.35s ease; }
 @keyframes msgIn { from{opacity:0;transform:translateY(10px);} to{opacity:1;transform:translateY(0);} }
 .msg-user { flex-direction:row-reverse; }
-
 .msg-avatar { width:22px; height:22px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-family:'JetBrains Mono',monospace; font-size:6px; letter-spacing:0.5px; border:1px solid; margin-top:2px; }
 .msg-avatar-agent { background:var(--surface); border-color:var(--line2); color:var(--teal); }
 .msg-avatar-user  { background:var(--panel);   border-color:var(--line2); color:var(--muted); }
-
 .msg-content { max-width:calc(100% - 36px); display:flex; flex-direction:column; gap:4px; }
 .msg-bubble { padding:13px 16px; font-size:15px; line-height:1.65; border:1px solid; }
 .msg-bubble-agent { background:var(--surface); border-color:var(--line);  color:var(--text); }
@@ -232,14 +144,12 @@ header {
 .msg-bubble a  { color:var(--teal); text-decoration:none; }
 .msg-bubble ul { padding-left:20px; margin:8px 0; }
 .msg-bubble li { margin-bottom:4px; color:rgba(232,228,218,0.7); font-size:15px; }
-
 .typing-wrap { display:flex; gap:14px; animation:msgIn 0.3s ease; }
 .typing-bubble { background:var(--surface); border:1px solid var(--line); padding:14px 20px; display:flex; gap:5px; align-items:center; }
 .typing-dot { width:4px; height:4px; border-radius:50%; background:var(--muted); animation:blink 1.3s ease-in-out infinite; }
 .typing-dot:nth-child(2) { animation-delay:0.2s; }
 .typing-dot:nth-child(3) { animation-delay:0.4s; }
 @keyframes blink { 0%,60%,100%{opacity:0.25;transform:scale(1);} 30%{opacity:1;transform:scale(1.3);} }
-
 .chat-input-area { flex-shrink:0; padding:16px 18px 18px; border-top:1px solid var(--line); background:rgba(4,9,4,0.8); backdrop-filter:blur(10px); position:relative; z-index:2; }
 .chat-input-row { display:flex; gap:8px; align-items:flex-end; }
 .chat-input { flex:1; background:var(--surface); border:1px solid var(--line2); color:var(--text); font-family:'Crimson Pro',serif; font-size:15px; padding:12px 14px; outline:none; resize:none; min-height:46px; max-height:120px; line-height:1.5; transition:border-color 0.25s; }
@@ -249,8 +159,6 @@ header {
 .send-btn:hover   { background:var(--gold2); }
 .send-btn:disabled { background:var(--dim); cursor:not-allowed; color:var(--surface); }
 .input-hint { font-family:'JetBrains Mono',monospace; font-size:7px; color:var(--dim); letter-spacing:1px; text-align:center; margin-top:8px; }
-
-/* MODALS — Terms / Privacy / Clickwrap */
 .modal-terms-overlay { display:none; position:fixed; inset:0; background:rgba(4,9,4,0.94); z-index:9500; overflow-y:auto; padding:40px 20px; backdrop-filter:blur(10px); }
 .modal-terms-overlay.active { display:flex; align-items:flex-start; justify-content:center; }
 .modal-terms-box { background:var(--panel); border:1px solid var(--line2); max-width:640px; width:100%; padding:48px; position:relative; margin-top:20px; }
@@ -262,8 +170,8 @@ header {
 .modal-terms-body h4 { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:2px; color:var(--muted); margin:20px 0 8px; }
 .modal-terms-body p { margin-bottom:12px; }
 .modal-terms-body strong { color:rgba(232,228,218,0.75); font-weight:400; }
-
-/* CLICKWRAP MODAL */
+.modal-terms-body .ejemplos { background:var(--card); border:1px solid var(--line); border-left:2px solid var(--teal); padding:14px 18px; margin-top:14px; }
+.modal-terms-body .ejemplos strong { color:var(--teal); }
 .clickwrap-box { max-width:560px; }
 .clickwrap-clausulas { display:flex; flex-direction:column; gap:14px; margin:20px 0 28px; }
 .clausula-card { background:var(--card); border:1px solid var(--line2); border-left:2px solid var(--teal); padding:16px 18px; }
@@ -277,8 +185,7 @@ header {
 .clickwrap-btn.enabled { background:var(--white); cursor:pointer; color:var(--void); }
 .clickwrap-btn.enabled:hover { background:var(--gold2); }
 .clickwrap-hash-note { font-family:'JetBrains Mono',monospace; font-size:7px; color:var(--dim); letter-spacing:0.5px; text-align:center; margin-top:14px; line-height:1.6; }
-
-/* ═══════════════ PARTE UNO — PRESENTACIÓN CORPORATIVA ═══════════════ */
+/* ═══════════════ PARTE UNO — PRESENTACIÓN (COLORES ORIGINALES) ═══════════════ */
 :root {
   --corp-bg:     #1A1C1E;
   --corp-bg2:    #212427;
@@ -290,34 +197,22 @@ header {
   --corp-bone:   #F2F0EA;
   --corp-steel:  #9FB0C0;
 }
-
 .intro { background:var(--corp-bg); color:var(--corp-text); position:relative; z-index:1; }
-
-/* Sección de apertura — pantalla completa, ancho total */
-.intro-hero {
-  min-height:100vh; display:flex; flex-direction:column;
-  padding:0; position:relative;
-  background:linear-gradient(180deg, var(--corp-bg) 0%, var(--corp-bg2) 100%);
-}
-/* Barra de links ARRIBA */
-.hero-topbar {
-  display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:14px;
-  padding:22px clamp(24px,5vw,72px); border-bottom:1px solid var(--corp-line);
-}
-.hero-topbar-brand { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:4px; color:var(--corp-steel); }
-.hero-links { display:flex; flex-wrap:wrap; gap:4px 26px; }
-.hero-link { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:2px; color:var(--corp-muted); cursor:pointer; background:none; border:none; padding:6px 0; transition:color 0.2s; border-bottom:1px solid transparent; }
-.hero-link:hover { color:var(--corp-bone); border-bottom-color:var(--corp-steel); }
-
-/* Cuerpo del hero — centrado vertical, ancho total */
+.intro-hero { min-height:100vh; display:flex; flex-direction:column; padding:0; position:relative; background:linear-gradient(180deg, var(--corp-bg) 0%, var(--corp-bg2) 100%); }
+.hero-topbar { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:14px; padding:22px clamp(24px,5vw,72px); border-bottom:1px solid var(--corp-line); }
+.hero-topbar-brand { font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:4px; color:var(--corp-steel); }
+.hero-links { display:flex; flex-wrap:wrap; gap:10px; }
+/* Menú de arriba ahora en formato botón, legible */
+.hero-link { font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:2px; color:var(--corp-text); cursor:pointer; background:var(--corp-panel); border:1px solid var(--corp-line); padding:10px 16px; transition:all 0.2s; }
+.hero-link:hover { color:var(--corp-bone); border-color:var(--corp-steel); transform:translateY(-1px); }
+.hero-link-gratis { color:var(--corp-bone); border-color:rgba(159,176,192,0.4); background:rgba(159,176,192,0.08); }
+.hero-link-gratis:hover { border-color:var(--corp-steel); background:rgba(159,176,192,0.15); }
 .hero-body { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:40px clamp(24px,4vw,56px); width:100%; }
 .intro-hero-mark { font-family:'Playfair Display',serif; font-size:clamp(52px,12vw,150px); font-weight:400; letter-spacing:clamp(8px,2.5vw,28px); color:var(--corp-bone); margin-bottom:16px; line-height:1; }
 .intro-hero-rule { width:80px; height:1px; background:var(--corp-steel); margin-bottom:20px; opacity:0.6; }
 .intro-hero-sub { font-family:'JetBrains Mono',monospace; font-size:clamp(9px,1.1vw,12px); letter-spacing:5px; color:var(--corp-dim); margin-bottom:36px; }
 .intro-scroll-hint { padding:20px; text-align:center; font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:3px; color:var(--corp-dim); animation:scrollPulse 2.4s ease-in-out infinite; }
 @keyframes scrollPulse { 0%,100%{opacity:0.35;} 50%{opacity:0.85;} }
-
-/* Catch-frases del hero — golpe inicial, ancho total */
 .hero-catch { display:flex; flex-direction:column; align-items:center; gap:24px; width:100%; max-width:1500px; margin:0 auto; }
 .hero-catch-lead { font-family:'Playfair Display',serif; font-size:clamp(32px,5.4vw,68px); font-weight:400; color:var(--corp-bone); line-height:1.18; font-style:italic; max-width:none; }
 .hero-catch-lead em { color:var(--corp-steel); font-style:italic; }
@@ -326,8 +221,8 @@ header {
 .hero-catch-row strong { color:var(--corp-bone); font-weight:600; }
 .hero-catch-num { display:block; font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:2px; color:var(--corp-steel); margin-bottom:14px; opacity:0.85; }
 .hero-cta { display:flex; flex-wrap:wrap; gap:16px; justify-content:center; margin-top:48px; }
-
-/* Franja de activos certificados — ancho total */
+.hero-capacidad { max-width:1000px; margin:0 auto; padding:0 clamp(24px,4vw,56px) 8px; text-align:center; }
+.hero-capacidad-text { font-family:'Playfair Display',serif; font-style:italic; font-size:clamp(16px,1.9vw,22px); color:var(--corp-bone); line-height:1.5; }
 .hero-assets { border-top:1px solid var(--corp-line); padding:28px clamp(24px,4vw,56px); }
 .hero-assets-label { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:3px; color:var(--corp-steel); text-align:center; margin-bottom:20px; }
 .hero-assets-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:1px; max-width:1500px; margin:0 auto; background:var(--corp-line); }
@@ -338,84 +233,23 @@ header {
 .hero-btn-primary { background:var(--corp-bone); color:var(--corp-bg); border-color:var(--corp-bone); }
 .hero-btn-primary:hover { background:#fff; transform:translateY(-1px); }
 .hero-btn-ghost:hover { border-color:var(--corp-steel); color:var(--corp-bone); }
-
-@media(max-width:760px) {
-  .hero-catch-rows { grid-template-columns:1fr; gap:0; }
-  .hero-catch-row { border-top:2px solid rgba(159,176,192,0.35); padding:20px 4px; }
-  .hero-catch-lead { max-width:none; }
-  .hero-topbar { justify-content:center; }
-  .hero-assets-grid { grid-template-columns:1fr; }
-}
-
-/* Bloques de contenido de la parte uno */
-.intro-section { max-width:780px; margin:0 auto; padding:80px 32px; border-top:1px solid var(--corp-line); }
-.intro-eyebrow { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:5px; color:var(--corp-steel); margin-bottom:28px; display:flex; align-items:center; gap:12px; }
-.intro-eyebrow::before { content:''; width:24px; height:1px; background:var(--corp-steel); }
-.intro-h2 { font-family:'Playfair Display',serif; font-size:clamp(24px,3.6vw,36px); font-weight:400; color:var(--corp-bone); line-height:1.3; margin-bottom:32px; }
-.intro-h2 em { font-style:italic; color:var(--corp-steel); }
-.intro-text { font-size:clamp(16px,1.9vw,18px); color:rgba(228,226,221,0.72); line-height:1.95; }
-.intro-text p { margin-bottom:20px; }
-.intro-text p:last-child { margin-bottom:0; }
-.intro-text strong { color:var(--corp-bone); font-weight:600; }
-
-/* Marcos / siglas */
-.marcos-grid { display:flex; flex-direction:column; gap:1px; margin-top:8px; }
-.marco-row { background:var(--corp-panel); border:1px solid var(--corp-line); padding:20px 24px; transition:border-color 0.2s; }
-.marco-row:hover { border-color:rgba(159,176,192,0.3); }
-.marco-sigla { font-family:'JetBrains Mono',monospace; font-size:13px; letter-spacing:2px; color:var(--corp-bone); margin-bottom:4px; }
-.marco-desc { font-size:15px; color:var(--corp-muted); line-height:1.5; }
-
-/* FAQ en parte uno */
-.intro-faq-item { border-bottom:1px solid var(--corp-line); }
-.intro-faq-item:first-child { border-top:1px solid var(--corp-line); }
-.intro-faq-q { width:100%; text-align:left; background:none; border:none; cursor:pointer; padding:20px 0; display:flex; justify-content:space-between; align-items:center; gap:16px; font-family:'Crimson Pro',serif; font-size:clamp(16px,2vw,18px); color:rgba(228,226,221,0.85); transition:color 0.2s; }
-.intro-faq-q:hover { color:var(--corp-bone); }
-.intro-faq-icon { font-family:'JetBrains Mono',monospace; font-size:16px; color:var(--corp-steel); flex-shrink:0; transition:transform 0.25s ease; }
-.intro-faq-item.open .intro-faq-icon { transform:rotate(45deg); }
-.intro-faq-a { max-height:0; overflow:hidden; transition:max-height 0.35s ease; font-size:16px; color:rgba(228,226,221,0.6); line-height:1.85; }
-.intro-faq-item.open .intro-faq-a { max-height:420px; padding-bottom:22px; }
-
-/* Cierre de la parte uno */
-.intro-cierre { background:linear-gradient(180deg, var(--corp-bg2) 0%, var(--corp-bg) 100%); padding:96px 32px; text-align:center; border-top:1px solid var(--corp-line); }
-.intro-cierre-text { font-family:'Playfair Display',serif; font-size:clamp(22px,3.4vw,34px); font-weight:400; color:var(--corp-bone); line-height:1.45; max-width:680px; margin:0 auto 14px; }
-.intro-cierre-text em { font-style:italic; color:var(--corp-steel); }
-.intro-cierre-sign { font-family:'Playfair Display',serif; font-size:clamp(18px,2.4vw,24px); font-style:italic; color:var(--corp-muted); margin-top:8px; }
-.intro-enter { margin-top:48px; display:inline-flex; flex-direction:column; align-items:center; gap:14px; cursor:pointer; text-decoration:none; }
-.intro-enter-label { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:4px; color:var(--corp-steel); transition:color 0.2s; }
-.intro-enter:hover .intro-enter-label { color:var(--corp-bone); }
-.intro-enter-arrow { font-size:20px; color:var(--corp-steel); animation:scrollPulse 2.4s ease-in-out infinite; }
-
-@media(max-width:960px) {
-  body { overflow-y:auto; height:auto; }
-  .app { grid-template-rows:56px auto; height:auto; }
-  .main { grid-template-columns:1fr; height:auto; overflow:visible; }
-  .soul { border-bottom:1px solid var(--line); height:auto; overflow-y:visible; }
-  .agent-panel { height:70vh; min-height:500px; border-left:none; border-top:1px solid var(--line); }
-  .header-center { display:none; }
-  .counter-pair { display:none; }
-  .intro-section { padding:56px 24px; }
-  .intro-cierre { padding:64px 24px; }
-}
+@media(max-width:760px) { .hero-catch-rows { grid-template-columns:1fr; gap:0; } .hero-catch-row { border-top:2px solid rgba(159,176,192,0.35); padding:20px 4px; } .hero-topbar { justify-content:center; } .hero-assets-grid { grid-template-columns:1fr; } }
+@media(max-width:960px) { body { overflow-y:auto; height:auto; } .app { grid-template-rows:56px auto; height:auto; } .main { grid-template-columns:1fr; height:auto; overflow:visible; } .soul { border-bottom:1px solid var(--line); height:auto; overflow-y:visible; } .agent-panel { height:70vh; min-height:500px; border-left:none; border-top:1px solid var(--line); } .header-center { display:none; } .counter-pair { display:none; } }
 </style>
 </head>
 <body>
 
-<!-- ═══════════════════════════════════════════════════════════ -->
-<!-- PARTE UNO — PRESENTACIÓN CORPORATIVA (pantalla completa)      -->
-<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- PARTE UNO — PRESENTACIÓN -->
 <div class="intro">
-
-  <!-- Apertura — golpe inicial, ancho total -->
   <section class="intro-hero">
-
-    <!-- Barra de links ARRIBA -->
     <div class="hero-topbar">
       <div class="hero-topbar-brand">EPIMELEIA · POLYGON MAINNET</div>
       <div class="hero-links">
-        <button class="hero-link" onclick="abrirInfo('queHacemos')">QUÉ HACEMOS</button>
+        <button class="hero-link" onclick="abrirInfo('queHacemos')">CÓMO FUNCIONA</button>
         <button class="hero-link" onclick="abrirInfo('historia')">NUESTRA HISTORIA</button>
         <button class="hero-link" onclick="abrirInfo('marcos')">A QUÉ ABRE LA PUERTA</button>
         <button class="hero-link" onclick="abrirInfo('faqs')">PREGUNTAS FRECUENTES</button>
+        <button class="hero-link hero-link-gratis" onclick="abrirInfo('mesGratis')">¿UN MES GRATIS?</button>
       </div>
     </div>
 
@@ -439,7 +273,10 @@ header {
       </div>
     </div>
 
-    <!-- Franja de activos certificados — información destacada, ancho total -->
+    <div class="hero-capacidad">
+      <p class="hero-capacidad-text">Tenemos la tecnología para certificar cientos de activos por día alrededor del globo. Estos son apenas una pequeñísima muestra de lo que podemos hacer.</p>
+    </div>
+
     <div class="hero-assets">
       <div class="hero-assets-label">CERTIFICADO HOY EN POLYGON MAINNET · Q2/2026</div>
       <div class="hero-assets-grid">
@@ -451,14 +288,10 @@ header {
 
     <div class="intro-scroll-hint">↓ DESLIZÁ PARA ENTRAR AL ARCHIVO VIVO</div>
   </section>
-
 </div>
 
-<!-- ═══════════════════════════════════════════════════════════ -->
-<!-- PARTE DOS — PANTALLA OPERATIVA (archivo vivo + EPI)           -->
-<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- PARTE DOS — PANTALLA OPERATIVA -->
 <div class="app" id="parteDos">
-
 <header>
   <div class="logo-wrap">
     <span class="logo">EPIMELEIA</span>
@@ -470,15 +303,9 @@ header {
   </div>
   <div class="header-right">
     <div class="counter-pair">
-      <div class="counter-item">
-        <div class="counter-num" id="hActivos">3</div>
-        <div class="counter-lbl">ACTIVOS</div>
-      </div>
+      <div class="counter-item"><div class="counter-num" id="hActivos">3</div><div class="counter-lbl">ACTIVOS</div></div>
       <div class="divider-v"></div>
-      <div class="counter-item">
-        <div class="counter-num" id="hCerts">3</div>
-        <div class="counter-lbl">CERT. Q2</div>
-      </div>
+      <div class="counter-item"><div class="counter-num" id="hCerts">3</div><div class="counter-lbl">CERT. Q2</div></div>
     </div>
     <div class="divider-v"></div>
     <div class="founder-badge" id="founderBadge">✦ FOUNDER</div>
@@ -486,62 +313,40 @@ header {
 </header>
 
 <div class="main">
-
   <aside class="soul">
 
-
     <div class="recursos">
-      <div class="recursos-label">RECURSOS QUE EPIMELEIA REGISTRA</div>
+      <div class="recursos-label">RECURSOS QUE EPIMELEIA REGISTRA · TOCÁ PARA VER CÓMO</div>
       <div class="recursos-grid">
-        <div class="recurso-item"><span class="recurso-icon">🏔</span><div class="recurso-text"><strong>GLACIARES</strong>Cumbres y masas de hielo</div></div>
-        <div class="recurso-item"><span class="recurso-icon">💧</span><div class="recurso-text"><strong>CUENCAS</strong>Ríos y nacientes</div></div>
-        <div class="recurso-item"><span class="recurso-icon">🌊</span><div class="recurso-text"><strong>HIDROVÍAS</strong>Corredores fluviales</div></div>
-        <div class="recurso-item"><span class="recurso-icon">🌿</span><div class="recurso-text"><strong>BOSQUES</strong>Cobertura vegetal</div></div>
-        <div class="recurso-item"><span class="recurso-icon">⛏</span><div class="recurso-text"><strong>MINERÍA</strong>Impacto y expansión</div></div>
-        <div class="recurso-item"><span class="recurso-icon">🏭</span><div class="recurso-text"><strong>INDUSTRIA</strong>Emisiones y área</div></div>
+        <button class="recurso-item" onclick="abrirRecurso('glaciares')"><span class="recurso-icon">🏔</span><div class="recurso-text"><strong>GLACIARES</strong>Cumbres y masas de hielo</div></button>
+        <button class="recurso-item" onclick="abrirRecurso('cuencas')"><span class="recurso-icon">💧</span><div class="recurso-text"><strong>CUENCAS</strong>Ríos y nacientes</div></button>
+        <button class="recurso-item" onclick="abrirRecurso('hidrovias')"><span class="recurso-icon">🌊</span><div class="recurso-text"><strong>HIDROVÍAS</strong>Corredores fluviales</div></button>
+        <button class="recurso-item" onclick="abrirRecurso('bosques')"><span class="recurso-icon">🌿</span><div class="recurso-text"><strong>BOSQUES</strong>Cobertura vegetal</div></button>
+        <button class="recurso-item" onclick="abrirRecurso('mineria')"><span class="recurso-icon">⛏</span><div class="recurso-text"><strong>MINERÍA</strong>Impacto y expansión</div></button>
+        <button class="recurso-item" onclick="abrirRecurso('industria')"><span class="recurso-icon">🏭</span><div class="recurso-text"><strong>INDUSTRIA</strong>Emisiones y área</div></button>
+        <button class="recurso-item tu-compania" onclick="abrirRecurso('tuCompania')"><span class="recurso-icon">✦</span><div class="recurso-text"><strong>TU COMPAÑÍA</strong>El próximo registro</div></button>
       </div>
     </div>
 
-    <!-- CERTIFIED ASSETS — REAL ON-CHAIN DATA -->
     <div class="activos-block">
-      <div class="block-label">ACTIVOS CERTIFICADOS · Q2/2026 · POLYGON MAINNET</div>
-
-      <div class="activo-card">
-        <div class="activo-name">Hidrovía Paraná-Paraguay</div>
-        <div class="data-rows">
-          <div class="data-row"><span class="data-key">NIVEL</span><span class="data-val teal">PV-L1 · Sentinel-2 / Copernicus</span></div>
-          <div class="data-row"><span class="data-key">COORD.</span><span class="data-val">27°S 58°O · 50km</span></div>
-          <div class="data-row"><span class="data-key">TRIMESTRE</span><span class="data-val green">Q2/2026 · CERTIFICADO ✓</span></div>
-          <div class="data-row"><span class="data-key">TX HASH</span><span class="data-val" style="font-size:7px;">0x763dba27...9ab75cc</span></div>
-        </div>
-        <a href="https://polygon.blockscout.com/address/0x6FBcD0d28f240E2F792Ed42a8BFD7Ef97662a67E" target="_blank" class="blockscout-link">VERIFICAR EN BLOCKSCOUT →</a>
-      </div>
-
-      <div class="activo-card">
-        <div class="activo-name">Mar de Aral</div>
-        <div class="data-rows">
-          <div class="data-row"><span class="data-key">NIVEL</span><span class="data-val teal">PV-L1 · Sentinel-2 / Copernicus</span></div>
-          <div class="data-row"><span class="data-key">COORD.</span><span class="data-val">45°N 60°E</span></div>
-          <div class="data-row"><span class="data-key">TRIMESTRE</span><span class="data-val green">Q2/2026 · CERTIFICADO ✓</span></div>
-          <div class="data-row"><span class="data-key">TX HASH</span><span class="data-val" style="font-size:7px;">0xfe49cca8...276a4</span></div>
-        </div>
-        <a href="https://polygon.blockscout.com/address/0x6FBcD0d28f240E2F792Ed42a8BFD7Ef97662a67E" target="_blank" class="blockscout-link">VERIFICAR EN BLOCKSCOUT →</a>
-      </div>
-
-      <div class="activo-card">
-        <div class="activo-name">Zona de Exclusión de Chernóbil</div>
-        <div class="data-rows">
-          <div class="data-row"><span class="data-key">NIVEL</span><span class="data-val teal">PV-L1 · Sentinel-2 / Copernicus</span></div>
-          <div class="data-row"><span class="data-key">COORD.</span><span class="data-val">51°N 30°E</span></div>
-          <div class="data-row"><span class="data-key">TRIMESTRE</span><span class="data-val green">Q2/2026 · CERTIFICADO ✓</span></div>
-          <div class="data-row"><span class="data-key">TX HASH</span><span class="data-val" style="font-size:7px;">0x66ca0c3f...136cf2b</span></div>
-        </div>
-        <a href="https://polygon.blockscout.com/address/0x6FBcD0d28f240E2F792Ed42a8BFD7Ef97662a67E" target="_blank" class="blockscout-link">VERIFICAR EN BLOCKSCOUT →</a>
-      </div>
+      <div class="block-label">ACTIVOS CERTIFICADOS · Q2/2026 · TOCÁ PARA VER EL DETALLE</div>
+      <button class="activo-card" onclick="abrirActivo('hidrovia')">
+        <div class="activo-card-main"><div class="activo-name">Hidrovía Paraná-Paraguay</div><div class="activo-meta">SUDAMÉRICA · PV-L1 · CERTIFICADO ✓</div></div>
+        <span class="activo-arrow">→</span>
+      </button>
+      <button class="activo-card" onclick="abrirActivo('aral')">
+        <div class="activo-card-main"><div class="activo-name">Mar de Aral</div><div class="activo-meta">ASIA CENTRAL · PV-L1 · CERTIFICADO ✓</div></div>
+        <span class="activo-arrow">→</span>
+      </button>
+      <button class="activo-card" onclick="abrirActivo('chernobil')">
+        <div class="activo-card-main"><div class="activo-name">Zona de Exclusión de Chernóbil</div><div class="activo-meta">EUROPA DEL ESTE · PV-L1 · CERTIFICADO ✓</div></div>
+        <span class="activo-arrow">→</span>
+      </button>
     </div>
 
     <div class="niveles-block">
-      <div class="block-label">NIVELES DE VALIDACIÓN SATELITAL</div>
+      <div class="section-title-big">Niveles de Validación</div>
+      <div class="section-title-sub">SATELITAL · POLYGON MAINNET</div>
       <div class="nivel-row"><span class="nivel-code">PV-L1</span><span class="nivel-desc">Sentinel / Copernicus · ESA</span><span class="tag tag-green">OPERATIVO</span></div>
       <div class="nivel-row"><span class="nivel-code">PV-L2</span><span class="nivel-desc">Satélite comercial + Validación cruzada</span><span class="tag tag-amber">ACUERDO</span></div>
       <div class="nivel-row"><span class="nivel-code">PV-L3</span><span class="nivel-desc">Triple fuente + IoT in situ</span><span class="tag tag-amber">ACUERDO</span></div>
@@ -558,21 +363,20 @@ header {
     </div>
 
     <div class="soul-footer">
-      <div class="contact-line">
-        ¿Preferís hablar con una persona?<br>
-        Escribinos a <a onclick="copiarEmail(this)" style="cursor:pointer;" title="Clic para copiar">info@epimeleia.world</a> — un humano te responde.
+      <div class="footer-contact-line">¿Preferís hablar con una persona? Un humano te responde.</div>
+      <div class="footer-btns">
+        <button class="footer-btn" onclick="copiarEmail(this)">✉ info@epimeleia.world</button>
+        <button class="footer-btn" onclick="abrirModal('condiciones')">TÉRMINOS DE USO</button>
+        <button class="footer-btn" onclick="abrirModal('privacidad')">PRIVACIDAD</button>
       </div>
       <div class="soul-footer-text">
         <a href="https://epimeleia.world">epimeleia.world</a><br>
-        <span onclick="abrirModal('condiciones')" style="cursor:pointer;text-decoration:underline;">Términos de Uso</span> ·
-        <span onclick="abrirModal('privacidad')" style="cursor:pointer;text-decoration:underline;">Privacidad</span><br>
         Polygon Mainnet · 2026 · Sin publicidad
       </div>
     </div>
 
   </aside>
 
-  <!-- AGENT PANEL -->
   <div class="agent-panel">
     <div class="agent-topbar">
       <span class="agent-title">AGENTE EPIMELEIA</span>
@@ -587,52 +391,32 @@ header {
       <div class="input-hint">ENTER para enviar · SHIFT+ENTER para nueva línea</div>
     </div>
   </div>
-
 </div>
 </div>
 
-<!-- ═══════════════ CLICKWRAP MODAL ═══════════════ -->
+<!-- CLICKWRAP MODAL -->
 <div class="modal-terms-overlay" id="modalClickwrap">
   <div class="modal-terms-box clickwrap-box">
     <button class="modal-terms-close" onclick="cerrarModalTerms('modalClickwrap')">✕</button>
     <div class="modal-terms-tag">ANTES DE CONTINUAR</div>
     <div class="modal-terms-title">Aceptación del protocolo</div>
-
     <div class="clickwrap-clausulas">
-      <div class="clausula-card">
-        <div class="clausula-num">CLÁUSULA 1</div>
-        <div class="clausula-text">EPIMELEIA registra <strong>observación satelital</strong>, no opina sobre prácticas ni garantiza resultados ambientales. La responsabilidad sobre los datos declarados del activo es de quien lo registra.</div>
-      </div>
-      <div class="clausula-card">
-        <div class="clausula-num">CLÁUSULA 2</div>
-        <div class="clausula-text">Una vez escrito en blockchain, <strong>ningún registro puede ser editado ni eliminado</strong> — ni por el cliente, ni por EPIMELEIA, bajo ninguna circunstancia.</div>
-      </div>
-      <div class="clausula-card">
-        <div class="clausula-num">CLÁUSULA 3</div>
-        <div class="clausula-text">La aceptación de estos términos queda registrada con fecha, hora y hash de confirmación, como evidencia de que esta aceptación ocurrió.</div>
-      </div>
+      <div class="clausula-card"><div class="clausula-num">CLÁUSULA 1</div><div class="clausula-text">EPIMELEIA registra <strong>observación satelital</strong>, no opina sobre prácticas ni garantiza resultados ambientales. La responsabilidad sobre los datos declarados del activo es de quien lo registra.</div></div>
+      <div class="clausula-card"><div class="clausula-num">CLÁUSULA 2</div><div class="clausula-text">Una vez escrito en blockchain, <strong>ningún registro puede ser editado ni eliminado</strong> — ni por el cliente, ni por EPIMELEIA, bajo ninguna circunstancia.</div></div>
+      <div class="clausula-card"><div class="clausula-num">CLÁUSULA 3</div><div class="clausula-text">La aceptación de estos términos queda registrada con fecha, hora y hash de confirmación, como evidencia de que esta aceptación ocurrió.</div></div>
     </div>
-
     <div class="clickwrap-check-row">
       <input type="checkbox" class="clickwrap-checkbox" id="clickwrapCheck" onchange="toggleClickwrapBtn()">
       <label class="clickwrap-check-label" for="clickwrapCheck">He leído y acepto las tres cláusulas del protocolo EPIMELEIA en nombre de mi organización.</label>
     </div>
-
     <button class="clickwrap-btn" id="clickwrapBtn" disabled>CONFIRMAR Y CONTINUAR</button>
     <div class="clickwrap-hash-note">Sin necesidad de billetera cripto · El hash de aceptación queda anclado on-chain junto al registro del activo</div>
   </div>
 </div>
-
 <script>
-// ══════════════════════════════════════════════════════════════
-// EPIMELEIA — AGENT V3.4
-// ══════════════════════════════════════════════════════════════
-
 const CORE_ADDRESS = "0x6FBcD0d28f240E2F792Ed42a8BFD7Ef97662a67E";
-
 let historial = [];
 
-// ── RENDER ──────────────────────────────────────────────────
 function agregarMensaje(rol, texto) {
   const container = document.getElementById('chatMessages');
   const wrap = document.createElement('div');
@@ -685,7 +469,6 @@ function quitarTyping() {
   if (el) el.remove();
 }
 
-// ── ENVIAR ───────────────────────────────────────────────────
 async function enviar(textoForzado) {
   const input   = document.getElementById('chatInput');
   const sendBtn = document.getElementById('sendBtn');
@@ -711,7 +494,6 @@ async function enviar(textoForzado) {
 
     quitarTyping();
 
-    // Detectar modo founder activado (lo confirma chat.js, no el front)
     if (respuesta.toLowerCase().includes('modo founder activado')) {
       document.getElementById('founderBadge').classList.add('visible');
     }
@@ -734,37 +516,71 @@ function copiarEmail(el) {
     el.textContent = '✓ copiado';
     setTimeout(function(){ el.textContent = original; }, 1800);
   }).catch(function() {
-    // Si el navegador no permite copiar, no rompe nada: el texto sigue visible para copiar a mano
     el.textContent = email;
   });
 }
 
-// ── INPUT HANDLERS ───────────────────────────────────────────
 document.getElementById('chatInput').addEventListener('keydown', function(e) {
   if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); enviar(); }
 });
-
 document.getElementById('chatInput').addEventListener('input', function() {
   this.style.height = 'auto';
   this.style.height = Math.min(this.scrollHeight, 120) + 'px';
 });
-
 function resetInputHeight() {
   document.getElementById('chatInput').style.height = 'auto';
 }
 
-// ── MENSAJE INICIAL ──────────────────────────────────────────
 function mensajeInicial() {
   agregarMensaje('agent',
     `Protocolo EPIMELEIA — Agente EPI.\n\nEPIMELEIA es el archivo vivo del planeta. Registra la realidad de los recursos naturales estratégicos — de glaciares a hidrovías — de forma permanente e inmutable en blockchain. Sin intervención humana. Sin sesgo. Sin posibilidad de edición retroactiva.\n\nHoy hay tres activos certificados en Polygon Mainnet: la Hidrovía Paraná-Paraguay, el Mar de Aral, y la Zona de Exclusión de Chernóbil — todos verificados para Q2/2026.\n\n¿Tu organización ya conoce el protocolo, o es tu primer contacto?`
   );
 }
-
 mensajeInicial();
 
-// ══════════════════════════════════════════════════════════════
-// FAQ — 17 preguntas, ventanas de lectura (sin precio)
-// ══════════════════════════════════════════════════════════════
+// ── DATOS DE RECURSOS (ventanas nuevas) ──
+const RECURSOS = {
+  glaciares: { icon:'🏔', titulo:'Glaciares', tag:'CUMBRES Y MASAS DE HIELO', cuerpo:'<p>EPIMELEIA observa la superficie de hielo y nieve, su retroceso o avance estacional, y los cambios en la línea de nieve a lo largo del tiempo.</p><p>Cada pasada del satélite suma una observación a la trayectoria del glaciar — y esa secuencia queda grabada de forma inmutable, imposible de retocar.</p>', ejemplos:'Operaciones mineras de altura, represas hidroeléctricas que dependen del deshielo, y gobiernos o reservas que necesitan probar el estado de sus glaciares ante organismos internacionales.' },
+  cuencas: { icon:'💧', titulo:'Cuencas', tag:'RÍOS Y NACIENTES', cuerpo:'<p>EPIMELEIA registra el nivel y la extensión de los cuerpos de agua, la turbidez visible, y los cambios en las nacientes entre observaciones.</p><p>El estado del agua queda documentado trimestre a trimestre, sin que nadie pueda alterar el registro después.</p>', ejemplos:'Empresas agrícolas, plantas que captan o vierten agua, y comunidades que necesitan documentar el estado de su fuente hídrica.' },
+  hidrovias: { icon:'🌊', titulo:'Hidrovías', tag:'CORREDORES FLUVIALES', cuerpo:'<p>EPIMELEIA observa el ancho navegable, los bancos de sedimento, y las variaciones del cauce a lo largo del tiempo.</p><p>La condición de la vía navegable queda registrada de forma permanente y verificable por cualquiera.</p>', ejemplos:'Operadores de transporte fluvial, puertos, y autoridades que gestionan vías navegables y deben probar su condición.' },
+  bosques: { icon:'🌿', titulo:'Bosques', tag:'COBERTURA VEGETAL', cuerpo:'<p>EPIMELEIA mide la cobertura vegetal, su densidad, y detecta pérdidas o recuperación de masa forestal entre una observación y la siguiente.</p><p>La evolución del bosque queda anclada en blockchain, sin posibilidad de edición retroactiva.</p>', ejemplos:'Empresas forestales, proyectos de reforestación, productores que deben demostrar que no deforestan (hoy clave para exportar a la Unión Europea), y áreas protegidas.' },
+  mineria: { icon:'⛏', titulo:'Minería', tag:'IMPACTO Y EXPANSIÓN', cuerpo:'<p>EPIMELEIA observa la huella de la actividad sobre el terreno: la extensión de la operación, escombreras, balsas, y el avance o la contención de esa huella en el tiempo.</p><p>El impacto observado queda registrado de forma inmutable, trimestre a trimestre.</p>', ejemplos:'Empresas mineras que necesitan probar, ante reguladores o inversores, que su impacto se mantiene dentro de lo declarado.' },
+  industria: { icon:'🏭', titulo:'Industria', tag:'EMISIONES Y ÁREA', cuerpo:'<p>EPIMELEIA registra la extensión de las instalaciones, los cambios en el área ocupada, y rasgos visibles de la actividad sobre el entorno.</p><p>La huella territorial de la operación queda documentada de forma permanente y verificable.</p>', ejemplos:'Plantas industriales, centros de datos, gestión de residuos, y cualquier instalación cuya huella territorial deba documentarse.' },
+  tuCompania: { icon:'✦', titulo:'Tu Compañía', tag:'EL PRÓXIMO REGISTRO DEL ARCHIVO', cuerpo:'<p>Cualquier actividad cuya huella pueda verse desde el espacio puede entrar al archivo vivo del planeta.</p><p><strong>Tu organización puede ser la próxima en quedar registrada</strong> — trimestre a trimestre, con prueba inmutable, defendible ante gobiernos, bancos y fondos.</p><p>Conversá con EPI para empezar. El primer mes es de cortesía.</p>', ejemplos:'Si tu actividad deja una huella sobre el territorio — agua, vegetación, suelo, instalaciones — EPIMELEIA puede certificarla.' }
+};
+
+function abrirRecurso(key) {
+  const r = RECURSOS[key];
+  if (!r) return;
+  document.getElementById('recursoTag').textContent = r.tag;
+  document.getElementById('recursoTitulo').innerHTML = r.icon + ' ' + r.titulo;
+  document.getElementById('recursoCuerpo').innerHTML = r.cuerpo + '<div class="ejemplos"><strong>DÓNDE APLICA:</strong> ' + r.ejemplos + '</div>';
+  document.getElementById('modalRecurso').classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+
+// ── DATOS DE ACTIVOS (ventanas detalle) ──
+const ACTIVOS = {
+  hidrovia: { nombre:'Hidrovía Paraná-Paraguay', nivel:'PV-L1 · Sentinel-2 / Copernicus', coord:'27°S 58°O · 50km', tx:'0x763dba27...9ab75cc' },
+  aral: { nombre:'Mar de Aral', nivel:'PV-L1 · Sentinel-2 / Copernicus', coord:'45°N 60°E', tx:'0xfe49cca8...276a4' },
+  chernobil: { nombre:'Zona de Exclusión de Chernóbil', nivel:'PV-L1 · Sentinel-2 / Copernicus', coord:'51°N 30°E', tx:'0x66ca0c3f...136cf2b' }
+};
+
+function abrirActivo(key) {
+  const a = ACTIVOS[key];
+  if (!a) return;
+  document.getElementById('activoTitulo').textContent = a.nombre;
+  document.getElementById('activoCuerpo').innerHTML =
+    '<div class="data-rows">' +
+    '<div class="data-row"><span class="data-key">NIVEL</span><span class="data-val teal">'+a.nivel+'</span></div>' +
+    '<div class="data-row"><span class="data-key">COORDENADAS</span><span class="data-val">'+a.coord+'</span></div>' +
+    '<div class="data-row"><span class="data-key">TRIMESTRE</span><span class="data-val green">Q2/2026 · CERTIFICADO ✓</span></div>' +
+    '<div class="data-row"><span class="data-key">TX HASH</span><span class="data-val">'+a.tx+'</span></div>' +
+    '</div>' +
+    '<a href="https://polygon.blockscout.com/address/0x6FBcD0d28f240E2F792Ed42a8BFD7Ef97662a67E" target="_blank" class="blockscout-link">VERIFICAR EN BLOCKSCOUT →</a>';
+  document.getElementById('modalActivo').classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
 
 const FAQS = [
   { q: "¿Qué es exactamente lo que EPIMELEIA certifica?", a: "EPIMELEIA no certifica intenciones ni promesas. Certifica observación: que un satélite vio un lugar determinado, en una fecha determinada, y registró lo que encontró. No opina sobre si eso es \"bueno\" o \"malo\" — deja la prueba, y que cada quien la interprete frente a quien corresponda." },
@@ -788,7 +604,7 @@ const FAQS = [
 
 function renderFaqs() {
   const container = document.getElementById('introFaqContainer');
-  if (!container) return;
+  if (!container || container.hasChildNodes()) return;
   FAQS.forEach((item, i) => {
     const el = document.createElement('div');
     el.className = 'intro-faq-item';
@@ -807,11 +623,29 @@ function toggleFaq(i) {
   const items = document.querySelectorAll('.intro-faq-item');
   items[i].classList.toggle('open');
 }
-
-renderFaqs();
 </script>
 
-<!-- MODALS: Contenido informativo (acceso por clic desde el hero) -->
+<!-- MODAL: RECURSO (dinámico) -->
+<div class="modal-terms-overlay" id="modalRecurso">
+  <div class="modal-terms-box">
+    <button class="modal-terms-close" onclick="cerrarModalTerms('modalRecurso')">✕</button>
+    <div class="modal-terms-tag" id="recursoTag"></div>
+    <div class="modal-terms-title" id="recursoTitulo"></div>
+    <div class="modal-terms-body" id="recursoCuerpo"></div>
+  </div>
+</div>
+
+<!-- MODAL: ACTIVO (dinámico) -->
+<div class="modal-terms-overlay" id="modalActivo">
+  <div class="modal-terms-box">
+    <button class="modal-terms-close" onclick="cerrarModalTerms('modalActivo')">✕</button>
+    <div class="modal-terms-tag">ACTIVO CERTIFICADO · Q2/2026</div>
+    <div class="modal-terms-title" id="activoTitulo"></div>
+    <div class="modal-terms-body" id="activoCuerpo"></div>
+  </div>
+</div>
+
+<!-- MODALS informativos -->
 <div class="modal-terms-overlay" id="modalQueHacemos">
   <div class="modal-terms-box">
     <button class="modal-terms-close" onclick="cerrarModalTerms('modalQueHacemos')">✕</button>
@@ -851,16 +685,11 @@ renderFaqs();
     <div class="modal-terms-title">Los marcos que hoy exigen fondos, bancos y reguladores</div>
     <div class="modal-terms-body">
       <p>Una trayectoria ambiental verificable es la base de los marcos internacionales que hoy condicionan financiamiento, acceso a mercados y reputación corporativa.</p>
-      <h4>ESG</h4>
-      <p>Environmental, Social &amp; Governance — los criterios que usan fondos e inversores para evaluar a una organización.</p>
-      <h4>GRI</h4>
-      <p>Global Reporting Initiative — el estándar internacional de reportes de sostenibilidad.</p>
-      <h4>TCFD</h4>
-      <p>Task Force on Climate-related Financial Disclosures — divulgación financiera relacionada al clima.</p>
-      <h4>CBAM</h4>
-      <p>Carbon Border Adjustment Mechanism — el mecanismo de ajuste de carbono en frontera de la Unión Europea.</p>
-      <h4>TAXONOMÍA VERDE · UE</h4>
-      <p>La clasificación europea de actividades económicas ambientalmente sostenibles.</p>
+      <h4>ESG</h4><p>Environmental, Social &amp; Governance — los criterios que usan fondos e inversores para evaluar a una organización.</p>
+      <h4>GRI</h4><p>Global Reporting Initiative — el estándar internacional de reportes de sostenibilidad.</p>
+      <h4>TCFD</h4><p>Task Force on Climate-related Financial Disclosures — divulgación financiera relacionada al clima.</p>
+      <h4>CBAM</h4><p>Carbon Border Adjustment Mechanism — el mecanismo de ajuste de carbono en frontera de la Unión Europea.</p>
+      <h4>TAXONOMÍA VERDE · UE</h4><p>La clasificación europea de actividades económicas ambientalmente sostenibles.</p>
     </div>
   </div>
 </div>
@@ -870,31 +699,40 @@ renderFaqs();
     <button class="modal-terms-close" onclick="cerrarModalTerms('modalFaqs')">✕</button>
     <div class="modal-terms-tag">PREGUNTAS FRECUENTES</div>
     <div class="modal-terms-title">Lo que más nos preguntan</div>
+    <div class="modal-terms-body"><div id="introFaqContainer"></div></div>
+  </div>
+</div>
+
+<div class="modal-terms-overlay" id="modalMesGratis">
+  <div class="modal-terms-box">
+    <button class="modal-terms-close" onclick="cerrarModalTerms('modalMesGratis')">✕</button>
+    <div class="modal-terms-tag">¿UN MES GRATIS?</div>
+    <div class="modal-terms-title">El primer mes es de cortesía</div>
     <div class="modal-terms-body">
-      <div id="introFaqContainer"></div>
+      <p>Sí. Tu organización tiene <strong>el primer mes completamente gratis</strong> — y "completo" significa completo: la certificación satelital real, grabada en blockchain, igual que un cliente que ya está pagando. No es una demostración recortada. Es el servicio entero, sin costo, durante el primer mes.</p>
+      <h4>CÓMO FUNCIONA</h4>
+      <p>Es el modelo de prueba que ya conocés de otros servicios. Al darte de alta, dejás tu medio de pago desde el inicio — eso lo gestiona <strong>PayPal o Mercado Pago</strong>, nunca EPIMELEIA: nosotros no vemos ni tocamos los datos de tu tarjeta.</p>
+      <p>Durante 30 días no se te cobra nada. Si en ese plazo decidís que no es para vos, <strong>cancelás y no se debita un solo peso</strong>. Si no hacés nada, al cumplirse el mes el servicio continúa y recién ahí comienza el cobro mensual.</p>
+      <h4>POR QUÉ LO HACEMOS ASÍ</h4>
+      <p>Porque creemos que la prueba se demuestra usándola, no prometiéndola. Preferimos que veas tu activo certificado de verdad antes de pagar, y no pedirte un peso hasta que estés convencido.</p>
+      <h4>SIN LETRA CHICA</h4>
+      <p>El precio se te informa con claridad antes de empezar. Cualquier cambio futuro se anuncia, nunca se cobra de sorpresa. Cancelás cuando quieras, sin explicaciones.</p>
     </div>
   </div>
 </div>
 
-<!-- MODALS: Terms / Privacy -->
 <div class="modal-terms-overlay" id="modalCondiciones">
   <div class="modal-terms-box">
     <button class="modal-terms-close" onclick="cerrarModalTerms('modalCondiciones')">✕</button>
     <div class="modal-terms-tag">TÉRMINOS Y CONDICIONES</div>
     <div class="modal-terms-title">Términos de Uso</div>
     <div class="modal-terms-body">
-      <h4>NATURALEZA DEL SERVICIO</h4>
-      <p>EPIMELEIA actúa como un <strong>notario digital de la conducta ambiental corporativa</strong>. No es un auditor, no es un organismo regulatorio, y no actúa en representación de ningún gobierno o entidad reguladora. Es un protocolo neutral que registra datos satelitales de forma permanente e inmutable en la blockchain de Polygon.</p>
-      <h4>PERMANENCIA E IRREVOCABILIDAD</h4>
-      <p>Todo registro escrito en la blockchain de Polygon es <strong>permanente e inmutable</strong>. No existe mecanismo de eliminación. El historial de certificaciones, vacíos de opacidad, y sellos de excelencia no puede modificarse bajo ninguna circunstancia.</p>
-      <h4>RESPONSABILIDAD SOBRE LOS DATOS</h4>
-      <p>La responsabilidad sobre la exactitud de los datos declarados es <strong>100% de la organización que registra</strong>. Si los datos declarados no coinciden con las observaciones satelitales, el registro refleja esto de forma permanente.</p>
-      <h4>MEMBRESÍA Y PRECIOS</h4>
-      <p>La membresía es de carácter trimestral. El protocolo se encuentra actualmente en fase de prueba con acceso de cortesía. <strong>Los valores pueden modificarse sin previo aviso</strong>.</p>
-      <h4>JURISDICCIÓN</h4>
-      <p>Las transacciones se ejecutan en Polygon Mainnet (Chain ID: 137). Son irreversibles por la propia naturaleza de la tecnología blockchain.</p>
-      <h4>CONTACTO</h4>
-      <p>Consultas: <strong>info@epimeleia.world</strong></p>
+      <h4>NATURALEZA DEL SERVICIO</h4><p>EPIMELEIA actúa como un <strong>notario digital de la conducta ambiental corporativa</strong>. No es un auditor, no es un organismo regulatorio, y no actúa en representación de ningún gobierno o entidad reguladora. Es un protocolo neutral que registra datos satelitales de forma permanente e inmutable en la blockchain de Polygon.</p>
+      <h4>PERMANENCIA E IRREVOCABILIDAD</h4><p>Todo registro escrito en la blockchain de Polygon es <strong>permanente e inmutable</strong>. No existe mecanismo de eliminación. El historial de certificaciones, vacíos de opacidad, y sellos de excelencia no puede modificarse bajo ninguna circunstancia.</p>
+      <h4>RESPONSABILIDAD SOBRE LOS DATOS</h4><p>La responsabilidad sobre la exactitud de los datos declarados es <strong>100% de la organización que registra</strong>. Si los datos declarados no coinciden con las observaciones satelitales, el registro refleja esto de forma permanente.</p>
+      <h4>MEMBRESÍA Y PRECIOS</h4><p>La membresía es de carácter trimestral. El protocolo se encuentra actualmente en fase de prueba con acceso de cortesía. <strong>Los valores pueden modificarse sin previo aviso</strong>.</p>
+      <h4>JURISDICCIÓN</h4><p>Las transacciones se ejecutan en Polygon Mainnet (Chain ID: 137). Son irreversibles por la propia naturaleza de la tecnología blockchain.</p>
+      <h4>CONTACTO</h4><p>Consultas: <strong>info@epimeleia.world</strong></p>
     </div>
   </div>
 </div>
@@ -905,18 +743,12 @@ renderFaqs();
     <div class="modal-terms-tag">POLÍTICA DE PRIVACIDAD</div>
     <div class="modal-terms-title">Privacidad</div>
     <div class="modal-terms-body">
-      <h4>DATOS PÚBLICOS EN BLOCKCHAIN</h4>
-      <p>El <strong>estado de certificación</strong> y el <strong>nivel de validación</strong> de cada activo son públicamente visibles en la blockchain de Polygon. Cualquiera puede verificarlos en Blockscout.</p>
-      <h4>DATOS PRIVADOS</h4>
-      <p>Los siguientes datos son <strong>estrictamente privados</strong>: coordenadas GPS, email corporativo, razón social, saldo de membresía, historial de pagos y datos de contacto.</p>
-      <h4>EMAIL CORPORATIVO</h4>
-      <p>El email corporativo se almacena únicamente como hash criptográfico on-chain. El email real <strong>nunca se registra en la blockchain</strong>.</p>
-      <h4>DATOS DE LA CONVERSACIÓN</h4>
-      <p>Las conversaciones con el agente EPI son procesadas por la API de Anthropic bajo sus propios términos de privacidad. EPIMELEIA no almacena el contenido de la conversación entre sesiones.</p>
-      <h4>SIN VENTA DE DATOS</h4>
-      <p>EPIMELEIA <strong>no vende, transfiere ni comercializa</strong> datos de clientes con terceros bajo ninguna circunstancia.</p>
-      <h4>CONTACTO</h4>
-      <p>Consultas de privacidad: <strong>info@epimeleia.world</strong></p>
+      <h4>DATOS PÚBLICOS EN BLOCKCHAIN</h4><p>El <strong>estado de certificación</strong> y el <strong>nivel de validación</strong> de cada activo son públicamente visibles en la blockchain de Polygon. Cualquiera puede verificarlos en Blockscout.</p>
+      <h4>DATOS PRIVADOS</h4><p>Los siguientes datos son <strong>estrictamente privados</strong>: coordenadas GPS, email corporativo, razón social, saldo de membresía, historial de pagos y datos de contacto.</p>
+      <h4>EMAIL CORPORATIVO</h4><p>El email corporativo se almacena únicamente como hash criptográfico on-chain. El email real <strong>nunca se registra en la blockchain</strong>.</p>
+      <h4>DATOS DE LA CONVERSACIÓN</h4><p>Las conversaciones con el agente EPI son procesadas por la API de Anthropic bajo sus propios términos de privacidad. EPIMELEIA no almacena el contenido de la conversación entre sesiones.</p>
+      <h4>SIN VENTA DE DATOS</h4><p>EPIMELEIA <strong>no vende, transfiere ni comercializa</strong> datos de clientes con terceros bajo ninguna circunstancia.</p>
+      <h4>CONTACTO</h4><p>Consultas de privacidad: <strong>info@epimeleia.world</strong></p>
     </div>
   </div>
 </div>
@@ -927,10 +759,10 @@ function abrirModal(id) {
   document.body.style.overflow = 'hidden';
 }
 function abrirInfo(tipo) {
-  const map = { queHacemos:'modalQueHacemos', historia:'modalHistoria', marcos:'modalMarcos', faqs:'modalFaqs' };
+  const map = { queHacemos:'modalQueHacemos', historia:'modalHistoria', marcos:'modalMarcos', faqs:'modalFaqs', mesGratis:'modalMesGratis' };
   const el = document.getElementById(map[tipo]);
   if (el) {
-    if (tipo === 'faqs') { const c=document.getElementById('introFaqContainer'); if(c && !c.hasChildNodes()) renderFaqs(); }
+    if (tipo === 'faqs') renderFaqs();
     el.classList.add('active'); document.body.style.overflow = 'hidden';
   }
 }
@@ -938,10 +770,7 @@ function cerrarModalTerms(id) {
   document.getElementById(id).classList.remove('active');
   document.body.style.overflow = '';
 }
-document.getElementById('modalCondiciones').addEventListener('click', function(e) { if(e.target===this) cerrarModalTerms('modalCondiciones'); });
-document.getElementById('modalPrivacidad').addEventListener('click',  function(e) { if(e.target===this) cerrarModalTerms('modalPrivacidad'); });
-document.getElementById('modalClickwrap').addEventListener('click',  function(e) { if(e.target===this) cerrarModalTerms('modalClickwrap'); });
-['modalQueHacemos','modalHistoria','modalMarcos','modalFaqs'].forEach(function(id){
+['modalCondiciones','modalPrivacidad','modalClickwrap','modalQueHacemos','modalHistoria','modalMarcos','modalFaqs','modalMesGratis','modalRecurso','modalActivo'].forEach(function(id){
   var el = document.getElementById(id);
   if (el) el.addEventListener('click', function(e){ if(e.target===this) cerrarModalTerms(id); });
 });
@@ -949,17 +778,10 @@ document.getElementById('modalClickwrap').addEventListener('click',  function(e)
 function toggleClickwrapBtn() {
   const check = document.getElementById('clickwrapCheck');
   const btn   = document.getElementById('clickwrapBtn');
-  if (check.checked) {
-    btn.classList.add('enabled');
-    btn.disabled = false;
-  } else {
-    btn.classList.remove('enabled');
-    btn.disabled = true;
-  }
+  if (check.checked) { btn.classList.add('enabled'); btn.disabled = false; }
+  else { btn.classList.remove('enabled'); btn.disabled = true; }
 }
 
-// El clickwrap se abre cuando chat.js indique que el flujo de pago está por iniciar.
-// Disparador de ejemplo (a conectar con la respuesta real de /api/chat):
 function abrirClickwrap() {
   document.getElementById('modalClickwrap').classList.add('active');
   document.body.style.overflow = 'hidden';
