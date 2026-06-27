@@ -233,7 +233,62 @@ header { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center
 .hero-btn-primary { background:var(--corp-bone); color:var(--corp-bg); border-color:var(--corp-bone); }
 .hero-btn-primary:hover { background:#fff; transform:translateY(-1px); }
 .hero-btn-ghost:hover { border-color:var(--corp-steel); color:var(--corp-bone); }
-@media(max-width:760px) { .hero-catch-rows { grid-template-columns:1fr; gap:0; } .hero-catch-row { border-top:2px solid rgba(159,176,192,0.35); padding:20px 4px; } .hero-topbar { justify-content:center; } .hero-assets-grid { grid-template-columns:1fr; } }
+/* ═══════════════ BLOQUES DE PESO — EPI · OPACIDAD · RELOJ ═══════════════ */
+.intro-extra { background:linear-gradient(180deg, var(--corp-bg2) 0%, var(--corp-bg) 100%); border-top:1px solid var(--corp-line); }
+.xblock { max-width:1180px; margin:0 auto; padding:clamp(56px,9vw,120px) clamp(24px,5vw,72px); border-bottom:1px solid var(--corp-line); }
+.xblock:last-child { border-bottom:none; }
+.xblock-label { font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:4px; color:var(--corp-steel); margin-bottom:24px; }
+
+/* EPI — interlocutor */
+.epi-block { display:grid; grid-template-columns:minmax(0,1.15fr) minmax(0,1fr); gap:clamp(32px,5vw,72px); align-items:center; }
+.epi-title { font-family:'Playfair Display',serif; font-size:clamp(30px,4.4vw,52px); font-weight:400; color:var(--corp-bone); line-height:1.12; letter-spacing:0.5px; margin-bottom:24px; }
+.epi-title em { font-style:italic; color:var(--corp-steel); }
+.epi-text { font-family:'Crimson Pro',serif; font-size:clamp(17px,1.4vw,20px); color:rgba(228,226,221,0.84); line-height:1.62; margin-bottom:14px; }
+.epi-text:last-of-type { margin-bottom:0; }
+.epi-text strong { color:var(--corp-bone); font-weight:600; }
+.epi-aside { border-left:2px solid var(--corp-steel); padding:8px 0 8px clamp(24px,3vw,40px); }
+.epi-steps { display:flex; flex-direction:column; gap:18px; margin-bottom:32px; }
+.epi-step { display:flex; gap:16px; align-items:flex-start; }
+.epi-step-num { font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:1px; color:var(--corp-steel); padding-top:3px; flex-shrink:0; opacity:0.9; }
+.epi-step-text { font-family:'Crimson Pro',serif; font-size:clamp(15px,1.2vw,17px); color:rgba(228,226,221,0.8); line-height:1.5; }
+.epi-step-text strong { color:var(--corp-bone); font-weight:600; }
+.epi-cta { font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:2px; padding:18px 36px; background:var(--corp-bone); color:var(--corp-bg); border:1px solid var(--corp-bone); cursor:pointer; text-decoration:none; transition:all 0.22s; display:inline-flex; align-items:center; gap:10px; }
+.epi-cta:hover { background:#fff; transform:translateY(-1px); }
+
+/* OPACIDAD — el núcleo */
+.opa-block { text-align:center; }
+.opa-statement { font-family:'Playfair Display',serif; font-style:italic; font-size:clamp(30px,5vw,62px); font-weight:400; color:var(--corp-bone); line-height:1.18; max-width:1000px; margin:0 auto 40px; letter-spacing:0.3px; }
+.opa-statement .opa-hi { font-style:normal; color:var(--corp-steel); }
+.opa-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:1px; background:var(--corp-line); max-width:920px; margin:0 auto; text-align:left; }
+.opa-cell { background:var(--corp-bg); padding:clamp(24px,3vw,36px); }
+.opa-cell-tag { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:2px; color:var(--corp-steel); margin-bottom:14px; }
+.opa-cell-text { font-family:'Crimson Pro',serif; font-size:clamp(15px,1.25vw,18px); color:rgba(228,226,221,0.82); line-height:1.6; }
+.opa-cell-text strong { color:var(--corp-bone); font-weight:600; }
+.opa-foot { font-family:'Crimson Pro',serif; font-style:italic; font-size:clamp(15px,1.3vw,19px); color:var(--corp-muted); margin-top:36px; }
+
+/* RELOJ — cadencia trimestral */
+.reloj-block { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.05fr); gap:clamp(32px,5vw,72px); align-items:center; }
+.reloj-title { font-family:'Playfair Display',serif; font-size:clamp(30px,4.4vw,52px); font-weight:400; color:var(--corp-bone); line-height:1.12; margin-bottom:24px; letter-spacing:0.5px; }
+.reloj-text { font-family:'Crimson Pro',serif; font-size:clamp(17px,1.4vw,20px); color:rgba(228,226,221,0.84); line-height:1.62; margin-bottom:14px; }
+.reloj-text:last-of-type { margin-bottom:0; }
+.reloj-text strong { color:var(--corp-bone); font-weight:600; }
+.reloj-quarters { display:grid; grid-template-columns:repeat(2,1fr); gap:1px; background:var(--corp-line); border:1px solid var(--corp-line); }
+.q-cell { background:var(--corp-bg2); padding:clamp(22px,3vw,32px) clamp(20px,2.4vw,28px); }
+.q-code { font-family:'Playfair Display',serif; font-size:clamp(26px,3vw,40px); color:var(--corp-bone); line-height:1; margin-bottom:8px; }
+.q-months { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:1px; color:var(--corp-steel); }
+.q-note { font-family:'JetBrains Mono',monospace; font-size:8px; letter-spacing:1px; color:var(--corp-dim); margin-top:10px; line-height:1.6; }
+.reloj-clockline { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:2px; color:var(--corp-steel); margin-top:20px; text-align:center; }
+
+/* CLICKWRAP — campos de email (doble confirmación) */
+.clickwrap-emails { display:flex; flex-direction:column; gap:12px; margin:4px 0 22px; }
+.clickwrap-field-label { font-family:'JetBrains Mono',monospace; font-size:8px; letter-spacing:2px; color:var(--muted); margin-bottom:7px; display:block; }
+.clickwrap-input { width:100%; background:var(--surface); border:1px solid var(--line2); color:var(--text); font-family:'Crimson Pro',serif; font-size:15px; padding:12px 14px; outline:none; transition:border-color 0.25s; }
+.clickwrap-input:focus { border-color:var(--teal); }
+.clickwrap-input::placeholder { color:var(--dim); }
+.clickwrap-error { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:0.5px; color:#C87A2A; min-height:14px; margin:-12px 0 16px; line-height:1.5; }
+
+@media(max-width:860px) { .epi-block { grid-template-columns:1fr; gap:36px; } .reloj-block { grid-template-columns:1fr; gap:36px; } .epi-aside { border-left:none; border-top:1px solid var(--corp-line); padding:32px 0 0; } }
+@media(max-width:760px) { .hero-catch-rows { grid-template-columns:1fr; gap:0; } .hero-catch-row { border-top:2px solid rgba(159,176,192,0.35); padding:20px 4px; } .hero-topbar { justify-content:center; } .hero-assets-grid { grid-template-columns:1fr; } .opa-grid { grid-template-columns:1fr; } .reloj-quarters { grid-template-columns:1fr; } }
 @media(max-width:960px) { body { overflow-y:auto; height:auto; } .app { grid-template-rows:56px auto; height:auto; } .main { grid-template-columns:1fr; height:auto; overflow:visible; } .soul { border-bottom:1px solid var(--line); height:auto; overflow-y:visible; } .agent-panel { height:70vh; min-height:500px; border-left:none; border-top:1px solid var(--line); } .header-center { display:none; } .counter-pair { display:none; } }
 </style>
 </head>
@@ -286,7 +341,74 @@ header { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center
       </div>
     </div>
 
-    <div class="intro-scroll-hint">↓ DESLIZÁ PARA ENTRAR AL ARCHIVO VIVO</div>
+    <div class="intro-scroll-hint">↓ DESLIZÁ PARA CONOCER EL PROTOCOLO</div>
+  </section>
+
+  <!-- BLOQUES DE PESO -->
+  <section class="intro-extra">
+
+    <!-- EPI — tu interlocutor -->
+    <div class="xblock">
+      <div class="xblock-label">TU INTERLOCUTOR</div>
+      <div class="epi-block">
+        <div>
+          <h2 class="epi-title">EPI no es un asistente. Es quien te lleva <em>de principio a fin</em>.</h2>
+          <p class="epi-text">Detrás de cada registro hay una conversación con EPI. No es un chat más que responde dudas las 24 horas: es la única puerta de entrada al protocolo, y te acompaña en cada paso del camino.</p>
+          <p class="epi-text">Te explica cómo funciona EPIMELEIA, identifica tu activo, calcula sus coordenadas, te presenta las cláusulas, toma tus datos y <strong>te guía hasta dejar tu activo registrado en blockchain — incluida tu adhesión al sistema</strong>. Una sola conversación, de la primera pregunta al alta final.</p>
+        </div>
+        <div class="epi-aside">
+          <div class="epi-steps">
+            <div class="epi-step"><span class="epi-step-num">01</span><span class="epi-step-text"><strong>Te explica</strong> el protocolo y responde todo lo que necesites saber.</span></div>
+            <div class="epi-step"><span class="epi-step-num">02</span><span class="epi-step-text"><strong>Identifica tu activo</strong> y calcula sus coordenadas para el registro.</span></div>
+            <div class="epi-step"><span class="epi-step-num">03</span><span class="epi-step-text"><strong>Toma tus datos</strong> y te presenta las cláusulas para que las aceptes.</span></div>
+            <div class="epi-step"><span class="epi-step-num">04</span><span class="epi-step-text"><strong>Te lleva hasta el alta</strong> y deja tu activo camino a la certificación.</span></div>
+          </div>
+          <a href="#parteDos" class="epi-cta">CONVERSAR CON EPI →</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- OPACIDAD — el núcleo -->
+    <div class="xblock">
+      <div class="xblock-label">EL NÚCLEO DEL PROTOCOLO</div>
+      <div class="opa-block">
+        <p class="opa-statement">EPIMELEIA no vende la posibilidad de verse bien. Vuelve <span class="opa-hi">imposible esconder</span> cuando las cosas fueron de otra manera.</p>
+        <div class="opa-grid">
+          <div class="opa-cell">
+            <div class="opa-cell-tag">CUANDO HAY OBSERVACIÓN</div>
+            <p class="opa-cell-text">El satélite ve, registra, y el resultado queda <strong>grabado en blockchain</strong>, sin que nadie pueda alterarlo después — ni el cliente, ni nosotros.</p>
+          </div>
+          <div class="opa-cell">
+            <div class="opa-cell-tag">CUANDO NO LA HAY</div>
+            <p class="opa-cell-text">Si por nubes, falla técnica o falta de dato no hubo observación válida, eso también se escribe: lo llamamos <strong>hueco de opacidad</strong>. No es un castigo — es una consecuencia automática del contrato.</p>
+          </div>
+        </div>
+        <p class="opa-foot">La ausencia de dato también es un dato. Y tampoco se puede ocultar ni inventar.</p>
+      </div>
+    </div>
+
+    <!-- RELOJ — cadencia trimestral -->
+    <div class="xblock">
+      <div class="xblock-label">EL RELOJ DE EPIMELEIA</div>
+      <div class="reloj-block">
+        <div>
+          <h2 class="reloj-title">Cuatro cierres al año. El mismo para todos.</h2>
+          <p class="reloj-text">EPIMELEIA tiene su propio reloj, y late al compás de las compañías que cotizan en bolsa. El año se divide en cuatro trimestres que <strong>reflejan los balances corporativos de los mercados del mundo</strong>.</p>
+          <p class="reloj-text">El cierre trimestral es fijo e igual para cada activo, sin importar cuándo se haya registrado. Dentro de cada trimestre el satélite sobrevuela las coordenadas entre seis y siete veces; dos observaciones positivas dentro de la ventana constituyen una certificación válida.</p>
+          <p class="reloj-text">No es una foto suelta: es una <strong>trayectoria</strong>, medida con la misma vara, trimestre tras trimestre.</p>
+        </div>
+        <div>
+          <div class="reloj-quarters">
+            <div class="q-cell"><div class="q-code">Q1</div><div class="q-months">ENE · FEB · MAR</div></div>
+            <div class="q-cell"><div class="q-code">Q2</div><div class="q-months">ABR · MAY · JUN</div></div>
+            <div class="q-cell"><div class="q-code">Q3</div><div class="q-months">JUL · AGO · SEP</div></div>
+            <div class="q-cell"><div class="q-code">Q4</div><div class="q-months">OCT · NOV · DIC</div></div>
+          </div>
+          <div class="reloj-clockline">CIERRE FIJO · MISMO RELOJ PARA CADA ACTIVO</div>
+        </div>
+      </div>
+    </div>
+
   </section>
 </div>
 
@@ -405,12 +527,23 @@ header { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center
       <div class="clausula-card"><div class="clausula-num">CLÁUSULA 2</div><div class="clausula-text">Una vez escrito en blockchain, <strong>ningún registro puede ser editado ni eliminado</strong> — ni por el cliente, ni por EPIMELEIA, bajo ninguna circunstancia.</div></div>
       <div class="clausula-card"><div class="clausula-num">CLÁUSULA 3</div><div class="clausula-text">La aceptación de estos términos queda registrada con fecha, hora y hash de confirmación, como evidencia de que esta aceptación ocurrió.</div></div>
     </div>
+    <div class="clickwrap-emails">
+      <div>
+        <label class="clickwrap-field-label" for="clickwrapEmail">CORREO DE TU ORGANIZACIÓN</label>
+        <input type="email" class="clickwrap-input" id="clickwrapEmail" placeholder="nombre@tuorganizacion.com" oninput="toggleClickwrapBtn()" autocomplete="off">
+      </div>
+      <div>
+        <label class="clickwrap-field-label" for="clickwrapEmail2">REPETÍ EL CORREO PARA CONFIRMAR</label>
+        <input type="email" class="clickwrap-input" id="clickwrapEmail2" placeholder="nombre@tuorganizacion.com" oninput="toggleClickwrapBtn()" autocomplete="off">
+      </div>
+    </div>
     <div class="clickwrap-check-row">
       <input type="checkbox" class="clickwrap-checkbox" id="clickwrapCheck" onchange="toggleClickwrapBtn()">
       <label class="clickwrap-check-label" for="clickwrapCheck">He leído y acepto las tres cláusulas del protocolo EPIMELEIA en nombre de mi organización.</label>
     </div>
+    <div class="clickwrap-error" id="clickwrapError"></div>
     <button class="clickwrap-btn" id="clickwrapBtn" disabled>CONFIRMAR Y CONTINUAR</button>
-    <div class="clickwrap-hash-note">Sin necesidad de billetera cripto · El hash de aceptación queda anclado on-chain junto al registro del activo</div>
+    <div class="clickwrap-hash-note">Sin necesidad de billetera cripto · La tarjeta la gestiona PayPal — EPIMELEIA nunca ve ni guarda los datos de tu medio de pago · El hash de aceptación queda anclado on-chain junto al registro</div>
   </div>
 </div>
 <script>
@@ -490,7 +623,7 @@ async function enviar(textoForzado) {
     });
 
     const data      = await res.json();
-    const respuesta = data.content?.[0]?.text || data.error || 'Ocurrió un error del sistema. Por favor, intentá nuevamente.';
+    let respuesta   = data.content?.[0]?.text || data.error || 'Ocurrió un error del sistema. Por favor, intentá nuevamente.';
 
     quitarTyping();
 
@@ -498,8 +631,21 @@ async function enviar(textoForzado) {
       document.getElementById('founderBadge').classList.add('visible');
     }
 
+    // Señal de EPI: ya confirmó todos los datos y corresponde abrir la
+    // ventana de adhesión (cláusulas + medio de pago). Se quita del texto
+    // visible para que el cliente no la vea.
+    let pedirCheckout = false;
+    if (respuesta.includes('[[ABRIR_CHECKOUT]]')) {
+      pedirCheckout = true;
+      respuesta = respuesta.replace(/\[\[ABRIR_CHECKOUT\]\]/g, '').trim();
+    }
+
     historial.push({ role: 'assistant', content: respuesta });
     agregarMensaje('agent', respuesta);
+
+    if (pedirCheckout) {
+      setTimeout(abrirClickwrap, 700);
+    }
 
   } catch(err) {
     quitarTyping();
@@ -776,9 +922,12 @@ function cerrarModalTerms(id) {
 });
 
 function toggleClickwrapBtn() {
-  const check = document.getElementById('clickwrapCheck');
+  const check = document.getElementById('clickwrapCheck').checked;
+  const e1    = document.getElementById('clickwrapEmail').value.trim();
+  const e2    = document.getElementById('clickwrapEmail2').value.trim();
   const btn   = document.getElementById('clickwrapBtn');
-  if (check.checked) { btn.classList.add('enabled'); btn.disabled = false; }
+  const listo = check && e1.length > 0 && e2.length > 0;
+  if (listo) { btn.classList.add('enabled'); btn.disabled = false; }
   else { btn.classList.remove('enabled'); btn.disabled = true; }
 }
 
@@ -787,11 +936,56 @@ function abrirClickwrap() {
   document.body.style.overflow = 'hidden';
 }
 
-document.getElementById('clickwrapBtn').addEventListener('click', function() {
-  if (this.disabled) return;
-  cerrarModalTerms('modalClickwrap');
-  enviar('Acepto los términos del protocolo EPIMELEIA.');
-});
+async function confirmarAdhesion() {
+  const btn = document.getElementById('clickwrapBtn');
+  const err = document.getElementById('clickwrapError');
+  if (btn.disabled) return;
+
+  const email1 = document.getElementById('clickwrapEmail').value.trim().toLowerCase();
+  const email2 = document.getElementById('clickwrapEmail2').value.trim().toLowerCase();
+  const check  = document.getElementById('clickwrapCheck').checked;
+
+  err.textContent = '';
+
+  if (!check) { err.textContent = 'Tenés que aceptar las tres cláusulas para continuar.'; return; }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email1)) { err.textContent = 'Ingresá un correo válido.'; return; }
+  if (email1 !== email2) { err.textContent = 'Los dos correos no coinciden. Revisalos, por favor.'; return; }
+
+  btn.disabled = true;
+  btn.classList.remove('enabled');
+  btn.textContent = 'CREANDO TU ADHESIÓN…';
+
+  try {
+    const res = await fetch('/api/crear-suscripcion', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email1, aceptoClausulas: true })
+    });
+    const data = await res.json();
+
+    if (data.ok && data.approval_url) {
+      // Abrir la ventana de PayPal (Camino A). PayPal gestiona la tarjeta:
+      // EPIMELEIA nunca ve ni guarda el medio de pago.
+      window.open(data.approval_url, '_blank');
+      cerrarModalTerms('modalClickwrap');
+      btn.textContent = 'CONFIRMAR Y CONTINUAR';
+      // Avisar a EPI en la charla, para que retome el hilo del proceso.
+      enviar('Acepté las cláusulas y voy a dejar mi medio de pago en PayPal para iniciar el mes de cortesía.');
+    } else {
+      err.textContent = data.error || 'No se pudo crear la adhesión. Intentá de nuevo en un momento.';
+      btn.disabled = false;
+      btn.classList.add('enabled');
+      btn.textContent = 'CONFIRMAR Y CONTINUAR';
+    }
+  } catch (e) {
+    err.textContent = 'Error de conexión. Intentá de nuevo o escribinos a info@epimeleia.world';
+    btn.disabled = false;
+    btn.classList.add('enabled');
+    btn.textContent = 'CONFIRMAR Y CONTINUAR';
+  }
+}
+
+document.getElementById('clickwrapBtn').addEventListener('click', confirmarAdhesion);
 </script>
 
 </body>
