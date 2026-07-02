@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>EPIMELEIA · Mapa del activo</title>
+
+<link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+
+<style>
+  :root {
+    --bg: #05070a; --panel: rgba(8, 12, 18, 0.92); --line: rgba(0, 240, 255, 0.22);
+    --cyan: #00f0ff; --cyan-dim: #7fd6df; --text: #dfeef0; --muted: #7d8b90;
+    --warn: #ffd24a; --lock: #4ade80;
+    --mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font-family: var(--mono); overflow: hidden; }
+  #app { position: fixed; inset: 0; }
+  #map { position: absolute; inset: 0; background: var(--bg); }
+
+  #panel {
+    position: absolute; top: 16px; left: 16px; width: 320px;
+    max-width: calc(100vw - 32px); max-height: calc(100vh - 32px); overflow-y: auto;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+    backdrop-filter: blur(6px); padding: 18px; z-index: 2; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.55);
+  }
+  .brand { display: flex; align-items: baseline; gap: 8px; letter-spacing: 0.14em; margin-bottom: 2px; }
+  .brand b { color: var(--cyan); font-weight: 700; font-size: 15px; }
+  .brand span { color: var(--muted); font-size: 10px; letter-spacing: 0.2em; }
+  .subtitle { color: var(--cyan-dim); font-size: 11px; letter-spacing: 0.06em; margin: 0 0 14px; line-height: 1.5; }
+
+  .search-row { display: flex; gap: 6px; margin-bottom: 14px; }
+  .search-row input { flex: 1; min-width: 0; background: transparent; border: 1px solid var(--line); border-radius: 6px; color: var(--text); font-family: var(--mono); font-size: 12px; padding: 9px 10px; }
+  .search-row input::placeholder { color: var(--muted); }
+  .search-row input:focus { outline: 2px solid var(--cyan); border-color: transparent; }
+  .search-row button { background: transparent; border: 1px solid var(--line); color: var(--cyan); border-radius: 6px; padding: 0 12px; font-family: var(--mono); cursor: pointer; }
+  .search-row button:hover { border-color: var(--cyan); }
+
+  .step { font-size: 11px; line-height: 1.6; color: var(--muted); border-left: 2px solid var(--line); padding-left: 10px; margin: 0 0 14px; }
+  .step b { color: var(--cyan-dim); }
+
+  .readout { border: 1px solid var(--line); border-radius: 8px; padding: 12px; margin-bottom: 14px; }
+  .readout .label { font-size: 9px; letter-spacing: 0.22em; color: var(--muted); }
+  .readout .value { font-size: 26px; font-weight: 700; color: var(--cyan); margin-top: 4px; line-height: 1; }
+  .readout .value small { font-size: 13px; color: var(--cyan-dim); font-weight: 500; }
+  .readout .sub { font-size: 10px; color: var(--muted); margin-top: 6px; }
+
+  .btns { display: flex; flex-direction: column; gap: 8px; }
+  button.action { font-family: var(--mono); font-size: 12px; letter-spacing: 0.08em; padding: 11px 12px; border-radius: 7px; cursor: pointer; border: 1px solid var(--line); background: transparent; color: var(--text); transition: border-color 0.15s, background 0.15s, color 0.15s; }
+  button.action:hover:not(:disabled) { border-color: var(--cyan); color: var(--cyan); }
+  button.action:disabled { opacity: 0.35; cursor: not-allowed; }
+  button.primary { background: var(--cyan); color: #04262b; border-color: var(--cyan); font-weight: 700; }
+  button.primary:hover:not(:disabled) { background: #5df6ff; color: #04262b; }
+  button.action:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+
+  .warn { display: none; margin-top: 12px; font-size: 11px; line-height: 1.5; color: var(--warn); border: 1px solid rgba(255, 210, 74, 0.4); border-radius: 7px; padding: 10px; }
+
+  #confirmed { display: none; }
+  #confirmed .lock-head { display: flex; align-items: center; gap: 8px; color: var(--lock); font-size: 12px; letter-spacing: 0.1em; margin-bottom: 10px; }
+  #confirmed .lock-head .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--lock); box-shadow: 0 0 10px var(--lock); }
+  .coords { font-size: 10px; line-height: 1.6; color: var(--cyan-dim); background: rgba(0, 240, 255, 0.05); border: 1px solid var(--line); border-radius: 7px; padding: 10px; max-height: 180px; overflow: auto; white-space: pre; margin-bottom: 12px; }
+  .coords-label { font-size: 9px; letter-spacing: 0.2em; color: var(--muted); margin-bottom: 6px; }
+
+  .mapboxgl-ctrl-attrib { background: rgba(5,7,10,0.7) !important; }
+  .mapboxgl-ctrl-attrib a { color: var(--cyan-dim) !important; }
+
+  @media (max-width: 520px) { #panel { width: calc(100vw - 24px); top: 12px; left: 12px; padding: 14px; } .readout .value { font-size: 22px; } }
+  @media (prefers-reduced-motion: reduce) { button.action { transition: none; } }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="map"></div>
+
+  <div id="panel">
+    <div class="brand"><b>EPIMELEIA</b><span>MAPA DEL ACTIVO</span></div>
+    <p class="subtitle">Dibujá el contorno real de tu terreno sobre la imagen del satélite. Este dibujo es la ubicación que se va a certificar.</p>
+
+    <div class="search-row">
+      <input id="search" type="text" placeholder="Buscá tu lugar (dirección, ciudad…)" aria-label="Buscar lugar" />
+      <button id="searchBtn" type="button" aria-label="Buscar">Ir</button>
+    </div>
+
+    <div id="drawing">
+      <p class="step" id="hint">
+        <b>1.</b> Acercate hasta ver tu terreno.<br />
+        <b>2.</b> Tocá <b>Dibujar contorno</b>.<br />
+        <b>3.</b> Marcá cada límite tocando el mapa (mínimo 3 puntos).<br />
+        <b>4.</b> Cuando esté bien, tocá <b>Confirmar activo</b>.
+      </p>
+
+      <div class="readout">
+        <div class="label">SUPERFICIE</div>
+        <div class="value" id="areaValue">— <small>ha</small></div>
+        <div class="sub" id="vtxSub">Todavía no dibujaste nada.</div>
+      </div>
+
+      <div class="btns">
+        <button class="action" id="drawBtn" type="button">Dibujar contorno</button>
+        <button class="action" id="undoBtn" type="button" disabled>Deshacer último punto</button>
+        <button class="action" id="clearBtn" type="button" disabled>Borrar y empezar de nuevo</button>
+        <button class="action primary" id="confirmBtn" type="button" disabled>Confirmar activo</button>
+      </div>
+
+      <div class="warn" id="warnBig">El área marcada es muy grande. ¿Seguro que es esto? Podés seguir igual, o borrar y ajustar.</div>
+    </div>
+
+    <div id="confirmed">
+      <div class="lock-head"><span class="dot"></span> CONTORNO CONFIRMADO</div>
+      <p class="step" style="border-color: rgba(74,222,128,0.4);">Este es el lugar que se va a certificar. Queda fijo: el sistema lo usa tal cual, sin recalcular ni redondear.</p>
+      <div class="readout">
+        <div class="label">SUPERFICIE CONFIRMADA</div>
+        <div class="value" id="areaValueLocked">— <small>ha</small></div>
+        <div class="sub" id="vtxSubLocked"></div>
+      </div>
+      <div class="coords-label">COORDENADAS (LO QUE LEE EL SISTEMA · GeoJSON)</div>
+      <div class="coords" id="coordsOut" tabindex="0"></div>
+      <div class="btns"><button class="action" id="editBtn" type="button">Volver a dibujar</button></div>
+    </div>
+  </div>
+</div>
+
+<script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  // Token restringido a epimeleia.world
+  mapboxgl.accessToken = 'pk.eyJ1IjoiZXBpbWVsZWlhIiwiYSI6ImNtcjN3Z3JlYTA1eGYzNG9qMDFraGFsMWoifQ.-6NTOmDqo8fC8M677eD7sQ';
+
+  var map = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/mapbox/satellite-streets-v12',
+    center: [-58.3816, -34.6037],
+    zoom: 4
+  });
+
+  map.addControl(new mapboxgl.NavigationControl(), 'top-right');
+  map.addControl(new mapboxgl.GeolocateControl({
+    positionOptions: { enableHighAccuracy: true },
+    trackUserLocation: false,
+    showUserLocation: true
+  }), 'top-right');
+
+  // --- Estado del dibujo ---
+  var drawing = false, points = [], confirmed = false, BIG_HA = 50000;
+
+  var el = function (id) { return document.getElementById(id); };
+  var drawBtn = el('drawBtn'), undoBtn = el('undoBtn'), clearBtn = el('clearBtn'), confirmBtn = el('confirmBtn'), editBtn = el('editBtn');
+  var warnBig = el('warnBig'), hint = el('hint');
+  var areaValue = el('areaValue'), vtxSub = el('vtxSub');
+  var areaValueLocked = el('areaValueLocked'), vtxSubLocked = el('vtxSubLocked'), coordsOut = el('coordsOut');
+  var drawingView = el('drawing'), confirmedView = el('confirmed');
+
+  function geodesicArea(coords) { // coords: [{lng,lat}]
+    var n = coords.length, area = 0, d2r = Math.PI / 180, p1, p2;
+    if (n < 3) return 0;
+    for (var i = 0; i < n; i++) {
+      p1 = coords[i]; p2 = coords[(i + 1) % n];
+      area += ((p2.lng - p1.lng) * d2r) * (2 + Math.sin(p1.lat * d2r) + Math.sin(p2.lat * d2r));
+    }
+    return Math.abs(area * 6378137.0 * 6378137.0 / 2.0);
+  }
+  function haText(m2) {
+    var ha = m2 / 10000;
+    if (ha >= 100) return ha.toLocaleString('es-AR', { maximumFractionDigits: 0 });
+    return ha.toLocaleString('es-AR', { maximumFractionDigits: 2 });
+  }
+
+  function buildFC(color) {
+    var feats = [];
+    if (points.length >= 3) {
+      var ring = points.map(function (p) { return [p.lng, p.lat]; });
+      ring.push([points[0].lng, points[0].lat]);
+      feats.push({ type: 'Feature', geometry: { type: 'Polygon', coordinates: [ring] }, properties: {} });
+    } else if (points.length >= 2) {
+      feats.push({ type: 'Feature', geometry: { type: 'LineString', coordinates: points.map(function (p) { return [p.lng, p.lat]; }) }, properties: {} });
+    }
+    points.forEach(function (p) { feats.push({ type: 'Feature', geometry: { type: 'Point', coordinates: [p.lng, p.lat] }, properties: {} }); });
+    return { type: 'FeatureCollection', features: feats };
+  }
+
+  function refreshSource() {
+    var src = map.getSource('draw');
+    if (src) src.setData(buildFC());
+  }
+
+  function refreshPanel() {
+    var m2 = points.length >= 3 ? geodesicArea(points) : 0;
+    areaValue.innerHTML = (points.length >= 3 ? haText(m2) : '—') + ' <small>ha</small>';
+    vtxSub.textContent = points.length + ' punto' + (points.length === 1 ? '' : 's') + ' marcados' + (points.length < 3 ? ' · faltan al menos ' + (3 - points.length) : '') + '.';
+    undoBtn.disabled = points.length === 0; clearBtn.disabled = points.length === 0; confirmBtn.disabled = points.length < 3;
+    warnBig.style.display = (m2 / 10000 > BIG_HA) ? 'block' : 'none';
+  }
+
+  map.on('load', function () {
+    map.addSource('draw', { type: 'geojson', data: buildFC() });
+    map.addLayer({ id: 'draw-fill', type: 'fill', source: 'draw', filter: ['==', '$type', 'Polygon'], paint: { 'fill-color': '#00f0ff', 'fill-opacity': 0.12 } });
+    map.addLayer({ id: 'draw-line', type: 'line', source: 'draw', filter: ['in', '$type', 'Polygon', 'LineString'], paint: { 'line-color': '#00f0ff', 'line-width': 2 } });
+    map.addLayer({ id: 'draw-verts', type: 'circle', source: 'draw', filter: ['==', '$type', 'Point'], paint: { 'circle-radius': 5, 'circle-color': '#05070a', 'circle-stroke-color': '#00f0ff', 'circle-stroke-width': 2 } });
+  });
+
+  map.on('click', function (e) {
+    if (!drawing || confirmed) return;
+    points.push(e.lngLat);
+    refreshSource(); refreshPanel();
+  });
+
+  drawBtn.addEventListener('click', function () {
+    drawing = true; drawBtn.disabled = true;
+    map.getCanvas().style.cursor = 'crosshair';
+    hint.innerHTML = '<b>Dibujando.</b> Tocá el mapa para marcar cada límite. Necesitás al menos 3 puntos. Cuando esté bien, tocá <b>Confirmar activo</b>.';
+  });
+
+  undoBtn.addEventListener('click', function () {
+    if (!points.length) return;
+    points.pop(); refreshSource(); refreshPanel();
+  });
+
+  function resetAll() {
+    drawing = false; confirmed = false; points = [];
+    map.getCanvas().style.cursor = '';
+    if (map.getLayer('draw-fill')) { map.setPaintProperty('draw-fill', 'fill-color', '#00f0ff'); map.setPaintProperty('draw-line', 'line-color', '#00f0ff'); }
+    refreshSource();
+    drawBtn.disabled = false;
+    areaValue.innerHTML = '— <small>ha</small>'; vtxSub.textContent = 'Todavía no dibujaste nada.';
+    undoBtn.disabled = true; clearBtn.disabled = true; confirmBtn.disabled = true; warnBig.style.display = 'none';
+    hint.innerHTML = '<b>1.</b> Acercate hasta ver tu terreno.<br /><b>2.</b> Tocá <b>Dibujar contorno</b>.<br /><b>3.</b> Marcá cada límite tocando el mapa (mínimo 3 puntos).<br /><b>4.</b> Cuando esté bien, tocá <b>Confirmar activo</b>.';
+  }
+  clearBtn.addEventListener('click', resetAll);
+
+  confirmBtn.addEventListener('click', function () {
+    if (points.length < 3) return;
+    var m2 = geodesicArea(points);
+    var ring = points.map(function (p) { return [p.lng, p.lat]; });
+    ring.push([points[0].lng, points[0].lat]);
+    var geojson = {
+      type: 'Feature',
+      geometry: { type: 'Polygon', coordinates: [ring] },
+      properties: { superficie_ha: +(m2 / 10000).toFixed(4), vertices: points.length, confirmado_en: new Date().toISOString() }
+    };
+
+    areaValueLocked.innerHTML = haText(m2) + ' <small>ha</small>';
+    vtxSubLocked.textContent = points.length + ' puntos · contorno cerrado';
+    coordsOut.textContent = JSON.stringify(geojson, null, 2);
+
+    confirmed = true; drawing = false;
+    map.getCanvas().style.cursor = '';
+    // Pinta el contorno confirmado en verde y saca los vertices
+    map.setPaintProperty('draw-fill', 'fill-color', '#4ade80');
+    map.setPaintProperty('draw-line', 'line-color', '#4ade80');
+    var fc = buildFC();
+    fc.features = fc.features.filter(function (f) { return f.geometry.type === 'Polygon'; });
+    map.getSource('draw').setData(fc);
+
+    // Encuadra el activo
+    var b = new mapboxgl.LngLatBounds();
+    points.forEach(function (p) { b.extend([p.lng, p.lat]); });
+    map.fitBounds(b, { padding: 60, duration: 600 });
+
+    drawingView.style.display = 'none'; confirmedView.style.display = 'block';
+    // Para el sistema real: window.parent.postMessage({ tipo: 'activo_confirmado', geojson: geojson }, '*');
+  });
+
+  editBtn.addEventListener('click', function () {
+    confirmedView.style.display = 'none'; drawingView.style.display = 'block';
+    coordsOut.textContent = ''; resetAll();
+  });
+
+  function doSearch() {
+    var q = el('search').value.trim(); if (!q) return;
+    fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + encodeURIComponent(q), { headers: { 'Accept': 'application/json' } })
+      .then(function (r) { return r.json(); })
+      .then(function (d) { if (d && d.length) map.flyTo({ center: [parseFloat(d[0].lon), parseFloat(d[0].lat)], zoom: 15 }); else alert('No encontré ese lugar. Probá con otro nombre, o acercate a mano con el mapa.'); })
+      .catch(function () { alert('No pude buscar ahora. Podés acercarte a mano con el mapa igual.'); });
+  }
+  el('searchBtn').addEventListener('click', doSearch);
+  el('search').addEventListener('keydown', function (e) { if (e.key === 'Enter') doSearch(); });
+})();
+</script>
+</body>
+</html>
