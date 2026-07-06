@@ -3,6 +3,8 @@
  * ─────────────────────────────────────────────
  * Toda la lógica de consulta a Sentinel/Copernicus (PV-L1).
  * Ajuste 21: OAuth client_credentials (nuevo método Copernicus 2026).
+ * Ajuste 22: medirIndicadores() — mide el NÚMERO REAL de cada índice
+ *            sobre el polígono del cliente vía Statistical API.
  */
 
 const axios    = require('axios');
@@ -210,6 +212,249 @@ async function consultarTripleFuente(datosActivo, fuentes) {
   };
 }
 
+// ═══════════════════════════════════════════════════════════════
+//  AJUSTE 22 · EL ENSAMBLADO — MEDICIÓN REAL SOBRE EL POLÍGONO
+//  ───────────────────────────────────────────────────────────
+//  Agarra el polígono que dibujó el cliente y le pide a Copernicus
+//  (Sentinel Hub Statistical API) el NÚMERO medido de cada índice
+//  que corresponde al tipo de recurso. No descarga la imagen:
+//  Copernicus calcula la estadística de su lado y devuelve el valor.
+//  Reusa el mismo login OAuth que ya usa consultarSentinel().
+//  Doc oficial:
+//  https://documentation.dataspace.copernicus.eu/APIs/SentinelHub/Statistical.html
+// ═══════════════════════════════════════════════════════════════
+
+const STATS_URL = 'https://sh.dataspace.copernicus.eu/api/v1/statistics';
+
+// Todo índice acá es (num - den) / (num + den). Estas son las bandas.
+const _formulaIndice = {
+  NDVI: { num: 'B08', den: 'B04' }, // vegetación
+  NDWI: { num: 'B03', den: 'B08' }, // agua (McFeeters)
+  NDMI: { num: 'B08', den: 'B11' }, // humedad
+  NDTI: { num: 'B04', den: 'B03' }, // turbidez/sedimentos (aprox.)
+  NDBI: { num: 'B11', den: 'B08' }, // construido/pelado (aprox.)
+};
+
+// Construye el evalscript v3 para un índice, excluyendo nubes del cálculo.
+function _evalscript(indice) {
+  const f = _formulaIndice[indice];
+  const bandas = Array.from(new Set([f.num, f.den, 'SCL', 'dataMask']));
+  return `//VERSION=3
+function setup() {
+  return {
+    input: [{ bands: [${bandas.map(b => `"${b}"`).join(', ')}] }],
+    output: [
+      { id: "data",     bands: 1, sampleType: "FLOAT32" },
+      { id: "dataMask", bands: 1 }
+    ]
+  };
+}
+function evaluatePixel(s) {
+  var num = s.${f.num};
+  var den = s.${f.den};
+  var indice = (num + den) === 0 ? 0 : (num - den) / (num + den);
+  var valido = (num + den) === 0 ? 0 : 1;
+  // Excluir sombra de nube (3), nube media (8), nube alta (9) y cirros (10)
+  var sinNube = (s.SCL === 3 || s.SCL === 8 || s.SCL === 9 || s.SCL === 10) ? 0 : 1;
+  return { data: [indice], dataMask: [s.dataMask * valido * sinNube] };
+}`;
+}
+
+// Devuelve la geometría a medir: el polígono real del cliente si existe,
+// o un cuadrado de respaldo desde lat/lon/radio si todavía no hay polígono.
+function _geometriaDeActivo(datosActivo) {
+  const g = datosActivo.geometria || datosActivo.geoJSON || datosActivo.poligono;
+  if (g && g.type === 'Polygon' && Array.isArray(g.coordinates)) return g;
+  if (g && g.type === 'Feature' && g.geometry?.type === 'Polygon') return g.geometry;
+
+  const { latitud, longitud, radioKm } = datosActivo;
+  const d = (radioKm || 1) / 111;
+  return {
+    type: 'Polygon',
+    coordinates: [[
+      [longitud - d, latitud - d],
+      [longitud + d, latitud - d],
+      [longitud + d, latitud + d],
+      [longitud - d, latitud + d],
+      [longitud - d, latitud - d],
+    ]],
+  };
+}
+
+// De la respuesta de la Statistical API, toma la pasada VÁLIDA más reciente.
+function _ultimaMedicionValida(intervalos) {
+  const validos = (intervalos || [])
+    .map(it => {
+      const st = it?.outputs?.data?.bands?.B0?.stats;
+      if (!st || !isFinite(st.mean)) return null;
+      const muestras = st.sampleCount || 0;
+      const nodata   = st.noDataCount || 0;
+      const total    = muestras + nodata;
+      if (muestras <= 0) return null;
+      return {
+        fecha:      it.interval?.from || null,
+        mean:       st.mean,
+        min:        st.min,
+        max:        st.max,
+        stDev:      st.stDev,
+        calidadPct: total > 0 ? Math.round((muestras / total) * 100) : 0,
+      };
+    })
+    .filter(Boolean)
+    .sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+
+  return validos.length ? validos[validos.length - 1] : null;
+}
+
+// Llama a la Statistical API por un índice y devuelve su última medición.
+async function _pedirEstadistica(indice, geometria, token, dias = 30) {
+  const desde = new Date(Date.now() - dias * 24 * 3600 * 1000).toISOString();
+  const hasta = new Date().toISOString();
+
+  const body = {
+    input: {
+      bounds: {
+        geometry: geometria,
+        properties: { crs: 'http://www.opengis.net/def/crs/EPSG/0/4326' },
+      },
+      data: [{
+        type: 'sentinel-2-l2a',
+        dataFilter: { mosaickingOrder: 'mostRecent' },
+      }],
+    },
+    aggregation: {
+      timeRange: { from: desde, to: hasta },
+      aggregationInterval: { of: 'P1D' },
+      evalscript: _evalscript(indice),
+      // bounds en grados (EPSG:4326) → resolución en grados. ~0.0001° ≈ 11 m.
+      resx: 0.0001,
+      resy: 0.0001,
+    },
+  };
+
+  const resp = await axios.post(STATS_URL, body, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type':  'application/json',
+      'Accept':        'application/json',
+    },
+    timeout: 20000,
+  });
+
+  return _ultimaMedicionValida(resp.data?.data || []);
+}
+
+// Traduce el número técnico a una frase entendible (orientativa).
+function _interpretar(indice, valor) {
+  if (valor == null) return 'sin dato';
+  switch (indice) {
+    case 'NDVI':
+      if (valor < 0.1) return 'suelo desnudo o sin vegetación';
+      if (valor < 0.3) return 'vegetación escasa o estresada';
+      if (valor < 0.6) return 'vegetación moderada';
+      return 'vegetación densa y sana';
+    case 'NDWI':
+      return valor > 0 ? 'presencia de agua abierta' : 'sin agua abierta';
+    case 'NDMI':
+      if (valor < -0.2) return 'muy seco';
+      if (valor < 0.1)  return 'humedad baja';
+      if (valor < 0.4)  return 'humedad media';
+      return 'húmedo';
+    case 'NDTI':
+      return valor > 0 ? 'agua con carga de sedimentos' : 'agua clara';
+    case 'NDBI':
+      return valor > 0 ? 'superficie construida o de suelo pelado' : 'superficie natural';
+    default:
+      return '';
+  }
+}
+
+/**
+ * EL ENSAMBLADO. Punto de entrada único.
+ * Toma un activo (con su polígono y su tipo) y devuelve los números
+ * REALES medidos por Sentinel-2 sobre ese polígono, ya interpretados.
+ *
+ * @param {Object} datosActivo
+ * @param {number} datosActivo.activoId
+ * @param {number} datosActivo.tipo            - índice 0..7 (ver config)
+ * @param {Object} [datosActivo.geometria]     - GeoJSON Polygon del mapa
+ * @param {number} [datosActivo.latitud]       - respaldo si no hay polígono
+ * @param {number} [datosActivo.longitud]
+ * @param {number} [datosActivo.radioKm]
+ * @returns {Object|null} { activoId, satelite, geometria, timestamp, mediciones[] }
+ */
+async function medirIndicadores(datosActivo) {
+  const { activoId, tipo } = datosActivo;
+  const cfg = config.indicadoresPorTipo[tipo] || config.indicadoresPorTipo[7];
+  const geometria = _geometriaDeActivo(datosActivo);
+
+  log('MEDIR', `Midiendo indicadores sobre el polígono`, { activoId, tipo: cfg.nombre });
+
+  // Modo test: números simulados, no golpea la API real.
+  if (config.modoTest) {
+    const mediciones = cfg.indicadores.map(ind => {
+      const info  = config.indicesDisponibles[ind.indice] || {};
+      const valor = +(((Math.random() * 0.8) - 0.1).toFixed(3));
+      return {
+        clave: ind.clave, etiqueta: ind.etiqueta, indice: ind.indice,
+        confianza: info.confianza || 'medido',
+        valor, fecha: new Date().toISOString(), calidadPct: 100,
+        interpretacion: _interpretar(ind.indice, valor), simulado: true,
+      };
+    });
+    return { activoId, satelite: 'Sentinel-2 (MOCK)', geometria, timestamp: new Date().toISOString(), mediciones };
+  }
+
+  let token;
+  try {
+    token = await _getTokenCopernicus();
+  } catch (err) {
+    log('ERROR', `No se pudo autenticar contra Copernicus: ${err.message}`, { activoId });
+    return null;
+  }
+
+  // Índices únicos (para no pedir dos veces el mismo).
+  const indicesUnicos = Array.from(new Set(cfg.indicadores.map(i => i.indice)));
+  const cacheIndice = {};
+
+  for (const indice of indicesUnicos) {
+    try {
+      cacheIndice[indice] = await _pedirEstadistica(indice, geometria, token);
+      await new Promise(r => setTimeout(r, 400)); // respiro entre llamadas
+    } catch (err) {
+      log('ERROR', `Fallo midiendo ${indice}: ${err.response?.status || ''} ${err.message}`, { activoId });
+      cacheIndice[indice] = null;
+    }
+  }
+
+  const mediciones = cfg.indicadores.map(ind => {
+    const info = config.indicesDisponibles[ind.indice] || {};
+    const m    = cacheIndice[ind.indice];
+    return {
+      clave:          ind.clave,
+      etiqueta:       ind.etiqueta,
+      indice:         ind.indice,
+      confianza:      info.confianza || 'medido',
+      valor:          m ? +m.mean.toFixed(3) : null,
+      fecha:          m ? m.fecha : null,
+      calidadPct:     m ? m.calidadPct : null,
+      interpretacion: m ? _interpretar(ind.indice, m.mean) : 'sin dato satelital en la ventana',
+    };
+  });
+
+  const conDato = mediciones.filter(m => m.valor !== null).length;
+  log('MEDIR', `Medición terminada`, { activoId, indicadores: mediciones.length, conDato });
+
+  return {
+    activoId,
+    satelite:  'Sentinel-2 L2A',
+    fuente:    'ESA_COPERNICUS_DATASPACE',
+    geometria,
+    timestamp: new Date().toISOString(),
+    mediciones,
+  };
+}
+
 // ─── Helpers privados ───────────────────────────────────────────
 
 async function _getTokenCopernicus() {
@@ -274,4 +519,5 @@ module.exports = {
   evaluarNubosidad,
   generarHashEvidencia,
   generarMetadataURI,
+  medirIndicadores,
 };
