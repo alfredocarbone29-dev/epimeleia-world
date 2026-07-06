@@ -80,17 +80,58 @@ const config = {
     transferencia:  400000,
   },
 
-  // ── Indicadores satelitales por tipo de actividad ─
-  // El tipo declarado por el activo determina qué bandas analiza el oráculo
+  // ── Índices espectrales que EPIMELEIA es CAPAZ de medir ────────────
+  // Fuente única de lo que el satélite realmente certifica. Si un fenómeno
+  // no está acá, Sentinel-2 no lo mide y NO se informa: no se inventa el dato.
+  //   confianza 'medido'       → índice directo, número duro.
+  //   confianza 'aproximacion' → estimación honesta, se informa como tal.
+  indicesDisponibles: {
+    NDVI: { etiqueta: 'Vigor de la vegetación',        bandas: 'B04 RED / B08 NIR',   confianza: 'medido' },
+    NDWI: { etiqueta: 'Presencia y nivel de agua',     bandas: 'B03 GREEN / B08 NIR', confianza: 'medido' },
+    NDMI: { etiqueta: 'Humedad de vegetación y suelo', bandas: 'B08 NIR / B11 SWIR',  confianza: 'medido' },
+    NDTI: { etiqueta: 'Turbidez y sedimentos del agua',bandas: 'B03 GREEN / B04 RED', confianza: 'aproximacion' },
+    NDBI: { etiqueta: 'Superficie construida o pelada',bandas: 'B08 NIR / B11 SWIR',  confianza: 'aproximacion' },
+  },
+
+  // ── Indicadores por tipo de actividad ─────────────
+  // SOLO lo que Sentinel-2 mide de verdad. Se retiró todo lo que exigía un
+  // satélite térmico (temperatura superficial), uno atmosférico (emisiones)
+  // o que no se observa desde el espacio (consumo energético, lixiviados).
   indicadoresPorTipo: {
-    0: { nombre: 'MINERIA',     bandas: 'B11 SWIR/B04 RED',        indicadores: ['expansion_area', 'sedimentos_agua', 'cobertura_vegetal'] },
-    1: { nombre: 'FORESTAL',    bandas: 'B04/B08 NDVI',            indicadores: ['ndvi', 'cobertura_vegetal', 'deforestacion'] },
-    2: { nombre: 'NAVAL',       bandas: 'B03 GREEN/B11 SWIR',      indicadores: ['area_portuaria', 'temperatura_superficial', 'turbidez_agua'] },
-    3: { nombre: 'INDUSTRIAL',  bandas: 'B11 SWIR/B12 SWIR2',      indicadores: ['temperatura_superficial', 'emisiones', 'expansion_area'] },
-    4: { nombre: 'DATA_CENTER', bandas: 'B11 SWIR/B10 CIRRUS',     indicadores: ['temperatura_superficial', 'consumo_energetico', 'area_construccion'] },
-    5: { nombre: 'RESIDUOS',    bandas: 'B11 SWIR/B09 NIR',        indicadores: ['expansion_area', 'lixiviados', 'temperatura_superficial'] },
-    6: { nombre: 'HIDROVIA',    bandas: 'B03 GREEN/B04 RED/B08 NIR',indicadores: ['nivel_hidrico', 'turbidez_agua', 'sedimentos', 'cobertura_vegetal'] },
-    7: { nombre: 'OTRO',        bandas: 'B04/B08 NDVI',            indicadores: ['cobertura_vegetal', 'temperatura_superficial'] },
+    0: { nombre: 'MINERIA',     bandas: 'B03/B04/B08/B11', indicadores: [
+           { clave: 'cobertura_vegetal',  etiqueta: 'Cobertura vegetal',         indice: 'NDVI' },
+           { clave: 'expansion_area',     etiqueta: 'Expansión del área',        indice: 'NDBI' },
+           { clave: 'sedimentos_agua',    etiqueta: 'Sedimentos en el agua',     indice: 'NDTI' },
+         ] },
+    1: { nombre: 'FORESTAL',    bandas: 'B04/B08/B11',     indicadores: [
+           { clave: 'cobertura_vegetal',  etiqueta: 'Cobertura vegetal (NDVI)',  indice: 'NDVI' },
+           { clave: 'humedad_vegetal',    etiqueta: 'Humedad de la vegetación',  indice: 'NDMI' },
+         ] },
+    2: { nombre: 'NAVAL',       bandas: 'B03/B04/B08/B11', indicadores: [
+           { clave: 'area_portuaria',     etiqueta: 'Área portuaria construida', indice: 'NDBI' },
+           { clave: 'turbidez_agua',      etiqueta: 'Turbidez del agua',         indice: 'NDTI' },
+         ] },
+    3: { nombre: 'INDUSTRIAL',  bandas: 'B04/B08/B11',     indicadores: [
+           { clave: 'expansion_area',     etiqueta: 'Expansión del área',        indice: 'NDBI' },
+           { clave: 'cobertura_vegetal',  etiqueta: 'Cobertura vegetal lindante',indice: 'NDVI' },
+         ] },
+    4: { nombre: 'DATA_CENTER', bandas: 'B04/B08/B11',     indicadores: [
+           { clave: 'area_construccion',  etiqueta: 'Área construida',           indice: 'NDBI' },
+           { clave: 'cobertura_vegetal',  etiqueta: 'Cobertura vegetal lindante',indice: 'NDVI' },
+         ] },
+    5: { nombre: 'RESIDUOS',    bandas: 'B04/B08/B11',     indicadores: [
+           { clave: 'expansion_area',     etiqueta: 'Expansión del área',        indice: 'NDBI' },
+           { clave: 'cobertura_vegetal',  etiqueta: 'Cobertura vegetal lindante',indice: 'NDVI' },
+         ] },
+    6: { nombre: 'HIDROVIA',    bandas: 'B03/B04/B08',     indicadores: [
+           { clave: 'nivel_hidrico',      etiqueta: 'Nivel / presencia de agua', indice: 'NDWI' },
+           { clave: 'turbidez_sedimentos',etiqueta: 'Turbidez y sedimentos',     indice: 'NDTI' },
+           { clave: 'cobertura_vegetal',  etiqueta: 'Cobertura vegetal ribereña',indice: 'NDVI' },
+         ] },
+    7: { nombre: 'OTRO',        bandas: 'B04/B08/B11',     indicadores: [
+           { clave: 'cobertura_vegetal',  etiqueta: 'Cobertura vegetal (NDVI)',  indice: 'NDVI' },
+           { clave: 'humedad',            etiqueta: 'Humedad',                   indice: 'NDMI' },
+         ] },
   },
 
   // ── Cron schedules ────────────────────────────────
@@ -126,5 +167,3 @@ function validarConfig() {
   if (!config.sentinel.apiKey && !config.modoTest) errores.push('SENTINEL_API_KEY no definida (requerida en producción)');
   return errores;
 }
-
-module.exports = { config, validarConfig };
