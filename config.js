@@ -167,3 +167,5 @@ function validarConfig() {
   if (!config.sentinel.apiKey && !config.modoTest) errores.push('SENTINEL_API_KEY no definida (requerida en producción)');
   return errores;
 }
+
+module.exports = { config, validarConfig };
