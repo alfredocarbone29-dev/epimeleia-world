@@ -243,9 +243,25 @@ function construirHTML(datos) {
 
 // ── Render HTML → PDF con Chrome ─────────────────────────────
 
+// Busca el ejecutable de Chrome que quedó en la cache de puppeteer.
+function _rutaChrome() {
+  const base = '/root/.cache/puppeteer/chrome';
+  try {
+    const versiones = fs.readdirSync(base).filter(n => n.startsWith('linux-'));
+    if (versiones.length) {
+      // Toma la primera carpeta de versión disponible
+      const carpeta = versiones.sort().reverse()[0];
+      const ruta = path.join(base, carpeta, 'chrome-linux64', 'chrome');
+      if (fs.existsSync(ruta)) return ruta;
+    }
+  } catch (e) { /* si no está, dejamos que puppeteer intente por su cuenta */ }
+  return undefined; // undefined = que puppeteer resuelva solo
+}
+
 async function generarPDF(html) {
   const browser = await puppeteer.launch({
     headless: true,
+    executablePath: _rutaChrome(),
     args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
   });
   try {
