@@ -136,8 +136,21 @@ const config = {
 
   // ── Cron schedules ────────────────────────────────
   cron: {
-    // Ventana satelital cada 15 días: días 1 y 15 de cada mes a las 06:00 UTC
-    ventanaSatelital:   '0 6 1,15 * *',
+    // ── AJUSTE 24 — El reloj de dos ritmos ──────────────────────
+    // Ventana satelital quincenal: días 2 y 16 de cada mes, 06:00 UTC.
+    //
+    // ¿Por qué 2 y 16, y no 1 y 15?
+    // El satélite no publica al instante: Sentinel-2 L2A tarda horas en
+    // estar disponible. Corriendo el día 15, la pasada del 15 todavía no
+    // existe. Emitiendo el 16 se garantiza incluirla.
+    //
+    // Cada corrida mide la quincena YA CERRADA:
+    //   día 16 → mide del 1 al 15 de ese mes
+    //   día  2 → mide del 16 al fin del mes anterior
+    //
+    // Eso da exactamente 6 ventanas por trimestre, que es el máximo
+    // que acepta el contrato (require(ev.length < 6)).
+    ventanaSatelital:   '0 6 2,16 * *',
     // Continuidad: diaria a medianoche UTC
     continuidad:        '0 0 * * *',
     // Verificación de estado: cada hora
