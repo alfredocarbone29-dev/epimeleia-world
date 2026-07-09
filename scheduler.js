@@ -2,7 +2,56 @@
  * EPIMELEIA V3.4 — Oracle Node · scheduler.js
  * ─────────────────────────────────────────────
  * Cerebro del oracle: coordina ventanas satelitales, multi-activo,
- * reportes trimestrales y alertas. Completamente autónomo — Ajuste 8.
+ * certificaciones trimestrales y alertas.
+ *
+ * ══ AJUSTE 24 — EL RELOJ DE DOS RITMOS ══════════════════════════
+ *
+ * EPIMELEIA tiene su propio reloj y respeta los mismos cortes para todos.
+ * Late en dos tiempos, y cada uno hace algo distinto en la cadena:
+ *
+ *   · QUINCENAL (el pulso)  → registrarEvidenciaVentana()
+ *     Cada 15 días se mide el activo y se sella esa medición.
+ *     Es lo que hace que el cliente sienta cerca a EPIMELEIA.
+ *     El contrato acepta 6 por trimestre: require(ev.length < 6).
+ *     3 meses × 2 quincenas = 6. Estaba pensado así desde el principio.
+ *
+ *   · TRIMESTRAL (el balance) → certificarQ()
+ *     Una sola vez por trimestre, al cierre del Q.
+ *     Espejo de los cierres Q1–Q4 de las compañías que operan en bolsa.
+ *     Es el sello formal, y el que hace avanzar el Sello de Excelencia
+ *     (4 certificaciones consecutivas = 4 trimestres = 1 año).
+ *
+ * CALENDARIO (cron: '0 6 2,16 * *')
+ * Cada corrida mide la quincena YA CERRADA, no la fecha en que corre:
+ *
+ *   emite el 16 de M   → mide del 1 al 15 de M          (quincena A)
+ *   emite el  2 de M   → mide del 16 al fin de M-1      (quincena B)
+ *
+ *   La corrida del 2 de ENE / ABR / JUL / OCT mide la última quincena
+ *   del trimestre que acaba de cerrar → esa corrida, además de sellar
+ *   la evidencia, ejecuta certificarQ() del trimestre cerrado.
+ *
+ * POR QUÉ 2 Y 16, Y NO 1 Y 15
+ * El satélite no publica al instante: Sentinel-2 L2A tarda horas.
+ * Corriendo el día 15, la pasada del 15 todavía no existe para el sistema.
+ * Emitiendo el 16, se garantiza incluirla.
+ *
+ * HUECOS: SE CUENTAN POR TRIMESTRE, NO POR QUINCENA
+ * El contrato lo dice en sus propios nombres: trimestresConHueco.
+ * Y _registrarHueco() hace actualizarConsecutivos(activoId, 0), o sea
+ * borra la racha del Sello de Excelencia.
+ * Si registráramos un hueco por cada quincena nublada, el sello sería
+ * imposible de ganar (4 trimestres = 24 quincenas; que ninguna tenga
+ * nubes no pasa nunca) y el índice de continuidad quedaría mal calculado.
+ * Que el satélite no vea un día no es culpa del cliente.
+ * Que no se lo pueda ver en tres meses, sí es un hecho relevante.
+ *
+ * Por eso:
+ *   · quincena con nubes  → NO se sella evidencia. La ausencia es el
+ *                            registro: el trimestre debía tener 6 y tiene 5.
+ *   · trimestre sin ver   → certificarQ() registra el hueco. Ahí se juega
+ *                            la continuidad y el sello.
+ * ─────────────────────────────────────────────────────────────────
  */
 
 const cron       = require('node-cron');
@@ -13,28 +62,99 @@ const satellite  = require('./satellite');
 const reports    = require('./reports');
 const { ethers } = require('ethers');
 
-// ─── Trimestre actual ───────────────────────────────────────────
-
-function trimestreActual() {
-  const ahora = new Date();
-  const año   = ahora.getFullYear();
-  const q     = Math.floor(ahora.getMonth() / 3) + 1;
-  return año * 10 + q; // ej: 20241, 20242, 20243, 20244
-}
-
-// ─── Proceso de ventana satelital (PV-L1) ──────────────────────
+// ─── El reloj: trimestres y quincenas ───────────────────────────
 
 /**
- * Procesa todos los activos activos en una ventana de 15 días.
- * Por cada activo:
- *   1. Consulta Sentinel/Copernicus
- *   2. Si nubosidad OK → certifica en blockchain
- *   3. Si nubosidad alta → registra Hueco Climático (Ajuste 1)
- *   4. Si sin señal → registra Hueco SATELLITE_LOSS
+ * Trimestre del momento actual. Formato: año*10 + Q  (ej: 20263)
+ * Se mantiene por compatibilidad (index.js lo usa para el log de arranque).
  */
-async function procesarVentanaSatelital() {
-  const trimestre = trimestreActual();
-  log('SCHEDULER', `══ VENTANA SATELITAL Q${trimestre % 10}/${Math.floor(trimestre / 10)} ══`);
+function trimestreActual() {
+  const ahora = new Date();
+  return _trimestreDe(ahora.getUTCFullYear(), ahora.getUTCMonth());
+}
+
+/** Arma el número de trimestre a partir de año y mes (mes 0-indexado). */
+function _trimestreDe(anio, mes0) {
+  const q = Math.floor(mes0 / 3) + 1;
+  return anio * 10 + q; // 20261, 20262, 20263, 20264
+}
+
+/**
+ * Corazón del reloj. Dada la fecha de emisión, devuelve qué período se mide.
+ *
+ * Devuelve:
+ *   desde, hasta            → los bordes del período medido (Date, UTC)
+ *   trimestre               → el trimestre AL QUE PERTENECE ese período
+ *   quincena                → 'A' (1–15) o 'B' (16–fin de mes)
+ *   quincenaDelTrimestre    → 1..6
+ *   esCierreDeTrimestre     → true si es la 6ª quincena del Q
+ */
+function periodoDeVentana(fechaEmision = new Date()) {
+  const dia = fechaEmision.getUTCDate();
+
+  let anio, mes0, quincena, diaDesde, diaHasta;
+
+  if (dia >= 10) {
+    // Corrida del 16: mide la primera quincena de ESTE mes.
+    anio     = fechaEmision.getUTCFullYear();
+    mes0     = fechaEmision.getUTCMonth();
+    quincena = 'A';
+    diaDesde = 1;
+    diaHasta = 15;
+  } else {
+    // Corrida del 2: mide la segunda quincena del mes ANTERIOR.
+    const anterior = new Date(Date.UTC(fechaEmision.getUTCFullYear(), fechaEmision.getUTCMonth(), 1));
+    anterior.setUTCMonth(anterior.getUTCMonth() - 1);
+    anio     = anterior.getUTCFullYear();
+    mes0     = anterior.getUTCMonth();
+    quincena = 'B';
+    diaDesde = 16;
+    diaHasta = new Date(Date.UTC(anio, mes0 + 1, 0)).getUTCDate(); // último día del mes
+  }
+
+  const trimestre = _trimestreDe(anio, mes0);
+
+  // Posición dentro del trimestre: mes del Q (0,1,2) × 2 + (A=1, B=2)
+  const mesDentroDelQ       = mes0 % 3;
+  const quincenaDelTrimestre = mesDentroDelQ * 2 + (quincena === 'A' ? 1 : 2);
+
+  // Cierra el trimestre la quincena B del último mes del Q (mar, jun, sep, dic)
+  const esCierreDeTrimestre = (quincena === 'B' && mesDentroDelQ === 2);
+
+  return {
+    desde: new Date(Date.UTC(anio, mes0, diaDesde, 0, 0, 0)),
+    hasta: new Date(Date.UTC(anio, mes0, diaHasta, 23, 59, 59)),
+    trimestre,
+    quincena,
+    quincenaDelTrimestre,
+    esCierreDeTrimestre,
+  };
+}
+
+/** Etiqueta legible del período, para logs y mails. Ej: "Q3/2026 · quincena 6/6" */
+function _etiqueta(p) {
+  const q   = p.trimestre % 10;
+  const anio = Math.floor(p.trimestre / 10);
+  return `Q${q}/${anio} · quincena ${p.quincenaDelTrimestre}/6`;
+}
+
+// ─── Proceso de ventana satelital ──────────────────────────────
+
+/**
+ * Procesa todos los activos activos en una ventana quincenal.
+ * Por cada activo:
+ *   1. Consulta Sentinel/Copernicus sobre el período medido
+ *   2. Si la nubosidad lo permite → sella la evidencia de ventana
+ *   3. Si es el cierre del trimestre → además ejecuta certificarQ()
+ *   4. Si hay nubes → no sella nada esta quincena (ver nota de huecos arriba)
+ */
+async function procesarVentanaSatelital(fechaEmision = new Date()) {
+  const periodo = periodoDeVentana(fechaEmision);
+
+  log('SCHEDULER', `══ VENTANA SATELITAL ${_etiqueta(periodo)} ══`, {
+    mide:  `${periodo.desde.toISOString().slice(0,10)} → ${periodo.hasta.toISOString().slice(0,10)}`,
+    cierreDeTrimestre: periodo.esCierreDeTrimestre,
+  });
 
   let ids;
   try {
@@ -46,16 +166,13 @@ async function procesarVentanaSatelital() {
     return;
   }
 
-  let certificados = 0, huecos = 0, omitidos = 0;
+  let evidencias = 0, certificaciones = 0, sinVer = 0, huecos = 0, omitidos = 0, fallidos = 0;
 
   for (const activoId of ids) {
+    let resultado = null;
+
     try {
-      await _procesarActivoL1(activoId, trimestre);
-
-      // Pausa entre activos para no saturar el RPC
-      await _pausa(config.pausas.entreActivos);
-
-      certificados++;
+      resultado = await _procesarActivoVentana(activoId, periodo);
     } catch (err) {
       log('ERROR', `Error procesando activo ${activoId}: ${err.message}`);
       await reports.notificarAdmin('ERROR_ACTIVO', { activoId, error: err.message });
@@ -65,113 +182,166 @@ async function procesarVentanaSatelital() {
       while (reintentos < config.pausas.maxReintentos) {
         await _pausa(config.pausas.reintento * (reintentos + 1));
         try {
-          await _procesarActivoL1(activoId, trimestre);
-          certificados++;
+          resultado = await _procesarActivoVentana(activoId, periodo);
           break;
         } catch (e) {
           reintentos++;
           log('WARN', `Reintento ${reintentos}/${config.pausas.maxReintentos} para activo ${activoId}`);
         }
       }
-      if (reintentos === config.pausas.maxReintentos) {
-        huecos++;
-        log('ERROR', `Activo ${activoId} no procesado después de ${reintentos} reintentos`);
+      if (!resultado) {
+        fallidos++;
+        log('ERROR', `Activo ${activoId} no procesado después de ${config.pausas.maxReintentos} reintentos`);
       }
     }
+
+    if (resultado) {
+      if (resultado.omitido)     omitidos++;
+      if (resultado.evidencia)   evidencias++;
+      if (resultado.certificado) certificaciones++;
+      if (resultado.sinVer)      sinVer++;
+      if (resultado.hueco)       huecos++;
+    }
+
+    // Pausa entre activos para no saturar el RPC
+    await _pausa(config.pausas.entreActivos);
   }
 
   log('SCHEDULER', `══ VENTANA COMPLETADA ══`, {
-    trimestre, certificados, huecos, omitidos,
-    totalActivos: ids.length
+    periodo: _etiqueta(periodo),
+    evidencias, certificaciones, sinVer, huecos, omitidos, fallidos,
+    totalActivos: ids.length,
   });
 
   await reports.notificarAdmin('VENTANA_SATELITAL_COMPLETADA', {
-    trimestre, certificados, huecos, totalActivos: ids.length,
-    timestamp: new Date().toISOString()
+    trimestre:            periodo.trimestre,
+    quincenaDelTrimestre: periodo.quincenaDelTrimestre,
+    esCierreDeTrimestre:  periodo.esCierreDeTrimestre,
+    mide:                 `${periodo.desde.toISOString().slice(0,10)} → ${periodo.hasta.toISOString().slice(0,10)}`,
+    evidencias, certificaciones, sinVer, huecos,
+    totalActivos: ids.length,
+    timestamp: new Date().toISOString(),
   });
 }
 
 /**
- * Procesa un activo individual en la ventana PV-L1.
+ * Procesa un activo individual en una ventana quincenal.
+ * Devuelve un pequeño resumen de lo que hizo.
  */
-async function _procesarActivoL1(activoId, trimestre) {
-  // Obtener datos del activo desde blockchain
+async function _procesarActivoVentana(activoId, periodo) {
   const datos = await blockchain.getDatosActivo(activoId);
   if (!datos || !datos.activo) {
     log('INFO', `Activo ${activoId} inactivo, omitiendo`);
-    return;
+    return { omitido: true };
   }
 
   // Solo procesar L1 automáticamente (L2 y L3 requieren acuerdo previo)
   if (datos.nivel !== 0) {
     log('INFO', `Activo ${activoId} es L${datos.nivel + 1} — requiere acuerdo previo`);
     await reports.notificarAdmin('ACTIVO_BAJO_ACUERDO', {
-      activoId, nivel: `L${datos.nivel + 1}`, trimestre
+      activoId, nivel: `L${datos.nivel + 1}`, trimestre: periodo.trimestre,
     });
-    return;
+    return { omitido: true };
   }
 
-  log('L1', `Procesando activo ${activoId}`, {
+  log('VENTANA', `Activo ${activoId} · ${_etiqueta(periodo)}`, {
     tipo: config.indicadoresPorTipo[datos.tipo]?.nombre || 'OTRO',
-    lat: datos.latitud, lng: datos.longitud
+    lat: datos.latitud, lng: datos.longitud,
   });
 
-  // Consultar Sentinel
+  // 1) Consultar el satélite sobre el período medido
   const reporte = await satellite.consultarSentinel(datos);
 
-  // Evaluar si se puede certificar (Ajuste 1: umbral nubosidad)
+  // 2) ¿Se pudo ver?
   const evaluacion = satellite.evaluarNubosidad(reporte);
 
   if (!evaluacion.puedeCertificar) {
-    // Registrar Hueco de Opacidad
-    await blockchain.registrarHueco(
+    // Quincena sin ver: NO se registra hueco on-chain (ver nota de arriba).
+    // La ausencia de esta evidencia es el registro: el trimestre tendrá
+    // menos de 6. El hueco, si corresponde, se decide al cierre del Q.
+    log('SIN_VER', `Activo ${activoId}: ${evaluacion.causa} — no se sella esta quincena`);
+
+    await reports.notificarAdmin('QUINCENA_SIN_VER', {
       activoId,
-      evaluacion.causa,
-      evaluacion.esClimatica || false
-    );
-    log('HUECO', `Activo ${activoId}: ${evaluacion.causa}`);
-    return;
+      trimestre:            periodo.trimestre,
+      quincenaDelTrimestre: periodo.quincenaDelTrimestre,
+      causa:                evaluacion.causa,
+      esClimatica:          evaluacion.esClimatica || false,
+    });
+
+    // Si además es el cierre del trimestre, el hueco sí se registra:
+    // el trimestre entero se cierra sin haber podido ver.
+    if (periodo.esCierreDeTrimestre) {
+      await blockchain.registrarHueco(activoId, evaluacion.causa, evaluacion.esClimatica || false);
+      log('HUECO', `Activo ${activoId}: trimestre ${periodo.trimestre} cerrado con hueco — ${evaluacion.causa}`);
+      return { sinVer: true, hueco: true };
+    }
+
+    return { sinVer: true };
   }
 
-  // Certificar en blockchain
   const hashEvidencia = satellite.generarHashEvidencia(reporte);
-  const metadataURI   = satellite.generarMetadataURI(reporte, trimestre);
 
-  await blockchain.certificarEnChain({
-    activoId,
-    hashEvidencia,
-    metadataURI,
-    trimestre,
-    satelite:      reporte.satelite,
-    bandaEspectral:reporte.bandaEspectral,
-    nubosidadPct:  reporte.nubosidadPct,
-    urlDescarga:   reporte.urlDescargaDatos,
-    uuid:          reporte.uuid,
-  });
-
-  // Si hay evidencia adicional de ventana, registrarla también (Ajuste 7)
+  // 3) EL PULSO — sellar la evidencia de esta quincena
   await blockchain.registrarEvidenciaVentana({
     activoId,
-    trimestre,
+    trimestre:    periodo.trimestre,
     hashEvidencia,
-    satelite:      reporte.satelite,
-    nubosidadPct:  reporte.nubosidadPct,
-    urlDescarga:   reporte.urlDescargaDatos,
+    satelite:     reporte.satelite,
+    nubosidadPct: reporte.nubosidadPct,
+    urlDescarga:  reporte.urlDescargaDatos,
   });
 
-  await reports.notificarAdmin('CERT_TRIMESTRAL_CONFIRMADA', {
+  log('EVIDENCIA', `Activo ${activoId} · evidencia ${periodo.quincenaDelTrimestre}/6 sellada`);
+
+  await reports.notificarAdmin('EVIDENCIA_QUINCENAL_SELLADA', {
     activoId,
-    trimestre,
-    satelite:   reporte.satelite,
-    nubosidad:  reporte.nubosidadPct,
-    timestamp:  new Date().toISOString(),
+    trimestre:            periodo.trimestre,
+    quincenaDelTrimestre: periodo.quincenaDelTrimestre,
+    satelite:             reporte.satelite,
+    nubosidad:            reporte.nubosidadPct,
+    timestamp:            new Date().toISOString(),
   });
+
+  const resultado = { evidencia: true };
+
+  // 4) EL BALANCE — solo al cierre del trimestre
+  if (periodo.esCierreDeTrimestre) {
+    const metadataURI = satellite.generarMetadataURI(reporte, periodo.trimestre);
+
+    await blockchain.certificarEnChain({
+      activoId,
+      hashEvidencia,
+      metadataURI,
+      trimestre:      periodo.trimestre,
+      satelite:       reporte.satelite,
+      bandaEspectral: reporte.bandaEspectral,
+      nubosidadPct:   reporte.nubosidadPct,
+      urlDescarga:    reporte.urlDescargaDatos,
+      uuid:           reporte.uuid,
+    });
+
+    log('CERT_Q', `Activo ${activoId} · trimestre ${periodo.trimestre} CERTIFICADO`);
+
+    await reports.notificarAdmin('CERT_TRIMESTRAL_CONFIRMADA', {
+      activoId,
+      trimestre:  periodo.trimestre,
+      satelite:   reporte.satelite,
+      nubosidad:  reporte.nubosidadPct,
+      timestamp:  new Date().toISOString(),
+    });
+
+    resultado.certificado = true;
+  }
+
+  return resultado;
 }
 
 // ─── Escucha de eventos blockchain ─────────────────────────────
 
 /**
  * Escucha ReporteTrimestralTrigger para despachar reportes por email — Ajuste 21.
+ * NOTA: hoy está desactivada desde index.js (los filtros contra el RPC se rompían).
  */
 function iniciarEscuchaEventos() {
   blockchain.escucharReportesTrimestrales(async ({ activoId, owner, trimestre }) => {
@@ -229,12 +399,13 @@ function iniciarEscuchaEventos() {
 // ─── Schedulers cron ───────────────────────────────────────────
 
 function iniciarSchedulers() {
-  const schedVentana    = config.modoTest ? config.cron.testVentana     : config.cron.ventanaSatelital;
+  const schedVentana     = config.modoTest ? config.cron.testVentana     : config.cron.ventanaSatelital;
   const schedContinuidad = config.modoTest ? config.cron.testContinuidad : config.cron.continuidad;
 
-  // Ventana satelital (cada 15 días en prod / cada minuto en test)
+  // Ventana satelital quincenal (días 2 y 16 en prod / cada minuto en test)
   cron.schedule(schedVentana, () => {
-    log('CRON', `Job: Ventana satelital Q${trimestreActual() % 10}`);
+    const p = periodoDeVentana(new Date());
+    log('CRON', `Job: Ventana satelital ${_etiqueta(p)}${p.esCierreDeTrimestre ? ' · CIERRE DE TRIMESTRE' : ''}`);
     procesarVentanaSatelital().catch(err =>
       log('ERROR', `Error en ventana: ${err.message}`)
     );
@@ -251,9 +422,12 @@ function iniciarSchedulers() {
     }
   });
 
+  const proximo = periodoDeVentana(new Date());
   log('SCHEDULER', `Schedulers iniciados`, {
-    modoTest:  config.modoTest,
-    ventana:   schedVentana,
+    modoTest:    config.modoTest,
+    ventana:     schedVentana,
+    ritmo:       'quincenal (evidencia) + trimestral (certificación)',
+    periodoActual: _etiqueta(proximo),
     healthcheck: config.cron.healthcheck,
   });
 }
@@ -266,6 +440,7 @@ function _pausa(ms) {
 
 module.exports = {
   trimestreActual,
+  periodoDeVentana,
   procesarVentanaSatelital,
   iniciarSchedulers,
   iniciarEscuchaEventos,
