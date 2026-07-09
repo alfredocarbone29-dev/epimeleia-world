@@ -148,12 +148,24 @@ function _etiqueta(p) {
  *   3. Si es el cierre del trimestre → además ejecuta certificarQ()
  *   4. Si hay nubes → no sella nada esta quincena (ver nota de huecos arriba)
  */
-async function procesarVentanaSatelital(fechaEmision = new Date()) {
+async function procesarVentanaSatelital(opciones = {}) {
+  // Compatibilidad: si alguien pasa una Date suelta, la tomamos como fecha de emisión.
+  if (opciones instanceof Date) opciones = { fechaEmision: opciones };
+
+  const fechaEmision = opciones.fechaEmision || new Date();
+  const simular      = opciones.simular === true;
+
   const periodo = periodoDeVentana(fechaEmision);
 
+  if (simular) {
+    log('SIMULACRO', `══ MODO SIMULACRO — NO SE ESCRIBE NADA EN LA CADENA ══`);
+  }
+
   log('SCHEDULER', `══ VENTANA SATELITAL ${_etiqueta(periodo)} ══`, {
+    emite: fechaEmision.toISOString().slice(0,10),
     mide:  `${periodo.desde.toISOString().slice(0,10)} → ${periodo.hasta.toISOString().slice(0,10)}`,
     cierreDeTrimestre: periodo.esCierreDeTrimestre,
+    simulacro: simular,
   });
 
   let ids;
@@ -172,7 +184,7 @@ async function procesarVentanaSatelital(fechaEmision = new Date()) {
     let resultado = null;
 
     try {
-      resultado = await _procesarActivoVentana(activoId, periodo);
+      resultado = await _procesarActivoVentana(activoId, periodo, simular);
     } catch (err) {
       log('ERROR', `Error procesando activo ${activoId}: ${err.message}`);
       await reports.notificarAdmin('ERROR_ACTIVO', { activoId, error: err.message });
@@ -182,7 +194,7 @@ async function procesarVentanaSatelital(fechaEmision = new Date()) {
       while (reintentos < config.pausas.maxReintentos) {
         await _pausa(config.pausas.reintento * (reintentos + 1));
         try {
-          resultado = await _procesarActivoVentana(activoId, periodo);
+          resultado = await _procesarActivoVentana(activoId, periodo, simular);
           break;
         } catch (e) {
           reintentos++;
@@ -213,6 +225,11 @@ async function procesarVentanaSatelital(fechaEmision = new Date()) {
     totalActivos: ids.length,
   });
 
+  if (simular) {
+    log('SIMULACRO', `══ FIN DEL SIMULACRO — la cadena quedó intacta ══`);
+    return;
+  }
+
   await reports.notificarAdmin('VENTANA_SATELITAL_COMPLETADA', {
     trimestre:            periodo.trimestre,
     quincenaDelTrimestre: periodo.quincenaDelTrimestre,
@@ -228,7 +245,7 @@ async function procesarVentanaSatelital(fechaEmision = new Date()) {
  * Procesa un activo individual en una ventana quincenal.
  * Devuelve un pequeño resumen de lo que hizo.
  */
-async function _procesarActivoVentana(activoId, periodo) {
+async function _procesarActivoVentana(activoId, periodo, simular = false) {
   const datos = await blockchain.getDatosActivo(activoId);
   if (!datos || !datos.activo) {
     log('INFO', `Activo ${activoId} inactivo, omitiendo`);
@@ -261,17 +278,23 @@ async function _procesarActivoVentana(activoId, periodo) {
     // menos de 6. El hueco, si corresponde, se decide al cierre del Q.
     log('SIN_VER', `Activo ${activoId}: ${evaluacion.causa} — no se sella esta quincena`);
 
-    await reports.notificarAdmin('QUINCENA_SIN_VER', {
-      activoId,
-      trimestre:            periodo.trimestre,
-      quincenaDelTrimestre: periodo.quincenaDelTrimestre,
-      causa:                evaluacion.causa,
-      esClimatica:          evaluacion.esClimatica || false,
-    });
+    if (!simular) {
+      await reports.notificarAdmin('QUINCENA_SIN_VER', {
+        activoId,
+        trimestre:            periodo.trimestre,
+        quincenaDelTrimestre: periodo.quincenaDelTrimestre,
+        causa:                evaluacion.causa,
+        esClimatica:          evaluacion.esClimatica || false,
+      });
+    }
 
     // Si además es el cierre del trimestre, el hueco sí se registra:
     // el trimestre entero se cierra sin haber podido ver.
     if (periodo.esCierreDeTrimestre) {
+      if (simular) {
+        log('SIMULACRO', `Activo ${activoId}: ESCRIBIRÍA un Hueco de Opacidad (trimestre ${periodo.trimestre}) — ${evaluacion.causa}`);
+        return { sinVer: true, hueco: true };
+      }
       await blockchain.registrarHueco(activoId, evaluacion.causa, evaluacion.esClimatica || false);
       log('HUECO', `Activo ${activoId}: trimestre ${periodo.trimestre} cerrado con hueco — ${evaluacion.causa}`);
       return { sinVer: true, hueco: true };
@@ -283,31 +306,43 @@ async function _procesarActivoVentana(activoId, periodo) {
   const hashEvidencia = satellite.generarHashEvidencia(reporte);
 
   // 3) EL PULSO — sellar la evidencia de esta quincena
-  await blockchain.registrarEvidenciaVentana({
-    activoId,
-    trimestre:    periodo.trimestre,
-    hashEvidencia,
-    satelite:     reporte.satelite,
-    nubosidadPct: reporte.nubosidadPct,
-    urlDescarga:  reporte.urlDescargaDatos,
-  });
+  if (simular) {
+    log('SIMULACRO', `Activo ${activoId}: SELLARÍA evidencia ${periodo.quincenaDelTrimestre}/6`, {
+      trimestre: periodo.trimestre, hashEvidencia, satelite: reporte.satelite, nubosidad: reporte.nubosidadPct,
+    });
+  } else {
+    await blockchain.registrarEvidenciaVentana({
+      activoId,
+      trimestre:    periodo.trimestre,
+      hashEvidencia,
+      satelite:     reporte.satelite,
+      nubosidadPct: reporte.nubosidadPct,
+      urlDescarga:  reporte.urlDescargaDatos,
+    });
 
-  log('EVIDENCIA', `Activo ${activoId} · evidencia ${periodo.quincenaDelTrimestre}/6 sellada`);
+    log('EVIDENCIA', `Activo ${activoId} · evidencia ${periodo.quincenaDelTrimestre}/6 sellada`);
 
-  await reports.notificarAdmin('EVIDENCIA_QUINCENAL_SELLADA', {
-    activoId,
-    trimestre:            periodo.trimestre,
-    quincenaDelTrimestre: periodo.quincenaDelTrimestre,
-    satelite:             reporte.satelite,
-    nubosidad:            reporte.nubosidadPct,
-    timestamp:            new Date().toISOString(),
-  });
+    await reports.notificarAdmin('EVIDENCIA_QUINCENAL_SELLADA', {
+      activoId,
+      trimestre:            periodo.trimestre,
+      quincenaDelTrimestre: periodo.quincenaDelTrimestre,
+      satelite:             reporte.satelite,
+      nubosidad:            reporte.nubosidadPct,
+      timestamp:            new Date().toISOString(),
+    });
+  }
 
   const resultado = { evidencia: true };
 
   // 4) EL BALANCE — solo al cierre del trimestre
   if (periodo.esCierreDeTrimestre) {
     const metadataURI = satellite.generarMetadataURI(reporte, periodo.trimestre);
+
+    if (simular) {
+      log('SIMULACRO', `Activo ${activoId}: CERTIFICARÍA el trimestre ${periodo.trimestre} (certificarQ)`);
+      resultado.certificado = true;
+      return resultado;
+    }
 
     await blockchain.certificarEnChain({
       activoId,
