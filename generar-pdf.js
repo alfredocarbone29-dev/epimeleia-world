@@ -272,7 +272,13 @@ async function generarPDF(html) {
       printBackground: true,
       margin: { top: '0', right: '0', bottom: '0', left: '0' },
     });
-    return pdf;
+    // ── AJUSTE 23 ──────────────────────────────────────────────
+    // Las versiones nuevas de Chrome/puppeteer devuelven un Uint8Array,
+    // no un Buffer de Node. Guardarlo en disco funciona igual, pero
+    // .toString('base64') sobre un Uint8Array NO codifica el PDF:
+    // devuelve una lista de números y SendGrid rechaza el adjunto (400).
+    // Lo pasamos a Buffer de verdad acá, una sola vez, y listo.
+    return Buffer.from(pdf);
   } finally {
     await browser.close();
   }
@@ -285,6 +291,9 @@ async function enviarPDFPorEmail({ para, pdfBuffer, nombreActivo }) {
     console.log('  · SendGrid no configurado en .env → no se envía el mail (el PDF quedó en disco igual).');
     return false;
   }
+  // Cinturón y tiradores: si por lo que sea no llegó como Buffer, lo convertimos.
+  const buf = Buffer.isBuffer(pdfBuffer) ? pdfBuffer : Buffer.from(pdfBuffer);
+
   const asunto = `[EPIMELEIA] Certificación satelital — ${nombreActivo}`;
   const cuerpo = `
     <div style="font-family:Georgia,serif;max-width:520px;margin:0 auto;color:#12261a;">
@@ -301,13 +310,13 @@ async function enviarPDFPorEmail({ para, pdfBuffer, nombreActivo }) {
       subject: asunto,
       content: [{ type: 'text/html', value: cuerpo }],
       attachments: [{
-        content:     pdfBuffer.toString('base64'),
+        content:     buf.toString('base64'),
         filename:    'certificado-epimeleia.pdf',
         type:        'application/pdf',
         disposition: 'attachment',
       }],
     },
-    { headers: { 'Authorization': `Bearer ${config.notificaciones.sendgridKey}`, 'Content-Type': 'application/json' }, timeout: 20000 }
+    { headers: { 'Authorization': `Bearer ${config.notificaciones.sendgridKey}`, 'Content-Type': 'application/json' }, timeout: 30000 }
   );
   return true;
 }
@@ -354,6 +363,7 @@ async function enviarPDFPorEmail({ para, pdfBuffer, nombreActivo }) {
     if (enviado) console.log('   ✓ Email enviado. Revisá tu casilla (mirá también spam).');
   } catch (e) {
     console.log('   ✗ No se pudo enviar el email: ' + (e.response?.status || '') + ' ' + e.message);
+    if (e.response?.data) console.log('     Motivo: ' + JSON.stringify(e.response.data));
     console.log('     (No importa para la prueba: el PDF ya está en disco en ' + RUTA_PDF + ')');
   }
 
