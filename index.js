@@ -4,18 +4,111 @@
  * Punto de entrada. Inicia todo el sistema y lo deja corriendo.
  *
  * Uso:
- *   node index.js              → modo normal
- *   node index.js --test-cert  → fuerza una ventana satelital inmediata (test)
+ *   node index.js
+ *       → modo normal. El cron dispara las ventanas los días 2 y 16.
+ *
+ *   node index.js --test-cert
+ *       → SIMULACRO. Corre una ventana completa: mide el satélite de verdad
+ *         y muestra exactamente qué haría, pero NO ESCRIBE NADA en la cadena.
+ *         Es el modo seguro para probar.
+ *
+ *   node index.js --test-cert --fecha=2026-04-02
+ *       → Simulacro fingiendo otra fecha de emisión. Sirve para ver cómo se
+ *         comportaría el reloj en un cierre de trimestre, sin esperar a abril.
+ *
+ *   node index.js --test-cert --en-serio
+ *       → CORRIDA REAL fuera de horario. ESCRIBE EN POLYGON Y ES INALTERABLE.
+ *         Pide confirmación tipeada antes de hacer nada.
+ *
+ * ══ AJUSTE 25 — El flag de prueba ya no toca la cadena ══════════
+ * Antes, `--test-cert` ejecutaba una ventana real. El 9/7/2026 eso grabó
+ * Huecos de Opacidad verdaderos en Polygon (activos de prueba, por suerte),
+ * porque ese día caía en un cierre de trimestre. Lo escrito en la cadena no
+ * se borra. Desde ahora, probar es gratis: hay que pedir explícitamente
+ * escribir.
  *
  * Requiere:
  *   npm install ethers axios dotenv node-cron
  */
 
+const readline                  = require('readline');
 const { config, validarConfig } = require('./config');
 const { log }                   = require('./logger');
 const blockchain                = require('./blockchain');
 const scheduler                 = require('./scheduler');
 const reports                   = require('./reports');
+
+// ── Lectura de flags ────────────────────────────────────────────
+
+const ARGS = process.argv.slice(2);
+
+function _tieneFlag(nombre) {
+  return ARGS.includes(nombre);
+}
+
+/** Lee --fecha=YYYY-MM-DD. Devuelve Date (UTC) o null. */
+function _fechaSimulada() {
+  const arg = ARGS.find(a => a.startsWith('--fecha='));
+  if (!arg) return null;
+  const valor = arg.split('=')[1];
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(valor)) {
+    log('ERROR', `Fecha inválida: "${valor}". Usá el formato --fecha=2026-04-02`);
+    process.exit(1);
+  }
+  const [a, m, d] = valor.split('-').map(Number);
+  return new Date(Date.UTC(a, m - 1, d, 6, 0, 0));
+}
+
+/** Pide confirmación tipeada antes de escribir en la cadena a mano. */
+function _confirmar(pregunta) {
+  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+  return new Promise(resolve => rl.question(pregunta, r => { rl.close(); resolve(r.trim()); }));
+}
+
+// ── Ventana manual (con o sin escritura) ────────────────────────
+
+async function _ventanaManual() {
+  const fechaEmision = _fechaSimulada() || new Date();
+  const enSerio      = _tieneFlag('--en-serio');
+  const periodo      = scheduler.periodoDeVentana(fechaEmision);
+
+  console.log('');
+  console.log('  Fecha de emisión : ' + fechaEmision.toISOString().slice(0, 10) +
+              (_fechaSimulada() ? '  (simulada)' : ''));
+  console.log('  Período que mide : ' + periodo.desde.toISOString().slice(0, 10) +
+              ' → ' + periodo.hasta.toISOString().slice(0, 10));
+  console.log('  Trimestre        : ' + periodo.trimestre +
+              '  ·  quincena ' + periodo.quincenaDelTrimestre + '/6');
+  console.log('  Cierre de Q      : ' + (periodo.esCierreDeTrimestre ? 'SÍ' : 'no'));
+  console.log('');
+
+  if (!enSerio) {
+    log('SYSTEM', 'Ventana de prueba en MODO SIMULACRO. La cadena no se toca.');
+    log('SYSTEM', 'Si necesitás escribir de verdad, agregá --en-serio (con cuidado).');
+    await scheduler.procesarVentanaSatelital({ fechaEmision, simular: true });
+    return;
+  }
+
+  // ── Corrida real pedida a mano: doble confirmación ────────────
+  console.log('  ⚠  ATENCIÓN: esto ESCRIBE EN POLYGON MAINNET.');
+  console.log('     Lo que se graba es INALTERABLE. No se puede deshacer.');
+  if (periodo.esCierreDeTrimestre) {
+    console.log('     Además es CIERRE DE TRIMESTRE: se ejecuta certificarQ()');
+    console.log('     y, si un activo no se pudo ver, se graba un Hueco de Opacidad.');
+  }
+  console.log('');
+
+  const r = await _confirmar('  Escribí exactamente ESCRIBIR EN CADENA para continuar: ');
+  if (r !== 'ESCRIBIR EN CADENA') {
+    log('SYSTEM', 'Confirmación no coincide. No se escribió nada. Salgo.');
+    process.exit(0);
+  }
+
+  log('SYSTEM', 'Confirmado. Ejecutando ventana REAL...');
+  await scheduler.procesarVentanaSatelital({ fechaEmision, simular: false });
+}
+
+// ── Arranque ────────────────────────────────────────────────────
 
 async function iniciar() {
   console.log('');
@@ -74,14 +167,16 @@ async function iniciar() {
   //
   // scheduler.iniciarEscuchaEventos();
 
+  // ── Ventana manual (--test-cert): simulacro salvo --en-serio ──
+  if (_tieneFlag('--test-cert')) {
+    log('SYSTEM', `Flag --test-cert detectado.`);
+    await _ventanaManual();
+    log('SYSTEM', 'Ventana manual terminada. Salgo sin dejar el oracle corriendo.');
+    process.exit(0);
+  }
+
   // ── Iniciar schedulers cron ──────────────────────────────────
   scheduler.iniciarSchedulers();
-
-  // ── Si se pasa --test-cert, correr ventana inmediatamente ────
-  if (process.argv.includes('--test-cert')) {
-    log('SYSTEM', `Flag --test-cert detectado. Ejecutando ventana satelital de prueba...`);
-    await scheduler.procesarVentanaSatelital();
-  }
 
   // ── Notificar arranque al admin ──────────────────────────────
   await reports.notificarAdmin('ORACLE_INICIADO', {
@@ -91,8 +186,8 @@ async function iniciar() {
   });
 
   log('SYSTEM', `══ ORACLE EPIMELEIA V3.4 ACTIVO ══`);
-  log('SYSTEM', `Ventanas satelitales programadas · Healthcheck horario`);
-  log('SYSTEM', `Primer certificado: Hidrovía Paraná-Paraguay`);
+  log('SYSTEM', `Ventanas quincenales (días 2 y 16) · Certificación al cierre de cada trimestre`);
+  log('SYSTEM', `Healthcheck horario`);
   console.log('');
 }
 
