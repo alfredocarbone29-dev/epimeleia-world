@@ -5,6 +5,71 @@
  * Ajuste 21: OAuth client_credentials (nuevo método Copernicus 2026).
  * Ajuste 22: medirIndicadores() — mide el NÚMERO REAL de cada índice
  *            sobre el polígono del cliente vía Statistical API.
+ *
+ * ════════════════════════════════════════════════════════════════
+ * AJUSTE 27 (10/7/2026) — LA NUBOSIDAD DEJA DE SER INVENTADA
+ * ════════════════════════════════════════════════════════════════
+ *
+ * Se repararon tres cosas. Las tres violaban el manifiesto:
+ * "solo se certifica lo que el satélite mide de verdad".
+ *
+ *  A) El filtro de Copernicus estaba mal escrito.
+ *     Decía:  Name eq 'SENTINEL-2'
+ *     Debe:   Collection/Name eq 'SENTINEL-2'
+ *     `Name` es el nombre del ARCHIVO del producto (S2A_MSIL2A_...SAFE).
+ *     Ningún producto se llama "SENTINEL-2". La consulta devolvía
+ *     SIEMPRE cero resultados. De ahí salieron todos los
+ *     "SATELLITE_LOSS" grabados en Polygon.
+ *
+ *  B) _extraerNubosidad devolvía 50 cuando no encontraba el dato.
+ *     Un número inventado que: (1) pasaba el umbral de 70, así que
+ *     siempre certificaba; (2) entraba al hash de evidencia; (3) se
+ *     grababa en la cadena como si fuera medido.
+ *     Ahora devuelve null. Si no se sabe, no se inventa.
+ *     Además leía producto.Attributes.value — con $expand, Copernicus
+ *     devuelve Attributes como lista directa. Ahora se aceptan ambas formas.
+ *
+ *  C) La nubosidad que va a la cadena ya no viene de la ESCENA.
+ *     `cloudCover` mide la nube sobre los ~100x100 km del producto
+ *     entero, no sobre el activo. Un campo despejado dentro de una
+ *     escena nublada daba cloudCover 80 y calidad 98.
+ *     Ahora: nubosidadPct = 100 − calidadPct, donde calidadPct es el
+ *     % de píxeles DEL POLÍGONO que quedaron limpios tras la máscara
+ *     de nubes. Medido sobre el activo, no heredado de la escena.
+ *
+ * Y se expone lo que antes se tiraba:
+ *  · fechaPasada         — la fecha real de la pasada usada
+ *  · fechasDistintas     — true si los índices vienen de días distintos
+ *  · calidadPct          — % de píxeles limpios del polígono
+ *  · nubosidadPct        — 100 − calidadPct, o null si no hay dato
+ *
+ * ════════════════════════════════════════════════════════════════
+ * AJUSTE 28 (10/7/2026) — LA CALIDAD SE CALCULABA MAL + VENTANA
+ * ════════════════════════════════════════════════════════════════
+ *
+ * Comprobado en pantalla, contra Copernicus, el mismo 10/7:
+ *
+ *  D) La fórmula de calidad estaba rota (función _ultimaMedicionValida).
+ *     sampleCount YA es el total de píxeles del rectángulo; noDataCount
+ *     son los excluidos. Los medidos son sampleCount − noDataCount.
+ *     La fórmula vieja hacía sampleCount / (sampleCount + noDataCount):
+ *       · inflaba la calidad (real 47% → daba 65%);
+ *       · y cuando NO se medía nada, daba 50% en vez de 0%.
+ *     Ese 50% era el gemelo del viejo `return 50` de la nubosidad.
+ *     La cuenta correcta es medidos / sampleCount. Ya corregida.
+ *
+ *  E) La ventana pasó de 30 a 45 días. En 30 días, Pergamino en invierno
+ *     a veces vuelve sin ninguna pasada limpia por nubes. En 45 casi
+ *     siempre hay una. Se sigue tomando la más reciente que esté limpia.
+ *
+ *  F) medirIndicadores ahora devuelve `sinDato: true` cuando no hubo
+ *     ninguna pasada limpia. Es un hueco honesto, no un error. El que
+ *     llama decide qué hacer, pero el sistema ya no inventa para tapar.
+ *
+ * ⚠️ NO SE TOCÓ generarHashEvidencia(). Sigue sin cubrir las
+ *    mediciones ni el polígono (ver sección 8 del brief). Esa es la
+ *    sesión de Supabase. Está marcado abajo.
+ * ════════════════════════════════════════════════════════════════
  */
 
 const axios    = require('axios');
@@ -26,9 +91,12 @@ async function consultarSentinel(datosActivo) {
   try {
     const url = 'https://catalogue.dataspace.copernicus.eu/odata/v1/Products';
     const params = {
-      '$filter': `OData.CSC.Intersects(area=geography'SRID=4326;POLYGON((${_bboxToWkt(bbox)}))') and ContentDate/Start gt ${_hace90dias()} and Name eq 'SENTINEL-2'`,
+      // ── AJUSTE 27-A: era `Name eq 'SENTINEL-2'`. Ningún producto se
+      //    llama así: Name es el nombre del archivo .SAFE. El filtro
+      //    de colección es Collection/Name. Sin esto, cero resultados.
+      '$filter': `Collection/Name eq 'SENTINEL-2' and OData.CSC.Intersects(area=geography'SRID=4326;POLYGON((${_bboxToWkt(bbox)}))') and ContentDate/Start gt ${_hace90dias()}`,
       '$orderby': 'ContentDate/Start desc',
-      '$top': 3,
+      '$top': 10,
       '$expand': 'Attributes',
     };
 
@@ -50,11 +118,17 @@ async function consultarSentinel(datosActivo) {
     const producto = _seleccionarMejorProducto(productos);
 
     if (!producto) {
-      log('SAT-L1', `Todos los productos superan el umbral de nubosidad`, { activoId });
+      log('SAT-L1', `Ningún producto con nubosidad conocida bajo el umbral`, { activoId });
       return null;
     }
 
+    // ── AJUSTE 27-B: si no hay dato de nubosidad, no hay número.
     const nubosidad = _extraerNubosidad(producto);
+    if (nubosidad === null) {
+      log('SAT-L1', `Producto sin dato de nubosidad — no se certifica`, { activoId });
+      return null;
+    }
+
     const urlDescarga = _generarUrlDescarga(producto.Id);
 
     const reporte = {
@@ -68,6 +142,7 @@ async function consultarSentinel(datosActivo) {
       satelite:   producto.Name || 'Sentinel-2',
       latitud, longitud, radioKm, bbox,
       nubosidadPct: nubosidad,
+      fuenteNubosidad: 'ESCENA',   // ← ojo: es la nube de los ~100x100 km, no la del activo
       uuid:       producto.Id,
       urlDescargaDatos: urlDescarga,
       fuente:     'ESA_COPERNICUS_DATASPACE',
@@ -101,9 +176,25 @@ async function consultarSentinel(datosActivo) {
   }
 }
 
+/**
+ * Decide si un reporte permite certificar.
+ *
+ * AJUSTE 27: ahora distingue tres casos, no dos.
+ *   · No hay reporte             → hueco por pérdida de señal.
+ *   · Hay reporte, sin nubosidad → hueco. NO se inventa un número.
+ *   · Hay nubosidad > umbral     → hueco climático.
+ */
 function evaluarNubosidad(reporte) {
   if (!reporte) {
     return { puedeCertificar: false, causa: 'SATELLITE_LOSS: Sin datos satelitales disponibles.' };
+  }
+
+  if (reporte.nubosidadPct === null || reporte.nubosidadPct === undefined) {
+    return {
+      puedeCertificar: false,
+      causa: 'SATELLITE_LOSS: Sin dato de nubosidad sobre el area. No se certifica lo que no se midio.',
+      esClimatica: false,
+    };
   }
 
   if (reporte.nubosidadPct > config.sentinel.umbralNubosidad) {
@@ -117,6 +208,20 @@ function evaluarNubosidad(reporte) {
   return { puedeCertificar: true, causa: null, esClimatica: false };
 }
 
+/**
+ * ⚠️ DEUDA CONOCIDA — sección 8 del brief. NO REPARADO ACÁ.
+ *
+ * Este hash NO incluye los valores medidos (NDVI, NDMI) ni el polígono.
+ * Prueba que existió una pasada con ese uuid, esa nubosidad y ese
+ * timestamp. NO prueba los números que el certificado muestra.
+ *
+ * La reparación es:
+ *   keccak256({ ...metadatos, mediciones, hashPoligono })
+ *
+ * Requiere fijar antes cómo se serializa un polígono de forma canónica
+ * (orden de vértices, decimales, orden de claves). Eso es la sesión
+ * de Supabase. No se toca hasta entonces.
+ */
 function generarHashEvidencia(reporte) {
   const { ethers } = require('ethers');
   const str = JSON.stringify({
@@ -131,6 +236,11 @@ function generarHashEvidencia(reporte) {
   return ethers.keccak256(ethers.toUtf8Bytes(str));
 }
 
+/**
+ * ⚠️ DEUDA CONOCIDA — sección 8 del brief.
+ * Esto arma un string que PARECE un IPFS y no lo es. Está grabado en
+ * Polygon apuntando a nada. O se hace real, o se saca.
+ */
 function generarMetadataURI(reporte, trimestre) {
   return `ipfs://QmEpimeleia_${reporte.activoId}_Q${trimestre}_${reporte.nivel}_${reporte.uuid?.slice(0,8) || 'pending'}`;
 }
@@ -155,7 +265,8 @@ async function consultarSatelitalComercial(datosActivo, endpoint) {
       bandaEspectral: indicadores.bandas,
       timestamp:      new Date().toISOString(),
       satelite:       resp.data?.satelite || 'Satelital Comercial',
-      nubosidadPct:   resp.data?.nubosidad || 0,
+      // AJUSTE 27: era `|| 0` — un cielo perfecto inventado. Ahora null.
+      nubosidadPct:   resp.data?.nubosidad ?? null,
       uuid:           resp.data?.uuid || '',
       urlDescargaDatos: resp.data?.urlDescarga || '',
       datos:          resp.data,
@@ -202,7 +313,8 @@ async function consultarTripleFuente(datosActivo, fuentes) {
     bandaEspectral: indicadores.bandas,
     timestamp:      new Date().toISOString(),
     satelite:       'Triple Fuente Independiente',
-    nubosidadPct:   0,
+    // AJUSTE 27: era 0. Un 0 es "cielo perfecto", y nadie lo midió.
+    nubosidadPct:   null,
     uuid:           `L3_${activoId}_${Date.now()}`,
     urlDescargaDatos: '',
     fuentesActivas: exitosas.length,
@@ -225,6 +337,20 @@ async function consultarTripleFuente(datosActivo, fuentes) {
 // ═══════════════════════════════════════════════════════════════
 
 const STATS_URL = 'https://sh.dataspace.copernicus.eu/api/v1/statistics';
+
+/**
+ * ⚠️ PENDIENTE DE DECISIÓN DEL FUNDADOR.
+ *
+ * Hoy, una medición sobre el 3% del polígono (97% tapado por nubes)
+ * se acepta igual que una sobre el 98%. El certificado la muestra
+ * con el chip MEDIDO y "CALIDAD 3%".
+ *
+ * ¿Cuál es la calidad mínima para que un número sea certificable?
+ * Mientras no se decida, este umbral queda en 0: acepta todo, igual
+ * que antes. NO se cambia el comportamiento a espaldas de nadie.
+ * Cuando se decida, se sube acá (o se mueve a config.js).
+ */
+const CALIDAD_MINIMA_PCT = 0;
 
 // Todo índice acá es (num - den) / (num + den). Estas son las bandas.
 const _formulaIndice = {
@@ -264,40 +390,69 @@ function evaluatePixel(s) {
 // o un cuadrado de respaldo desde lat/lon/radio si todavía no hay polígono.
 function _geometriaDeActivo(datosActivo) {
   const g = datosActivo.geometria || datosActivo.geoJSON || datosActivo.poligono;
-  if (g && g.type === 'Polygon' && Array.isArray(g.coordinates)) return g;
-  if (g && g.type === 'Feature' && g.geometry?.type === 'Polygon') return g.geometry;
+  if (g && g.type === 'Polygon' && Array.isArray(g.coordinates)) {
+    return { geometria: g, esPoligonoReal: true };
+  }
+  if (g && g.type === 'Feature' && g.geometry?.type === 'Polygon') {
+    return { geometria: g.geometry, esPoligonoReal: true };
+  }
 
   const { latitud, longitud, radioKm } = datosActivo;
   const d = (radioKm || 1) / 111;
   return {
-    type: 'Polygon',
-    coordinates: [[
-      [longitud - d, latitud - d],
-      [longitud + d, latitud - d],
-      [longitud + d, latitud + d],
-      [longitud - d, latitud + d],
-      [longitud - d, latitud - d],
-    ]],
+    geometria: {
+      type: 'Polygon',
+      coordinates: [[
+        [longitud - d, latitud - d],
+        [longitud + d, latitud - d],
+        [longitud + d, latitud + d],
+        [longitud - d, latitud + d],
+        [longitud - d, latitud - d],
+      ]],
+    },
+    // ← IMPORTANTE: esto NO es el activo. Es un cuadrado de respaldo.
+    //   Lo que se mida acá no es lo que el cliente dibujó.
+    esPoligonoReal: false,
   };
 }
 
 // De la respuesta de la Statistical API, toma la pasada VÁLIDA más reciente.
+//
+// ⚠️ AJUSTE 28 (10/7/2026) — LA CALIDAD SE CALCULABA MAL.
+//
+//   Se comprobó contra Copernicus, en pantalla, el 10/7:
+//   · sampleCount = TODOS los píxeles del rectángulo (no los limpios).
+//   · noDataCount = los excluidos (fuera de la figura, nube, sin dato).
+//   · medidos     = sampleCount − noDataCount   ← los que de verdad se usaron.
+//
+//   La fórmula vieja hacía  muestras / (muestras + nodata), que es
+//   sampleCount / (sampleCount + noDataCount). Eso está mal por dos vías:
+//     - Infla la calidad. Ej. real 47% → daba 65%.
+//     - Cuando NADA se midió (nodata == sampleCount), daba 50% en vez de 0%.
+//       Ese 50% es la misma mentira que el viejo `return 50` de la nubosidad:
+//       un número plausible que tapa el hecho de que no se vio el campo.
+//
+//   La cuenta correcta es  medidos / sampleCount.
 function _ultimaMedicionValida(intervalos) {
   const validos = (intervalos || [])
     .map(it => {
       const st = it?.outputs?.data?.bands?.B0?.stats;
       if (!st || !isFinite(st.mean)) return null;
-      const muestras = st.sampleCount || 0;
-      const nodata   = st.noDataCount || 0;
-      const total    = muestras + nodata;
-      if (muestras <= 0) return null;
+      const totales = st.sampleCount || 0;   // TODOS los píxeles del rectángulo
+      const nodata  = st.noDataCount || 0;   // los excluidos
+      const medidos = totales - nodata;      // los que de verdad se usaron
+      if (medidos <= 0) return null;         // no se midió nada: no es una pasada válida
+      const calidadPct = totales > 0 ? Math.round((medidos / totales) * 100) : 0;
+      if (calidadPct < CALIDAD_MINIMA_PCT) return null;
       return {
         fecha:      it.interval?.from || null,
         mean:       st.mean,
         min:        st.min,
         max:        st.max,
         stDev:      st.stDev,
-        calidadPct: total > 0 ? Math.round((muestras / total) * 100) : 0,
+        muestras:   medidos,
+        nodata,
+        calidadPct,
       };
     })
     .filter(Boolean)
@@ -307,7 +462,16 @@ function _ultimaMedicionValida(intervalos) {
 }
 
 // Llama a la Statistical API por un índice y devuelve su última medición.
-async function _pedirEstadistica(indice, geometria, token, dias = 30) {
+//
+// AJUSTE 28: la ventana pasa de 30 a 45 días.
+//   Sentinel-2 revisita cada ~5 días, pero las nubes tapan muchas pasadas.
+//   Se comprobó el 10/7 contra Copernicus: Pergamino en invierno, en 30 días,
+//   a veces devuelve 0 pasadas limpias por pura mala suerte de nubes; en 45
+//   días casi siempre hay al menos una. No es trampa: se sigue tomando la
+//   pasada MÁS RECIENTE que esté limpia, solo que se mira un poco más atrás
+//   antes de declarar un hueco. El certificado sigue diciendo la fecha real
+//   de la pasada, que puede no ser la de hoy. Eso ya es honesto y está declarado.
+async function _pedirEstadistica(indice, geometria, token, dias = 45) {
   const desde = new Date(Date.now() - dias * 24 * 3600 * 1000).toISOString();
   const hasta = new Date().toISOString();
 
@@ -374,21 +538,27 @@ function _interpretar(indice, valor) {
  * Toma un activo (con su polígono y su tipo) y devuelve los números
  * REALES medidos por Sentinel-2 sobre ese polígono, ya interpretados.
  *
- * @param {Object} datosActivo
- * @param {number} datosActivo.activoId
- * @param {number} datosActivo.tipo            - índice 0..7 (ver config)
- * @param {Object} [datosActivo.geometria]     - GeoJSON Polygon del mapa
- * @param {number} [datosActivo.latitud]       - respaldo si no hay polígono
- * @param {number} [datosActivo.longitud]
- * @param {number} [datosActivo.radioKm]
- * @returns {Object|null} { activoId, satelite, geometria, timestamp, mediciones[] }
+ * AJUSTE 27 — ahora devuelve además, y esto es lo que va a la cadena:
+ *   calidadPct        % de píxeles del POLÍGONO que quedaron limpios
+ *   nubosidadPct      100 − calidadPct. Medido sobre el activo. null si no hay dato.
+ *   fechaPasada       la fecha real de la pasada usada
+ *   fechasDistintas   true si los índices no vienen todos del mismo día
+ *   esPoligonoReal    false si se usó el cuadrado de respaldo lat/lon/radio
+ *
+ * @returns {Object|null}
  */
 async function medirIndicadores(datosActivo) {
   const { activoId, tipo } = datosActivo;
   const cfg = config.indicadoresPorTipo[tipo] || config.indicadoresPorTipo[7];
-  const geometria = _geometriaDeActivo(datosActivo);
+  const { geometria, esPoligonoReal } = _geometriaDeActivo(datosActivo);
 
-  log('MEDIR', `Midiendo indicadores sobre el polígono`, { activoId, tipo: cfg.nombre });
+  log('MEDIR', `Midiendo indicadores sobre el polígono`, {
+    activoId, tipo: cfg.nombre, esPoligonoReal
+  });
+
+  if (!esPoligonoReal) {
+    log('WARN', `Sin polígono: se usa cuadrado de respaldo. NO es el activo.`, { activoId });
+  }
 
   // Modo test: números simulados, no golpea la API real.
   if (config.modoTest) {
@@ -402,7 +572,13 @@ async function medirIndicadores(datosActivo) {
         interpretacion: _interpretar(ind.indice, valor), simulado: true,
       };
     });
-    return { activoId, satelite: 'Sentinel-2 (MOCK)', geometria, timestamp: new Date().toISOString(), mediciones };
+    return {
+      activoId, satelite: 'Sentinel-2 (MOCK)', geometria, esPoligonoReal,
+      timestamp: new Date().toISOString(),
+      fechaPasada: new Date().toISOString(), fechasDistintas: false,
+      calidadPct: 100, nubosidadPct: 0, simulado: true,
+      mediciones,
+    };
   }
 
   let token;
@@ -438,19 +614,68 @@ async function medirIndicadores(datosActivo) {
       valor:          m ? +m.mean.toFixed(3) : null,
       fecha:          m ? m.fecha : null,
       calidadPct:     m ? m.calidadPct : null,
+      pixelesLimpios: m ? m.muestras : null,
+      pixelesTapados: m ? m.nodata   : null,
       interpretacion: m ? _interpretar(ind.indice, m.mean) : 'sin dato satelital en la ventana',
     };
   });
 
-  const conDato = mediciones.filter(m => m.valor !== null).length;
-  log('MEDIR', `Medición terminada`, { activoId, indicadores: mediciones.length, conDato });
+  const conDato = mediciones.filter(m => m.valor !== null);
+
+  // ── AJUSTE 27-C: la nubosidad sale de la calidad del POLÍGONO.
+  //    Se usa el índice principal (el primero que trajo dato).
+  //    Si ninguno trajo dato: no hay nubosidad. Hay hueco.
+  const principal   = conDato[0] || null;
+  const calidadPct  = principal ? principal.calidadPct : null;
+  const nubosidadPct = calidadPct === null ? null : (100 - calidadPct);
+  const fechaPasada = principal ? principal.fecha : null;
+
+  // ── Los índices se piden por separado. Cada uno se queda con SU
+  //    pasada más reciente. Pueden no ser del mismo día. Si eso pasa,
+  //    el certificado no puede hablar de "una" pasada. Se avisa.
+  const fechasUnicas = Array.from(new Set(conDato.map(m => m.fecha)));
+  const fechasDistintas = fechasUnicas.length > 1;
+  if (fechasDistintas) {
+    log('WARN', `Los índices vienen de pasadas distintas`, { activoId, fechas: fechasUnicas });
+  }
+
+  // ── Si NINGÚN índice trajo dato, no hubo pasada limpia en la ventana.
+  //    Eso NO es un error: es un hecho del clima. Pero hay que decirlo,
+  //    no taparlo. El que llama (scheduler / generar-pdf) decide si es hueco.
+  const sinDato = conDato.length === 0;
+  if (sinDato) {
+    log('MEDIR', `Sin pasada limpia en la ventana — no se inventa nada`, { activoId });
+  } else if (calidadPct !== null && calidadPct < 70) {
+    // Se midió, pero se vio menos del 70% del campo. Es honesto, pero flojo.
+    log('WARN', `Calidad baja: solo se vio el ${calidadPct}% del polígono`, {
+      activoId, fechaPasada,
+    });
+  }
+
+  log('MEDIR', `Medición terminada`, {
+    activoId,
+    indicadores: mediciones.length,
+    conDato: conDato.length,
+    calidadPct,
+    nubosidadPct,
+    fechasDistintas,
+    sinDato,
+  });
 
   return {
     activoId,
     satelite:  'Sentinel-2 L2A',
     fuente:    'ESA_COPERNICUS_DATASPACE',
+    bandaEspectral: cfg.bandas,
     geometria,
+    esPoligonoReal,
     timestamp: new Date().toISOString(),
+    fechaPasada,
+    fechasDistintas,
+    calidadPct,
+    nubosidadPct,
+    fuenteNubosidad: 'POLIGONO',   // ← medida sobre el activo, no sobre la escena
+    sinDato,                        // ← true = no hubo pasada limpia. Es un hueco honesto.
     mediciones,
   };
 }
@@ -488,23 +713,44 @@ function _hace90dias() {
   return d.toISOString().split('.')[0] + 'Z';
 }
 
+/**
+ * AJUSTE 27-B: los productos sin dato de nubosidad quedan FUERA.
+ * Antes entraban con un 50 inventado, que siempre pasaba el umbral.
+ */
 function _seleccionarMejorProducto(productos) {
-  const conNubosidad = productos.map(p => ({
-    ...p,
-    _nubosidad: _extraerNubosidad(p)
-  })).sort((a, b) => a._nubosidad - b._nubosidad);
+  const conNubosidad = productos
+    .map(p => ({ ...p, _nubosidad: _extraerNubosidad(p) }))
+    .filter(p => p._nubosidad !== null)
+    .sort((a, b) => a._nubosidad - b._nubosidad);
 
   return conNubosidad.find(p => p._nubosidad <= config.sentinel.umbralNubosidad) || null;
 }
 
+/**
+ * AJUSTE 27-B. Dos cambios:
+ *
+ *  1. Con $expand=Attributes, Copernicus devuelve `Attributes` como una
+ *     LISTA directa, no como { value: [...] }. El código viejo buscaba
+ *     `.value`, no lo encontraba nunca, y caía siempre al default.
+ *     Ahora se aceptan las dos formas.
+ *
+ *  2. Ya no hay default. Si el atributo no está, se devuelve null.
+ *     Un dato que no se midió no se inventa: se declara ausente.
+ *     El viejo `return 50` pasaba el umbral de 70 y certificaba.
+ */
 function _extraerNubosidad(producto) {
-  if (producto.Attributes?.value) {
-    const attr = producto.Attributes.value.find(
-      a => a.Name === 'cloudCover' || a.Name === 'cloudcoverpercentage'
-    );
-    if (attr) return Math.round(parseFloat(attr.Value));
-  }
-  return 50;
+  const attrs = Array.isArray(producto.Attributes)
+    ? producto.Attributes
+    : (producto.Attributes?.value || []);
+
+  const attr = attrs.find(
+    a => a?.Name === 'cloudCover' || a?.Name === 'cloudcoverpercentage'
+  );
+
+  if (!attr || attr.Value === undefined || attr.Value === null) return null;
+
+  const n = parseFloat(attr.Value);
+  return isFinite(n) ? Math.round(n) : null;
 }
 
 function _generarUrlDescarga(productId) {
@@ -520,4 +766,5 @@ module.exports = {
   generarHashEvidencia,
   generarMetadataURI,
   medirIndicadores,
+  CALIDAD_MINIMA_PCT,
 };
