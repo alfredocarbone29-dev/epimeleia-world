@@ -9,7 +9,30 @@
  *      claves del .env que ya usa reports.js).
  *
  * Correr en el VPS con:   node generar-pdf.js
- * ─────────────────────────────────────────────────────────────
+ *
+ * ════════════════════════════════════════════════════════════════
+ * AJUSTE 29 (10/7/2026) — EL CERTIFICADO RESPETA EL RELOJ DEL PROTOCOLO
+ * ════════════════════════════════════════════════════════════════
+ *
+ * Antes, el trimestre y el folio estaban ESCRITOS A MANO ('Q3 · 2026').
+ * El trimestre no es arbitrario ni sale de la fecha de la pasada satelital:
+ * es el reloj de EPIMELEIA, el mismo para todos, espejo de los cierres
+ * bursátiles Q1–Q4. Por eso ahora se calcula con la MISMA función que usa
+ * el resto del sistema — scheduler.periodoDeVentana() — y no con una
+ * constante ni con la fecha en que el satélite pudo ver.
+ *
+ * Así, el trimestre del certificado, el de la evidencia de ventana y el
+ * del certificarQ() on-chain son SIEMPRE el mismo. Todos los certificados
+ * de EPIMELEIA hablan del mismo período, y por eso son comparables.
+ *
+ * También se corrigió la CONTINUIDAD: antes decía "Sin huecos de opacidad"
+ * fijo, para cualquier activo. Ahora se LEE de la cadena con
+ * blockchain.getIndiceContinuidad(). Si no hay historia, lo dice.
+ *
+ * ⚠️ SIGUEN DE EJEMPLO, PENDIENTES DE SUPABASE (paso 5-6 del brief):
+ *    hashEvidencia, selladoTexto, bloque. Esos tres salen de una
+ *    transacción real en Polygon, que todavía no se hace. Están marcados.
+ * ════════════════════════════════════════════════════════════════
  */
 
 require('dotenv').config();
@@ -19,6 +42,8 @@ const axios     = require('axios');
 const puppeteer = require('puppeteer');
 const { config }            = require('./config');
 const { medirIndicadores }  = require('./satellite');
+const scheduler             = require('./scheduler');   // ← AJUSTE 29: el reloj del protocolo
+let   blockchain            = null;                      // ← se carga si se puede, para leer continuidad
 
 // ── AJUSTES (cambialos cuando quieras) ───────────────────────
 const EMAIL_DESTINO = 'alfredocarbone29@gmail.com';   // a dónde llega el PDF de prueba
@@ -37,26 +62,71 @@ const ACTIVO_PRUEBA = {
   }
 };
 
-// Datos de identidad del activo (de ejemplo por ahora)
+// Datos de identidad del activo (de ejemplo por ahora — vienen de Supabase después)
 const IDENTIDAD = {
   nombreActivo: 'Campo Pergamino',
   tipoNombre:   'Forestal · Vegetación',
   superficieHa: '≈ 409 ha',
   ubicacion:    'Pergamino, Buenos Aires · AR',
-  folio:        'EPI-C-000999-Q3',
-  trimestre:    'Q3 · 2026',
-  // Estos tres se llenan de verdad al conectar al circuito on-chain:
+  // ── AJUSTE 29: folio y trimestre YA NO se escriben acá.
+  //    Se calculan con el reloj del protocolo, más abajo, en armarDatos().
+
+  // ⚠️ ESTOS TRES SIGUEN DE EJEMPLO — se llenan de verdad con Supabase
+  //    (paso 5-6 del brief): salen de una transacción real en Polygon.
   hashEvidencia: '0x7f3a9c2e5b18d40a6f21e0c9b7a4d3f8e2c1b0a9d8e7f6c5b4a3928170615243',
   selladoTexto:  '06 JUL 2026 · 18:42 UTC',
   bloque:        '#64.208.115',
   polygonscanUrl:'https://polygonscan.com/address/0xf59bcfb98ba9e05dc82d44e508d90917af8bbc93#events',
 };
 
-// Datos de respaldo por si la medición no devuelve nada (así el PDF sale igual)
-const MEDICIONES_RESPALDO = [
-  { etiqueta: 'Cobertura vegetal · NDVI',      valor: 0.407,  interpretacion: 'Vegetación moderada', confianza: 'medido', calidadPct: 95 },
-  { etiqueta: 'Humedad de vegetación · NDMI',  valor: -0.032, interpretacion: 'Humedad baja',        confianza: 'medido', calidadPct: 95 },
-];
+// ── El reloj del protocolo (AJUSTE 29) ───────────────────────
+//
+// Un solo lugar del que sale el trimestre, y es el mismo que usa
+// scheduler.js para sellar en la cadena. Formato on-chain: año*10 + Q.
+
+/** Devuelve { trimestreOnChain, etiqueta, folioSufijo } del período vigente. */
+function trimestreDelProtocolo(fechaEmision = new Date()) {
+  const periodo = scheduler.periodoDeVentana(fechaEmision);
+  const q    = periodo.trimestre % 10;              // 1..4
+  const anio = Math.floor(periodo.trimestre / 10);  // 2026
+  return {
+    trimestreOnChain: periodo.trimestre,            // 20263
+    etiqueta:         `Q${q} · ${anio}`,            // "Q3 · 2026"  → va en el certificado
+    folioSufijo:      `Q${q}`,                      // "Q3"         → va en el folio
+  };
+}
+
+// ── Continuidad leída de la cadena (AJUSTE 29) ───────────────
+//
+// Antes el certificado decía "Sin huecos de opacidad" fijo. Ahora
+// se lee de verdad. Si no se puede leer (sin blockchain, o activo de
+// prueba sin historia), se dice la verdad: "primer período".
+
+async function leerContinuidad(activoId) {
+  // Intento cargar blockchain solo si hace falta; si no está configurado,
+  // no rompo la prueba del PDF.
+  if (!blockchain) {
+    try { blockchain = require('./blockchain'); blockchain.inicializarBlockchain(); }
+    catch (e) { return { texto: 'Primer período certificado', leida: false }; }
+  }
+
+  try {
+    const cont = await blockchain.getIndiceContinuidad(activoId);
+    if (cont.sinHistoria) {
+      return { texto: 'Primer período · sin base de comparación', leida: true };
+    }
+    if (cont.conHueco === 0) {
+      return { texto: `Sin huecos de opacidad (${cont.certificados}/${cont.certificados})`, leida: true };
+    }
+    return {
+      texto: `Continuidad ${cont.pct}% · ${cont.conHueco} hueco(s) en ${cont.total}`,
+      leida: true,
+    };
+  } catch (e) {
+    // El activo 999 de prueba no existe on-chain: no es un error, es que no hay historia.
+    return { texto: 'Primer período certificado', leida: false };
+  }
+}
 
 // ── Helpers de presentación ──────────────────────────────────
 
@@ -184,7 +254,7 @@ function construirHTML(datos) {
         <div class="dato"><div class="k">Tipo declarado</div><div class="v">${datos.tipoNombre}</div></div>
         <div class="dato"><div class="k">Superficie</div><div class="v mono">${datos.superficieHa}</div></div>
         <div class="dato"><div class="k">Ubicación</div><div class="v">${datos.ubicacion}</div></div>
-        <div class="dato"><div class="k">Continuidad</div><div class="v">Sin huecos de opacidad</div></div>
+        <div class="dato"><div class="k">Continuidad</div><div class="v">${datos.continuidadTexto}</div></div>
       </section>
 
       <div class="seccion-tit"><span>Lo que vio el satélite</span></div>
@@ -326,38 +396,68 @@ async function enviarPDFPorEmail({ para, pdfBuffer, nombreActivo }) {
 (async () => {
   console.log('\n════════ GENERADOR DE CERTIFICADO PDF ════════\n');
 
-  // 1) Medir el satélite (con respaldo si no hay dato)
+  // ── AJUSTE 29: el trimestre sale del reloj del protocolo, NO de una
+  //    constante ni de la fecha de la pasada. Mismo reloj que scheduler.js.
+  const reloj = trimestreDelProtocolo(new Date());
+  console.log(`0) Reloj del protocolo: ${reloj.etiqueta}  (on-chain ${reloj.trimestreOnChain})`);
+
+  // 1) Medir el satélite
   console.log('1) Midiendo el satélite sobre el polígono...');
   let medicion = null;
   try { medicion = await medirIndicadores(ACTIVO_PRUEBA); } catch (e) { console.log('   (medición falló: ' + e.message + ')'); }
 
-  let mediciones, fechaPasada, satelite;
-  if (medicion && medicion.mediciones && medicion.mediciones.some(m => m.valor != null)) {
-    mediciones  = medicion.mediciones;
-    fechaPasada = medicion.mediciones.find(m => m.fecha)?.fecha || new Date().toISOString();
-    satelite    = medicion.satelite;
-    console.log('   ✓ Medición real obtenida.');
-  } else {
-    mediciones  = MEDICIONES_RESPALDO;
-    fechaPasada = '2026-06-30T00:00:00Z';
-    satelite    = 'Sentinel-2 L2A';
-    console.log('   · Sin dato en vivo; uso los números de respaldo (0.407 / -0.032).');
+  const hayDato = medicion && medicion.mediciones && medicion.mediciones.some(m => m.valor != null);
+
+  if (!hayDato) {
+    // ── AJUSTE 29: sin dato NO se inventa un certificado. Se dice la verdad.
+    //    (Antes había un MEDICIONES_RESPALDO con 0.407/-0.032 fijos. Se quitó:
+    //     era la misma clase de mentira que el return 50. Un certificado que
+    //     el satélite no respaldó no debe existir.)
+    console.log('\n   ✗ No hubo pasada satelital limpia en la ventana.');
+    console.log('     NO se genera certificado: EPIMELEIA no certifica lo que no vio.');
+    console.log('     Esto NO es un error del sistema — es el clima. Probá de nuevo en unos días,');
+    console.log('     o ampliá la ventana en satellite.js si necesitás mirar más atrás.\n');
+    console.log('════════ SIN CERTIFICADO (honesto) ════════\n');
+    process.exit(0);
   }
 
-  const datos = { ...IDENTIDAD, activoId: ACTIVO_PRUEBA.activoId, mediciones, fechaPasada, satelite };
+  const mediciones  = medicion.mediciones;
+  const fechaPasada = medicion.mediciones.find(m => m.fecha)?.fecha || new Date().toISOString();
+  const satelite    = medicion.satelite;
+  console.log('   ✓ Medición real obtenida.');
+  if (medicion.fechasDistintas) {
+    console.log('   ⚠ Los índices vienen de pasadas de días distintos (ver satellite.js).');
+  }
 
-  // 2) Armar HTML
-  console.log('2) Armando el certificado...');
+  // 2) Leer la continuidad de la cadena (AJUSTE 29)
+  console.log('2) Leyendo continuidad on-chain...');
+  const continuidad = await leerContinuidad(ACTIVO_PRUEBA.activoId);
+  console.log('   ' + (continuidad.leida ? '✓ leída: ' : '· sin historia on-chain: ') + continuidad.texto);
+
+  // 3) Armar los datos con el reloj del protocolo
+  const datos = {
+    ...IDENTIDAD,
+    activoId:         ACTIVO_PRUEBA.activoId,
+    mediciones,
+    fechaPasada,
+    satelite,
+    folio:            `EPI-C-${String(ACTIVO_PRUEBA.activoId).padStart(6,'0')}-${reloj.folioSufijo}`,
+    trimestre:        reloj.etiqueta,
+    continuidadTexto: continuidad.texto,
+  };
+
+  // 4) Armar HTML
+  console.log('3) Armando el certificado...');
   const html = construirHTML(datos);
 
-  // 3) HTML → PDF
-  console.log('3) Convirtiendo a PDF fiel con Chrome...');
+  // 5) HTML → PDF
+  console.log('4) Convirtiendo a PDF fiel con Chrome...');
   const pdf = await generarPDF(html);
   fs.writeFileSync(RUTA_PDF, pdf);
   console.log('   ✓ PDF generado: ' + RUTA_PDF + '  (' + Math.round(pdf.length / 1024) + ' KB)');
 
-  // 4) Enviar por email
-  console.log('4) Enviando por email a ' + EMAIL_DESTINO + '...');
+  // 6) Enviar por email
+  console.log('5) Enviando por email a ' + EMAIL_DESTINO + '...');
   try {
     const enviado = await enviarPDFPorEmail({ para: EMAIL_DESTINO, pdfBuffer: pdf, nombreActivo: IDENTIDAD.nombreActivo });
     if (enviado) console.log('   ✓ Email enviado. Revisá tu casilla (mirá también spam).');
@@ -368,4 +468,5 @@ async function enviarPDFPorEmail({ para, pdfBuffer, nombreActivo }) {
   }
 
   console.log('\n════════ LISTO ════════\n');
+  process.exit(0);
 })();
