@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EPIMELEIA · Protocolo</title>
+
+<!-- Mapbox (mismo que ya usás en mapa.html) -->
+<link href="https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.css" rel="stylesheet">
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.js"></script>
+<link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.4.3/mapbox-gl-draw.css" type="text/css">
+<script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.4.3/mapbox-gl-draw.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
+
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --deep:#0a1d14; --deep-2:#0e2619; --deep-3:#123020;
+    --paper:#f2ede1; --paper-dim:#a9b8a8;
+    --gold:#c9a961; --gold-bright:#dcc07f; --gold-dim:#7d6a3d;
+    --green:#3d7a4f; --green-bright:#4e9d64;
+    --line:rgba(201,169,97,.20); --field:#0c2117;
+    --ok:#4e9d64; --warn:#c9a961;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{height:100%;}
+  body{
+    background:var(--deep); color:var(--paper);
+    font-family:'Inter',system-ui,sans-serif; -webkit-font-smoothing:antialiased;
+    display:flex; flex-direction:column; height:100vh; overflow:hidden;
+  }
+  .mono{font-family:'JetBrains Mono',monospace;}
+
+  /* ══ BARRA SUPERIOR — siempre visible ══ */
+  .barra{
+    flex-shrink:0; border-bottom:1px solid var(--line); background:var(--deep-2);
+    padding:0 24px;
+  }
+  .barra-row{display:flex; align-items:center; justify-content:space-between; height:60px;}
+  .marca{font-family:'Fraunces',serif; font-weight:600; font-size:21px; letter-spacing:.16em; color:var(--paper);}
+  .marca span{color:var(--gold);}
+  .usuario{font-family:'JetBrains Mono',monospace; font-size:12.5px; color:var(--paper-dim);}
+  .usuario b{color:var(--paper); font-weight:500;}
+  .usuario a{color:var(--gold-dim); text-decoration:none; margin-left:14px; border-bottom:1px solid transparent; transition:border-color .2s;}
+  .usuario a:hover{border-color:var(--gold-dim);}
+
+  /* progreso: 4 estaciones */
+  .progreso{display:flex; align-items:center; gap:0; padding:0 0 14px;}
+  .etapa{display:flex; align-items:center; flex:1;}
+  .etapa:last-child{flex:0;}
+  .etapa .bola{
+    width:26px; height:26px; border-radius:50%; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'JetBrains Mono',monospace; font-size:11px;
+    border:1px solid var(--gold-dim); color:var(--gold-dim); background:var(--deep-2);
+    transition:all .4s ease;
+  }
+  .etapa .rotulo{font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--paper-dim); margin-left:9px; white-space:nowrap;}
+  .etapa .barrita{flex:1; height:1px; background:var(--line); margin:0 12px; transition:background .4s ease;}
+  .etapa.activa .bola{background:var(--gold); border-color:var(--gold); color:var(--deep);}
+  .etapa.activa .rotulo{color:var(--paper);}
+  .etapa.hecha .bola{background:var(--green); border-color:var(--green); color:var(--paper);}
+  .etapa.hecha .barrita{background:var(--green);}
+
+  /* ══ ESCENARIO — donde se revelan las estaciones ══ */
+  .escenario{flex:1; position:relative; overflow:hidden;}
+  .estacion{position:absolute; inset:0; opacity:0; visibility:hidden; transition:opacity .5s ease; display:flex;}
+  .estacion.viva{opacity:1; visibility:visible;}
+
+  /* ── ESTACIÓN 1: DIBUJAR ── */
+  #est-1{display:flex;}
+  .panel{
+    width:380px; flex-shrink:0; background:var(--deep-2); border-right:1px solid var(--line);
+    padding:30px 28px; overflow-y:auto; display:flex; flex-direction:column;
+  }
+  .panel .saludo{font-family:'Fraunces',serif; font-size:26px; font-weight:600; line-height:1.15; margin-bottom:8px;}
+  .panel .saludo em{font-style:italic; color:var(--gold);}
+  .panel .instru{font-size:14px; color:var(--paper-dim); line-height:1.6; margin-bottom:26px;}
+
+  .buscador{display:flex; gap:8px; margin-bottom:24px;}
+  .buscador input{flex:1; background:var(--field); border:1px solid var(--line); color:var(--paper); font-family:'Inter'; font-size:14px; padding:12px 13px; border-radius:3px;}
+  .buscador input:focus{outline:none; border-color:var(--gold);}
+  .buscador button{background:var(--deep-3); border:1px solid var(--gold-dim); color:var(--gold); font-family:'JetBrains Mono',monospace; font-size:12px; padding:0 16px; border-radius:3px; cursor:pointer;}
+  .buscador button:hover{background:var(--gold); color:var(--deep);}
+
+  .estado-dibujo{
+    background:var(--deep-3); border:1px solid var(--line); border-radius:4px;
+    padding:18px; margin-bottom:20px;
+  }
+  .estado-dibujo .et{font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--gold-dim);}
+  .estado-dibujo .val{font-family:'JetBrains Mono',monospace; font-size:32px; font-weight:700; color:var(--gold); line-height:1.1; margin:4px 0;}
+  .estado-dibujo .val small{font-size:15px; color:var(--paper-dim);}
+  .estado-dibujo .hint{font-size:12.5px; color:var(--paper-dim); margin-top:6px;}
+  .estado-dibujo.vacio .val{color:var(--paper-dim); opacity:.4;}
+
+  .precio-box{background:var(--deep-3); border:1px solid var(--line); border-left:3px solid var(--gold); border-radius:4px; padding:16px 18px; margin-bottom:24px; display:none;}
+  .precio-box .et{font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--gold-dim);}
+  .precio-box .tier{font-size:13px; color:var(--paper-dim); margin-top:3px;}
+  .precio-box .monto{font-family:'JetBrains Mono',monospace; font-size:22px; color:var(--paper); font-weight:700; margin-top:6px;}
+  .precio-box .nota-precio{font-size:11px; color:var(--gold-dim); margin-top:8px; font-style:italic;}
+
+  .btn-primario{
+    margin-top:auto; background:var(--gold); color:var(--deep); border:none; cursor:pointer;
+    font-family:'JetBrains Mono',monospace; font-size:14px; letter-spacing:.04em; font-weight:700;
+    padding:17px; border-radius:3px; width:100%; transition:transform .2s, background .2s;
+  }
+  .btn-primario:hover:not(:disabled){transform:translateY(-2px); background:var(--gold-bright);}
+  .btn-primario:disabled{opacity:.35; cursor:not-allowed;}
+
+  #mapa{flex:1; height:100%;}
+
+  /* ── ESTACIONES 2,3,4: preparadas (placeholder honesto) ── */
+  .por-venir{width:100%; display:flex; align-items:center; justify-content:center; padding:40px;}
+  .por-venir .caja{max-width:520px; text-align:center;}
+  .por-venir .k{font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.24em; text-transform:uppercase; color:var(--gold); margin-bottom:16px;}
+  .por-venir h2{font-family:'Fraunces',serif; font-weight:600; font-size:34px; margin-bottom:14px;}
+  .por-venir p{font-size:15px; color:var(--paper-dim); line-height:1.7; margin-bottom:10px;}
+  .por-venir .marca-obra{margin-top:24px; font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--gold-dim); border:1px dashed var(--gold-dim); border-radius:4px; padding:12px 18px; display:inline-block;}
+  .por-venir .btn-volver{margin-top:26px; background:none; border:1px solid var(--line); color:var(--paper-dim); font-family:'JetBrains Mono',monospace; font-size:12px; padding:11px 20px; border-radius:3px; cursor:pointer;}
+  .por-venir .btn-volver:hover{border-color:var(--gold); color:var(--paper);}
+
+  /* toast */
+  .toast{position:fixed; bottom:28px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--deep-3); border:1px solid var(--gold-dim); border-radius:6px; padding:14px 22px; font-family:'JetBrains Mono',monospace; font-size:13px; color:var(--paper); opacity:0; visibility:hidden; transition:all .3s; z-index:100; max-width:90vw;}
+  .toast.show{opacity:1; visibility:visible; transform:translateX(-50%) translateY(0);}
+  .toast.err{border-color:var(--warn); color:var(--gold-bright);}
+
+  @media(max-width:820px){
+    #est-1{flex-direction:column;}
+    .panel{width:100%; border-right:none; border-bottom:1px solid var(--line); max-height:none;}
+    #mapa{min-height:340px;}
+    .etapa .rotulo{display:none;}
+  }
+</style>
+</head>
+<body>
+
+  <!-- ══ BARRA SUPERIOR ══ -->
+  <div class="barra">
+    <div class="barra-row">
+      <div class="marca">EPI<span>MELEIA</span></div>
+      <div class="usuario">
+        Hola, <b id="nombreUsuario">…</b>
+        <a href="#" onclick="cerrarSesion(event)">salir</a>
+      </div>
+    </div>
+    <div class="progreso">
+      <div class="etapa activa" data-e="1"><span class="bola">1</span><span class="rotulo">Dibujar</span><span class="barrita"></span></div>
+      <div class="etapa" data-e="2"><span class="bola">2</span><span class="rotulo">Firmar</span><span class="barrita"></span></div>
+      <div class="etapa" data-e="3"><span class="bola">3</span><span class="rotulo">Pagar</span><span class="barrita"></span></div>
+      <div class="etapa" data-e="4"><span class="bola">4</span><span class="rotulo">Certificado</span></div>
+    </div>
+  </div>
+
+  <!-- ══ ESCENARIO ══ -->
+  <div class="escenario">
+
+    <!-- ─── ESTACIÓN 1: DIBUJAR (viva al entrar) ─── -->
+    <div class="estacion viva" id="est-1">
+      <div class="panel">
+        <div class="saludo">Ubiquemos tu <em>activo</em>.</div>
+        <p class="instru">Buscá el lugar y dibujá el contorno real de tu terreno sobre la imagen del satélite. Este dibujo es la ubicación exacta que se va a certificar.</p>
+
+        <div class="buscador">
+          <input id="q" type="text" placeholder="Buscar lugar…" onkeydown="if(event.key==='Enter')buscar()">
+          <button onclick="buscar()">Ir</button>
+        </div>
+
+        <div class="estado-dibujo vacio" id="estadoDibujo">
+          <div class="et">Superficie del contorno</div>
+          <div class="val" id="areaVal">— <small>ha</small></div>
+          <div class="hint" id="areaHint">Todavía no dibujaste. Usá la herramienta de polígono ▱ arriba a la derecha del mapa.</div>
+        </div>
+
+        <div class="precio-box" id="precioBox">
+          <div class="et">Tu plan según la superficie</div>
+          <div class="tier" id="tierTxt">—</div>
+          <div class="monto" id="montoTxt">—</div>
+          <div class="nota-precio">Valores de referencia. El precio se congela al confirmar.</div>
+        </div>
+
+        <button class="btn-primario" id="btnConfirmar" onclick="confirmarYContinuar()" disabled>
+          Confirmar y continuar
+        </button>
+      </div>
+      <div id="mapa"></div>
+    </div>
+
+    <!-- ─── ESTACIÓN 2: FIRMAR (preparada) ─── -->
+    <div class="estacion" id="est-2">
+      <div class="por-venir">
+        <div class="caja">
+          <div class="k">Estación 2 · Firmar</div>
+          <h2>Acá va el deslinde</h2>
+          <p>Tu activo ya quedó registrado. El paso siguiente es leer y aceptar los términos antes de pagar.</p>
+          <p>Esta estación se conecta con el deslinde que ya tenés redactado — es la próxima soldadura.</p>
+          <div class="marca-obra">◦ estación preparada · el deslinde se enchufa acá</div>
+          <br>
+          <button class="btn-volver" onclick="irA(1)">← Volver al mapa</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── ESTACIÓN 3: PAGAR (preparada) ─── -->
+    <div class="estacion" id="est-3">
+      <div class="por-venir">
+        <div class="caja">
+          <div class="k">Estación 3 · Pagar</div>
+          <h2>Acá va el pago</h2>
+          <p>Según tu país, el sistema muestra Mercado Pago (Argentina) o PayPal (resto). El monto sale de tu tier.</p>
+          <div class="marca-obra">◦ estación preparada · MP / PayPal se enchufan acá</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── ESTACIÓN 4: CERTIFICADO (preparada) ─── -->
+    <div class="estacion" id="est-4">
+      <div class="por-venir">
+        <div class="caja">
+          <div class="k">Estación 4 · Bienvenida</div>
+          <h2>Bienvenido al protocolo</h2>
+          <p>Acá llega el mensaje de bienvenida único y el certificado con la silueta de tu polígono.</p>
+          <div class="marca-obra">◦ estación preparada · sello + certificado + email se enchufan acá</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+  // ════════════════════════════════════════════════════════════
+  //  MOTOR EPIMELEIA · estación 1 funcional + navegación de flujo
+  // ════════════════════════════════════════════════════════════
+
+  // TOKEN de Mapbox — el mismo que usás en mapa.html.
+  // ⚠️ Reemplazá por tu token real antes de publicar.
+  mapboxgl.accessToken = 'pk.eyJ1IjoiZXBpbWVsZWlhd29ybGQiLCJhIjoiY21kdnJ6dTNvMDdndDJscTFhaWZ6d3NvcyJ9.WQBGl4Wj7cX8m7EFHXBM1w';
+
+  // ── Datos del cliente (vienen de auth.js / Supabase) ──
+  // En el sistema real esto se llena leyendo la sesión de Supabase Auth.
+  // Por ahora, un placeholder para que el motor funcione y se vea el flujo.
+  let CLIENTE = {
+    nombre: 'invitado',
+    email: null,
+    pais: null,
+    empresa: null,
+    cliente_id: null,
+  };
+
+  // Intenta leer el nombre de la sesión (si auth.js dejó algo en el navegador).
+  // Cuando conectemos auth.js de verdad, acá se lee la sesión real.
+  function cargarCliente(){
+    try {
+      const guardado = sessionStorage.getItem('epi_cliente');
+      if (guardado) CLIENTE = { ...CLIENTE, ...JSON.parse(guardado) };
+    } catch(e){}
+    document.getElementById('nombreUsuario').textContent = CLIENTE.nombre || 'invitado';
+  }
+
+  // ── El mapa ──
+  let map, draw, poligonoActual = null, areaHaActual = 0, areaKm2Actual = 0;
+
+  function initMapa(){
+    map = new mapboxgl.Map({
+      container: 'mapa',
+      style: 'mapbox://styles/mapbox/satellite-streets-v12',
+      center: [-64, -34],   // centro aproximado de Argentina
+      zoom: 4,
+    });
+    draw = new MapboxDraw({
+      displayControlsDefault: false,
+      controls: { polygon: true, trash: true },
+    });
+    map.addControl(draw);
+    map.addControl(new mapboxgl.NavigationControl());
+
+    map.on('draw.create', actualizarDibujo);
+    map.on('draw.update', actualizarDibujo);
+    map.on('draw.delete', ()=>{
+      poligonoActual = null; areaHaActual = 0;
+      pintarEstado();
+    });
+  }
+
+  function actualizarDibujo(){
+    const data = draw.getAll();
+    if (!data.features.length){ poligonoActual=null; areaHaActual=0; pintarEstado(); return; }
+    const f = data.features[data.features.length-1];
+    poligonoActual = f.geometry.coordinates[0];        // el anillo de puntos
+    const m2 = turf.area(f);
+    areaHaActual  = m2 / 10000;
+    areaKm2Actual = m2 / 1000000;
+    pintarEstado();
+  }
+
+  function pintarEstado(){
+    const est = document.getElementById('estadoDibujo');
+    const btn = document.getElementById('btnConfirmar');
+    const precio = document.getElementById('precioBox');
+    if (!poligonoActual || areaHaActual<=0){
+      est.classList.add('vacio');
+      document.getElementById('areaVal').innerHTML = '— <small>ha</small>';
+      document.getElementById('areaHint').textContent = 'Todavía no dibujaste. Usá la herramienta de polígono ▱ arriba a la derecha del mapa.';
+      precio.style.display='none';
+      btn.disabled = true;
+      return;
+    }
+    est.classList.remove('vacio');
+    document.getElementById('areaVal').innerHTML = areaHaActual.toLocaleString('es-AR',{maximumFractionDigits:2}) + ' <small>ha</small>';
+    document.getElementById('areaHint').textContent = 'Contorno cerrado · ' + poligonoActual.length + ' puntos · ' + areaKm2Actual.toLocaleString('es-AR',{maximumFractionDigits:2}) + ' km²';
+
+    // precio de referencia (valores de ejemplo — se unifican con la calculadora)
+    const p = calcularPrecio(areaHaActual);
+    document.getElementById('tierTxt').textContent = 'Tier ' + p.tier + ' · hasta ' + p.rango;
+    document.getElementById('montoTxt').textContent = 'USD ' + p.total.toLocaleString('es-AR',{maximumFractionDigits:0}) + ' / año';
+    precio.style.display='block';
+    btn.disabled = false;
+  }
+
+  // Precio de EJEMPLO. El definitivo vive en un solo lugar y se unifica.
+  function calcularPrecio(ha){
+    if (ha<=1000)  return {tier:1, rango:'1.000 ha',  total:3500};
+    if (ha<=10000) return {tier:2, rango:'10.000 ha', total:3500+(ha-1000)*0.575};
+    if (ha<=50000) return {tier:3, rango:'50.000 ha', total:5800+(ha-10000)*0.2466};
+    return {tier:4, rango:'sin límite', total:9500+(ha-50000)*0.15};
+  }
+
+  async function buscar(){
+    const q = document.getElementById('q').value.trim();
+    if (!q) return;
+    try{
+      const r = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(q)}.json?access_token=${mapboxgl.accessToken}&limit=1`);
+      const d = await r.json();
+      if (d.features && d.features.length){
+        map.flyTo({center:d.features[0].center, zoom:14});
+      } else { toast('No encontré ese lugar.', true); }
+    }catch(e){ toast('No se pudo buscar. Revisá el token de Mapbox.', true); }
+  }
+
+  // ── CONFIRMAR: guarda en Supabase y revela la estación 2 ──
+  async function confirmarYContinuar(){
+    if (!poligonoActual){ toast('Primero dibujá el contorno.', true); return; }
+
+    const btn = document.getElementById('btnConfirmar');
+    btn.disabled = true; btn.textContent = 'Registrando…';
+
+    // El paquete que espera /api/registrar-activo.js
+    const paquete = {
+      nombre:   CLIENTE.empresa ? (CLIENTE.empresa + ' · activo') : ('Activo de ' + CLIENTE.nombre),
+      tipo:     'Otro',                 // el tipo real vendrá del formulario de presentación
+      coordinates: poligonoActual,
+      area_ha:  Number(areaHaActual.toFixed(4)),
+      area_km2: Number(areaKm2Actual.toFixed(6)),
+      cliente_id: CLIENTE.cliente_id,   // cuando auth esté conectado, va el real
+    };
+
+    try{
+      const r = await fetch('/api/registrar-activo', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(paquete),
+      });
+      const data = await r.json();
+      if (data.ok){
+        toast('✓ Tu activo quedó registrado.');
+        marcarHecha(1);
+        setTimeout(()=>irA(2), 700);
+      } else {
+        toast('No se pudo registrar: ' + (data.error||'error'), true);
+        btn.disabled=false; btn.textContent='Confirmar y continuar';
+      }
+    }catch(e){
+      toast('No se pudo conectar con el servidor.', true);
+      btn.disabled=false; btn.textContent='Confirmar y continuar';
+    }
+  }
+
+  // ── Navegación entre estaciones ──
+  function irA(n){
+    document.querySelectorAll('.estacion').forEach(e=>e.classList.remove('viva'));
+    document.getElementById('est-'+n).classList.add('viva');
+    document.querySelectorAll('.etapa').forEach(et=>{
+      const e = +et.dataset.e;
+      et.classList.toggle('activa', e===n);
+    });
+  }
+  function marcarHecha(n){
+    const et = document.querySelector('.etapa[data-e="'+n+'"]');
+    if (et){ et.classList.remove('activa'); et.classList.add('hecha'); }
+  }
+
+  // ── util ──
+  let toastT;
+  function toast(msg, err){
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast show' + (err?' err':'');
+    clearTimeout(toastT);
+    toastT = setTimeout(()=>t.className='toast', 3200);
+  }
+  function cerrarSesion(e){ e.preventDefault(); toast('En el sistema real, esto cierra la sesión y vuelve a la vidriera.'); }
+
+  // ── arranque ──
+  cargarCliente();
+  initMapa();
+</script>
+</body>
+</html>
