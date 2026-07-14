@@ -168,6 +168,22 @@ body::after {
 .hint-inline { font-family:'JetBrains Mono',monospace; font-size:8px; letter-spacing:0.5px; color:var(--dim); line-height:1.6; margin-top:6px; }
 
 .account-actions { margin-top:36px; padding-top:24px; border-top:1px solid var(--line); display:flex; gap:10px; flex-wrap:wrap; }
+
+/* ── AGREGADO: bloque destacado "Certificar un activo" (la acción principal) ── */
+.certificar-block {
+  margin:28px 0; padding:24px; background:linear-gradient(135deg, rgba(58,138,122,0.10), rgba(74,138,74,0.05));
+  border:1px solid var(--teal); position:relative; overflow:hidden;
+}
+.certificar-block .cb-eyebrow { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:3px; color:var(--emerald); margin-bottom:8px; }
+.certificar-block .cb-title { font-family:'Playfair Display',serif; font-size:22px; color:var(--white); font-weight:400; margin-bottom:6px; line-height:1.2; }
+.certificar-block .cb-title em { font-style:italic; color:var(--glacier); }
+.certificar-block .cb-sub { font-family:'Crimson Pro',serif; font-size:14px; color:var(--muted); line-height:1.6; margin-bottom:18px; max-width:520px; }
+.btn-certificar {
+  padding:15px 32px; background:var(--white); border:none; cursor:pointer;
+  font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:2px; color:var(--void);
+  transition:all 0.22s; display:inline-flex; align-items:center; gap:10px;
+}
+.btn-certificar:hover { background:var(--gold2); transform:translateY(-1px); }
 .ghost-btn { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:2px; color:var(--muted); background:var(--card); border:1px solid var(--line2); padding:11px 18px; cursor:pointer; transition:all 0.2s; }
 .ghost-btn:hover { border-color:var(--teal); color:var(--text); }
 
@@ -310,6 +326,14 @@ body::after {
           <span class="dot"></span><span id="accEstadoCuenta">Cuenta activa</span><br>
           <span id="accEmailLogin" style="color:var(--dim);">—</span>
         </div>
+      </div>
+
+      <!-- ── AGREGADO: la acción principal — ir al motor a certificar ── -->
+      <div class="certificar-block">
+        <div class="cb-eyebrow">GRABAR EN LA CADENA</div>
+        <div class="cb-title">Certificá un <em>activo</em></div>
+        <div class="cb-sub">Dibujá el contorno de tu recurso sobre el satélite y grabá su estado ambiental de forma permanente. La ubicación exacta la vas a marcar vos en el mapa.</div>
+        <button class="btn-certificar" onclick="irAlMotor()">DIBUJAR Y CERTIFICAR →</button>
       </div>
 
       <div class="panel-label">TUS DATOS · TOCÁ PARA EDITAR Y GUARDÁ AL FINAL</div>
@@ -486,6 +510,26 @@ async function recuperar() {
 
   if (error) { return mostrarMsg('msgOlvide', traducirError(error.message), 'err'); }
   mostrarMsg('msgOlvide', 'Listo. Si ese correo tiene una cuenta, te llegó el enlace. Revisá tu bandeja (y spam).', 'ok');
+}
+
+/* ── IR AL MOTOR A CERTIFICAR ── */
+/* Guarda los datos del cliente donde el motor (protocolo.html) los lee,
+   así el activo se registra con su nombre e identidad real, no como "invitado". */
+async function irAlMotor() {
+  const { data: { user } } = await supa.auth.getUser();
+  if (!user) { irA('login'); return; }
+  const meta = user.user_metadata || {};
+  const cliente = {
+    cliente_id: user.id,
+    email:      user.email,
+    nombre:     meta.nombre || (user.email ? user.email.split('@')[0] : 'cliente'),
+    apellido:   meta.apellido || '',
+    empresa:    meta.compania || '',
+    pais:       meta.pais || '',
+    ubicacion:  meta.ubicacion_recurso || ''
+  };
+  try { sessionStorage.setItem('epi_cliente', JSON.stringify(cliente)); } catch (e) {}
+  window.location.href = 'protocolo.html';
 }
 
 /* ── CARGAR EL ÁREA PRIVADA ── */
