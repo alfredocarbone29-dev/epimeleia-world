@@ -33,15 +33,17 @@ const supabase = createClient(
 );
 
 // ─── Traduce el "tipo" que manda el mapa al código interno del protocolo ───
-// El mapa manda textos como "Bosque / forestación". El satélite y el resto
-// del sistema trabajan con un tipo simple. Este diccionario los une.
-// Si llega algo que no está acá, se guarda tal cual y se marca para revisar.
+// El motor manda textos legibles. El satélite y el resto del sistema trabajan
+// con un código simple. Este diccionario los une.
+// El tipo NO es decorativo: define QUÉ mide el satélite (no es lo mismo medir
+// agua que vegetación).
 const MAPA_TIPOS = {
   'Bosque / forestación':            'FORESTAL',
+  'Campo / vegetación agrícola':     'AGRICOLA',
   'Cuenca hídrica / cuerpo de agua': 'HIDRICO',
   'Minería / suelo intervenido':     'MINERIA',
   'Glaciar / reserva de hielo':      'GLACIAR',
-  'Campo / vegetación agrícola':     'AGRICOLA',
+  'Industria / instalaciones':       'INDUSTRIAL',
   'Otro':                            'OTRO',
 };
 
@@ -82,12 +84,10 @@ export default async function handler(req, res) {
     const tipoInterno = MAPA_TIPOS[datos.tipo] || 'OTRO';
 
     // ── 4) ARMAR la fila para Supabase ──
-    // Solo llenamos lo que el mapa nos da de verdad. El resto queda para
-    // los pasos siguientes:
-    //   · cliente_id       → cuando esté el login con Google
+    // El resto de las columnas se llenan en su momento del recorrido:
     //   · activo_id_onchain, ultimo_hash, ultimo_bloque → cuando se selle
     //   · ultima_medicion  → cuando el satélite mida
-    //   · tier, precio     → cuando definas los precios finales
+    //   · tier, precio     → cuando el cliente pague
     // El estado nace en 'alta': registrado, todavía sin certificar ni pagar.
     const fila = {
       nombre_activo:          datos.nombre.trim(),
@@ -95,9 +95,15 @@ export default async function handler(req, res) {
       poligono:               poligono,
       superficie_ha:          Number(datos.area_ha)  || null,
       superficie_km2:         Number(datos.area_km2) || null,
-      // El polígono llega del mapa pero TODAVÍA no está "confirmado" en el
-      // sentido de la doble aceptación. Eso es un paso aparte. Por ahora false.
-      poligono_confirmado:    false,
+      // AGREGADO: el dueño del activo. Sin esto, el activo no queda atado a
+      // ninguna cuenta y nadie puede saber de quién es. Es la base de la
+      // confidencialidad (que cada cliente vea solo lo suyo).
+      cliente_id:             datos.cliente_id || null,
+      // El polígono ya viene confirmado por el cliente en el mapa
+      // (apretó "Confirmar activo" y después "Confirmar y continuar":
+      //  esa es la doble aceptación).
+      poligono_confirmado:    true,
+      poligono_confirmado_en: new Date().toISOString(),
       estado:                 'alta',
       // fecha_alta y fecha_creacion las pone Supabase solas (default now()).
     };
@@ -106,7 +112,7 @@ export default async function handler(req, res) {
     const { data, error } = await supabase
       .from('activos')
       .insert(fila)
-      .select('id, nombre_activo, superficie_ha, estado')
+      .select('id, nombre_activo, tipo, superficie_ha, estado, cliente_id')
       .single();
 
     if (error) {
