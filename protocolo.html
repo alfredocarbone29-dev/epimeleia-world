@@ -100,6 +100,19 @@
   #continueWrap { margin-top: 12px; }
   #continueBtn { width: 100%; }
 
+  /* ── AGREGADO: identidad del activo (nombre + tipo) ── */
+  #identidad { margin-bottom: 14px; }
+  #identidad .campo { margin-bottom: 10px; }
+  #identidad label { display: block; font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); margin-bottom: 5px; }
+  #identidad input, #identidad select {
+    width: 100%; background: transparent; border: 1px solid var(--line); border-radius: 6px;
+    color: var(--text); font-family: var(--mono); font-size: 12px; padding: 9px 10px;
+  }
+  #identidad input:focus, #identidad select:focus { outline: 2px solid var(--cyan); border-color: transparent; }
+  #identidad input::placeholder { color: var(--muted); }
+  #identidad select option { background: var(--bg); color: var(--text); }
+  #identidad .nota { font-size: 9px; color: var(--muted); line-height: 1.5; margin-top: 4px; }
+
   /* estaciones siguientes (firmar/pagar) — placeholder honesto */
   .estacion-msg { display:none; text-align:center; padding: 8px 4px; }
   .estacion-msg .k { font-size: 9px; letter-spacing: 0.2em; color: var(--cyan); text-transform: uppercase; }
@@ -215,6 +228,30 @@
       </div>
       <div class="coords-label">COORDENADAS (LO QUE LEE EL SISTEMA · GeoJSON)</div>
       <div class="coords" id="coordsOut" tabindex="0"></div>
+
+      <!-- ── AGREGADO: identidad del activo ── -->
+      <div id="identidad">
+        <div class="campo">
+          <label for="actNombre">Nombre de este activo</label>
+          <input id="actNombre" type="text" placeholder="Ej.: Campo Pergamino, Cuenca Norte…" autocomplete="off" />
+          <div class="nota">Así lo vas a reconocer entre tus activos, y así aparece en el certificado.</div>
+        </div>
+        <div class="campo">
+          <label for="actTipo">Tipo de recurso</label>
+          <select id="actTipo">
+            <option value="">Elegí qué estás certificando…</option>
+            <option>Bosque / forestación</option>
+            <option>Campo / vegetación agrícola</option>
+            <option>Cuenca hídrica / cuerpo de agua</option>
+            <option>Minería / suelo intervenido</option>
+            <option>Glaciar / reserva de hielo</option>
+            <option>Industria / instalaciones</option>
+            <option>Otro</option>
+          </select>
+          <div class="nota">Define qué mide el satélite: no es lo mismo medir agua que vegetación.</div>
+        </div>
+      </div>
+
       <div class="btns">
         <button class="action" id="editBtn" type="button">Volver a dibujar</button>
         <!-- ── AGREGADO: segunda confirmación, guarda en Supabase ── -->
@@ -448,6 +485,12 @@
   el('continueBtn').addEventListener('click', function () {
     if (!geojsonConfirmado) { toast('Primero confirmá el contorno.', true); return; }
 
+    // AGREGADO: el activo necesita identidad propia.
+    var nombreActivo = el('actNombre').value.trim();
+    var tipoActivo   = el('actTipo').value;
+    if (!nombreActivo) { toast('Ponele un nombre a este activo.', true); el('actNombre').focus(); return; }
+    if (!tipoActivo)   { toast('Elegí qué tipo de recurso es.', true); el('actTipo').focus(); return; }
+
     var btn = el('continueBtn');
     btn.disabled = true; btn.textContent = 'Registrando…';
 
@@ -456,12 +499,12 @@
     var areaHa = props.superficie_ha || 0;
 
     var paquete = {
-      nombre: CLIENTE.empresa ? (CLIENTE.empresa) : ('Activo de ' + CLIENTE.nombre),
-      tipo: 'Otro',                    // el tipo real vendrá del formulario de presentación
+      nombre: nombreActivo,            // AGREGADO: el nombre que puso el cliente
+      tipo: tipoActivo,                // AGREGADO: el tipo que eligió
       coordinates: ring,
       area_ha: areaHa,
       area_km2: +(areaHa / 100).toFixed(6),
-      cliente_id: CLIENTE.cliente_id   // cuando auth esté conectado, va el real
+      cliente_id: CLIENTE.cliente_id   // el dueño: viene de cuenta.html
     };
 
     fetch('/api/registrar-activo', {
@@ -472,7 +515,7 @@
     .then(function (r) { return r.json(); })
     .then(function (data) {
       if (data && data.ok) {
-        toast('✓ Tu activo quedó registrado.');
+        toast('✓ "' + nombreActivo + '" quedó registrado.');
         pasoHecho(1); paso(2);
         // revela la estación 2 (firmar) dentro del mismo panel
         confirmedView.style.display = 'none';
