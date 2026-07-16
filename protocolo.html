@@ -96,9 +96,19 @@
   #panel { top: 62px; }
   @media (max-width: 720px) { #steps .st .t { display: none; } }
 
-  /* botón continuar (segunda confirmación) */
-  #continueWrap { margin-top: 12px; }
-  #continueBtn { width: 100%; }
+  /* botón continuar (segunda confirmación) — ES LA ACCIÓN PRINCIPAL */
+  #continueWrap { margin-bottom: 14px; }
+  #continueBtn {
+    width: 100%; font-size: 14px; font-weight: 700; padding: 15px 12px;
+    letter-spacing: 0.06em; box-shadow: 0 0 24px rgba(0,240,255,0.25);
+    animation: pulseBtn 2.6s ease-in-out infinite;
+  }
+  @keyframes pulseBtn {
+    0%,100% { box-shadow: 0 0 20px rgba(0,240,255,0.20); }
+    50%     { box-shadow: 0 0 30px rgba(0,240,255,0.40); }
+  }
+  #continueBtn:disabled { animation: none; box-shadow: none; }
+  .continue-hint { font-size: 9.5px; color: var(--muted); text-align: center; margin-bottom: 12px; line-height: 1.5; }
 
   /* ── AGREGADO: identidad del activo (nombre + tipo) ── */
   #identidad { margin-bottom: 14px; }
@@ -226,9 +236,6 @@
         <div class="value" id="areaValueLocked">— <small>ha</small></div>
         <div class="sub" id="vtxSubLocked"></div>
       </div>
-      <div class="coords-label">COORDENADAS (LO QUE LEE EL SISTEMA · GeoJSON)</div>
-      <div class="coords" id="coordsOut" tabindex="0"></div>
-
       <!-- ── AGREGADO: identidad del activo ── -->
       <div id="identidad">
         <div class="campo">
@@ -252,13 +259,19 @@
         </div>
       </div>
 
+      <!-- LA ACCIÓN PRINCIPAL — arriba y visible -->
+      <div id="continueWrap">
+        <button class="action primary" id="continueBtn" type="button">CONFIRMAR Y CONTINUAR →</button>
+      </div>
+      <div class="continue-hint">Al confirmar, tu activo queda registrado con este contorno.</div>
+
       <div class="btns">
         <button class="action" id="editBtn" type="button">Volver a dibujar</button>
-        <!-- ── AGREGADO: segunda confirmación, guarda en Supabase ── -->
-        <div id="continueWrap">
-          <button class="action primary" id="continueBtn" type="button">Confirmar y continuar →</button>
-        </div>
       </div>
+
+      <!-- Info técnica: al final, para quien la quiera ver -->
+      <div class="coords-label" style="margin-top:18px;">COORDENADAS (LO QUE LEE EL SISTEMA · GeoJSON)</div>
+      <div class="coords" id="coordsOut" tabindex="0"></div>
     </div>
 
     <!-- ── AGREGADO: estación FIRMAR (placeholder honesto) ── -->
@@ -499,12 +512,17 @@
     var areaHa = props.superficie_ha || 0;
 
     var paquete = {
-      nombre: nombreActivo,            // AGREGADO: el nombre que puso el cliente
-      tipo: tipoActivo,                // AGREGADO: el tipo que eligió
+      nombre: nombreActivo,            // el nombre que puso el cliente
+      tipo: tipoActivo,                // el tipo que eligió
       coordinates: ring,
       area_ha: areaHa,
       area_km2: +(areaHa / 100).toFixed(6),
-      cliente_id: CLIENTE.cliente_id   // el dueño: viene de cuenta.html
+      // El dueño: viene de cuenta.html. Si es su primer activo, el endpoint
+      // crea su ficha de cliente con estos datos.
+      cliente_id:      CLIENTE.cliente_id,
+      cliente_email:   CLIENTE.email,
+      cliente_nombre:  CLIENTE.nombre,
+      cliente_empresa: CLIENTE.empresa
     };
 
     fetch('/api/registrar-activo', {
@@ -522,12 +540,12 @@
         el('est-firmar').style.display = 'block';
       } else {
         toast('No se pudo registrar: ' + ((data && data.error) || 'error'), true);
-        btn.disabled = false; btn.textContent = 'Confirmar y continuar →';
+        btn.disabled = false; btn.textContent = 'CONFIRMAR Y CONTINUAR →';
       }
     })
     .catch(function () {
       toast('No se pudo conectar con el servidor.', true);
-      btn.disabled = false; btn.textContent = 'Confirmar y continuar →';
+      btn.disabled = false; btn.textContent = 'CONFIRMAR Y CONTINUAR →';
     });
   });
 })();
