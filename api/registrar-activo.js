@@ -83,6 +83,52 @@ export default async function handler(req, res) {
     // ── 3) MAPEAR el tipo del mapa al tipo interno ──
     const tipoInterno = MAPA_TIPOS[datos.tipo] || 'OTRO';
 
+    // ── 3b) ASEGURAR QUE EL CLIENTE EXISTE ──────────────────────────
+    // La tabla `activos` exige que cliente_id apunte a una fila real de
+    // `clientes`. Pero la cuenta del cliente vive en Supabase Auth, que es
+    // otro lado. Si el cliente todavía no tiene su fila en `clientes`, la
+    // creamos acá con los datos que manda el motor.
+    // (Esto es la "memoria del negocio": Auth dice quién puede entrar,
+    //  la tabla clientes es quién es como cliente de EPIMELEIA.)
+    let clienteId = null;
+    if (datos.cliente_id) {
+      const { data: existe, error: errBusca } = await supabase
+        .from('clientes')
+        .select('id')
+        .eq('id', datos.cliente_id)
+        .maybeSingle();
+
+      if (errBusca) {
+        console.error('[registrar-activo] Error buscando cliente:', errBusca);
+      }
+
+      if (existe) {
+        clienteId = existe.id;
+      } else {
+        // No existe todavía → lo creamos con lo que sabemos de él.
+        const { data: nuevo, error: errCrea } = await supabase
+          .from('clientes')
+          .insert({
+            id:      datos.cliente_id,        // el mismo id de su cuenta Auth
+            email:   datos.cliente_email || null,
+            nombre:  datos.cliente_nombre || null,
+            empresa: datos.cliente_empresa || null,
+          })
+          .select('id')
+          .single();
+
+        if (errCrea) {
+          console.error('[registrar-activo] Error creando cliente:', errCrea);
+          // Si no se pudo crear el cliente, guardamos el activo sin dueño
+          // antes que perder el dibujo. Queda anotado para revisar.
+          clienteId = null;
+        } else {
+          clienteId = nuevo.id;
+          console.log('[registrar-activo] Cliente creado:', clienteId);
+        }
+      }
+    }
+
     // ── 4) ARMAR la fila para Supabase ──
     // El resto de las columnas se llenan en su momento del recorrido:
     //   · activo_id_onchain, ultimo_hash, ultimo_bloque → cuando se selle
@@ -95,10 +141,9 @@ export default async function handler(req, res) {
       poligono:               poligono,
       superficie_ha:          Number(datos.area_ha)  || null,
       superficie_km2:         Number(datos.area_km2) || null,
-      // AGREGADO: el dueño del activo. Sin esto, el activo no queda atado a
-      // ninguna cuenta y nadie puede saber de quién es. Es la base de la
-      // confidencialidad (que cada cliente vea solo lo suyo).
-      cliente_id:             datos.cliente_id || null,
+      // El dueño del activo. Ya nos aseguramos arriba de que exista en
+      // la tabla `clientes` (si no estaba, lo creamos).
+      cliente_id:             clienteId,
       // El polígono ya viene confirmado por el cliente en el mapa
       // (apretó "Confirmar activo" y después "Confirmar y continuar":
       //  esa es la doble aceptación).
