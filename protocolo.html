@@ -451,22 +451,39 @@
   //  AGREGADO — reconocimiento del cliente + registro + secuencia
   // ═══════════════════════════════════════════════════════════
 
-  // Datos del cliente (los deja el login al entrar). Si no hay, "invitado".
+  // Datos del cliente (los deja cuenta.html al entrar). 
   var CLIENTE = { nombre: 'invitado', email: null, pais: null, empresa: null, cliente_id: null };
   function cargarCliente() {
     try {
       var g = sessionStorage.getItem('epi_cliente');
       if (g) { CLIENTE = Object.assign(CLIENTE, JSON.parse(g)); }
     } catch (e) {}
-    el('whoName').textContent = CLIENTE.nombre || 'invitado';
+
+    // ── PUERTA: sin identidad no se entra al motor ──────────────
+    // Si alguien abre protocolo.html directo (sin pasar por cuenta.html),
+    // no sabemos quién es. Antes lo dejábamos dibujar como "invitado" y el
+    // activo quedaba huérfano, sin dueño. Eso ensucia la base y va contra el
+    // principio de que cada activo tiene su cliente.
+    // Ahora: si no hay identidad, se vuelve a la puerta.
+    if (!CLIENTE.cliente_id) {
+      document.body.innerHTML =
+        '<div style="height:100vh;display:flex;align-items:center;justify-content:center;' +
+        'background:#05070a;color:#dfeef0;font-family:' + "'JetBrains Mono',monospace" + ';text-align:center;padding:24px;">' +
+        '<div><div style="font-size:20px;letter-spacing:.14em;color:#00f0ff;margin-bottom:14px;">EPIMELEIA</div>' +
+        '<div style="font-size:13px;color:#7d8b90;line-height:1.7;max-width:340px;">' +
+        'Para certificar un activo necesitás entrar a tu cuenta.<br>Te llevamos a la puerta…</div></div></div>';
+      setTimeout(function () { window.location.href = 'cuenta.html'; }, 1600);
+      return false;
+    }
+
+    el('whoName').textContent = CLIENTE.nombre || 'cliente';
+    return true;
   }
-  cargarCliente();
-  // Si el login termina después de que cargó el motor, actualizamos el saludo.
-  document.addEventListener('epi:cliente', function () { cargarCliente(); });
+  if (!cargarCliente()) return;   // si no hay cliente, el motor no arranca
 
   el('logoutLink').addEventListener('click', function (e) {
     e.preventDefault();
-    toast('En el sistema real, esto cierra sesión y vuelve a la web.');
+    window.location.href = 'cuenta.html';
   });
 
   // marca de progreso
