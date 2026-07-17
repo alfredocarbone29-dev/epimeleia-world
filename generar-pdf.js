@@ -29,9 +29,47 @@
  * fijo, para cualquier activo. Ahora se LEE de la cadena con
  * blockchain.getIndiceContinuidad(). Si no hay historia, lo dice.
  *
- * ⚠️ SIGUEN DE EJEMPLO, PENDIENTES DE SUPABASE (paso 5-6 del brief):
+ * ════════════════════════════════════════════════════════════════
+ * AJUSTE 31 (17/7/2026) — EL CERTIFICADO DICE CON QUÉ REGLA LEYÓ
+ * ════════════════════════════════════════════════════════════════
+ *
+ * DECISIÓN DEL FUNDADOR (17/7): regla de lectura VERSIONADA.
+ *
+ * El certificado muestra "vegetación moderada" al lado de 0.347. Esa
+ * frase ES el servicio: el número crudo no le dice nada a nadie. Pero
+ * la frase depende de un umbral (el corte está en 0.3), y 0.347 está
+ * a 0.047 del borde. Si mañana ese corte cambia, el MISMO número
+ * pasaría a decir "vegetación escasa o estresada".
+ *
+ * Por eso, desde hoy, el certificado declara:
+ *   · con qué VERSIÓN de la regla se leyó ....... v1
+ *   · la HUELLA de esa regla (keccak256) ........ 0x196ec711…
+ *
+ * Con eso, "vegetación moderada" deja de ser una opinión de EPIMELEIA
+ * y pasa a ser comprobable: este número, leído con esta regla pública,
+ * da esta frase. Y si alguien alguna vez edita la v1 en lugar de crear
+ * una v2, la huella deja de coincidir y cualquiera lo ve.
+ *
+ * QUÉ CAMBIÓ, exactamente:
+ *   1. Se leen medicion.reglaLectura y medicion.hashRegla (los devuelve
+ *      satellite.js desde el Ajuste 30).
+ *   2. Se muestran en dos lugares:
+ *        · al pie de las mediciones → donde están las frases
+ *        · en el recuadro verde     → donde van las cosas verificables
+ *
+ * ⚠️ DECISIÓN DE DISEÑO — importante, no es un detalle:
+ *    La regla se toma de la MEDICIÓN, no se vuelve a importar acá.
+ *    Si este archivo preguntara por su cuenta "¿cuál es la regla
+ *    vigente?", podría decir v1 mientras los números fueron leídos con
+ *    otra. El certificado tiene que reportar la regla que EFECTIVAMENTE
+ *    leyó esos números — la que viaja dentro de `medicion`.
+ *    Es la misma lógica de "lo que se muestra, se sella".
+ *
+ * ⚠️ SIGUEN DE EJEMPLO, PENDIENTES DE LA JUNTA A:
  *    hashEvidencia, selladoTexto, bloque. Esos tres salen de una
  *    transacción real en Polygon, que todavía no se hace. Están marcados.
+ *    El certificado dice "Nadie tocó este dato. Y se puede probar" — y
+ *    todavía NO se puede. Esa es la Junta A entera.
  * ════════════════════════════════════════════════════════════════
  */
 
@@ -71,8 +109,8 @@ const IDENTIDAD = {
   // ── AJUSTE 29: folio y trimestre YA NO se escriben acá.
   //    Se calculan con el reloj del protocolo, más abajo, en armarDatos().
 
-  // ⚠️ ESTOS TRES SIGUEN DE EJEMPLO — se llenan de verdad con Supabase
-  //    (paso 5-6 del brief): salen de una transacción real en Polygon.
+  // ⚠️ ESTOS TRES SIGUEN DE EJEMPLO — se llenan de verdad con la Junta A:
+  //    salen de una transacción real en Polygon.
   hashEvidencia: '0x7f3a9c2e5b18d40a6f21e0c9b7a4d3f8e2c1b0a9d8e7f6c5b4a3928170615243',
   selladoTexto:  '06 JUL 2026 · 18:42 UTC',
   bloque:        '#64.208.115',
@@ -145,6 +183,16 @@ function fechaCorta(iso) {
   } catch { return '—'; }
 }
 
+/**
+ * AJUSTE 31 — un hash largo, legible de un vistazo, sin perder el
+ * principio y el final (que es lo que un humano compara).
+ * El hash COMPLETO va igual en el recuadro verde.
+ */
+function hashCorto(h) {
+  if (!h || typeof h !== 'string' || h.length < 20) return '—';
+  return h.slice(0, 10) + '…' + h.slice(-8);
+}
+
 // ── HTML del certificado (diseño aprobado) ───────────────────
 
 function construirHTML(datos) {
@@ -158,6 +206,24 @@ function construirHTML(datos) {
           ${m.calidadPct != null ? `<span class="chip calidad">Calidad ${m.calidadPct}%</span>` : ''}
         </div>
       </div>`).join('');
+
+  // ── AJUSTE 31 · La línea que declara la regla, al pie de las frases.
+  //    Si por lo que sea la medición no trajo regla, NO se inventa nada:
+  //    simplemente no se muestra la línea. (Mismo criterio que el resto
+  //    del protocolo: lo que no se sabe, no se dice.)
+  const pieRegla = datos.reglaLectura
+    ? `
+      <div class="reglapie">
+        Las frases de arriba se leyeron con la <b>Regla de lectura ${datos.reglaLectura}</b>
+        · huella <b>${hashCorto(datos.hashRegla)}</b><br>
+        El número lo mide el satélite. La regla lo traduce. Las dos cosas están selladas.
+      </div>`
+    : '';
+
+  // ── AJUSTE 31 · La regla, también entre las cosas verificables.
+  const lineaReglaPrueba = datos.reglaLectura
+    ? `Regla de lectura · <b>${datos.reglaLectura}</b> · <b>${datos.hashRegla}</b><br>`
+    : '';
 
   return `<!DOCTYPE html>
 <html lang="es">
@@ -206,6 +272,11 @@ function construirHTML(datos) {
   .chip.medido{ background:var(--chip-medido-bg); color:var(--chip-medido-fg); }
   .chip.aprox{ background:transparent; color:var(--chip-aprox-fg); border:1px solid var(--chip-aprox-fg); }
   .chip.calidad{ background:transparent; color:var(--ink-soft); border:1px solid var(--line); }
+
+  /* ── AJUSTE 31 · la regla, al pie de las frases que produjo ── */
+  .reglapie{ margin-top:12px; padding-left:2px; font-family:'JetBrains Mono',monospace;
+             font-size:8.5px; color:var(--ink-soft); letter-spacing:.03em; line-height:1.9; }
+  .reglapie b{ color:var(--green); font-weight:500; }
 
   .satstrip{ display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:var(--line); border:1px solid var(--line); margin-top:20px; }
   .satstrip .cel{ background:#faf7ef; padding:11px 14px; }
@@ -260,6 +331,7 @@ function construirHTML(datos) {
       <div class="seccion-tit"><span>Lo que vio el satélite</span></div>
       <section class="medidas">${filasMedidas}
       </section>
+      ${pieRegla}
 
       <div class="satstrip">
         <div class="cel"><div class="k">Satélite</div><div class="v">${datos.satelite}</div></div>
@@ -288,7 +360,7 @@ function construirHTML(datos) {
           <div class="hashline">
             Hash de evidencia<br>
             <b>${datos.hashEvidencia}</b><br>
-            Contrato · <b>0xf59BCFB9…AF8bbc93</b> · Polygon Mainnet<br>
+            ${lineaReglaPrueba}Contrato · <b>0xf59BCFB9…AF8bbc93</b> · Polygon Mainnet<br>
             Sellado · <b>${datos.selladoTexto}</b> · bloque <b>${datos.bloque}</b>
           </div>
           <a class="verificar" href="${datos.polygonscanUrl}">Verificar en Polygonscan →</a>
@@ -429,6 +501,22 @@ async function enviarPDFPorEmail({ para, pdfBuffer, nombreActivo }) {
     console.log('   ⚠ Los índices vienen de pasadas de días distintos (ver satellite.js).');
   }
 
+  // ── AJUSTE 31: con qué regla se leyeron esos números.
+  //    Se toma de la MEDICIÓN, no se vuelve a importar la regla. Si este
+  //    archivo preguntara por su cuenta cuál es la vigente, podría decir
+  //    v1 mientras los números se leyeron con otra.
+  const reglaLectura = medicion.reglaLectura || null;
+  const hashRegla    = medicion.hashRegla    || null;
+
+  if (reglaLectura) {
+    console.log(`   ✓ Leído con la Regla de lectura ${reglaLectura}`);
+    console.log(`     huella: ${hashRegla}`);
+  } else {
+    console.log('   ⚠ La medición no declaró regla de lectura.');
+    console.log('     El certificado NO va a mostrar la línea de la regla (no se inventa).');
+    console.log('     Revisá que satellite.js tenga el Ajuste 30.');
+  }
+
   // 2) Leer la continuidad de la cadena (AJUSTE 29)
   console.log('2) Leyendo continuidad on-chain...');
   const continuidad = await leerContinuidad(ACTIVO_PRUEBA.activoId);
@@ -444,6 +532,8 @@ async function enviarPDFPorEmail({ para, pdfBuffer, nombreActivo }) {
     folio:            `EPI-C-${String(ACTIVO_PRUEBA.activoId).padStart(6,'0')}-${reloj.folioSufijo}`,
     trimestre:        reloj.etiqueta,
     continuidadTexto: continuidad.texto,
+    reglaLectura,                    // ← AJUSTE 31
+    hashRegla,                       // ← AJUSTE 31
   };
 
   // 4) Armar HTML
