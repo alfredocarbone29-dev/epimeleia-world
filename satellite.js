@@ -66,9 +66,59 @@
  *     ninguna pasada limpia. Es un hueco honesto, no un error. El que
  *     llama decide qué hacer, pero el sistema ya no inventa para tapar.
  *
+ * ════════════════════════════════════════════════════════════════
+ * AJUSTE 30 (17/7/2026) — LA REGLA DE LECTURA SALE DE ACÁ
+ * ════════════════════════════════════════════════════════════════
+ *
+ * DECISIÓN DEL FUNDADOR (17/7): regla VERSIONADA, no congelada.
+ *
+ * El problema que resuelve, con el certificado real del 10/7 delante:
+ *
+ *     NDVI 0.347  →  "vegetación moderada"   (el corte está en 0.3)
+ *
+ * Ese número está a 0.047 del borde. Si algún día se decide que el
+ * corte correcto para la pampa es 0.35, ese MISMO 0.347 pasaría a
+ * decir "vegetación escasa o estresada". Dos certificados sellados,
+ * los dos válidos, contradiciéndose. El hash de cada uno perfecto,
+ * y la serie rota.
+ *
+ * Por eso: cada medición ahora declara CON QUÉ REGLA leyó, y esa
+ * versión (y la huella de la regla) entran después en el hash.
+ *
+ * QUÉ CAMBIÓ, exactamente y nada más:
+ *
+ *   1. Se importa ./reglas-lectura  (archivo nuevo, ya probado: 23/23).
+ *   2. Se BORRÓ la función _interpretar() local. Su contenido, tal cual,
+ *      es ahora la regla v1 de ese archivo. No se movió ni un umbral.
+ *   3. Donde se traducía, ahora se llama a reglas.interpretar().
+ *   4. medirIndicadores() devuelve dos campos nuevos:
+ *          reglaLectura   'v1'
+ *          hashRegla      0x196ec7110533897c2c0fd3d7cd089ab93a801e79...
+ *      Eso es lo que va a entrar al hash del certificado.
+ *
+ * QUÉ **NO** CAMBIÓ:
+ *   · Ni un umbral. Ni una frase. Ni una coma.
+ *   · Comprobado con 23 casos, incluidos el 0.347 y el -0.07 del
+ *     certificado real, y los bordes exactos de cada corte.
+ *   · El resto del archivo (ajustes 27 y 28) está intacto.
+ *
+ * ⚠️ DEUDA ABIERTA, DECLARADA — NO SE TOCÓ A PROPÓSITO:
+ *
+ *   Hay DOS frases distintas para "no hay dato", y solo una está
+ *   en la regla sellada:
+ *       · la regla dice ............ "sin dato"
+ *       · este archivo dice ........ "sin dato satelital en la ventana"
+ *   La segunda la escribe medirIndicadores() por su cuenta (ver abajo,
+ *   marcado). Puede aparecer en un certificado: si un índice midió y
+ *   el otro no, el PDF muestra esa frase al lado del que no midió.
+ *   Sería la única línea del certificado que ninguna regla sellada cubre.
+ *
+ *   Se dejó EXACTAMENTE como estaba. Extraer y arreglar a la vez es
+ *   cómo se cuelan los errores. Es decisión del fundador.
+ *
  * ⚠️ NO SE TOCÓ generarHashEvidencia(). Sigue sin cubrir las
- *    mediciones ni el polígono (ver sección 8 del brief). Esa es la
- *    sesión de Supabase. Está marcado abajo.
+ *    mediciones ni el polígono ni la regla (ver Junta A del brief).
+ *    Está marcado abajo.
  * ════════════════════════════════════════════════════════════════
  */
 
@@ -76,6 +126,16 @@ const axios    = require('axios');
 const { ethers } = require('ethers');
 const { config } = require('./config');
 const { log }    = require('./logger');
+
+// ── AJUSTE 30 · LA REGLA DE LECTURA ──────────────────────────────
+// La traducción del número a la frase ES el servicio. Por eso vive
+// en su archivo propio, versionada y con huella. Si algún día un
+// umbral tiene que cambiar, se agrega una v2 allá: acá no se toca nada.
+//
+//   ⛔ Nadie edita la v1. Jamás. Su huella la delataría.
+//
+// Para ver la regla completa y su huella:  node reglas-lectura.js
+const reglas = require('./reglas-lectura');
 
 // ─── PV-L1: Sentinel / Copernicus ──────────────────────────────
 
@@ -209,18 +269,21 @@ function evaluarNubosidad(reporte) {
 }
 
 /**
- * ⚠️ DEUDA CONOCIDA — sección 8 del brief. NO REPARADO ACÁ.
+ * ⚠️ DEUDA CONOCIDA — Junta A del brief. NO REPARADO ACÁ.
  *
- * Este hash NO incluye los valores medidos (NDVI, NDMI) ni el polígono.
+ * Este hash NO incluye los valores medidos (NDVI, NDMI), ni el polígono,
+ * ni el titular, ni la regla de lectura.
  * Prueba que existió una pasada con ese uuid, esa nubosidad y ese
  * timestamp. NO prueba los números que el certificado muestra.
  *
  * La reparación es:
- *   keccak256({ ...metadatos, mediciones, hashPoligono })
+ *   keccak256({ ...metadatos, mediciones, hashPoligono, titular,
+ *               reglaLectura, hashRegla })
  *
- * Requiere fijar antes cómo se serializa un polígono de forma canónica
- * (orden de vértices, decimales, orden de claves). Eso es la sesión
- * de Supabase. No se toca hasta entonces.
+ * AJUSTE 30: la parte de la REGLA ya está lista y disponible —
+ * medirIndicadores() ahora devuelve reglaLectura y hashRegla.
+ * Falta la serialización canónica del polígono y el paquete de
+ * inscripción. Eso es la Junta A propiamente dicha.
  */
 function generarHashEvidencia(reporte) {
   const { ethers } = require('ethers');
@@ -237,9 +300,15 @@ function generarHashEvidencia(reporte) {
 }
 
 /**
- * ⚠️ DEUDA CONOCIDA — sección 8 del brief.
+ * ⚠️ DEUDA CONOCIDA — Junta A del brief.
  * Esto arma un string que PARECE un IPFS y no lo es. Está grabado en
  * Polygon apuntando a nada. O se hace real, o se saca.
+ *
+ * Nota (17/7): acá va la dirección del PAQUETE DE EVIDENCIA — el
+ * polígono, las mediciones y la regla — para que un tercero pueda
+ * recalcular el hash y comprobar. Sin eso, "verificable por
+ * cualquiera" es una frase. Decisión del fundador pendiente:
+ * ¿IPFS de verdad, o un endpoint público de epimeleia.world?
  */
 function generarMetadataURI(reporte, trimestre) {
   return `ipfs://QmEpimeleia_${reporte.activoId}_Q${trimestre}_${reporte.nivel}_${reporte.uuid?.slice(0,8) || 'pending'}`;
@@ -412,6 +481,9 @@ function _geometriaDeActivo(datosActivo) {
     },
     // ← IMPORTANTE: esto NO es el activo. Es un cuadrado de respaldo.
     //   Lo que se mida acá no es lo que el cliente dibujó.
+    //   Es exactamente el modelo viejo: un punto con un radio. Así se
+    //   certificaron Hidrovía, Aral y Chernóbil: real, sellado, y
+    //   describiendo un cuadrado que no es el campo de nadie.
     esPoligonoReal: false,
   };
 }
@@ -508,30 +580,16 @@ async function _pedirEstadistica(indice, geometria, token, dias = 45) {
   return _ultimaMedicionValida(resp.data?.data || []);
 }
 
-// Traduce el número técnico a una frase entendible (orientativa).
-function _interpretar(indice, valor) {
-  if (valor == null) return 'sin dato';
-  switch (indice) {
-    case 'NDVI':
-      if (valor < 0.1) return 'suelo desnudo o sin vegetación';
-      if (valor < 0.3) return 'vegetación escasa o estresada';
-      if (valor < 0.6) return 'vegetación moderada';
-      return 'vegetación densa y sana';
-    case 'NDWI':
-      return valor > 0 ? 'presencia de agua abierta' : 'sin agua abierta';
-    case 'NDMI':
-      if (valor < -0.2) return 'muy seco';
-      if (valor < 0.1)  return 'humedad baja';
-      if (valor < 0.4)  return 'humedad media';
-      return 'húmedo';
-    case 'NDTI':
-      return valor > 0 ? 'agua con carga de sedimentos' : 'agua clara';
-    case 'NDBI':
-      return valor > 0 ? 'superficie construida o de suelo pelado' : 'superficie natural';
-    default:
-      return '';
-  }
-}
+// ── AJUSTE 30 ────────────────────────────────────────────────────
+// Acá vivía _interpretar(): un switch con los umbrales escritos a mano.
+// Se fue entera a reglas-lectura.js, como regla v1, sin cambiarle
+// ni un decimal. Comprobado: 23/23 casos dan idéntico, incluidos el
+// NDVI 0.347 y el NDMI -0.07 del certificado real del 10/7.
+//
+// Ya no hay traducción escondida en este archivo. La traducción es
+// pública, versionada y tiene huella propia:
+//     node reglas-lectura.js
+// ──────────────────────────────────────────────────────────────────
 
 /**
  * EL ENSAMBLADO. Punto de entrada único.
@@ -545,6 +603,11 @@ function _interpretar(indice, valor) {
  *   fechasDistintas   true si los índices no vienen todos del mismo día
  *   esPoligonoReal    false si se usó el cuadrado de respaldo lat/lon/radio
  *
+ * AJUSTE 30 — y también:
+ *   reglaLectura      con qué versión de la regla se tradujo ('v1')
+ *   hashRegla         la huella de esa regla, para que un tercero
+ *                     pueda comprobar que es la misma que se selló
+ *
  * @returns {Object|null}
  */
 async function medirIndicadores(datosActivo) {
@@ -552,8 +615,13 @@ async function medirIndicadores(datosActivo) {
   const cfg = config.indicadoresPorTipo[tipo] || config.indicadoresPorTipo[7];
   const { geometria, esPoligonoReal } = _geometriaDeActivo(datosActivo);
 
+  // AJUSTE 30: la versión y la huella de la regla con la que se va a leer.
+  // Se calculan UNA vez acá y viajan con la medición hasta el certificado.
+  const reglaLectura = reglas.VERSION_VIGENTE;
+  const hashRegla    = reglas.hashDeRegla(reglaLectura);
+
   log('MEDIR', `Midiendo indicadores sobre el polígono`, {
-    activoId, tipo: cfg.nombre, esPoligonoReal
+    activoId, tipo: cfg.nombre, esPoligonoReal, reglaLectura
   });
 
   if (!esPoligonoReal) {
@@ -569,7 +637,9 @@ async function medirIndicadores(datosActivo) {
         clave: ind.clave, etiqueta: ind.etiqueta, indice: ind.indice,
         confianza: info.confianza || 'medido',
         valor, fecha: new Date().toISOString(), calidadPct: 100,
-        interpretacion: _interpretar(ind.indice, valor), simulado: true,
+        // AJUSTE 30: era _interpretar(). Misma regla, ahora declarada.
+        interpretacion: reglas.interpretar(ind.indice, valor, reglaLectura),
+        simulado: true,
       };
     });
     return {
@@ -577,6 +647,7 @@ async function medirIndicadores(datosActivo) {
       timestamp: new Date().toISOString(),
       fechaPasada: new Date().toISOString(), fechasDistintas: false,
       calidadPct: 100, nubosidadPct: 0, simulado: true,
+      reglaLectura, hashRegla,          // ← AJUSTE 30
       mediciones,
     };
   }
@@ -616,7 +687,19 @@ async function medirIndicadores(datosActivo) {
       calidadPct:     m ? m.calidadPct : null,
       pixelesLimpios: m ? m.muestras : null,
       pixelesTapados: m ? m.nodata   : null,
-      interpretacion: m ? _interpretar(ind.indice, m.mean) : 'sin dato satelital en la ventana',
+
+      // ── AJUSTE 30 ────────────────────────────────────────────
+      // Cuando HAY número, traduce la regla v1 (antes: _interpretar).
+      //
+      // ⚠️ Cuando NO hay número, sigue diciendo "sin dato satelital en
+      //    la ventana" — una frase de ESTE archivo, que NO está en la
+      //    regla sellada (la regla dice "sin dato"). Se dejó tal cual
+      //    estaba: cambiarla ahora sería mover el comportamiento a
+      //    espaldas del fundador. Está anotado en la cabecera como
+      //    deuda declarada, para que él decida.
+      interpretacion: m
+        ? reglas.interpretar(ind.indice, m.mean, reglaLectura)
+        : 'sin dato satelital en la ventana',
     };
   });
 
@@ -660,6 +743,7 @@ async function medirIndicadores(datosActivo) {
     nubosidadPct,
     fechasDistintas,
     sinDato,
+    reglaLectura,
   });
 
   return {
@@ -676,6 +760,14 @@ async function medirIndicadores(datosActivo) {
     nubosidadPct,
     fuenteNubosidad: 'POLIGONO',   // ← medida sobre el activo, no sobre la escena
     sinDato,                        // ← true = no hubo pasada limpia. Es un hueco honesto.
+
+    // ── AJUSTE 30 · con qué regla se leyeron estos números ──────
+    // Esto es lo que después entra al hash del certificado. Sin esto,
+    // "vegetación moderada" es una opinión. Con esto, es un hecho:
+    // este número, leído con esta regla pública, da esta frase.
+    reglaLectura,
+    hashRegla,
+
     mediciones,
   };
 }
