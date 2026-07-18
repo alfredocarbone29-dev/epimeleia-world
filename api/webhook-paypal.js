@@ -15,17 +15,42 @@
 //   PayPal. Ese campo lo completa la Pieza 3 (crear-suscripcion.js) cuando
 //   el cliente tilda el casillero en el frontend. Formato esperado:
 //   "email|fechaISO|versionClausulas"
-//   Ejemplo: "empresa@dominio.com|2026-06-27T14:32:00.000Z|v1.0.0"
+//   Ejemplo: "empresa@dominio.com|2026-06-27T14:32:00.000Z|v2.0.0"
 //
 // VARIABLES DE ENTORNO NECESARIAS (en .env del VPS y en Vercel):
 //   PAYPAL_CLIENT_ID
 //   PAYPAL_CLIENT_SECRET
 //   PAYPAL_WEBHOOK_ID
 //   (las mismas que ya estaban — no se agregan nuevas)
-// ────────────────────────────────────────────────────────────────────────────
+//
+// ════════════════════════════════════════════════════════════════════════════
+// AJUSTE 32 (18/7/2026) — JUNTA B · LA VERSIÓN DE CLÁUSULAS QUE SE SELLA
+//                          ES LA VIGENTE, NO UNA ESCRITA A MANO
+// ════════════════════════════════════════════════════════════════════════════
+//
+// EL PROBLEMA (decisión del fundador, opción A):
+//   hash-clausulas.js dice VERSION_VIGENTE = "v2.0.0".
+//   Este archivo tenía "v1.0.0" y HASH_CLAUSULAS_V1 escritos a mano en TRES
+//   lugares (activación, cobro mensual, cancelación). Resultado: EPI le
+//   muestra al cliente la v2 y acá se sellaba la v1. Se mostraba una cosa y
+//   se sellaba otra. Y la v1 dice "By signing with their private key", un
+//   método descartado (el cliente nunca firma con clave privada).
+//
+// EL ARREGLO (opción A):
+//   Se apunta a la única fuente de verdad — VERSION_VIGENTE y
+//   HASH_CLAUSULAS_VIGENTE de hash-clausulas.js — en los tres lugares y en
+//   el fallback del custom_id inválido. El día que haya una v3, este archivo
+//   la sigue solo.
+//
+// ⚠️ La "firma asumida" (firmaAsumida cuando el custom_id viene mal) sigue
+//    existiendo: es la Junta C, y la resuelve la Estación 2 del motor. No se
+//    toca acá. Este ajuste solo garantiza que la VERSIÓN sellada sea la que
+//    se le mostró al cliente.
+// ════════════════════════════════════════════════════════════════════════════
 
 const { encolarPago, pagoYaExiste, guardarAceptacionClausulas } = require("../lib/cola-pagos");
-const { HASH_CLAUSULAS_V1, calcularHashAceptacion } = require("../lib/hash-clausulas");
+// AJUSTE 32: se importan la versión vigente y su hash, en vez de la v1.
+const { VERSION_VIGENTE, HASH_CLAUSULAS_VIGENTE, calcularHashAceptacion } = require("../lib/hash-clausulas");
 
 // ─── URL base de PayPal según entorno ────────────────────────────────────────
 // Cuando pases a producción: cambiar "sandbox" por "api-m.paypal.com"
@@ -161,9 +186,10 @@ async function manejarSuscripcionActivada(resource) {
     console.error(`[webhook-paypal] custom_id inválido: ${firmaParsed.motivo}`);
     // Logueamos el error pero NO frenamos: la suscripción existe,
     // hay que procesarla igual. La firma queda marcada como "asumida".
+    // AJUSTE 32: el fallback usa la versión VIGENTE, no "v1.0.0" a mano.
     firmaParsed.email            = resource.subscriber?.email_address || null;
     firmaParsed.fechaAceptacion  = fechaActivacion;
-    firmaParsed.versionClausulas = "v1.0.0";
+    firmaParsed.versionClausulas = VERSION_VIGENTE;
     firmaParsed.firmaAsumida     = true;
   }
 
@@ -188,7 +214,8 @@ async function manejarSuscripcionActivada(resource) {
     externalReference:  planId,
     fechaAprobacion:    fechaActivacion,
     hashAceptacion,
-    hashClausulasV1:    HASH_CLAUSULAS_V1,
+    // AJUSTE 32: era hashClausulasV1: HASH_CLAUSULAS_V1.
+    hashClausulasVigente: HASH_CLAUSULAS_VIGENTE,
     versionClausulas,
     firmaAsumida:       firmaParsed.firmaAsumida || false,
     accion:             "ALTA_ONCHAIN",  // <-- el VPS lee este campo para saber qué hacer
@@ -201,7 +228,7 @@ async function manejarSuscripcionActivada(resource) {
     }
   });
 
-  console.log(`[webhook-paypal] ALTA encolada — ${email} | sub=${subscriptionId}`);
+  console.log(`[webhook-paypal] ALTA encolada — ${email} | sub=${subscriptionId} | cláusulas ${versionClausulas}`);
   return { status: "queued", accion: "ALTA_ONCHAIN", subscription_id: subscriptionId, email };
 }
 
@@ -235,8 +262,9 @@ async function manejarCobroMensual(resource) {
     externalReference:  subscriptionId,
     fechaAprobacion:    fechaCobro,
     hashAceptacion:     null,       // ya fue guardada al activarse
-    hashClausulasV1:    HASH_CLAUSULAS_V1,
-    versionClausulas:   "v1.0.0",
+    // AJUSTE 32: era hashClausulasV1: HASH_CLAUSULAS_V1 y "v1.0.0".
+    hashClausulasVigente: HASH_CLAUSULAS_VIGENTE,
+    versionClausulas:   VERSION_VIGENTE,
     accion:             "COBRO_MENSUAL", // <-- el VPS renueva el período activo
     rawPayPal: {
       sale_id:         saleId,
@@ -269,8 +297,9 @@ async function manejarSuscripcionCancelada(resource) {
     externalReference:  subscriptionId,
     fechaAprobacion:    fechaCancelacion,
     hashAceptacion:     null,
-    hashClausulasV1:    HASH_CLAUSULAS_V1,
-    versionClausulas:   "v1.0.0",
+    // AJUSTE 32: era hashClausulasV1: HASH_CLAUSULAS_V1 y "v1.0.0".
+    hashClausulasVigente: HASH_CLAUSULAS_VIGENTE,
+    versionClausulas:   VERSION_VIGENTE,
     accion:             "BAJA_CLIENTE", // <-- el VPS desactiva al cliente
     rawPayPal: {
       subscription_id: subscriptionId,
