@@ -51,7 +51,49 @@
  *                            registro: el trimestre debía tener 6 y tiene 5.
  *   · trimestre sin ver   → certificarQ() registra el hueco. Ahí se juega
  *                            la continuidad y el sello.
- * ─────────────────────────────────────────────────────────────────
+ *
+ * ════════════════════════════════════════════════════════════════
+ * AJUSTE 33 (18/7/2026) — EL NUDO · SE MIDE EL POLÍGONO REAL
+ * ════════════════════════════════════════════════════════════════
+ *
+ * Hasta hoy había DOS mundos que no se tocaban:
+ *   · este scheduler medía con consultarSentinel() → punto + radio,
+ *     nubosidad DE LA ESCENA, hash de 7 campos de metadata.
+ *   · el polígono REAL del cliente vivía en Supabase, y lo medía
+ *     medirIndicadores() (con la regla de lectura v1), pero NADIE
+ *     llamaba a esa función desde acá.
+ *
+ * El NDVI real nunca fue a la cadena. Ni una vez.
+ *
+ * ESTE AJUSTE COSE LOS DOS MUNDOS. En _procesarActivoVentana():
+ *   1. Se le pregunta a Supabase por el polígono del activo, cruzando
+ *      por activo_id_onchain (activo-supabase.js).
+ *   2. Si HAY polígono → se mide con medirIndicadores() sobre el
+ *      polígono real. Ese es el mundo nuevo: NDVI de verdad, calidad
+ *      del polígono, regla de lectura v1.
+ *   3. Si NO hay polígono → NO se certifica (decisión del fundador,
+ *      opción B). Se anota y se sigue. El modo viejo del cuadrado
+ *      MUERE: nunca más se certifica un punto + radio.
+ *
+ * DECISIÓN DEL FUNDADOR (opción B):
+ *   "No certificamos lo que no podemos medir bien." Mientras
+ *   activo_id_onchain esté vacío (hasta la Fase 7), no se certifica
+ *   nada nuevo — y eso está bien, porque los únicos activos on-chain
+ *   hoy son escombro de prueba.
+ *
+ * QUÉ NO SE TOCÓ:
+ *   · El reloj (periodoDeVentana, etc.) — idéntico.
+ *   · Los cron, la escucha de eventos, el healthcheck — idénticos.
+ *   · consultarSentinel() y evaluarNubosidad() siguen EXISTIENDO en
+ *     satellite.js, pero este scheduler YA NO LOS LLAMA. Se dejan por
+ *     si hay que volver atrás. Están marcados como camino muerto.
+ *
+ * ⚠️ TRAMPA CONOCIDA (documentada, se maneja acá):
+ *   El contrato hace hueco automático si nubosidadPct > 70. Con
+ *   medirIndicadores(), nubosidad = 100 − calidad. Y si no hubo pasada,
+ *   nubosidadPct viene null → el contrato espera uint16 → la tx
+ *   rompería. Por eso ANTES de sellar se normaliza (ver _nubosidadParaContrato).
+ * ════════════════════════════════════════════════════════════════
  */
 
 const cron       = require('node-cron');
@@ -61,6 +103,11 @@ const blockchain = require('./blockchain');
 const satellite  = require('./satellite');
 const reports    = require('./reports');
 const { ethers } = require('ethers');
+
+// ── AJUSTE 33: el puente al mundo nuevo ──────────────────────────
+// Trae de Supabase el polígono real del activo, cruzando por
+// activo_id_onchain. Es la pieza probada en la Fase 3.
+const activoSupabase = require('./activo-supabase');
 
 // ─── El reloj: trimestres y quincenas ───────────────────────────
 
@@ -138,15 +185,82 @@ function _etiqueta(p) {
   return `Q${q}/${anio} · quincena ${p.quincenaDelTrimestre}/6`;
 }
 
+// ─── AJUSTE 33: helpers del nudo ────────────────────────────────
+
+/**
+ * Normaliza la nubosidad que va al contrato.
+ *
+ * medirIndicadores() devuelve:
+ *   · nubosidadPct = 100 − calidadPct  (medida sobre el polígono)
+ *   · null si no hubo pasada limpia
+ *
+ * El contrato espera un uint16 (0..65535) y hace hueco si > 70.
+ * Si le pasáramos null, la transacción rompería. Por eso:
+ *   · null  → 100 (nubosidad total: no se vio nada → el contrato hace hueco)
+ *   · resto → el número redondeado, acotado a 0..100
+ *
+ * Devolver 100 cuando no hay dato es honesto: significa "no se pudo ver".
+ * El contrato lo tratará como hueco climático, que es lo correcto.
+ */
+function _nubosidadParaContrato(nubosidadPct) {
+  if (nubosidadPct === null || nubosidadPct === undefined || !isFinite(nubosidadPct)) {
+    return 100;
+  }
+  const n = Math.round(nubosidadPct);
+  if (n < 0)   return 0;
+  if (n > 100) return 100;
+  return n;
+}
+
+/**
+ * ¿La medición del polígono permite certificar?
+ *
+ * Espeja la lógica de evaluarNubosidad() del modo viejo, pero sobre la
+ * medición REAL del polígono (medirIndicadores), no sobre la escena.
+ *
+ *   · sin pasada limpia (sinDato)        → no se puede certificar
+ *   · nubosidad del polígono > umbral    → no se puede (hueco climático)
+ *   · si no                              → se puede
+ */
+function _evaluarMedicionPoligono(medicion) {
+  if (!medicion || medicion.sinDato) {
+    return {
+      puedeCertificar: false,
+      causa: 'SATELLITE_LOSS: Sin pasada limpia sobre el poligono en la ventana.',
+      esClimatica: false,
+    };
+  }
+
+  const nub = medicion.nubosidadPct;
+  if (nub === null || nub === undefined) {
+    return {
+      puedeCertificar: false,
+      causa: 'SATELLITE_LOSS: Sin dato de calidad sobre el poligono. No se certifica lo que no se midio.',
+      esClimatica: false,
+    };
+  }
+
+  if (nub > config.sentinel.umbralNubosidad) {
+    return {
+      puedeCertificar: false,
+      causa: `CLIMA: Calidad insuficiente sobre el poligono (nubosidad ${nub}%). Umbral maximo: ${config.sentinel.umbralNubosidad}%.`,
+      esClimatica: true,
+    };
+  }
+
+  return { puedeCertificar: true, causa: null, esClimatica: false };
+}
+
 // ─── Proceso de ventana satelital ──────────────────────────────
 
 /**
  * Procesa todos los activos activos en una ventana quincenal.
  * Por cada activo:
- *   1. Consulta Sentinel/Copernicus sobre el período medido
- *   2. Si la nubosidad lo permite → sella la evidencia de ventana
- *   3. Si es el cierre del trimestre → además ejecuta certificarQ()
- *   4. Si hay nubes → no sella nada esta quincena (ver nota de huecos arriba)
+ *   1. Trae su polígono de Supabase (AJUSTE 33)
+ *   2. Si hay polígono → mide con medirIndicadores() sobre el polígono real
+ *   3. Si la calidad lo permite → sella la evidencia de ventana
+ *   4. Si es el cierre del trimestre → además ejecuta certificarQ()
+ *   5. Si no hay polígono o hay nubes → no sella (ver notas arriba)
  */
 async function procesarVentanaSatelital(opciones = {}) {
   // Compatibilidad: si alguien pasa una Date suelta, la tomamos como fecha de emisión.
@@ -178,7 +292,7 @@ async function procesarVentanaSatelital(opciones = {}) {
     return;
   }
 
-  let evidencias = 0, certificaciones = 0, sinVer = 0, huecos = 0, omitidos = 0, fallidos = 0;
+  let evidencias = 0, certificaciones = 0, sinVer = 0, huecos = 0, omitidos = 0, fallidos = 0, sinPoligono = 0;
 
   for (const activoId of ids) {
     let resultado = null;
@@ -213,6 +327,7 @@ async function procesarVentanaSatelital(opciones = {}) {
       if (resultado.certificado) certificaciones++;
       if (resultado.sinVer)      sinVer++;
       if (resultado.hueco)       huecos++;
+      if (resultado.sinPoligono) sinPoligono++;
     }
 
     // Pausa entre activos para no saturar el RPC
@@ -221,7 +336,7 @@ async function procesarVentanaSatelital(opciones = {}) {
 
   log('SCHEDULER', `══ VENTANA COMPLETADA ══`, {
     periodo: _etiqueta(periodo),
-    evidencias, certificaciones, sinVer, huecos, omitidos, fallidos,
+    evidencias, certificaciones, sinVer, huecos, sinPoligono, omitidos, fallidos,
     totalActivos: ids.length,
   });
 
@@ -235,7 +350,7 @@ async function procesarVentanaSatelital(opciones = {}) {
     quincenaDelTrimestre: periodo.quincenaDelTrimestre,
     esCierreDeTrimestre:  periodo.esCierreDeTrimestre,
     mide:                 `${periodo.desde.toISOString().slice(0,10)} → ${periodo.hasta.toISOString().slice(0,10)}`,
-    evidencias, certificaciones, sinVer, huecos,
+    evidencias, certificaciones, sinVer, huecos, sinPoligono,
     totalActivos: ids.length,
     timestamp: new Date().toISOString(),
   });
@@ -244,6 +359,8 @@ async function procesarVentanaSatelital(opciones = {}) {
 /**
  * Procesa un activo individual en una ventana quincenal.
  * Devuelve un pequeño resumen de lo que hizo.
+ *
+ * AJUSTE 33: mide el POLÍGONO REAL de Supabase, no el punto + radio.
  */
 async function _procesarActivoVentana(activoId, periodo, simular = false) {
   const datos = await blockchain.getDatosActivo(activoId);
@@ -261,21 +378,64 @@ async function _procesarActivoVentana(activoId, periodo, simular = false) {
     return { omitido: true };
   }
 
-  log('VENTANA', `Activo ${activoId} · ${_etiqueta(periodo)}`, {
-    tipo: config.indicadoresPorTipo[datos.tipo]?.nombre || 'OTRO',
-    lat: datos.latitud, lng: datos.longitud,
+  // ── AJUSTE 33 · PASO 1: traer el polígono real de Supabase ────
+  // Se cruza por activo_id_onchain = activoId (el ID de la cadena).
+  let filaSupabase;
+  try {
+    filaSupabase = await activoSupabase.traerActivoPorOnchainId(activoId);
+  } catch (err) {
+    // Error REAL de Supabase (red/credenciales). No es "no encontrado".
+    log('ERROR', `No se pudo leer Supabase para activo ${activoId}: ${err.message}`);
+    // Se trata como fallo del activo, para reintentar. No se inventa nada.
+    throw err;
+  }
+
+  // ── AJUSTE 33 · OPCIÓN B: sin polígono, NO se certifica ───────
+  // El modo viejo del cuadrado (punto + radio) MUERE acá. Si no hay
+  // polígono real en Supabase, no se mide ni se sella. Se anota y se sigue.
+  if (!filaSupabase.encontrado || !filaSupabase.esPoligonoReal) {
+    const motivo = !filaSupabase.encontrado
+      ? filaSupabase.motivo
+      : 'El activo existe en Supabase pero no tiene un polígono válido.';
+    log('SIN_POLIGONO', `Activo ${activoId}: no se certifica — ${motivo}`);
+
+    if (!simular) {
+      await reports.notificarAdmin('ACTIVO_SIN_POLIGONO', {
+        activoId,
+        trimestre: periodo.trimestre,
+        motivo,
+      });
+    }
+    // Importante: NO se registra hueco on-chain por esto. "No tener el
+    // polígono atado todavía" es un tema administrativo (falta la Fase 7),
+    // no un hueco de opacidad del activo. No se penaliza al cliente.
+    return { sinPoligono: true };
+  }
+
+  log('VENTANA', `Activo ${activoId} · ${_etiqueta(periodo)} · POLÍGONO REAL`, {
+    tipo: config.indicadoresPorTipo[filaSupabase.tipo]?.nombre || 'OTRO',
+    nombre: filaSupabase.nombreActivo,
+    filaSupabase: filaSupabase.filaId,
   });
 
-  // 1) Consultar el satélite sobre el período medido
-  const reporte = await satellite.consultarSentinel(datos);
+  // ── AJUSTE 33 · PASO 2: medir sobre el polígono real ──────────
+  // Se arma el objeto que medirIndicadores() espera: el tipo (número) y
+  // la geometría (GeoJSON Polygon). Ese es el mundo nuevo — NDVI real,
+  // calidad del polígono, regla de lectura v1.
+  const activoParaMedir = {
+    activoId,
+    tipo:       filaSupabase.tipo,
+    geometria:  filaSupabase.geometria,
+  };
 
-  // 2) ¿Se pudo ver?
-  const evaluacion = satellite.evaluarNubosidad(reporte);
+  const medicion = await satellite.medirIndicadores(activoParaMedir);
+
+  // ── PASO 3: ¿la calidad del polígono permite certificar? ──────
+  const evaluacion = _evaluarMedicionPoligono(medicion);
 
   if (!evaluacion.puedeCertificar) {
-    // Quincena sin ver: NO se registra hueco on-chain (ver nota de arriba).
-    // La ausencia de esta evidencia es el registro: el trimestre tendrá
-    // menos de 6. El hueco, si corresponde, se decide al cierre del Q.
+    // Quincena sin ver: NO se registra hueco on-chain (misma lógica de
+    // siempre — los huecos se cuentan por trimestre, no por quincena).
     log('SIN_VER', `Activo ${activoId}: ${evaluacion.causa} — no se sella esta quincena`);
 
     if (!simular) {
@@ -288,8 +448,7 @@ async function _procesarActivoVentana(activoId, periodo, simular = false) {
       });
     }
 
-    // Si además es el cierre del trimestre, el hueco sí se registra:
-    // el trimestre entero se cierra sin haber podido ver.
+    // Si además es el cierre del trimestre, el hueco sí se registra.
     if (periodo.esCierreDeTrimestre) {
       if (simular) {
         log('SIMULACRO', `Activo ${activoId}: ESCRIBIRÍA un Hueco de Opacidad (trimestre ${periodo.trimestre}) — ${evaluacion.causa}`);
@@ -303,43 +462,70 @@ async function _procesarActivoVentana(activoId, periodo, simular = false) {
     return { sinVer: true };
   }
 
-  const hashEvidencia = satellite.generarHashEvidencia(reporte);
+  // ── AJUSTE 33 · PASO 4: armar el hash y la nubosidad para la cadena ──
+  // ⚠️ Hoy generarHashEvidencia() sigue cubriendo solo metadata (7 campos).
+  //    El hash del PAQUETE COMPLETO (polígono + mediciones + regla + titular)
+  //    se conecta en la Junta A, cuando se enchufe paquete-evidencia.js.
+  //    Por ahora el nudo mide bien y sella el hash que había — el salto al
+  //    hash real es el paso siguiente, y está marcado.
+  //
+  //    Se le pasa a generarHashEvidencia un reporte con los datos que la
+  //    medición sí tiene, para no romper su firma.
+  const reporteParaHash = {
+    activoId,
+    satelite:       medicion.satelite,
+    uuid:           `POLY_${activoId}_${medicion.fechaPasada || 'sinfecha'}`,
+    nubosidadPct:   _nubosidadParaContrato(medicion.nubosidadPct),
+    bandaEspectral: medicion.bandaEspectral,
+    timestamp:      medicion.timestamp,
+    fuente:         medicion.fuente,
+  };
+  const hashEvidencia = satellite.generarHashEvidencia(reporteParaHash);
+  const nubosidadContrato = _nubosidadParaContrato(medicion.nubosidadPct);
 
-  // 3) EL PULSO — sellar la evidencia de esta quincena
+  // ── PASO 5: EL PULSO — sellar la evidencia de esta quincena ───
   if (simular) {
-    log('SIMULACRO', `Activo ${activoId}: SELLARÍA evidencia ${periodo.quincenaDelTrimestre}/6`, {
-      trimestre: periodo.trimestre, hashEvidencia, satelite: reporte.satelite, nubosidad: reporte.nubosidadPct,
+    log('SIMULACRO', `Activo ${activoId}: SELLARÍA evidencia ${periodo.quincenaDelTrimestre}/6 (polígono real)`, {
+      trimestre: periodo.trimestre,
+      hashEvidencia,
+      satelite: medicion.satelite,
+      nubosidad: nubosidadContrato,
+      calidad: medicion.calidadPct,
+      regla: medicion.reglaLectura,
+      fechaPasada: medicion.fechaPasada,
     });
   } else {
     await blockchain.registrarEvidenciaVentana({
       activoId,
       trimestre:    periodo.trimestre,
       hashEvidencia,
-      satelite:     reporte.satelite,
-      nubosidadPct: reporte.nubosidadPct,
-      urlDescarga:  reporte.urlDescargaDatos,
+      satelite:     medicion.satelite,
+      nubosidadPct: nubosidadContrato,
+      urlDescarga:  '',   // el polígono no descarga una escena; queda vacío por ahora
     });
 
-    log('EVIDENCIA', `Activo ${activoId} · evidencia ${periodo.quincenaDelTrimestre}/6 sellada`);
+    log('EVIDENCIA', `Activo ${activoId} · evidencia ${periodo.quincenaDelTrimestre}/6 sellada (polígono real)`);
 
     await reports.notificarAdmin('EVIDENCIA_QUINCENAL_SELLADA', {
       activoId,
       trimestre:            periodo.trimestre,
       quincenaDelTrimestre: periodo.quincenaDelTrimestre,
-      satelite:             reporte.satelite,
-      nubosidad:            reporte.nubosidadPct,
+      satelite:             medicion.satelite,
+      nubosidad:            nubosidadContrato,
+      calidad:              medicion.calidadPct,
+      regla:                medicion.reglaLectura,
       timestamp:            new Date().toISOString(),
     });
   }
 
   const resultado = { evidencia: true };
 
-  // 4) EL BALANCE — solo al cierre del trimestre
+  // ── PASO 6: EL BALANCE — solo al cierre del trimestre ─────────
   if (periodo.esCierreDeTrimestre) {
-    const metadataURI = satellite.generarMetadataURI(reporte, periodo.trimestre);
+    const metadataURI = satellite.generarMetadataURI(reporteParaHash, periodo.trimestre);
 
     if (simular) {
-      log('SIMULACRO', `Activo ${activoId}: CERTIFICARÍA el trimestre ${periodo.trimestre} (certificarQ)`);
+      log('SIMULACRO', `Activo ${activoId}: CERTIFICARÍA el trimestre ${periodo.trimestre} (certificarQ, polígono real)`);
       resultado.certificado = true;
       return resultado;
     }
@@ -349,20 +535,22 @@ async function _procesarActivoVentana(activoId, periodo, simular = false) {
       hashEvidencia,
       metadataURI,
       trimestre:      periodo.trimestre,
-      satelite:       reporte.satelite,
-      bandaEspectral: reporte.bandaEspectral,
-      nubosidadPct:   reporte.nubosidadPct,
-      urlDescarga:    reporte.urlDescargaDatos,
-      uuid:           reporte.uuid,
+      satelite:       medicion.satelite,
+      bandaEspectral: medicion.bandaEspectral,
+      nubosidadPct:   nubosidadContrato,
+      urlDescarga:    '',
+      uuid:           reporteParaHash.uuid,
     });
 
-    log('CERT_Q', `Activo ${activoId} · trimestre ${periodo.trimestre} CERTIFICADO`);
+    log('CERT_Q', `Activo ${activoId} · trimestre ${periodo.trimestre} CERTIFICADO (polígono real)`);
 
     await reports.notificarAdmin('CERT_TRIMESTRAL_CONFIRMADA', {
       activoId,
       trimestre:  periodo.trimestre,
-      satelite:   reporte.satelite,
-      nubosidad:  reporte.nubosidadPct,
+      satelite:   medicion.satelite,
+      nubosidad:  nubosidadContrato,
+      calidad:    medicion.calidadPct,
+      regla:      medicion.reglaLectura,
       timestamp:  new Date().toISOString(),
     });
 
