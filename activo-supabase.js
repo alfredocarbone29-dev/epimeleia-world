@@ -62,6 +62,13 @@
  * ═════════════════════════════════════════════════════════════
  */
 
+// Carga el .env cuando el archivo se corre SUELTO (node activo-supabase.js).
+// Cuando corre dentro de scheduler.js no hace falta —el proceso principal ya
+// lo cargó—, pero suelto arranca sin las variables y Supabase no encuentra la
+// URL. dotenv ya está instalado (lo usa procesador-pagos.js). No molesta que
+// se llame dos veces: la segunda es un no-op.
+require('dotenv').config();
+
 const { createClient } = require('@supabase/supabase-js');
 
 // Cliente Supabase con service key (mismo patrón que procesador-pagos.js).
