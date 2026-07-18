@@ -14,11 +14,41 @@
 // EVENTOS SOPORTADOS:
 //   - payment            → pago único o cuota de suscripción
 //   - subscription_*     → eventos de plan de suscripción (preapproval)
-// ────────────────────────────────────────────────────────────────────────────
+//
+// ════════════════════════════════════════════════════════════════════════════
+// AJUSTE 32 (18/7/2026) — JUNTA B · LA VERSIÓN DE CLÁUSULAS QUE SE SELLA
+//                          ES LA VIGENTE, NO UNA ESCRITA A MANO
+// ════════════════════════════════════════════════════════════════════════════
+//
+// EL PROBLEMA (decisión del fundador, opción A):
+//   hash-clausulas.js dice VERSION_VIGENTE = "v2.0.0".
+//   Este archivo tenía escrito a mano "v1.0.0" y HASH_CLAUSULAS_V1.
+//   Resultado: EPI le muestra al cliente la v2, y acá se sellaba la v1.
+//   Se mostraba una cosa y se sellaba otra — "lo que se muestra, se sella"
+//   roto en la capa legal, la más delicada.
+//   Y la v1 dice "By signing with their private key", un método descartado:
+//   el cliente nunca firma con clave privada.
+//
+// EL ARREGLO (opción A, elegida por el fundador):
+//   Se apunta a la ÚNICA fuente de verdad: VERSION_VIGENTE y
+//   HASH_CLAUSULAS_VIGENTE, ambas de hash-clausulas.js. El día que haya
+//   una v3, este archivo la sigue solo, sin tocar una línea.
+//
+//   Antes:  const versionClausulas = "v1.0.0";
+//           ... hashClausulasV1: HASH_CLAUSULAS_V1
+//   Ahora:  const versionClausulas = VERSION_VIGENTE;
+//           ... hashClausulasVigente: HASH_CLAUSULAS_VIGENTE
+//
+// ⚠️ ESTO NO ARREGLA LA "FIRMA ASUMIDA" (Junta C):
+//   Acá se sigue calculando el hashAceptacion asumiendo que el cliente
+//   aceptó. Eso lo resuelve la Estación 2 del motor (deslinde firmado
+//   de verdad, antes de pagar). Es otra junta. No se toca acá.
+// ════════════════════════════════════════════════════════════════════════════
 
 const crypto = require("crypto");
 const { encolarPago, pagoYaExiste, guardarAceptacionClausulas } = require("../lib/cola-pagos");
-const { HASH_CLAUSULAS_V1, calcularHashAceptacion } = require("../lib/hash-clausulas");
+// AJUSTE 32: se importan la versión vigente y su hash, en vez de la v1.
+const { VERSION_VIGENTE, HASH_CLAUSULAS_VIGENTE, calcularHashAceptacion } = require("../lib/hash-clausulas");
 
 // ─── Verificación de firma HMAC ──────────────────────────────────────────────
 // MP envía un header "x-signature" con formato: "ts=NNN,v1=HASH"
@@ -166,10 +196,14 @@ module.exports = async (req, res) => {
     }
 
     // PASO 6: Calcular hash de aceptación de cláusulas
-    // ASUNCIÓN: el cliente aceptó cláusulas v1.0.0 antes de pagar (clickwrap
-    // en el frontend). Si en el futuro las cláusulas se actualizan, la versión
-    // vigente al momento del pago se determinaría aquí.
-    const versionClausulas = "v1.0.0";
+    // AJUSTE 32: la versión vigente sale de hash-clausulas.js, no está escrita
+    // a mano. Hoy es "v2.0.0"; el día que sea "v3.0.0", este código la sigue solo.
+    //
+    // ⚠️ Sigue siendo una ASUNCIÓN de que el cliente aceptó (clickwrap en el
+    //    frontend). La firma REAL, antes de pagar, la resuelve la Estación 2
+    //    del motor (Junta C). Esto no la reemplaza — solo asegura que, cuando
+    //    haya firma, se selle la MISMA versión que se le mostró al cliente.
+    const versionClausulas = VERSION_VIGENTE;
     const hashAceptacion = calcularHashAceptacion(email, fechaAprobacion, versionClausulas);
 
     // PASO 7: Guardar aceptación en Redis (evidencia jurídica)
@@ -185,7 +219,8 @@ module.exports = async (req, res) => {
       externalReference,
       fechaAprobacion,
       hashAceptacion,
-      hashClausulasV1: HASH_CLAUSULAS_V1,
+      // AJUSTE 32: era hashClausulasV1: HASH_CLAUSULAS_V1.
+      hashClausulasVigente: HASH_CLAUSULAS_VIGENTE,
       versionClausulas,
       rawMP: {
         payment_id: detalles.id,
@@ -196,7 +231,7 @@ module.exports = async (req, res) => {
       }
     });
 
-    console.log(`[webhook-mp] Pago ${dataId} encolado para ${email} — USD ${monto} ${moneda}`);
+    console.log(`[webhook-mp] Pago ${dataId} encolado para ${email} — USD ${monto} ${moneda} — cláusulas ${versionClausulas}`);
 
     return res.status(200).json({
       status: "queued",
