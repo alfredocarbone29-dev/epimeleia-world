@@ -60,6 +60,9 @@ let   blockchain            = null;
 // ── AJUSTE 34: el paquete de evidencia real ──────────────────
 const { armarPaquete } = require('./paquete-evidencia');
 
+// ── AJUSTE 35: leer el activo real de Supabase (Fase 4 · Pieza 2)
+const activoSupabase = require('./activo-supabase');
+
 // ── AJUSTES (cambialos cuando quieras) ───────────────────────
 const EMAIL_DESTINO = 'alfredocarbone29@gmail.com';
 const RUTA_PDF      = path.join(__dirname, 'certificado-prueba.pdf');
@@ -377,12 +380,80 @@ async function enviarPDFPorEmail({ para, pdfBuffer, nombreActivo }) {
 (async () => {
   console.log('\n════════ GENERADOR DE CERTIFICADO PDF ════════\n');
 
+  // ── AJUSTE 35 (Fase 4 · Pieza 2): ¿activo real o de ejemplo? ──
+  // Si se pasa un id de fila de Supabase:  node generar-pdf.js <id>
+  // se genera el certificado de ESE activo real (polígono + titular).
+  // Sin argumento, usa el Pergamino de ejemplo, como antes.
+  const filaIdArg = process.argv[2];
+
+  // Estos se llenan según de dónde salga el activo.
+  let activoParaMedir = ACTIVO_PRUEBA;
+  let identidad       = { ...IDENTIDAD };
+
+  if (filaIdArg) {
+    console.log(`0.5) Leyendo el activo real de Supabase (fila ${filaIdArg})...`);
+    let fila;
+    try {
+      fila = await activoSupabase.traerActivoParaCertificado(filaIdArg);
+    } catch (e) {
+      console.log('   ✗ Error leyendo Supabase: ' + e.message);
+      process.exit(1);
+    }
+
+    if (!fila.encontrado) {
+      console.log('   ✗ ' + fila.motivo);
+      process.exit(1);
+    }
+
+    if (!fila.esPoligonoReal) {
+      console.log('   ✗ El activo existe pero NO tiene un polígono válido. No se certifica.');
+      console.log('     (EPIMELEIA no mide un cuadrado inventado — decisión del fundador.)');
+      process.exit(0);
+    }
+
+    // El activo real manda sobre el de ejemplo.
+    activoParaMedir = {
+      activoId:  fila.activoIdOnchain ?? fila.filaId,  // el id que se muestra
+      tipo:      fila.tipo,
+      geometria: fila.geometria,
+    };
+
+    // El titular: de clientes, o se dice que falta.
+    if (fila.titular) {
+      identidad.titular   = fila.titular.nombre  ?? null;
+      identidad.empresa   = fila.titular.empresa ?? null;
+      identidad.email     = fila.titular.email   ?? null;
+      identidad.clienteId = fila.clienteId;
+      console.log(`   ✓ Titular: ${identidad.titular || '(sin nombre)'}${identidad.empresa ? ' · ' + identidad.empresa : ''}`);
+    } else {
+      // Honestidad: no se inventa un titular. El certificado lo dirá.
+      identidad.titular   = null;
+      identidad.empresa   = null;
+      identidad.email     = null;
+      identidad.clienteId = fila.clienteId;
+      console.log('   ⚠ Sin titular: ' + (fila.titularMotivo || 'no se pudo determinar'));
+      console.log('     El certificado se genera igual, pero sin nombre de titular.');
+    }
+
+    identidad.nombreActivo = fila.nombreActivo || 'Activo sin nombre';
+    identidad.tipoNombre   = fila.tipoTexto || 'OTRO';
+    identidad.superficieHaNum = fila.superficieHa ?? null;
+    identidad.superficieHa = fila.superficieHa != null ? `≈ ${fila.superficieHa} ha` : '—';
+    // La ubicación no está en la tabla; se deja genérica hasta atarla.
+    identidad.ubicacion    = 'Ubicación según polígono registrado';
+
+    console.log(`   ✓ Activo real cargado: "${identidad.nombreActivo}" (${identidad.tipoNombre})`);
+  } else {
+    console.log('0.5) Sin id de fila → usando el activo de ejemplo (Campo Pergamino).');
+    console.log('     Para un activo real:  node generar-pdf.js <id_de_fila_supabase>');
+  }
+
   const reloj = trimestreDelProtocolo(new Date());
   console.log(`0) Reloj del protocolo: ${reloj.etiqueta}  (on-chain ${reloj.trimestreOnChain})`);
 
   console.log('1) Midiendo el satélite sobre el polígono...');
   let medicion = null;
-  try { medicion = await medirIndicadores(ACTIVO_PRUEBA); } catch (e) { console.log('   (medición falló: ' + e.message + ')'); }
+  try { medicion = await medirIndicadores(activoParaMedir); } catch (e) { console.log('   (medición falló: ' + e.message + ')'); }
 
   const hayDato = medicion && medicion.mediciones && medicion.mediciones.some(m => m.valor != null);
   if (!hayDato) {
@@ -405,17 +476,17 @@ async function enviarPDFPorEmail({ para, pdfBuffer, nombreActivo }) {
   console.log('1.5) Armando el paquete de evidencia (hash real)...');
   const paqueteEntrada = {
     titular: {
-      nombre:    IDENTIDAD.titular,
-      empresa:   IDENTIDAD.empresa,
-      clienteId: IDENTIDAD.clienteId,
-      email:     IDENTIDAD.email,
+      nombre:    identidad.titular,
+      empresa:   identidad.empresa,
+      clienteId: identidad.clienteId,
+      email:     identidad.email,
     },
     activo: {
-      nombre:       IDENTIDAD.nombreActivo,
-      tipo:         ACTIVO_PRUEBA.tipo,
-      superficieHa: IDENTIDAD.superficieHaNum,
+      nombre:       identidad.nombreActivo,
+      tipo:         activoParaMedir.tipo,
+      superficieHa: identidad.superficieHaNum,
     },
-    poligono: ACTIVO_PRUEBA.geometria,
+    poligono: activoParaMedir.geometria,
     mediciones: mediciones.map(m => ({
       indice:         m.indice,
       valor:          m.valor,
@@ -441,16 +512,16 @@ async function enviarPDFPorEmail({ para, pdfBuffer, nombreActivo }) {
   }
 
   console.log('2) Leyendo continuidad on-chain...');
-  const continuidad = await leerContinuidad(ACTIVO_PRUEBA.activoId);
+  const continuidad = await leerContinuidad(activoParaMedir.activoId);
   console.log('   ' + (continuidad.leida ? '✓ leída: ' : '· sin historia on-chain: ') + continuidad.texto);
 
   const datos = {
-    ...IDENTIDAD,
-    activoId:         ACTIVO_PRUEBA.activoId,
+    ...identidad,
+    activoId:         activoParaMedir.activoId,
     mediciones,
     fechaPasada,
     satelite,
-    folio:            `EPI-C-${String(ACTIVO_PRUEBA.activoId).padStart(6,'0')}-${reloj.folioSufijo}`,
+    folio:            `EPI-C-${String(activoParaMedir.activoId).padStart(6,'0')}-${reloj.folioSufijo}`,
     trimestre:        reloj.etiqueta,
     continuidadTexto: continuidad.texto,
     reglaLectura,
@@ -468,7 +539,7 @@ async function enviarPDFPorEmail({ para, pdfBuffer, nombreActivo }) {
 
   console.log('5) Enviando por email a ' + EMAIL_DESTINO + '...');
   try {
-    const enviado = await enviarPDFPorEmail({ para: EMAIL_DESTINO, pdfBuffer: pdf, nombreActivo: IDENTIDAD.nombreActivo });
+    const enviado = await enviarPDFPorEmail({ para: EMAIL_DESTINO, pdfBuffer: pdf, nombreActivo: identidad.nombreActivo });
     if (enviado) console.log('   ✓ Email enviado. Revisá tu casilla (mirá también spam).');
   } catch (e) {
     console.log('   ✗ No se pudo enviar el email: ' + (e.response?.status || '') + ' ' + e.message);
