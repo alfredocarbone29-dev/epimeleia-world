@@ -213,6 +213,108 @@ async function traerActivoPorOnchainId(activoIdOnchain) {
 }
 
 /**
+ * Trae un activo por el ID DE SU FILA en Supabase (no el on-chain), y
+ * cruza a la tabla `clientes` para traer el TITULAR.
+ *
+ * ¿Por qué por id de fila y no por activo_id_onchain?
+ *   Porque activo_id_onchain está vacío hasta la Fase 7. El id de la
+ *   fila SÍ existe desde que el activo se registra (Estación 1). Esto
+ *   permite generar el certificado de un activo real HOY, para probar,
+ *   sin depender de que el alta on-chain lo haya atado.
+ *
+ * Cruza a `clientes` por cliente_id para traer nombre y empresa del
+ * titular. Si el activo no tiene cliente_id, o el cliente no está,
+ * el titular queda null y SE DICE — no se inventa un nombre.
+ * (Los "activos huérfanos" sin cliente_id son una deuda conocida:
+ *  el choque en la tabla clientes. Esta función los muestra tal cual.)
+ *
+ * Devuelve el MISMO formato que traerActivoPorOnchainId, más el titular:
+ *   { ..., titular: { nombre, empresa, email } | null, titularMotivo }
+ *
+ * @param {number|string} filaId  el id (uuid) de la fila en `activos`
+ */
+async function traerActivoParaCertificado(filaId) {
+  if (filaId === null || filaId === undefined || filaId === '') {
+    return { encontrado: false, motivo: 'No se pasó el id de la fila.' };
+  }
+
+  const { data, error } = await supabase
+    .from(TABLA)
+    .select([
+      'id',
+      'nombre_activo',
+      'tipo',
+      'poligono',
+      'poligono_confirmado',
+      'superficie_ha',
+      'superficie_km2',
+      'cliente_id',
+      'activo_id_onchain',
+      'estado',
+    ].join(', '))
+    .eq('id', filaId)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(`Supabase falló leyendo activo (fila ${filaId}): ${error.message}`);
+  }
+  if (!data) {
+    return {
+      encontrado: false,
+      motivo: `No hay ninguna fila en 'activos' con id = ${filaId}.`,
+      filaId,
+    };
+  }
+
+  const geometria = _normalizarPoligono(data.poligono);
+
+  // ── Cruce a clientes para el titular ──────────────────────────
+  let titular = null;
+  let titularMotivo = null;
+
+  if (!data.cliente_id) {
+    titularMotivo = 'El activo no tiene cliente_id (activo huérfano — deuda conocida). Sin titular.';
+  } else {
+    const { data: cli, error: errCli } = await supabase
+      .from('clientes')
+      .select('nombre, empresa, email')
+      .eq('id', data.cliente_id)
+      .maybeSingle();
+
+    if (errCli) {
+      // No frenamos el certificado por esto: se anota y el titular queda null.
+      titularMotivo = `No se pudo leer el cliente ${data.cliente_id}: ${errCli.message}`;
+    } else if (!cli) {
+      titularMotivo = `El activo apunta a cliente_id ${data.cliente_id}, pero ese cliente no existe.`;
+    } else {
+      titular = {
+        nombre:  cli.nombre  ?? null,
+        empresa: cli.empresa ?? null,
+        email:   cli.email   ?? null,
+      };
+    }
+  }
+
+  return {
+    encontrado:     true,
+    filaId:         data.id,
+    activoIdOnchain: data.activo_id_onchain ?? null,
+    clienteId:      data.cliente_id ?? null,
+    nombreActivo:   data.nombre_activo ?? null,
+    tipo:           _tipoANumero(data.tipo),
+    tipoTexto:      data.tipo ?? null,
+    geometria,
+    esPoligonoReal: geometria !== null,
+    poligonoConfirmado: data.poligono_confirmado === true,
+    superficieHa:   data.superficie_ha ?? null,
+    superficieKm2:  data.superficie_km2 ?? null,
+    estado:         data.estado ?? null,
+    titular,                    // { nombre, empresa, email } o null
+    titularMotivo,              // por qué no hay titular, si es el caso
+  };
+}
+
+/**
  * Lista todos los activos que hay en Supabase, para diagnóstico.
  * Muestra cuáles ya tienen activo_id_onchain (atados a la cadena) y
  * cuáles no. Solo lectura.
@@ -336,5 +438,6 @@ if (require.main === module) {
 
 module.exports = {
   traerActivoPorOnchainId,
+  traerActivoParaCertificado,
   listarActivos,
 };
