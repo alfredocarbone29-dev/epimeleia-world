@@ -26,6 +26,14 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
+// AJUSTE 36 (Estación 2 · deslinde): el hash de la firma lo calcula el SERVIDOR,
+// con la misma función que usa el resto del sistema. El cliente solo manda la
+// intención (aceptado: true). Así la firma nunca difiere de la que se espera.
+import {
+  VERSION_VIGENTE,
+  HASH_CLAUSULAS_VIGENTE,
+  calcularHashAceptacion,
+} from '../lib/hash-clausulas.js';
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -68,6 +76,21 @@ export default async function handler(req, res) {
         ok: false,
         error: 'Faltan datos para registrar el activo.',
         faltan,
+      });
+    }
+
+    // ── 1b) AJUSTE 36 — SIN ACEPTACIÓN DEL DESLINDE, NO HAY ACTIVO ──
+    // Regla del fundador: "sin aceptación no hay pago" — y acá se lleva más
+    // lejos: sin aceptación no se guarda ni siquiera el activo. La firma es
+    // condición para que el activo exista (Camino 1, atómico).
+    //
+    // El cliente manda solo la INTENCIÓN (datos.aceptado === true). El hash,
+    // la versión y la fecha los pone el SERVIDOR abajo — el cliente no puede
+    // firmar una versión distinta de la vigente, ni mandar un hash arbitrario.
+    if (datos.aceptado !== true) {
+      return res.status(400).json({
+        ok: false,
+        error: 'El deslinde no fue aceptado. Sin aceptación no se registra el activo.',
       });
     }
 
@@ -129,6 +152,14 @@ export default async function handler(req, res) {
       }
     }
 
+    // ── 3c) AJUSTE 36 — LA FIRMA DEL DESLINDE (la calcula el servidor) ──
+    // Se usa el email del cliente. Se prefiere el que manda el motor; si no
+    // vino, se cae al de la cuenta. La versión y la fecha las pone el servidor.
+    const emailFirma = (datos.cliente_email || datos.email || '').toLowerCase().trim();
+    const firmaVersion = VERSION_VIGENTE;
+    const firmaFecha   = new Date().toISOString();
+    const firmaHash    = calcularHashAceptacion(emailFirma, firmaFecha, firmaVersion);
+
     // ── 4) ARMAR la fila para Supabase ──
     // El resto de las columnas se llenan en su momento del recorrido:
     //   · activo_id_onchain, ultimo_hash, ultimo_bloque → cuando se selle
@@ -150,6 +181,10 @@ export default async function handler(req, res) {
       poligono_confirmado:    true,
       poligono_confirmado_en: new Date().toISOString(),
       estado:                 'alta',
+      // AJUSTE 36 · Estación 2 — la firma del deslinde, sellada junto al activo.
+      hash_firma:             firmaHash,
+      firma_version:          firmaVersion,
+      firma_fecha:            firmaFecha,
       // fecha_alta y fecha_creacion las pone Supabase solas (default now()).
     };
 
@@ -157,7 +192,7 @@ export default async function handler(req, res) {
     const { data, error } = await supabase
       .from('activos')
       .insert(fila)
-      .select('id, nombre_activo, tipo, superficie_ha, estado, cliente_id')
+      .select('id, nombre_activo, tipo, superficie_ha, estado, cliente_id, hash_firma, firma_version, firma_fecha')
       .single();
 
     if (error) {
@@ -180,8 +215,16 @@ export default async function handler(req, res) {
         area_ha:   data.superficie_ha,
         estado:    data.estado,
       },
+      // AJUSTE 36 · Estación 2 — el deslinde quedó firmado junto al activo.
+      deslinde: {
+        firmado:          !!data.hash_firma,
+        version:          data.firma_version,
+        fecha:            data.firma_fecha,
+        hash:             data.hash_firma,
+        clausulasVigente: HASH_CLAUSULAS_VIGENTE,
+      },
       // Nota honesta para el front: guardado sí, certificado todavía no.
-      siguiente_paso: 'El activo está registrado. La certificación y el pago vienen después.',
+      siguiente_paso: 'El activo está registrado y el deslinde aceptado. El pago viene después.',
     });
 
   } catch (err) {
