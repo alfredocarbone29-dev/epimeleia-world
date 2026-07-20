@@ -130,6 +130,24 @@
   .estacion-msg p { font-size: 11px; color: var(--muted); line-height: 1.6; }
   .estacion-msg .obra { margin-top: 14px; font-size: 10px; color: var(--cyan-dim); border: 1px dashed var(--line); border-radius: 6px; padding: 8px 12px; }
 
+  /* ── Modal del deslinde (Estación 2) ── */
+  #deslindeModal { display:none; position:fixed; inset:0; z-index:50; background:rgba(4,7,11,0.82); backdrop-filter:blur(3px); align-items:center; justify-content:center; padding:20px; }
+  #deslindeModal.show { display:flex; }
+  #deslindeModal .box { background:var(--panel,#0c1219); border:1px solid var(--cyan); border-radius:12px; max-width:560px; width:100%; max-height:88vh; display:flex; flex-direction:column; box-shadow:0 20px 60px rgba(0,0,0,0.5); }
+  #deslindeModal .head { padding:20px 24px 12px; border-bottom:1px solid var(--line); }
+  #deslindeModal .head .k { font-size:9px; letter-spacing:0.2em; color:var(--cyan); text-transform:uppercase; }
+  #deslindeModal .head h3 { font-size:19px; color:var(--text); margin:8px 0 0; font-weight:700; }
+  #deslindeModal .head p { font-size:11px; color:var(--muted); margin:6px 0 0; line-height:1.6; }
+  #deslindeModal .texto { padding:16px 24px; overflow-y:auto; flex:1; font-size:12px; line-height:1.7; color:var(--text); white-space:pre-wrap; font-family:Georgia,serif; }
+  #deslindeModal .foot { padding:14px 24px 20px; border-top:1px solid var(--line); }
+  #deslindeModal .check { display:flex; align-items:flex-start; gap:10px; font-size:12px; color:var(--text); cursor:pointer; line-height:1.5; }
+  #deslindeModal .check input { margin-top:2px; width:16px; height:16px; flex-shrink:0; cursor:pointer; }
+  #deslindeModal .botones { display:flex; gap:10px; margin-top:16px; }
+  #deslindeModal .botones button { flex:1; padding:12px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer; border:1px solid var(--line); }
+  #deslindeModal .cancelar { background:transparent; color:var(--muted); }
+  #deslindeModal .firmar { background:var(--cyan); color:#04121a; border-color:var(--cyan); }
+  #deslindeModal .firmar:disabled { opacity:0.4; cursor:not-allowed; }
+
   /* toast */
   #toast { position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%) translateY(16px); background: rgba(8,12,18,0.96); border: 1px solid var(--cyan); border-radius: 8px; padding: 12px 20px; font-size: 12px; color: var(--text); opacity: 0; visibility: hidden; transition: all .3s; z-index: 10; max-width: 90vw; }
   #toast.show { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
@@ -285,6 +303,28 @@
 </div>
 
 <div id="toast"></div>
+
+<!-- ── Modal del deslinde · Estación 2 ── -->
+<div id="deslindeModal">
+  <div class="box">
+    <div class="head">
+      <div class="k">Estación 2 · Deslinde</div>
+      <h3>Términos de aceptación</h3>
+      <p>Leé los términos antes de continuar. Al aceptar, tu activo queda registrado con esta firma. Sin aceptación no se registra el activo.</p>
+    </div>
+    <div class="texto" id="deslindeTexto">Cargando términos…</div>
+    <div class="foot">
+      <label class="check">
+        <input type="checkbox" id="deslindeCheck" />
+        <span>He leído y acepto los términos de aceptación de EPIMELEIA.</span>
+      </label>
+      <div class="botones">
+        <button class="cancelar" id="deslindeCancelar" type="button">Volver</button>
+        <button class="firmar" id="deslindeFirmar" type="button" disabled>Firmar y registrar →</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
 
@@ -509,60 +549,107 @@
     toastT = setTimeout(function () { t.className = ''; }, 3400);
   }
 
-  // ── SEGUNDA CONFIRMACIÓN: registrar el activo en Supabase ──
+  // ── SEGUNDA CONFIRMACIÓN: abrir el deslinde antes de registrar ──
   // La primera confirmación es "Confirmar activo" (fija el contorno).
-  // Esta es la segunda: el cliente decide registrarlo de verdad.
+  // Esta es la segunda: el cliente decide registrarlo de verdad — pero antes
+  // tiene que leer y aceptar el deslinde (Estación 2, Camino 1 atómico).
+  // El registro real ocurre al FIRMAR en el modal, no acá.
+
+  // Texto de la v3.0.0 (español). Es EXACTAMENTE el mismo que en
+  // lib/hash-clausulas.js — de ese texto sale el hash. Si se cambia uno,
+  // hay que cambiar el otro (y en rigor, crear una v4). No editar a la ligera.
+  var DESLINDE_TEXTO =
+'EPIMELEIA — Protocolo de Notaría Ambiental — Términos de Aceptación (v3.0.0)\n\n' +
+'1. EPIMELEIA actúa exclusivamente como notario técnico. Observa, a través de imágenes satelitales Sentinel-2 provistas por la Agencia Espacial Europea (Copernicus), el estado ambiental del área geográfica (el "Activo") definida por el Cliente, y registra esa observación en la blockchain de Polygon como evidencia inmutable.\n\n' +
+'2. Las imágenes satelitales y las mediciones derivadas de ellas reflejan lo que el satélite observó en una fecha determinada. Su interpretación y cualquier decisión basada en ellas son responsabilidad exclusiva del Cliente. EPIMELEIA no garantiza ningún resultado ambiental en particular, ni audita, avala ni certifica la conducta del Cliente respecto del Activo.\n\n' +
+'3. El Cliente reconoce y acepta el registro on-chain como la fuente de verdad definitiva. Una vez sellado, un registro no puede ser alterado por nadie, incluidos EPIMELEIA y el propio Cliente.\n\n' +
+'4. El Cliente declara tener el derecho de solicitar la observación del Activo, y es el único responsable de los límites geográficos (el polígono) que define.\n\n' +
+'5. EPIMELEIA se reserva el derecho de incorporar mejoras y nuevas fuentes satelitales al protocolo, sin alterar los registros ya sellados.';
+
+  // Guardamos acá los datos del activo listos para registrar, mientras el
+  // cliente lee el deslinde.
+  var activoPendiente = null;
+
   el('continueBtn').addEventListener('click', function () {
     if (!geojsonConfirmado) { toast('Primero confirmá el contorno.', true); return; }
 
-    // AGREGADO: el activo necesita identidad propia.
     var nombreActivo = el('actNombre').value.trim();
     var tipoActivo   = el('actTipo').value;
     if (!nombreActivo) { toast('Ponele un nombre a este activo.', true); el('actNombre').focus(); return; }
     if (!tipoActivo)   { toast('Elegí qué tipo de recurso es.', true); el('actTipo').focus(); return; }
 
-    var btn = el('continueBtn');
-    btn.disabled = true; btn.textContent = 'Registrando…';
-
     var ring = geojsonConfirmado.geometry.coordinates[0];
     var props = geojsonConfirmado.properties || {};
     var areaHa = props.superficie_ha || 0;
 
-    var paquete = {
-      nombre: nombreActivo,            // el nombre que puso el cliente
-      tipo: tipoActivo,                // el tipo que eligió
+    // Se arma el paquete y se guarda pendiente. El registro real ocurre
+    // cuando el cliente firma el deslinde.
+    activoPendiente = {
+      nombre: nombreActivo,
+      tipo: tipoActivo,
       coordinates: ring,
       area_ha: areaHa,
       area_km2: +(areaHa / 100).toFixed(6),
-      // El dueño: viene de cuenta.html. Si es su primer activo, el endpoint
-      // crea su ficha de cliente con estos datos.
       cliente_id:      CLIENTE.cliente_id,
       cliente_email:   CLIENTE.email,
       cliente_nombre:  CLIENTE.nombre,
       cliente_empresa: CLIENTE.empresa
+      // aceptado: true  → se agrega al firmar en el modal
     };
+
+    // Abrir el modal del deslinde.
+    el('deslindeTexto').textContent = DESLINDE_TEXTO;
+    el('deslindeCheck').checked = false;
+    el('deslindeFirmar').disabled = true;
+    el('deslindeModal').classList.add('show');
+  });
+
+  // El botón "Firmar" se habilita solo si el checkbox está tildado.
+  el('deslindeCheck').addEventListener('change', function () {
+    el('deslindeFirmar').disabled = !this.checked;
+  });
+
+  // "Volver": cierra el modal sin registrar nada.
+  el('deslindeCancelar').addEventListener('click', function () {
+    el('deslindeModal').classList.remove('show');
+    activoPendiente = null;
+  });
+
+  // "Firmar y registrar": ahora sí se registra el activo, CON aceptado: true.
+  el('deslindeFirmar').addEventListener('click', function () {
+    if (!activoPendiente) { el('deslindeModal').classList.remove('show'); return; }
+    if (!el('deslindeCheck').checked) return;
+
+    var fbtn = el('deslindeFirmar');
+    fbtn.disabled = true; fbtn.textContent = 'Registrando…';
+
+    // La intención de aceptar. El hash lo calcula el SERVIDOR (Ajuste 36).
+    activoPendiente.aceptado = true;
+
+    var nombreActivo = activoPendiente.nombre;
 
     fetch('/api/registrar-activo', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(paquete)
+      body: JSON.stringify(activoPendiente)
     })
     .then(function (r) { return r.json(); })
     .then(function (data) {
       if (data && data.ok) {
-        toast('✓ "' + nombreActivo + '" quedó registrado.');
+        el('deslindeModal').classList.remove('show');
+        toast('✓ "' + nombreActivo + '" quedó registrado y firmado.');
         pasoHecho(1); paso(2);
-        // revela la estación 2 (firmar) dentro del mismo panel
         confirmedView.style.display = 'none';
         el('est-firmar').style.display = 'block';
+        activoPendiente = null;
       } else {
         toast('No se pudo registrar: ' + ((data && data.error) || 'error'), true);
-        btn.disabled = false; btn.textContent = 'CONFIRMAR Y CONTINUAR →';
+        fbtn.disabled = false; fbtn.textContent = 'Firmar y registrar →';
       }
     })
     .catch(function () {
       toast('No se pudo conectar con el servidor.', true);
-      btn.disabled = false; btn.textContent = 'CONFIRMAR Y CONTINUAR →';
+      fbtn.disabled = false; fbtn.textContent = 'Firmar y registrar →';
     });
   });
 })();
