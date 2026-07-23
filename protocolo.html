@@ -130,6 +130,26 @@
   .estacion-msg p { font-size: 11px; color: var(--muted); line-height: 1.6; }
   .estacion-msg .obra { margin-top: 14px; font-size: 10px; color: var(--cyan-dim); border: 1px dashed var(--line); border-radius: 6px; padding: 8px 12px; }
 
+  /* ── Bloque de precio y pago (Estación 3) ── */
+  #est-pagar { display:none; padding: 4px; }
+  #est-pagar .k { font-size:9px; letter-spacing:0.2em; color:var(--cyan); text-transform:uppercase; text-align:center; }
+  #est-pagar h3 { font-size:17px; color:var(--text); margin:10px 0 14px; font-weight:700; text-align:center; }
+  #precioCaja { border:1px solid var(--line); border-radius:9px; padding:16px; background:rgba(0,240,255,0.03); margin-bottom:14px; }
+  #precioCaja .fila { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:9px; font-size:11px; }
+  #precioCaja .fila:last-child { margin-bottom:0; }
+  #precioCaja .et { color:var(--muted); letter-spacing:0.05em; }
+  #precioCaja .va { color:var(--text); font-weight:500; }
+  #precioCaja .tier { font-size:15px; color:var(--cyan); font-weight:700; letter-spacing:0.04em; }
+  #precioCaja .monto { font-size:26px; color:var(--text); font-weight:700; line-height:1.1; }
+  #precioCaja .monto small { font-size:12px; color:var(--muted); font-weight:400; }
+  #precioCaja .gratis { margin-top:12px; padding:9px 11px; border-radius:6px; background:rgba(74,222,128,0.10); border:1px solid rgba(74,222,128,0.35); font-size:10.5px; color:var(--lock); line-height:1.5; text-align:center; }
+  #precioCaja .legal { margin-top:10px; font-size:9px; color:var(--muted); line-height:1.5; text-align:center; }
+  #precioCaja .tolerancia { margin-top:9px; font-size:9.5px; color:var(--cyan-dim); line-height:1.5; text-align:center; }
+  #pagarBtn { width:100%; font-size:14px; font-weight:700; padding:14px; letter-spacing:0.04em; }
+  #pagarNota { font-size:9.5px; color:var(--muted); text-align:center; margin-top:10px; line-height:1.5; }
+  #precioCargando { text-align:center; font-size:11px; color:var(--muted); padding:20px 0; }
+  #precioError { display:none; font-size:11px; color:var(--warn); border:1px solid rgba(255,210,74,0.4); border-radius:7px; padding:12px; line-height:1.5; }
+
   /* ── Modal del deslinde (Estación 2) ── */
   #deslindeModal { display:none; position:fixed; inset:0; z-index:50; background:rgba(4,7,11,0.82); backdrop-filter:blur(3px); align-items:center; justify-content:center; padding:20px; }
   #deslindeModal.show { display:flex; }
@@ -292,12 +312,51 @@
       <div class="coords" id="coordsOut" tabindex="0"></div>
     </div>
 
-    <!-- ── AGREGADO: estación FIRMAR (placeholder honesto) ── -->
+    <!-- ── Estación 2 · confirmación de firma (breve) ── -->
     <div class="estacion-msg" id="est-firmar">
       <div class="k">Estación 2 · Firmado ✓</div>
       <h3>Activo registrado y deslinde aceptado ✓</h3>
-      <p>Tu activo quedó registrado y firmaste los términos de aceptación. El paso siguiente es el pago, según la superficie de tu activo.</p>
-      <div class="obra">◦ próximo paso · Estación 3 · Pago</div>
+      <p>Tu activo quedó registrado y firmaste los términos de aceptación.</p>
+    </div>
+
+    <!-- ── Estación 3 · el precio y el pago ── -->
+    <div id="est-pagar">
+      <div class="k">Estación 3 · Pago</div>
+      <h3>Tu plan según la superficie</h3>
+
+      <div id="precioCargando">Calculando tu plan…</div>
+
+      <div id="precioError"></div>
+
+      <div id="precioCaja" style="display:none;">
+        <div class="fila">
+          <span class="et">Superficie certificada</span>
+          <span class="va" id="pcSuperficie">—</span>
+        </div>
+        <div class="fila">
+          <span class="et">Tu plan</span>
+          <span class="tier" id="pcTier">—</span>
+        </div>
+        <div class="fila" style="margin-top:12px;">
+          <span class="et">Precio</span>
+          <span class="monto" id="pcMonto">—</span>
+        </div>
+
+        <div class="gratis" id="pcGratis">
+          El primer mes es sin cargo. El cobro empieza en el segundo mes.
+        </div>
+
+        <div class="tolerancia" id="pcTolerancia" style="display:none;"></div>
+        <div class="legal" id="pcLegal"></div>
+      </div>
+
+      <button class="action primary" id="pagarBtn" type="button" style="display:none;">
+        SUSCRIBIRME →
+      </button>
+      <div id="pagarNota" style="display:none;">
+        Te vamos a llevar a PayPal para que dejes tu método de pago.<br>
+        Podés cancelar la suscripción cuando quieras.
+      </div>
     </div>
   </div>
 </div>
@@ -638,10 +697,20 @@
       if (data && data.ok) {
         el('deslindeModal').classList.remove('show');
         toast('✓ "' + nombreActivo + '" quedó registrado y firmado.');
-        pasoHecho(1); paso(2);
+        pasoHecho(1); pasoHecho(2); paso(3);
         confirmedView.style.display = 'none';
         el('est-firmar').style.display = 'block';
+
+        // ── Estación 3: mostrar el precio según la superficie ──
+        // El activoId viene de la respuesta del registro. Es lo que el pago
+        // necesita para saber QUÉ activo se está pagando.
+        var idActivo = (data.activo && data.activo.id) || data.activoId || null;
+        var haActivo = activoPendiente ? activoPendiente.area_ha : null;
         activoPendiente = null;
+
+        if (idActivo && haActivo) {
+          mostrarPrecio(idActivo, haActivo);
+        }
       } else {
         toast('No se pudo registrar: ' + ((data && data.error) || 'error'), true);
         fbtn.disabled = false; fbtn.textContent = 'Firmar y registrar →';
@@ -652,6 +721,113 @@
       fbtn.disabled = false; fbtn.textContent = 'Firmar y registrar →';
     });
   });
+
+  // ═══════════════════════════════════════════════════════════
+  //  ESTACIÓN 3 · EL PRECIO Y EL PAGO
+  // ═══════════════════════════════════════════════════════════
+  //
+  // El cliente ve el precio ANTES de ir a PayPal. Es lo honesto: nadie
+  // debería llegar a una pasarela de pago sin saber cuánto le van a cobrar.
+  //
+  // El precio lo calcula el SERVIDOR (lib/precios.js), no el navegador. Así
+  // hay una sola fuente de verdad para los precios, y el cliente no puede
+  // manipular lo que se le cobra.
+
+  var datosPago = null;   // { activoId, superficieHa } — para cuando apriete pagar
+
+  function mostrarPrecio(activoId, superficieHa) {
+    el('est-pagar').style.display = 'block';
+    el('precioCargando').style.display = 'block';
+    el('precioCaja').style.display = 'none';
+    el('precioError').style.display = 'none';
+    el('pagarBtn').style.display = 'none';
+    el('pagarNota').style.display = 'none';
+
+    var pais = (CLIENTE.pais || '').toUpperCase() === 'AR' ? 'AR' : 'INT';
+
+    fetch('/api/calcular-precio?superficieHa=' + encodeURIComponent(superficieHa) + '&pais=' + pais)
+      .then(function (r) { return r.json(); })
+      .then(function (p) {
+        el('precioCargando').style.display = 'none';
+
+        // El activo supera el máximo del satélite: hay que dividirlo.
+        if (!p.ok) {
+          el('precioError').style.display = 'block';
+          el('precioError').textContent = p.motivo || 'No se pudo calcular el precio.';
+          return;
+        }
+
+        // Mostrar el precio.
+        el('pcSuperficie').textContent = Number(p.superficieHa).toLocaleString('es-AR', { maximumFractionDigits: 2 }) + ' ha';
+        el('pcTier').textContent = p.tier.nombre;
+        el('pcMonto').innerHTML = 'USD ' + p.precioMensualUSD + ' <small>/ mes</small>';
+        el('pcLegal').textContent = p.leyendaImpuestos || '';
+
+        if (p.enTolerancia && p.nota) {
+          el('pcTolerancia').style.display = 'block';
+          el('pcTolerancia').textContent = p.nota;
+        } else {
+          el('pcTolerancia').style.display = 'none';
+        }
+
+        el('precioCaja').style.display = 'block';
+        el('pagarBtn').style.display = 'block';
+        el('pagarNota').style.display = 'block';
+
+        datosPago = { activoId: activoId, superficieHa: superficieHa, pais: pais };
+      })
+      .catch(function () {
+        el('precioCargando').style.display = 'none';
+        el('precioError').style.display = 'block';
+        el('precioError').textContent = 'No se pudo calcular el precio. Probá de nuevo en un momento.';
+      });
+  }
+
+  // El botón: crea la suscripción en PayPal y manda al cliente a poner su tarjeta.
+  el('pagarBtn').addEventListener('click', function () {
+    if (!datosPago) { toast('Falta calcular el precio.', true); return; }
+
+    var btn = el('pagarBtn');
+    btn.disabled = true; btn.textContent = 'Preparando el pago…';
+
+    fetch('/api/crear-suscripcion', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        activoId:     datosPago.activoId,
+        email:        CLIENTE.email,
+        superficieHa: datosPago.superficieHa,
+        pais:         datosPago.pais
+      })
+    })
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      if (data && data.ok && data.approvalUrl) {
+        // A PayPal. El cliente vuelve a protocolo.html con ?suscripcion=ok
+        window.location.href = data.approvalUrl;
+      } else {
+        toast('No se pudo iniciar el pago: ' + ((data && data.error) || 'error'), true);
+        btn.disabled = false; btn.textContent = 'SUSCRIBIRME →';
+      }
+    })
+    .catch(function () {
+      toast('No se pudo conectar con el servidor.', true);
+      btn.disabled = false; btn.textContent = 'SUSCRIBIRME →';
+    });
+  });
+
+  // ── Si el cliente vuelve de PayPal, mostrarle qué pasó ──
+  (function volverDePayPal() {
+    var params = new URLSearchParams(window.location.search);
+    var estado = params.get('suscripcion');
+    if (estado === 'ok') {
+      toast('✓ Suscripción confirmada. Tu activo entra al protocolo.');
+      pasoHecho(1); pasoHecho(2); pasoHecho(3); paso(4);
+    } else if (estado === 'cancelada') {
+      toast('Cancelaste el pago. Tu activo quedó registrado, podés suscribirte cuando quieras.', true);
+    }
+  })();
+
 })();
 </script>
 </body>
