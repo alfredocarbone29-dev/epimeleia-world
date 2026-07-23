@@ -1,78 +1,103 @@
 // ────────────────────────────────────────────────────────────────────────────
-// EPIMELEIA V3.4 — Crear suscripción de cliente (PIEZA 3)
+// EPIMELEIA V3.4 — Crear suscripción de PayPal (Estación 3 · el pago)
 // ────────────────────────────────────────────────────────────────────────────
-// URL pública: https://epimeleia.world/api/crear-suscripcion
-// La llama el FRONTEND cuando el cliente:
-//   1. Tildó el casillero del clickwrap (aceptó las 3 cláusulas)
-//   2. Quiere arrancar el mes de cortesía
+// URL pública (Vercel):  https://epimeleia.world/api/crear-suscripcion
 //
 // QUÉ HACE:
-//   1. Valida que el cliente realmente aceptó (aceptoClausulas === true)
-//   2. Captura la FIRMA REAL: email + fecha/hora exacta + versión de cláusulas
-//      → la guarda en Redis como evidencia jurídica EN EL MOMENTO DEL CONSENTIMIENTO
-//        (no espera al webhook — esto es el escudo legal del founder)
-//   3. Crea la suscripción en PayPal usando el PLAN ID (mes de cortesía incluido)
-//   4. Mete la firma dentro del campo custom_id de la suscripción, para que el
-//      webhook (Pieza 2) la lea cuando PayPal confirme la activación
-//   5. Devuelve al frontend la URL de aprobación (la ventana de PayPal — Camino A)
+//   Recibe un activo ya registrado y firmado (Estaciones 1 y 2), calcula qué
+//   tier le corresponde según su SUPERFICIE, elige el plan de PayPal de ese
+//   tier, y crea la suscripción. Devuelve el link donde el cliente pone su
+//   tarjeta.
 //
-// VARIABLES DE ENTORNO (en .env del VPS y en Vercel):
-//   PAYPAL_CLIENT_ID         (ya existe)
-//   PAYPAL_CLIENT_SECRET     (ya existe)
-//   PAYPAL_PLAN_ID           (opcional — si falta, usa el PLAN ID sandbox conocido)
-//   PAYPAL_ENV               (opcional — "live" para producción; default = sandbox)
-//   EPIMELEIA_BASE_URL       (opcional — default https://epimeleia.world)
+// ════════════════════════════════════════════════════════════════════════════
+// AJUSTE 37 (22/7/2026) — LOS CUATRO TIERS
+// ════════════════════════════════════════════════════════════════════════════
+//
+// ANTES: usaba UN plan fijo de PayPal (el de prueba, USD 550). No sabía nada
+// de tiers ni de superficie.
+//
+// AHORA: la superficie manda. lib/precios.js calcula el tier (con la
+// tolerancia del 5% incluida) y devuelve qué variable de entorno tiene el
+// Plan ID de PayPal de ese tier. Este archivo lo lee y crea la suscripción
+// con el plan correcto.
+//
+//   superficie → precios.js → tier → variable de entorno → Plan ID → PayPal
+//
+// LOS CUATRO PLANES (decisión del fundador, 20/7):
+//   Base        hasta 500 ha        USD 180/mes
+//   Pro         500 a 5.000 ha      USD 450/mes
+//   Corporate   5.000 a 25.000 ha   USD 900/mes
+//   Enterprise  25.000 a 62.500 ha  USD 1800/mes
+//   Los cuatro con 1 mes gratis (el trial de PayPal). El cliente ya dejó la
+//   tarjeta, así que desde el mes 2 se cobra solo.
+//
+// POR QUÉ LOS PLAN IDs VIENEN DE VARIABLES DE ENTORNO (opción B):
+//   Los Plan IDs de sandbox y de producción son DISTINTOS. Teniéndolos en
+//   variables, el salto sandbox → live es cambiar 4 variables y no tocar
+//   código. Si estuvieran escritos acá, habría que editar el archivo cada vez.
+//
+// VARIABLES DE ENTORNO NECESARIAS:
+//   PAYPAL_ENV                 "live" para producción; cualquier otra cosa = sandbox
+//   PAYPAL_CLIENT_ID
+//   PAYPAL_CLIENT_SECRET
+//   PAYPAL_PLAN_BASE           Plan ID del tier Base
+//   PAYPAL_PLAN_PRO            Plan ID del tier Pro
+//   PAYPAL_PLAN_CORPORATE      Plan ID del tier Corporate
+//   PAYPAL_PLAN_ENTERPRISE     Plan ID del tier Enterprise
+//   EPIMELEIA_BASE_URL         (opcional) default https://epimeleia.world
+//
+// QUÉ RECIBE (POST, JSON):
+//   {
+//     activoId:     "<uuid de la fila en activos>",   (requerido)
+//     email:        "titular@dominio.com",            (requerido)
+//     superficieHa: 1234.56,                          (requerido)
+//     pais:         "AR" | otro                       (opcional, para la leyenda)
+//   }
+//
+// ⚠️ IMPORTANTE — SIN FIRMA NO HAY PAGO:
+//   Este endpoint verifica en Supabase que el activo TENGA su deslinde firmado
+//   (hash_firma). Si no lo tiene, no crea la suscripción. Es la regla del
+//   fundador aplicada también acá: "sin aceptación no hay pago".
 // ────────────────────────────────────────────────────────────────────────────
 
-const { guardarAceptacionClausulas } = require("../lib/cola-pagos");
-const { HASH_CLAUSULAS_V1, calcularHashAceptacion } = require("../lib/hash-clausulas");
+const { createClient } = require("@supabase/supabase-js");
+const { calcularPrecio, planIdDePayPal } = require("../lib/precios");
 
-// ─── Config según entorno ────────────────────────────────────────────────────
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_KEY
+);
+
+// Sandbox salvo que se diga explícitamente "live".
 const PAYPAL_BASE = process.env.PAYPAL_ENV === "live"
   ? "https://api-m.paypal.com"
   : "https://api-m.sandbox.paypal.com";
 
-// PLAN ID: el creado en la Pieza 1. Preferimos leerlo del .env; si no está,
-// usamos el conocido de sandbox como respaldo para no frenar las pruebas.
-const PLAN_ID = process.env.PAYPAL_PLAN_ID || "P-28525887527389315NI76A7Q";
-
 const BASE_URL = process.env.EPIMELEIA_BASE_URL || "https://epimeleia.world";
 
-const VERSION_CLAUSULAS = "v1.0.0";
-
-// ─── Obtener access token de PayPal ──────────────────────────────────────────
+// ─── Token de PayPal ─────────────────────────────────────────────────────────
 async function obtenerToken() {
   const clientId     = process.env.PAYPAL_CLIENT_ID;
   const clientSecret = process.env.PAYPAL_CLIENT_SECRET;
-
   if (!clientId || !clientSecret) {
-    throw new Error("PAYPAL_CLIENT_ID o PAYPAL_CLIENT_SECRET no configurados");
+    throw new Error("Faltan PAYPAL_CLIENT_ID o PAYPAL_CLIENT_SECRET.");
   }
 
   const resp = await fetch(`${PAYPAL_BASE}/v1/oauth2/token`, {
     method: "POST",
     headers: {
       "Authorization": "Basic " + Buffer.from(`${clientId}:${clientSecret}`).toString("base64"),
-      "Content-Type": "application/x-www-form-urlencoded"
+      "Content-Type": "application/x-www-form-urlencoded",
     },
-    body: "grant_type=client_credentials"
+    body: "grant_type=client_credentials",
   });
 
-  if (!resp.ok) {
-    const detalle = await resp.text();
-    throw new Error(`Error obteniendo token PayPal (${resp.status}): ${detalle}`);
-  }
-
+  if (!resp.ok) throw new Error(`PayPal no dio token (${resp.status}).`);
   const data = await resp.json();
   return data.access_token;
 }
 
-// ─── Validación simple de email ──────────────────────────────────────────────
-function emailValido(email) {
-  return typeof email === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-}
-
-// ─── Handler principal ───────────────────────────────────────────────────────
+// ─── Handler ─────────────────────────────────────────────────────────────────
 module.exports = async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
@@ -84,62 +109,92 @@ module.exports = async (req, res) => {
   }
 
   try {
-    // ── PASO 1: Leer y validar lo que manda el frontend ──────────────────────
-    const body = req.body || {};
-    const email          = (body.email || "").toLowerCase().trim();
-    const aceptoClausulas = body.aceptoClausulas === true;
-    const nombreOrg      = (body.nombreOrg || "").trim(); // opcional, informativo
+    const body = typeof req.body === "string" ? JSON.parse(req.body) : (req.body || {});
+    const activoId     = body.activoId;
+    const email        = (body.email || "").toLowerCase().trim();
+    const superficieHa = Number(body.superficieHa);
+    const pais         = body.pais || "INT";
 
-    if (!emailValido(email)) {
-      return res.status(400).json({ ok: false, error: "Email inválido o ausente." });
+    // ── Validaciones ──────────────────────────────────────────────
+    if (!activoId) {
+      return res.status(400).json({ ok: false, error: "Falta activoId." });
+    }
+    if (!email || !email.includes("@")) {
+      return res.status(400).json({ ok: false, error: "Falta un email válido." });
+    }
+    if (!isFinite(superficieHa) || superficieHa <= 0) {
+      return res.status(400).json({ ok: false, error: "Falta la superficie del activo." });
     }
 
-    // El escudo legal: si NO aceptó, NO se crea nada. Sin excepciones.
-    if (!aceptoClausulas) {
+    // ── SIN FIRMA NO HAY PAGO ─────────────────────────────────────
+    // Se verifica contra Supabase que el deslinde esté firmado. No se confía
+    // en lo que diga el navegador.
+    const { data: activo, error: errActivo } = await supabase
+      .from("activos")
+      .select("id, nombre_activo, hash_firma, firma_version, superficie_ha")
+      .eq("id", activoId)
+      .maybeSingle();
+
+    if (errActivo) {
+      console.error("[crear-suscripcion] Error leyendo el activo:", errActivo.message);
+      return res.status(500).json({ ok: false, error: "No se pudo verificar el activo." });
+    }
+    if (!activo) {
+      return res.status(404).json({ ok: false, error: "Ese activo no existe." });
+    }
+    if (!activo.hash_firma) {
       return res.status(400).json({
         ok: false,
-        error: "Hay que aceptar las cláusulas del protocolo antes de continuar."
+        error: "Este activo no tiene el deslinde firmado. Sin aceptación no hay pago.",
       });
     }
 
-    // ── PASO 2: Capturar la FIRMA REAL ───────────────────────────────────────
-    // La fecha/hora la pone el servidor (más confiable como evidencia que el
-    // reloj del navegador del cliente). Este es el instante del consentimiento.
-    const fechaAceptacion = new Date().toISOString();
-    const hashAceptacion  = calcularHashAceptacion(email, fechaAceptacion, VERSION_CLAUSULAS);
+    // ── El precio, según la superficie ────────────────────────────
+    // Acá entra toda la lógica de tiers y la tolerancia del 5%.
+    const precio = calcularPrecio(superficieHa, pais);
 
-    // Guardar la firma en Redis YA — antes de tocar PayPal. Si PayPal fallara,
-    // igual queda registrado que este cliente aceptó, cuándo, y con qué hash.
-    await guardarAceptacionClausulas(email, hashAceptacion, VERSION_CLAUSULAS, fechaAceptacion);
-
-    // ── PASO 3: Armar el custom_id que viajará en la suscripción ─────────────
-    // Formato que la Pieza 2 (webhook) sabe leer: "email|fecha|version"
-    // PayPal limita custom_id a 127 caracteres — controlamos que entre.
-    let customId = `${email}|${fechaAceptacion}|${VERSION_CLAUSULAS}`;
-    if (customId.length > 127) {
-      // Si el email fuera larguísimo, recortamos la fecha a segundos (sigue siendo válida)
-      customId = `${email}|${fechaAceptacion.slice(0, 19)}Z|${VERSION_CLAUSULAS}`.slice(0, 127);
+    if (!precio.ok) {
+      // Puede ser que supere el máximo de Copernicus (hay que dividir el activo).
+      return res.status(400).json({
+        ok: false,
+        error: precio.motivo,
+        superaMaximo: precio.superaMaximo || false,
+      });
     }
 
-    // ── PASO 4: Crear la suscripción en PayPal ───────────────────────────────
+    // ── El plan de PayPal de ese tier ─────────────────────────────
+    const plan = planIdDePayPal(precio.tier.id);
+    if (!plan.ok) {
+      console.error("[crear-suscripcion] " + plan.motivo);
+      return res.status(500).json({
+        ok: false,
+        error: "El plan de pago de este tier no está configurado. Avisale al equipo.",
+        detalle: plan.motivo,
+      });
+    }
+
+    // ── Crear la suscripción en PayPal ────────────────────────────
     const token = await obtenerToken();
 
-    // PayPal-Request-Id: evita crear dos suscripciones si el cliente hace doble clic
-    const requestId = `epimeleia-${email}-${Date.now()}`;
+    // custom_id: viaja con la suscripción y vuelve en el webhook. Así el
+    // webhook sabe QUÉ activo se pagó, sin tener que adivinar.
+    // Formato: "activoId|email|tier". PayPal limita a 127 caracteres.
+    let customId = `${activoId}|${email}|${precio.tier.id}`;
+    if (customId.length > 127) customId = customId.slice(0, 127);
+
+    const requestId = `epimeleia-${activoId}-${Date.now()}`;
 
     const subResp = await fetch(`${PAYPAL_BASE}/v1/billing/subscriptions`, {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${token}`,
         "Content-Type": "application/json",
-        "PayPal-Request-Id": requestId
+        "PayPal-Request-Id": requestId,
       },
       body: JSON.stringify({
-        plan_id: PLAN_ID,
+        plan_id: plan.planId,
         custom_id: customId,
-        subscriber: {
-          email_address: email
-        },
+        subscriber: { email_address: email },
         application_context: {
           brand_name: "EPIMELEIA",
           locale: "es-AR",
@@ -147,55 +202,86 @@ module.exports = async (req, res) => {
           user_action: "SUBSCRIBE_NOW",
           payment_method: {
             payer_selected: "PAYPAL",
-            payee_preferred: "IMMEDIATE_PAYMENT_REQUIRED"
+            payee_preferred: "IMMEDIATE_PAYMENT_REQUIRED",
           },
-          // A dónde vuelve el cliente después de aprobar o cancelar en PayPal
-          return_url: `${BASE_URL}/?suscripcion=ok`,
-          cancel_url: `${BASE_URL}/?suscripcion=cancelada`
-        }
-      })
+          return_url: `${BASE_URL}/protocolo.html?suscripcion=ok&activo=${activoId}`,
+          cancel_url: `${BASE_URL}/protocolo.html?suscripcion=cancelada&activo=${activoId}`,
+        },
+      }),
     });
 
     const subData = await subResp.json();
 
     if (!subResp.ok) {
-      console.error("[crear-suscripcion] PayPal rechazó la creación:", subData);
+      console.error("[crear-suscripcion] PayPal rechazó la creación:", JSON.stringify(subData));
       return res.status(502).json({
         ok: false,
         error: "PayPal no pudo crear la suscripción.",
-        detalle: subData?.message || "Error desconocido de PayPal"
+        detalle: subData?.message || "Error desconocido de PayPal",
       });
     }
 
-    // ── PASO 5: Encontrar la URL de aprobación (la ventana — Camino A) ────────
+    // El link donde el cliente pone su tarjeta.
     const approveLink = (subData.links || []).find(l => l.rel === "approve");
     const approvalUrl = approveLink?.href || null;
 
     if (!approvalUrl) {
-      console.error("[crear-suscripcion] Suscripción creada pero sin link de aprobación:", subData);
+      console.error("[crear-suscripcion] Suscripción creada sin link de aprobación:", JSON.stringify(subData));
       return res.status(502).json({
         ok: false,
-        error: "PayPal creó la suscripción pero no devolvió la ventana de pago."
+        error: "PayPal creó la suscripción pero no devolvió la ventana de pago.",
       });
     }
 
-    console.log(`[crear-suscripcion] Suscripción ${subData.id} creada para ${email} — esperando aprobación`);
+    // ── Guardar el tier y el precio en el activo ──────────────────
+    // Para que quede constancia de QUÉ se le cobró y por qué. No frena el
+    // pago si falla: se anota el error y se sigue.
+    const { error: errUpd } = await supabase
+      .from("activos")
+      .update({
+        tier:                precio.tier.nombre,
+        precio_anual_dolar:  precio.precioAnualUSD,
+        moneda:              "USD",
+      })
+      .eq("id", activoId);
 
-    // ── PASO 6: Devolver al frontend lo que necesita ─────────────────────────
+    if (errUpd) {
+      console.error("[crear-suscripcion] No se pudo guardar el tier en el activo:", errUpd.message);
+    }
+
+    console.log(
+      `[crear-suscripcion] Suscripción ${subData.id} creada · activo ${activoId} · ` +
+      `${superficieHa} ha → tier ${precio.tier.nombre} · USD ${precio.precioMensualUSD}/mes · plan ${plan.planId}`
+    );
+
+    // ── Respuesta al frontend ─────────────────────────────────────
     return res.status(200).json({
       ok: true,
-      subscription_id: subData.id,
-      approval_url: approvalUrl,    // <-- el frontend abre esto (la ventana de PayPal)
+      subscriptionId: subData.id,
+      approvalUrl,                    // ← el frontend manda al cliente acá
+      activoId,
       email,
-      hash_aceptacion: hashAceptacion,
-      mensaje: "Suscripción creada. Redirigí al cliente a approval_url para que confirme."
+      superficieHa,
+      tier: {
+        id:     precio.tier.id,
+        nombre: precio.tier.nombre,
+      },
+      precio: {
+        mensualUSD: precio.precioMensualUSD,
+        anualUSD:   precio.precioAnualUSD,
+        enTolerancia: precio.enTolerancia,
+        // Si cayó en tolerancia, se quedó en el tier de abajo (no subió).
+        nota: precio.nota,
+      },
+      leyendaImpuestos: precio.leyendaImpuestos,
+      mensaje: "Suscripción creada. Redirigí al cliente a approvalUrl para que confirme el pago.",
     });
 
   } catch (error) {
     console.error("[crear-suscripcion] Error:", error);
     return res.status(500).json({
       ok: false,
-      error: "Error interno al crear la suscripción. Quedó registrado en los logs."
+      error: "Error interno al crear la suscripción.",
     });
   }
 };
