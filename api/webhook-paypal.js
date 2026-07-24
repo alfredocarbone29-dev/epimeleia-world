@@ -4,61 +4,93 @@
 // URL pública: https://epimeleia.world/api/webhook-paypal
 // Configurado en: developer.paypal.com → EPIMELEIA → Webhooks
 //
-// EVENTOS QUE MANEJA:
-//   BILLING.SUBSCRIPTION.ACTIVATED  → alta on-chain + certificar + minuta
-//   PAYMENT.SALE.COMPLETED          → cobro mensual real (post mes gratis)
-//   BILLING.SUBSCRIPTION.CANCELLED  → baja del cliente
-//   (cualquier otro evento)         → logueado, no procesado
+// QUÉ HACE:
+//   Escucha lo que PayPal avisa sobre una suscripción y marca en Supabase
+//   HASTA CUÁNDO ese activo está pago. Nada más que eso.
 //
-// CLICKWRAP:
-//   La firma REAL del cliente viene en el campo custom_id de la suscripción
-//   PayPal. Ese campo lo completa la Pieza 3 (crear-suscripcion.js) cuando
-//   el cliente tilda el casillero en el frontend. Formato esperado:
-//   "email|fechaISO|versionClausulas"
-//   Ejemplo: "empresa@dominio.com|2026-06-27T14:32:00.000Z|v2.0.0"
+//   PayPal confirma un cobro  →  activos.cobertura_hasta = fecha + 1 mes
 //
-// VARIABLES DE ENTORNO NECESARIAS (en .env del VPS y en Vercel):
-//   PAYPAL_CLIENT_ID
-//   PAYPAL_CLIENT_SECRET
-//   PAYPAL_WEBHOOK_ID
-//   (las mismas que ya estaban — no se agregan nuevas)
+//   Después, el scheduler del VPS lee esa fecha para decidir si certifica.
+//   El webhook escribe; el scheduler lee. Ninguno de los dos hace la otra cosa.
 //
 // ════════════════════════════════════════════════════════════════════════════
-// AJUSTE 32 (18/7/2026) — JUNTA B · LA VERSIÓN DE CLÁUSULAS QUE SE SELLA
-//                          ES LA VIGENTE, NO UNA ESCRITA A MANO
+// AJUSTE 38 (24/7/2026) — EL WEBHOOK ACTIVA EL ACTIVO
 // ════════════════════════════════════════════════════════════════════════════
 //
-// EL PROBLEMA (decisión del fundador, opción A):
-//   hash-clausulas.js dice VERSION_VIGENTE = "v2.0.0".
-//   Este archivo tenía "v1.0.0" y HASH_CLAUSULAS_V1 escritos a mano en TRES
-//   lugares (activación, cobro mensual, cancelación). Resultado: EPI le
-//   muestra al cliente la v2 y acá se sellaba la v1. Se mostraba una cosa y
-//   se sellaba otra. Y la v1 dice "By signing with their private key", un
-//   método descartado (el cliente nunca firma con clave privada).
+// QUÉ CAMBIÓ Y POR QUÉ
 //
-// EL ARREGLO (opción A):
-//   Se apunta a la única fuente de verdad — VERSION_VIGENTE y
-//   HASH_CLAUSULAS_VIGENTE de hash-clausulas.js — en los tres lugares y en
-//   el fallback del custom_id inválido. El día que haya una v3, este archivo
-//   la sigue solo.
+// 1 · EL custom_id ESTABA DESACOPLADO — era el bug que rompía todo.
+//     Este archivo esperaba  "email|fecha|versionClausulas".
+//     crear-suscripcion.js manda  "activoId|email|tier".
+//     Resultado: al llegar el ACTIVATED, buscaba una arroba donde venía el
+//     activoId, no la encontraba, y caía al fallback. El activoId se perdía
+//     — justo el dato que hace falta para saber QUÉ activo activar.
+//     Ahora se lee el formato real que manda crear-suscripcion.js.
 //
-// ⚠️ La "firma asumida" (firmaAsumida cuando el custom_id viene mal) sigue
-//    existiendo: es la Junta C, y la resuelve la Estación 2 del motor. No se
-//    toca acá. Este ajuste solo garantiza que la VERSIÓN sellada sea la que
-//    se le mostró al cliente.
+// 2 · SE ESCRIBE DIRECTO A SUPABASE. Antes se encolaba todo en Redis para
+//     que procesador-pagos.js (VPS) creara el activo y lo diera de alta
+//     on-chain. Ese diseño es de cuando EPI hacía el registro conversando.
+//     Hoy el activo YA EXISTE antes de pagar: lo dibujó y lo firmó el cliente
+//     en las Estaciones 1 y 2. Si el procesador actuara, insertaría una fila
+//     duplicada sin polígono. Entonces el webhook no crea: ACTUALIZA.
+//
+//     ⚠️ procesador-pagos.js NO se toca ni se para. Queda corriendo con la
+//        cola vacía, sin hacer nada, y su código de alta on-chain queda
+//        intacto para la Fase 7.
+//
+// 3 · SE SACÓ LA FIRMA ASUMIDA. Este archivo calculaba un hash de aceptación
+//     "asumiendo" que el cliente había aceptado las cláusulas (el clickwrap
+//     viejo). Desde la Estación 2 hay una firma REAL, sellada en Supabase
+//     (hash_firma, firma_version, firma_fecha), calculada por el servidor.
+//     Inventar una firma asumida al lado de una firma real es peor que no
+//     tener ninguna: son dos verdades sobre el mismo hecho.
+//
+// 4 · LOS DUPLICADOS SE CHEQUEAN CONTRA LA TABLA `pagos`, no contra Redis.
+//     PayPal reenvía notificaciones. Si el id externo ya está registrado,
+//     se ignora. Una sola fuente, la misma que guarda el historial.
+//
+// LO QUE SE DEJÓ INTACTO
+//   La verificación de firma contra la API de PayPal. Es la parte difícil,
+//   está bien hecha, y no había ninguna razón para tocarla.
+//
 // ════════════════════════════════════════════════════════════════════════════
+// COLUMNAS NUEVAS QUE ESTE ARCHIVO NECESITA EN `activos`
+// ════════════════════════════════════════════════════════════════════════════
+//   suscripcion_id    text          ID de la suscripción de PayPal.
+//                                   Es la llave de los cobros siguientes: el
+//                                   aviso de cobro NO trae el activo, solo
+//                                   trae este número.
+//   cobertura_hasta   timestamptz   Hasta cuándo está pago.
+//
+// NO se toca la columna `estado` (hoy dice "alta" en todas las filas y no se
+// sabe quién más la lee). NO se toca la tabla `clientes` — unificar la
+// creación de clientes es otro tema, y mezclarlo acá sería esconderlo.
+//
+// ════════════════════════════════════════════════════════════════════════════
+// LA TOLERANCIA NO VIVE ACÁ
+// ════════════════════════════════════════════════════════════════════════════
+//   cobertura_hasta guarda exactamente lo que se pagó, sin regalar un día.
+//   La tolerancia (seguir certificando una ventana más después del
+//   vencimiento) es una decisión del scheduler, y vive allá.
+//   Acá se registra el hecho; allá se decide qué hacer con él.
+//
+// VARIABLES DE ENTORNO
+//   PAYPAL_CLIENT_ID · PAYPAL_CLIENT_SECRET · PAYPAL_WEBHOOK_ID
+//   SUPABASE_URL · SUPABASE_SERVICE_KEY
+// ────────────────────────────────────────────────────────────────────────────
 
-const { encolarPago, pagoYaExiste, guardarAceptacionClausulas } = require("../lib/cola-pagos");
-// AJUSTE 32: se importan la versión vigente y su hash, en vez de la v1.
-const { VERSION_VIGENTE, HASH_CLAUSULAS_VIGENTE, calcularHashAceptacion } = require("../lib/hash-clausulas");
+const { createClient } = require("@supabase/supabase-js");
 
-// ─── URL base de PayPal según entorno ────────────────────────────────────────
-// Cuando pases a producción: cambiar "sandbox" por "api-m.paypal.com"
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_KEY
+);
+
 const PAYPAL_BASE = process.env.PAYPAL_ENV === "live"
   ? "https://api-m.paypal.com"
   : "https://api-m.sandbox.paypal.com";
 
-// ─── Obtener access token de PayPal ──────────────────────────────────────────
+// ─── Token de PayPal ─────────────────────────────────────────────────────────
 async function obtenerToken() {
   const clientId     = process.env.PAYPAL_CLIENT_ID;
   const clientSecret = process.env.PAYPAL_CLIENT_SECRET;
@@ -71,27 +103,24 @@ async function obtenerToken() {
     method: "POST",
     headers: {
       "Authorization": "Basic " + Buffer.from(`${clientId}:${clientSecret}`).toString("base64"),
-      "Content-Type": "application/x-www-form-urlencoded"
+      "Content-Type": "application/x-www-form-urlencoded",
     },
-    body: "grant_type=client_credentials"
+    body: "grant_type=client_credentials",
   });
 
-  if (!resp.ok) {
-    throw new Error(`Error obteniendo token PayPal: ${resp.status}`);
-  }
-
+  if (!resp.ok) throw new Error(`Error obteniendo token PayPal: ${resp.status}`);
   const data = await resp.json();
   return data.access_token;
 }
 
-// ─── Verificación del evento con PayPal API ──────────────────────────────────
-// PayPal ofrece verificación oficial vía su API. Usamos eso en lugar de HMAC
-// manual, porque es más robusto y es lo que ellos recomiendan para webhooks.
+// ─── Verificación del evento contra la API de PayPal ─────────────────────────
+// (sin cambios respecto de la versión anterior — funciona y es lo que PayPal
+//  recomienda para webhooks)
 async function verificarEventoPayPal(req) {
   const webhookId = process.env.PAYPAL_WEBHOOK_ID;
 
   if (!webhookId) {
-    console.warn("[webhook-paypal] PAYPAL_WEBHOOK_ID no configurado — saltando verificación");
+    console.warn("[webhook-paypal] PAYPAL_WEBHOOK_ID no configurado — no se procesa nada");
     return { valida: false, motivo: "PAYPAL_WEBHOOK_ID no configurado" };
   }
 
@@ -102,7 +131,7 @@ async function verificarEventoPayPal(req) {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${token}`,
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
         auth_algo:         req.headers["paypal-auth-algo"]         || "",
@@ -111,8 +140,8 @@ async function verificarEventoPayPal(req) {
         transmission_sig:  req.headers["paypal-transmission-sig"]  || "",
         transmission_time: req.headers["paypal-transmission-time"] || "",
         webhook_id:        webhookId,
-        webhook_event:     req.body
-      })
+        webhook_event:     req.body,
+      }),
     });
 
     if (!verifyResp.ok) {
@@ -128,189 +157,317 @@ async function verificarEventoPayPal(req) {
   }
 }
 
-// ─── Parsear el custom_id que viene de la suscripción ───────────────────────
-// La Pieza 3 (crear-suscripcion.js) va a guardar en custom_id:
-// "email|fechaAceptacion|versionClausulas"
-// Esta función lo desempaqueta y valida.
+// ─── El custom_id que manda crear-suscripcion.js ─────────────────────────────
+// Formato real: "activoId|email|tier"
+// (antes este archivo esperaba "email|fecha|version" — ese era el desacople)
 function parsearCustomId(customId) {
   if (!customId || typeof customId !== "string") {
-    return { valido: false, motivo: "custom_id ausente o no es string" };
+    return { valido: false, motivo: "custom_id ausente" };
   }
 
   const partes = customId.split("|");
-  if (partes.length !== 3) {
+  if (partes.length < 2) {
     return { valido: false, motivo: `custom_id mal formado: ${customId}` };
   }
 
-  const [email, fechaAceptacion, versionClausulas] = partes;
+  const [activoId, email, tier] = partes;
 
+  if (!activoId) {
+    return { valido: false, motivo: "activoId ausente en custom_id" };
+  }
   if (!email || !email.includes("@")) {
-    return { valido: false, motivo: "Email inválido en custom_id" };
-  }
-  if (!fechaAceptacion) {
-    return { valido: false, motivo: "Fecha de aceptación ausente en custom_id" };
-  }
-  if (!versionClausulas) {
-    return { valido: false, motivo: "Versión de cláusulas ausente en custom_id" };
+    return { valido: false, motivo: "email inválido en custom_id" };
   }
 
   return {
     valido: true,
+    activoId: activoId.trim(),
     email: email.toLowerCase().trim(),
-    fechaAceptacion,
-    versionClausulas
+    tier: (tier || "").trim() || null,
   };
 }
 
-// ─── MANEJADOR: BILLING.SUBSCRIPTION.ACTIVATED ──────────────────────────────
-// Se dispara cuando el cliente dejó la tarjeta y arranca el mes de cortesía.
-// ACCIÓN: alta on-chain + primera certificación + minuta.
-async function manejarSuscripcionActivada(resource) {
-  const subscriptionId = resource.id;
-  const planId         = resource.plan_id;
-  const customId       = resource.custom_id;
-  const fechaActivacion = resource.start_time || new Date().toISOString();
-
-  console.log(`[webhook-paypal] ACTIVATED — subscription_id=${subscriptionId}`);
-
-  // Anti-duplicados: usamos el subscription_id como idExterno
-  const yaExiste = await pagoYaExiste("paypal-sub", subscriptionId);
-  if (yaExiste) {
-    console.log(`[webhook-paypal] Suscripción ${subscriptionId} ya procesada — duplicado`);
-    return { status: "duplicate", subscription_id: subscriptionId };
-  }
-
-  // Parsear firma real del cliente (viene del frontend via Pieza 3)
-  const firmaParsed = parsearCustomId(customId);
-  if (!firmaParsed.valido) {
-    console.error(`[webhook-paypal] custom_id inválido: ${firmaParsed.motivo}`);
-    // Logueamos el error pero NO frenamos: la suscripción existe,
-    // hay que procesarla igual. La firma queda marcada como "asumida".
-    // AJUSTE 32: el fallback usa la versión VIGENTE, no "v1.0.0" a mano.
-    firmaParsed.email            = resource.subscriber?.email_address || null;
-    firmaParsed.fechaAceptacion  = fechaActivacion;
-    firmaParsed.versionClausulas = VERSION_VIGENTE;
-    firmaParsed.firmaAsumida     = true;
-  }
-
-  const { email, fechaAceptacion, versionClausulas } = firmaParsed;
-
-  if (!email) {
-    console.error(`[webhook-paypal] ACTIVATED sin email — subscription_id=${subscriptionId}`);
-    return { status: "error", reason: "no_email" };
-  }
-
-  // Calcular y guardar hash de aceptación (firma criptográfica del clickwrap)
-  const hashAceptacion = calcularHashAceptacion(email, fechaAceptacion, versionClausulas);
-  await guardarAceptacionClausulas(email, hashAceptacion, versionClausulas, fechaAceptacion);
-
-  // Encolar para que el VPS haga el alta on-chain + certificación + minuta
-  await encolarPago({
-    proveedor:          "paypal-suscripcion",
-    idExterno:          subscriptionId,
-    email,
-    monto:              0,           // mes de cortesía: sin cobro
-    moneda:             "USD",
-    externalReference:  planId,
-    fechaAprobacion:    fechaActivacion,
-    hashAceptacion,
-    // AJUSTE 32: era hashClausulasV1: HASH_CLAUSULAS_V1.
-    hashClausulasVigente: HASH_CLAUSULAS_VIGENTE,
-    versionClausulas,
-    firmaAsumida:       firmaParsed.firmaAsumida || false,
-    accion:             "ALTA_ONCHAIN",  // <-- el VPS lee este campo para saber qué hacer
-    rawPayPal: {
-      subscription_id: subscriptionId,
-      plan_id:         planId,
-      status:          resource.status,
-      start_time:      resource.start_time,
-      subscriber_email: resource.subscriber?.email_address
-    }
-  });
-
-  console.log(`[webhook-paypal] ALTA encolada — ${email} | sub=${subscriptionId} | cláusulas ${versionClausulas}`);
-  return { status: "queued", accion: "ALTA_ONCHAIN", subscription_id: subscriptionId, email };
+// ─── Un mes más, desde una fecha ─────────────────────────────────────────────
+// Se usa el calendario, no 30 días fijos: si se pagó el 31 de enero, la
+// cobertura va al 28 de febrero (JavaScript lo resuelve solo). Es lo mismo
+// que hace PayPal para el próximo cobro.
+function unMesDespues(fechaISO) {
+  const d = new Date(fechaISO);
+  if (isNaN(d.getTime())) return null;
+  const r = new Date(d);
+  r.setMonth(r.getMonth() + 1);
+  return r.toISOString();
 }
 
-// ─── MANEJADOR: PAYMENT.SALE.COMPLETED ──────────────────────────────────────
-// Se dispara cuando termina el mes gratis y PayPal cobra el primer mes real.
-// También se dispara en cobros subsiguientes.
-// ACCIÓN: registrar el cobro, renovar el período activo en el sistema.
+// ─── ¿Este evento ya se procesó? ─────────────────────────────────────────────
+// PayPal reenvía notificaciones. El id externo se guarda en pagos.hash_pago.
+async function yaProcesado(idExterno) {
+  const { data, error } = await supabase
+    .from("pagos")
+    .select("id")
+    .eq("hash_pago", idExterno)
+    .maybeSingle();
+
+  if (error) {
+    // Si Supabase falla, se prefiere procesar de nuevo antes que perder un
+    // cobro. Un duplicado en el historial es reparable; un cobro perdido no.
+    console.error("[webhook-paypal] Error chequeando duplicados:", error.message);
+    return false;
+  }
+  return !!data;
+}
+
+// ─── Registrar el hecho en la tabla `pagos` ──────────────────────────────────
+async function registrarPago({ email, monto, metodo, idExterno, payload }) {
+  const { error } = await supabase.from("pagos").insert({
+    cliente_email:   email || null,
+    monto_usd:       monto ?? null,
+    metodo:          metodo,
+    status:          "aprobado",
+    hash_pago:       idExterno,
+    webhook_payload: payload || null,
+  });
+
+  if (error) console.error("[webhook-paypal] Error registrando pago:", error.message);
+}
+
+// ─── Buscar el activo por el ID de suscripción ───────────────────────────────
+// Los cobros siguientes NO traen el activo: solo traen el número de la
+// suscripción. Por eso se guarda en el alta.
+async function activoPorSuscripcion(suscripcionId) {
+  const { data, error } = await supabase
+    .from("activos")
+    .select("id, nombre_activo, cliente_id, cobertura_hasta")
+    .eq("suscripcion_id", suscripcionId)
+    .maybeSingle();
+
+  if (error) {
+    console.error("[webhook-paypal] Error buscando activo por suscripción:", error.message);
+    return null;
+  }
+  return data;
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// BILLING.SUBSCRIPTION.ACTIVATED
+// El cliente dejó la tarjeta. Arranca el mes de cortesía.
+// ════════════════════════════════════════════════════════════════════════════
+async function manejarSuscripcionActivada(resource) {
+  const suscripcionId  = resource.id;
+  const fechaInicio    = resource.start_time || new Date().toISOString();
+  const emailPayPal    = resource.subscriber?.email_address || null;
+
+  console.log(`[webhook-paypal] ACTIVATED — sub=${suscripcionId}`);
+
+  if (await yaProcesado(suscripcionId)) {
+    return { status: "duplicate", subscription_id: suscripcionId };
+  }
+
+  const firma = parsearCustomId(resource.custom_id);
+
+  if (!firma.valido) {
+    // Sin activoId no hay nada que activar. NO se inventa un activo ni se
+    // adivina cuál es: se avisa y se corta. Es preferible una alta pendiente
+    // y visible, a una activación silenciosa sobre el activo equivocado.
+    console.error(
+      `[webhook-paypal] ACTIVATED sin activoId utilizable (${firma.motivo}) — ` +
+      `sub=${suscripcionId} email=${emailPayPal}`
+    );
+    await registrarPago({
+      email: emailPayPal,
+      monto: 0,
+      metodo: "paypal-suscripcion",
+      idExterno: suscripcionId,
+      payload: { evento: "ACTIVATED", error: firma.motivo, resource },
+    });
+    return { status: "error", reason: "custom_id_invalido", detalle: firma.motivo };
+  }
+
+  // El mes de cortesía también es cobertura: el cliente está adentro.
+  const coberturaHasta = unMesDespues(fechaInicio);
+
+  const { data: actualizado, error: errUpd } = await supabase
+    .from("activos")
+    .update({
+      suscripcion_id:  suscripcionId,
+      cobertura_hasta: coberturaHasta,
+    })
+    .eq("id", firma.activoId)
+    .select("id, nombre_activo")
+    .maybeSingle();
+
+  if (errUpd) {
+    console.error("[webhook-paypal] Error activando el activo:", errUpd.message);
+    return { status: "error", reason: "update_fallido", detalle: errUpd.message };
+  }
+
+  if (!actualizado) {
+    console.error(`[webhook-paypal] El activo ${firma.activoId} no existe en Supabase`);
+    return { status: "error", reason: "activo_inexistente", activo_id: firma.activoId };
+  }
+
+  await registrarPago({
+    email: firma.email || emailPayPal,
+    monto: 0,                       // mes de cortesía: sin cobro
+    metodo: "paypal-suscripcion",
+    idExterno: suscripcionId,
+    payload: {
+      evento: "ACTIVATED",
+      subscription_id: suscripcionId,
+      plan_id: resource.plan_id,
+      status: resource.status,
+      start_time: resource.start_time,
+      tier: firma.tier,
+    },
+  });
+
+  console.log(
+    `[webhook-paypal] Activo ${firma.activoId} ("${actualizado.nombre_activo}") ` +
+    `activado — cobertura hasta ${coberturaHasta}`
+  );
+
+  return {
+    status: "ok",
+    accion: "ACTIVADO",
+    activo_id: firma.activoId,
+    subscription_id: suscripcionId,
+    cobertura_hasta: coberturaHasta,
+  };
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// PAYMENT.SALE.COMPLETED
+// PayPal cobró un mes de verdad (el primero real, o cualquiera posterior).
+// ════════════════════════════════════════════════════════════════════════════
 async function manejarCobroMensual(resource) {
   const saleId        = resource.id;
-  const subscriptionId = resource.billing_agreement_id; // ID de la suscripción padre
+  const suscripcionId = resource.billing_agreement_id || null;
   const monto         = parseFloat(resource.amount?.total || "0");
   const moneda        = resource.amount?.currency || "USD";
   const fechaCobro    = resource.create_time || new Date().toISOString();
 
-  console.log(`[webhook-paypal] SALE.COMPLETED — sale_id=${saleId} sub=${subscriptionId}`);
+  console.log(`[webhook-paypal] SALE.COMPLETED — sale=${saleId} sub=${suscripcionId}`);
 
-  const yaExiste = await pagoYaExiste("paypal-sale", saleId);
-  if (yaExiste) {
-    console.log(`[webhook-paypal] Sale ${saleId} ya procesado — duplicado`);
+  if (await yaProcesado(saleId)) {
     return { status: "duplicate", sale_id: saleId };
   }
 
-  // En el cobro mensual no hay firma nueva — la firma original ya quedó
-  // guardada cuando se activó la suscripción. Solo registramos el cobro.
-  await encolarPago({
-    proveedor:          "paypal-suscripcion",
-    idExterno:          saleId,
-    email:              null,       // el VPS lo busca por subscription_id en su BD
+  if (!suscripcionId) {
+    // Un cobro suelto, sin suscripción padre. No se puede saber a qué activo
+    // corresponde. Se registra para que quede rastro y se avisa.
+    console.warn(`[webhook-paypal] Cobro ${saleId} sin billing_agreement_id`);
+    await registrarPago({
+      email: null, monto, metodo: "paypal-suscripcion", idExterno: saleId,
+      payload: { evento: "SALE.COMPLETED", error: "sin_subscription_id", resource },
+    });
+    return { status: "error", reason: "sin_subscription_id", sale_id: saleId };
+  }
+
+  const activo = await activoPorSuscripcion(suscripcionId);
+
+  if (!activo) {
+    console.error(`[webhook-paypal] Cobro ${saleId}: ningún activo con suscripción ${suscripcionId}`);
+    await registrarPago({
+      email: null, monto, metodo: "paypal-suscripcion", idExterno: saleId,
+      payload: { evento: "SALE.COMPLETED", error: "activo_no_encontrado", subscription_id: suscripcionId },
+    });
+    return { status: "error", reason: "activo_no_encontrado", subscription_id: suscripcionId };
+  }
+
+  // Se extiende un mes desde la fecha del cobro.
+  const coberturaHasta = unMesDespues(fechaCobro);
+
+  const { error: errUpd } = await supabase
+    .from("activos")
+    .update({ cobertura_hasta: coberturaHasta })
+    .eq("id", activo.id);
+
+  if (errUpd) {
+    console.error("[webhook-paypal] Error extendiendo la cobertura:", errUpd.message);
+    return { status: "error", reason: "update_fallido", detalle: errUpd.message };
+  }
+
+  await registrarPago({
+    email: null,
     monto,
-    moneda,
-    externalReference:  subscriptionId,
-    fechaAprobacion:    fechaCobro,
-    hashAceptacion:     null,       // ya fue guardada al activarse
-    // AJUSTE 32: era hashClausulasV1: HASH_CLAUSULAS_V1 y "v1.0.0".
-    hashClausulasVigente: HASH_CLAUSULAS_VIGENTE,
-    versionClausulas:   VERSION_VIGENTE,
-    accion:             "COBRO_MENSUAL", // <-- el VPS renueva el período activo
-    rawPayPal: {
-      sale_id:         saleId,
-      subscription_id: subscriptionId,
-      amount:          resource.amount,
-      state:           resource.state
-    }
+    metodo: "paypal-suscripcion",
+    idExterno: saleId,
+    payload: {
+      evento: "SALE.COMPLETED",
+      sale_id: saleId,
+      subscription_id: suscripcionId,
+      activo_id: activo.id,
+      amount: resource.amount,
+      state: resource.state,
+    },
   });
 
-  console.log(`[webhook-paypal] COBRO encolado — sale=${saleId} sub=${subscriptionId} ${moneda} ${monto}`);
-  return { status: "queued", accion: "COBRO_MENSUAL", sale_id: saleId, subscription_id: subscriptionId };
+  console.log(
+    `[webhook-paypal] Cobro ${moneda} ${monto} — activo ${activo.id} ` +
+    `("${activo.nombre_activo}") cubierto hasta ${coberturaHasta}`
+  );
+
+  return {
+    status: "ok",
+    accion: "COBRO_REGISTRADO",
+    activo_id: activo.id,
+    sale_id: saleId,
+    cobertura_hasta: coberturaHasta,
+  };
 }
 
-// ─── MANEJADOR: BILLING.SUBSCRIPTION.CANCELLED ──────────────────────────────
-// Se dispara cuando el cliente cancela (o PayPal cancela por falta de pago).
-// ACCIÓN: dar de baja al cliente en el sistema.
+// ════════════════════════════════════════════════════════════════════════════
+// BILLING.SUBSCRIPTION.CANCELLED
+// El cliente canceló, o PayPal canceló por falta de pago.
+// ════════════════════════════════════════════════════════════════════════════
+//
+// DECISIÓN DEL FUNDADOR: "el pago se respeta hasta el momento en que debía
+// entrar el próximo débito". Por eso acá NO se toca cobertura_hasta: la fecha
+// ya pagada sigue valiendo, y el activo se apaga solo cuando esa fecha pase.
+//
+// Tampoco se borra ni se cierra nada. El activo es del usuario, siempre: queda
+// dormido, con todo su historial intacto. Si vuelve a pagar, retoma.
+// Y no se registra ningún Hueco de Opacidad — un hueco significa que el
+// satélite no pudo ver, y dejar de pagar no es opacidad.
 async function manejarSuscripcionCancelada(resource) {
-  const subscriptionId = resource.id;
-  const fechaCancelacion = resource.status_update_time || new Date().toISOString();
+  const suscripcionId = resource.id;
+  const fechaCancel   = resource.status_update_time || new Date().toISOString();
 
-  console.log(`[webhook-paypal] CANCELLED — subscription_id=${subscriptionId}`);
+  console.log(`[webhook-paypal] CANCELLED — sub=${suscripcionId}`);
 
-  // No chequeamos duplicados aquí: una cancelación siempre se procesa.
-  await encolarPago({
-    proveedor:          "paypal-suscripcion",
-    idExterno:          `cancel-${subscriptionId}`,
-    email:              null,       // el VPS lo busca por subscription_id
-    monto:              0,
-    moneda:             "USD",
-    externalReference:  subscriptionId,
-    fechaAprobacion:    fechaCancelacion,
-    hashAceptacion:     null,
-    // AJUSTE 32: era hashClausulasV1: HASH_CLAUSULAS_V1 y "v1.0.0".
-    hashClausulasVigente: HASH_CLAUSULAS_VIGENTE,
-    versionClausulas:   VERSION_VIGENTE,
-    accion:             "BAJA_CLIENTE", // <-- el VPS desactiva al cliente
-    rawPayPal: {
-      subscription_id: subscriptionId,
-      status:          resource.status,
+  const activo = await activoPorSuscripcion(suscripcionId);
+
+  await registrarPago({
+    email: resource.subscriber?.email_address || null,
+    monto: 0,
+    metodo: "paypal-suscripcion",
+    idExterno: `cancel-${suscripcionId}`,
+    payload: {
+      evento: "CANCELLED",
+      subscription_id: suscripcionId,
+      activo_id: activo?.id || null,
+      status: resource.status,
       status_update_time: resource.status_update_time,
-      subscriber_email:   resource.subscriber?.email_address
-    }
+      cobertura_vigente_al_cancelar: activo?.cobertura_hasta || null,
+    },
   });
 
-  console.log(`[webhook-paypal] BAJA encolada — sub=${subscriptionId}`);
-  return { status: "queued", accion: "BAJA_CLIENTE", subscription_id: subscriptionId };
+  if (activo) {
+    console.log(
+      `[webhook-paypal] Activo ${activo.id} cancelado — sigue cubierto hasta ` +
+      `${activo.cobertura_hasta || "(sin fecha)"}, después queda dormido`
+    );
+  } else {
+    console.warn(`[webhook-paypal] CANCELLED: ningún activo con suscripción ${suscripcionId}`);
+  }
+
+  return {
+    status: "ok",
+    accion: "BAJA_REGISTRADA",
+    subscription_id: suscripcionId,
+    activo_id: activo?.id || null,
+    cobertura_hasta: activo?.cobertura_hasta || null,
+  };
 }
 
 // ─── Handler principal ───────────────────────────────────────────────────────
@@ -328,41 +485,37 @@ module.exports = async (req, res) => {
   console.log(`[webhook-paypal] Notificación recibida — event_type=${eventType}`);
 
   try {
-    // PASO 1: Verificar que el evento viene realmente de PayPal
+    // PASO 1 · ¿Viene realmente de PayPal?
     const firma = await verificarEventoPayPal(req);
     if (!firma.valida) {
       console.warn(`[webhook-paypal] Firma inválida: ${firma.motivo}`);
-      // Devolvemos 200 para que PayPal no reintente. Internamente no procesamos.
+      // 200 para que PayPal no reintente al infinito. Internamente: nada.
       return res.status(200).json({ status: "ignored", reason: "invalid_signature" });
     }
 
-    // PASO 2: Derivar al manejador correcto según el tipo de evento
+    // PASO 2 · Al manejador que corresponda
     const resource = req.body?.resource || {};
     let resultado;
 
     switch (eventType) {
-
       case "BILLING.SUBSCRIPTION.ACTIVATED":
-        // El cliente dejó la tarjeta — arranca el mes de cortesía
-        // ACCIÓN: alta on-chain + primera certificación + minuta
         resultado = await manejarSuscripcionActivada(resource);
         break;
 
       case "PAYMENT.SALE.COMPLETED":
-        // PayPal cobró un mes (post período de cortesía)
-        // ACCIÓN: registrar cobro, renovar período activo
         resultado = await manejarCobroMensual(resource);
         break;
 
       case "BILLING.SUBSCRIPTION.CANCELLED":
-        // El cliente canceló (o PayPal canceló por falta de pago)
-        // ACCIÓN: dar de baja al cliente en el sistema
+      case "BILLING.SUBSCRIPTION.EXPIRED":
+      case "BILLING.SUBSCRIPTION.SUSPENDED":
+        // Los tres significan lo mismo para EPIMELEIA: dejó de haber cobro.
+        // La cobertura ya pagada se respeta igual.
         resultado = await manejarSuscripcionCancelada(resource);
         break;
 
       default:
-        // Evento que no manejamos — lo logueamos y respondemos 200
-        console.log(`[webhook-paypal] Evento '${eventType}' no manejado en esta versión`);
+        console.log(`[webhook-paypal] Evento '${eventType}' no manejado`);
         resultado = { status: "logged", event_type: eventType };
         break;
     }
@@ -371,8 +524,6 @@ module.exports = async (req, res) => {
 
   } catch (error) {
     console.error("[webhook-paypal] Error no capturado:", error);
-    // Siempre 200 para que PayPal no reintente indefinidamente.
-    // El error queda en los logs de Vercel para depurar.
     return res.status(200).json({ status: "error", message: "Internal error — logged" });
   }
 };
