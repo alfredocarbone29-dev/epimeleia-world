@@ -53,7 +53,10 @@
 //     hash_firma. No se confía en el navegador.
 //   · MISMO lib/precios.js para el tier según superficie (tolerancia 5%).
 //   · MISMO external_reference que el custom_id de PayPal: "activoId|email|tier".
-//   · MISMO mes gratis: se difiere el primer cobro un mes con start_date.
+//   · ⚠️ MES GRATIS: en el método sin plan asociado, start_date rompe con 500
+//     cuando todavía no hay tarjeta asociada. Por ahora Mercado Pago cobra
+//     desde el primer mes (sin mes de cortesía). Queda como diferencia con
+//     PayPal, a resolver cuando se defina el flujo real de producción.
 //
 // VARIABLES DE ENTORNO NECESARIAS:
 //   MP_ACCESS_TOKEN_TEST       Access Token de prueba (TEST-).
@@ -172,13 +175,6 @@ module.exports = async (req, res) => {
       });
     }
 
-    // ── El mes gratis: se difiere el primer cobro un mes ──────────
-    // Sin plan asociado no hay free_trial: se usa start_date un mes adelante,
-    // así el primer cobro cae dentro de un mes (mes de cortesía).
-    const inicio = new Date();
-    inicio.setMonth(inicio.getMonth() + 1);
-    const startDate = inicio.toISOString();
-
     // external_reference: el gemelo del custom_id de PayPal.
     const externalReference = `${activoId}|${email}|${precio.tier.id}`;
 
@@ -194,7 +190,6 @@ module.exports = async (req, res) => {
         frequency_type: "months",
         transaction_amount: precioARS,
         currency_id: "ARS",
-        start_date: startDate,        // primer cobro dentro de un mes (mes gratis)
       },
     };
 
