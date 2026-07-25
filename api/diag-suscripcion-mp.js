@@ -68,9 +68,6 @@ module.exports = async (req, res) => {
     const precioARS = precio.precioMensualUSD * TIPO_CAMBIO;
     const email = "test_comprador@testuser.com";
 
-    const inicio = new Date();
-    inicio.setMonth(inicio.getMonth() + 1);
-
     const cuerpo = {
       reason: `EPIMELEIA ${precio.tier.nombre}`,
       external_reference: `${activo.id}|${email}|${precio.tier.id}`,
@@ -82,7 +79,6 @@ module.exports = async (req, res) => {
         frequency_type: "months",
         transaction_amount: precioARS,
         currency_id: "ARS",
-        start_date: inicio.toISOString(),
       },
     };
 
