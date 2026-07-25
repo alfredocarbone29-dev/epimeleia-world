@@ -6,25 +6,35 @@
 // ⚠️ ARCHIVO DESCARTABLE. Se sube, se usa UNA vez, y se BORRA del repo.
 //    Es el gemelo de diag-crear-planes.js (el que usamos para PayPal).
 //
-// POR QUÉ POR API Y NO A MANO:
-//   Igual que con PayPal — usa EXACTAMENTE las mismas credenciales que va a
-//   usar el resto del sistema (MP_ACCESS_TOKEN_TEST). Así es imposible que
-//   los planes queden en una cuenta y las credenciales en otra (el lío que
-//   nos costó una noche con PayPal). Y los IDs los devuelve Mercado Pago por
-//   escrito: no hay que copiarlos de una pantalla.
+// ════════════════════════════════════════════════════════════════════════════
+// MONEDA: PESOS ARGENTINOS (ARS)
+// ════════════════════════════════════════════════════════════════════════════
+//   Mercado Pago Argentina (MLA) NO opera en USD — lo rechaza con
+//   "Cannot operate with currency id USD in MLA". Por eso los planes de
+//   Mercado Pago van en ARS.
 //
-// QUÉ CREA (decisión del fundador — mismos tiers, en USD):
-//   Base        USD  180/mes
-//   Pro         USD  450/mes
-//   Corporate   USD  900/mes
-//   Enterprise  USD 1800/mes
-//   Todos: mensuales, moneda USD, con 1 mes gratis (free_trial de 1 mes).
+//   El valor en pesos es el precio en USD × un tipo de cambio. Para la PRUEBA
+//   se usa un cambio SIMBÓLICO de 1600. El valor REAL (contemplando las
+//   comisiones de Mercado Pago) lo define el fundador antes de producción, y
+//   se cambia acá, en un solo lugar.
 //
-// DIFERENCIAS CON PAYPAL (por si te las preguntás):
-//   · Mercado Pago no tiene "producto" aparte: el plan lleva todo.
-//   · El mes gratis se hace con "free_trial", no con un ciclo de precio cero.
-//   · Cada plan necesita un back_url (a dónde vuelve el cliente). Se usa el
-//     mismo protocolo.html que ya usa PayPal.
+//   ⚠️ RECORDATORIO: el precio en pesos NO se actualiza solo. Con la
+//   inflación hay que revisarlo. Además vive en DOS lugares: el plan de
+//   Mercado Pago (lo que se cobra) y lib/precios.js si algún día se muestra
+//   el precio en pesos en el frontend (lo que se ve). Si cambia uno, cambia
+//   el otro.
+//
+//   PayPal (resto del mundo) sigue en USD. Son dos flujos separados:
+//     Argentina → Mercado Pago → ARS
+//     Resto     → PayPal       → USD
+// ════════════════════════════════════════════════════════════════════════════
+//
+// QUÉ CREA:
+//   Base        ARS  288.000/mes   (180  × 1600)
+//   Pro         ARS  720.000/mes   (450  × 1600)
+//   Corporate   ARS 1.440.000/mes  (900  × 1600)
+//   Enterprise  ARS 2.880.000/mes  (1800 × 1600)
+//   Todos: mensuales, con 1 mes gratis (free_trial de 1 mes).
 //
 // ⚠️ CANDADO 1: no se dispara solo. Sin ?crear=si, solo muestra qué haría.
 // ⚠️ CANDADO 2: si no está MP_ACCESS_TOKEN_TEST, se niega a correr.
@@ -37,14 +47,15 @@ const MP_API = "https://api.mercadopago.com";
 
 const BASE_URL = "https://www.epimeleia.world";
 
-// Los cuatro tiers, con el nombre de la variable de entorno donde va a vivir
-// cada Plan ID una vez creado (las cargás en Vercel después, con lo que
-// devuelva este archivo).
+// El tipo de cambio simbólico para la prueba. El real lo define el fundador.
+const TIPO_CAMBIO = 1600;
+
+// Los cuatro tiers. El precio en pesos se calcula: USD × TIPO_CAMBIO.
 const PLANES = [
-  { tier: "base",       nombre: "EPIMELEIA Base",       precio: 180,  env: "MP_PLAN_BASE" },
-  { tier: "pro",        nombre: "EPIMELEIA Pro",        precio: 450,  env: "MP_PLAN_PRO" },
-  { tier: "corporate",  nombre: "EPIMELEIA Corporate",  precio: 900,  env: "MP_PLAN_CORPORATE" },
-  { tier: "enterprise", nombre: "EPIMELEIA Enterprise", precio: 1800, env: "MP_PLAN_ENTERPRISE" },
+  { tier: "base",       nombre: "EPIMELEIA Base",       usd: 180,  env: "MP_PLAN_BASE" },
+  { tier: "pro",        nombre: "EPIMELEIA Pro",        usd: 450,  env: "MP_PLAN_PRO" },
+  { tier: "corporate",  nombre: "EPIMELEIA Corporate",  usd: 900,  env: "MP_PLAN_CORPORATE" },
+  { tier: "enterprise", nombre: "EPIMELEIA Enterprise", usd: 1800, env: "MP_PLAN_ENTERPRISE" },
 ];
 
 module.exports = async (req, res) => {
@@ -66,12 +77,12 @@ module.exports = async (req, res) => {
     return res.status(200).json({
       ok: false,
       aviso: "Esta herramienta CREA planes en Mercado Pago. Para ejecutarla, agregá ?crear=si al final de la URL.",
-      creara: PLANES.map(p => `${p.nombre} · USD ${p.precio}/mes · 1 mes gratis`),
+      tipoCambio: TIPO_CAMBIO,
+      creara: PLANES.map(p => `${p.nombre} · ARS ${(p.usd * TIPO_CAMBIO).toLocaleString('es-AR')}/mes (USD ${p.usd} × ${TIPO_CAMBIO}) · 1 mes gratis`),
       entorno: token.startsWith("TEST-") ? "prueba (TEST-)" : "⚠️ NO es TEST — revisá la credencial",
     });
   }
 
-  // Aviso suave si la credencial no parece de prueba (no frena, solo avisa).
   const esPrueba = token.startsWith("TEST-");
 
   try {
@@ -79,21 +90,21 @@ module.exports = async (req, res) => {
     const fallados = [];
 
     for (const p of PLANES) {
-      // El cuerpo del plan de suscripción (preapproval_plan) de Mercado Pago.
+      const precioARS = p.usd * TIPO_CAMBIO;
+
       const cuerpo = {
-        reason: p.nombre,                          // lo que ve el cliente en el checkout
+        reason: p.nombre,
         auto_recurring: {
           frequency: 1,
           frequency_type: "months",
-          transaction_amount: p.precio,
-          currency_id: "USD",
+          transaction_amount: precioARS,
+          currency_id: "ARS",                        // ← pesos, no dólares
           free_trial: {
             frequency: 1,
-            frequency_type: "months",              // 1 mes gratis
+            frequency_type: "months",
           },
         },
         back_url: `${BASE_URL}/protocolo.html?suscripcion=ok`,
-        // status ACTIVE para que el plan quede listo para usarse.
         status: "active",
       };
 
@@ -114,7 +125,8 @@ module.exports = async (req, res) => {
           nombre: p.nombre,
           planId: data.id,
           estado: data.status,
-          precioMensualUSD: p.precio,
+          precioMensualARS: precioARS,
+          precioMensualUSD: p.usd,
           variableDeEntorno: p.env,
         });
       } else {
@@ -122,13 +134,13 @@ module.exports = async (req, res) => {
       }
     }
 
-    // Lo que hay que pegar en Vercel, listo para copiar.
     const paraVercel = {};
     for (const c of creados) paraVercel[c.variableDeEntorno] = c.planId;
 
     return res.status(200).json({
       ok: fallados.length === 0,
       entorno: esPrueba ? "prueba (TEST-)" : "⚠️ la credencial no empieza con TEST-",
+      tipoCambio: TIPO_CAMBIO,
       creados,
       fallados,
       paraVercel,
