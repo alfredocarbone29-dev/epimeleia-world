@@ -93,6 +93,29 @@
  *   medirIndicadores(), nubosidad = 100 − calidad. Y si no hubo pasada,
  *   nubosidadPct viene null → el contrato espera uint16 → la tx
  *   rompería. Por eso ANTES de sellar se normaliza (ver _nubosidadParaContrato).
+ *
+ * ════════════════════════════════════════════════════════════════
+ * AJUSTE 39 (25/7/2026) — EL CORTE POR BAJA
+ * ════════════════════════════════════════════════════════════════
+ *
+ * Antes de medir un activo, se pregunta si está al día (cobertura.js lee
+ * la columna cobertura_hasta de Supabase, que escribe el webhook de pago).
+ * Si dejó de pagar (fuera de la tolerancia de una ventana), no se mide ni
+ * se certifica: queda DORMIDO, sin hueco, con su historial intacto. Si
+ * vuelve a pagar, retoma solo.
+ *
+ * DECISIÓN DEL FUNDADOR (24/7): "Nadie está obligado a nada. Pagás y se
+ * certifica; dejás de pagar y se deja de certificar." Dejar de pagar NO es
+ * un Hueco de Opacidad — un hueco significa que el satélite no pudo ver, y
+ * la caja es otra cosa. Tolerancia de una ventana (~15 días) en las
+ * quincenas; sin tolerancia en el cierre de trimestre.
+ *
+ * ⚠️ NOTA FASE 7: hoy este scheduler cruza por activo_id_onchain, que
+ *    todavía está vacío. La cobertura se guarda contra el id de fila de
+ *    Supabase. Por eso, mientras activo_id_onchain no esté poblado, este
+ *    chequeo no encuentra la fila y el activo cae igual por "sin polígono"
+ *    más abajo. Queda escrito y correcto para cuando la Fase 7 ate los dos
+ *    mundos; a partir de ahí empieza a cortar de verdad, sin tocar nada más.
  * ════════════════════════════════════════════════════════════════
  */
 
@@ -108,6 +131,11 @@ const { ethers } = require('ethers');
 // Trae de Supabase el polígono real del activo, cruzando por
 // activo_id_onchain. Es la pieza probada en la Fase 3.
 const activoSupabase = require('./activo-supabase');
+
+// ── AJUSTE 39: el corte por baja ─────────────────────────────────
+// Pregunta si el activo está al día antes de medir. Pieza autocontenida,
+// hermana de activo-supabase.
+const cobertura = require('./cobertura');
 
 // ─── El reloj: trimestres y quincenas ───────────────────────────
 
@@ -292,7 +320,7 @@ async function procesarVentanaSatelital(opciones = {}) {
     return;
   }
 
-  let evidencias = 0, certificaciones = 0, sinVer = 0, huecos = 0, omitidos = 0, fallidos = 0, sinPoligono = 0;
+  let evidencias = 0, certificaciones = 0, sinVer = 0, huecos = 0, omitidos = 0, fallidos = 0, sinPoligono = 0, sinCobertura = 0;
 
   for (const activoId of ids) {
     let resultado = null;
@@ -322,12 +350,13 @@ async function procesarVentanaSatelital(opciones = {}) {
     }
 
     if (resultado) {
-      if (resultado.omitido)     omitidos++;
-      if (resultado.evidencia)   evidencias++;
-      if (resultado.certificado) certificaciones++;
-      if (resultado.sinVer)      sinVer++;
-      if (resultado.hueco)       huecos++;
-      if (resultado.sinPoligono) sinPoligono++;
+      if (resultado.omitido)      omitidos++;
+      if (resultado.evidencia)    evidencias++;
+      if (resultado.certificado)  certificaciones++;
+      if (resultado.sinVer)       sinVer++;
+      if (resultado.hueco)        huecos++;
+      if (resultado.sinPoligono)  sinPoligono++;
+      if (resultado.sinCobertura) sinCobertura++;
     }
 
     // Pausa entre activos para no saturar el RPC
@@ -336,7 +365,7 @@ async function procesarVentanaSatelital(opciones = {}) {
 
   log('SCHEDULER', `══ VENTANA COMPLETADA ══`, {
     periodo: _etiqueta(periodo),
-    evidencias, certificaciones, sinVer, huecos, sinPoligono, omitidos, fallidos,
+    evidencias, certificaciones, sinVer, huecos, sinPoligono, sinCobertura, omitidos, fallidos,
     totalActivos: ids.length,
   });
 
@@ -350,7 +379,7 @@ async function procesarVentanaSatelital(opciones = {}) {
     quincenaDelTrimestre: periodo.quincenaDelTrimestre,
     esCierreDeTrimestre:  periodo.esCierreDeTrimestre,
     mide:                 `${periodo.desde.toISOString().slice(0,10)} → ${periodo.hasta.toISOString().slice(0,10)}`,
-    evidencias, certificaciones, sinVer, huecos, sinPoligono,
+    evidencias, certificaciones, sinVer, huecos, sinPoligono, sinCobertura,
     totalActivos: ids.length,
     timestamp: new Date().toISOString(),
   });
@@ -361,6 +390,7 @@ async function procesarVentanaSatelital(opciones = {}) {
  * Devuelve un pequeño resumen de lo que hizo.
  *
  * AJUSTE 33: mide el POLÍGONO REAL de Supabase, no el punto + radio.
+ * AJUSTE 39: antes de medir, chequea que el activo esté al día (cobertura).
  */
 async function _procesarActivoVentana(activoId, periodo, simular = false) {
   const datos = await blockchain.getDatosActivo(activoId);
@@ -376,6 +406,45 @@ async function _procesarActivoVentana(activoId, periodo, simular = false) {
       activoId, nivel: `L${datos.nivel + 1}`, trimestre: periodo.trimestre,
     });
     return { omitido: true };
+  }
+
+  // ── AJUSTE 39 · EL CORTE POR BAJA ─────────────────────────────
+  // Antes de gastar una sola llamada a Supabase o al satélite, se
+  // pregunta si el activo está al día. Si dejó de pagar (fuera de la
+  // tolerancia), no se mide ni se certifica: queda dormido, sin hueco,
+  // con su historial intacto. Si vuelve a pagar, retoma solo.
+  //
+  // NOTA FASE 7: hoy se cruza por activo_id_onchain, todavía vacío. La
+  // cobertura se guarda contra el id de fila de Supabase. Por eso, mientras
+  // esa columna no esté poblada, este chequeo no encuentra la fila y el
+  // activo cae igual por "sin polígono" más abajo. Queda correcto para
+  // cuando la Fase 7 ate los dos mundos; a partir de ahí corta de verdad.
+  try {
+    const cob = await cobertura.evaluarCoberturaDeActivo(
+      activoId,                      // en Fase 7 será el id de fila atado
+      periodo.hasta,                 // la fecha de esta ventana
+      periodo.esCierreDeTrimestre    // sin tolerancia si cierra el Q
+    );
+
+    if (!cob.puedeCertificar) {
+      log('SIN_COBERTURA', `Activo ${activoId}: ${cob.motivo}`);
+      if (!simular) {
+        await reports.notificarAdmin('ACTIVO_SIN_COBERTURA', {
+          activoId,
+          trimestre: periodo.trimestre,
+          estado: cob.estado,
+          coberturaHasta: cob.coberturaHasta || null,
+          motivo: cob.motivo,
+        });
+      }
+      // No es hueco: dejar de pagar no es opacidad. Solo se saltea.
+      return { omitido: true, sinCobertura: true };
+    }
+  } catch (err) {
+    // Error REAL de Supabase (red/credenciales). Se trata como fallo del
+    // activo para que reintente, igual que el nudo. No se inventa nada.
+    log('ERROR', `No se pudo evaluar cobertura de ${activoId}: ${err.message}`);
+    throw err;
   }
 
   // ── AJUSTE 33 · PASO 1: traer el polígono real de Supabase ────
