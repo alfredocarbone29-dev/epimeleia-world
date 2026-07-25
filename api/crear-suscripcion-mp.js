@@ -6,64 +6,63 @@
 // QUÉ HACE:
 //   El gemelo de crear-suscripcion.js (PayPal), para clientes de Argentina.
 //   Recibe un activo ya registrado y firmado (Estaciones 1 y 2), calcula qué
-//   tier le corresponde según su SUPERFICIE, elige el plan de Mercado Pago de
-//   ese tier, y crea la suscripción. Devuelve el init_point: la URL donde el
-//   cliente pone su tarjeta.
-//
-//   superficie → precios.js → tier → variable MP_PLAN_* → plan → init_point
+//   tier le corresponde según su SUPERFICIE, y crea la suscripción en Mercado
+//   Pago. Devuelve el init_point: la URL donde el cliente pone su tarjeta.
 //
 // ════════════════════════════════════════════════════════════════════════════
-// POR QUÉ ES UN ARCHIVO SEPARADO DEL DE PAYPAL
+// MÉTODO: SUSCRIPCIÓN SIN PLAN ASOCIADO (decisión del fundador, 25/7 — opción A)
 // ════════════════════════════════════════════════════════════════════════════
-//   Argentina → Mercado Pago → pesos (ARS)
-//   Resto     → PayPal       → dólares (USD)
+//   Mercado Pago tiene dos formas de suscribir:
 //
-//   Son dos flujos con reglas distintas: Mercado Pago Argentina NO opera en
-//   USD (lo rechaza). Por eso los precios de Mercado Pago están en pesos, y
-//   viven en los planes ya creados en la cuenta. La bifurcación por país la
-//   hace el frontend: manda a los argentinos acá, y al resto al de PayPal.
+//   · CON plan asociado (preapproval_plan_id): exige card_token_id, es decir
+//     que la tarjeta se capture en NUESTRO sitio (Checkout Bricks). Más
+//     control, pero la tarjeta pasa por el frontend.
+//
+//   · SIN plan asociado (esta): se manda al cliente a Mercado Pago y ahí pone
+//     la tarjeta, igual que PayPal. Devuelve init_point. El precio va escrito
+//     en CADA suscripción (no lo toma de un plan).
+//
+//   Se eligió SIN plan asociado (opción A) porque es el flujo tipo PayPal que
+//   ya usa EPIMELEIA: mandar al cliente a la ventana del proveedor. No obliga
+//   a meter mano en el frontend de captura de tarjeta.
+//
+//   ⚠️ CONSECUENCIA: los 4 planes MP_PLAN_* que se crearon NO se usan en este
+//   método. Quedan por si algún día se pasa al método con plan asociado. El
+//   precio se arma acá, a partir del tier (USD) × tipo de cambio.
 //
 // ════════════════════════════════════════════════════════════════════════════
-// LO QUE SE MANTIENE IGUAL QUE PAYPAL (a propósito, son hermanos)
+// EL PRECIO EN PESOS
 // ════════════════════════════════════════════════════════════════════════════
-//   · MISMA regla del fundador: SIN FIRMA NO HAY PAGO. Se verifica contra
-//     Supabase que el activo tenga hash_firma. No se confía en el navegador.
-//   · MISMO lib/precios.js para calcular el tier según superficie (con la
-//     tolerancia del 5%). El tier es el mismo en los dos flujos; lo único que
-//     cambia es en qué moneda y con qué plan se cobra.
+//   lib/precios.js calcula el tier y el precio en USD (fuente única de verdad,
+//   compartida con PayPal). Mercado Pago Argentina cobra en ARS. Por eso el
+//   precio en pesos es: precio USD del tier × TIPO_CAMBIO.
+//
+//   El TIPO_CAMBIO de acá es SIMBÓLICO (1600), el mismo que se usó para crear
+//   los planes. El valor real (con las comisiones de Mercado Pago) lo define
+//   el fundador antes de producción, y se cambia en esta constante.
+//
+//   ⚠️ Debe coincidir con el TIPO_CAMBIO que se usó al crear los planes, para
+//   que lo que se muestra y lo que se cobra sea lo mismo. Si cambia uno,
+//   cambia el otro. (Es la misma regla de "lo que se muestra, se sella"
+//   aplicada al precio.)
+//
+// ════════════════════════════════════════════════════════════════════════════
+// LO QUE SE MANTIENE IGUAL QUE PAYPAL (son hermanos)
+// ════════════════════════════════════════════════════════════════════════════
+//   · SIN FIRMA NO HAY PAGO: se verifica contra Supabase que el activo tenga
+//     hash_firma. No se confía en el navegador.
+//   · MISMO lib/precios.js para el tier según superficie (tolerancia 5%).
 //   · MISMO external_reference que el custom_id de PayPal: "activoId|email|tier".
-//     Viaja con la suscripción y vuelve en el webhook, para saber QUÉ activo
-//     se pagó sin adivinar.
-//
-// ════════════════════════════════════════════════════════════════════════════
-// LO QUE MERCADO PAGO HACE DISTINTO
-// ════════════════════════════════════════════════════════════════════════════
-//   · No hay "sandbox URL" aparte: es la misma API. Lo que cambia es la
-//     credencial (MP_ACCESS_TOKEN_TEST vs la de producción).
-//   · La suscripción se crea con POST /preapproval, atada a un plan por
-//     preapproval_plan_id.
-//   · Necesita payer_email (el email del que paga).
-//   · Devuelve init_point (equivalente exacto del approvalUrl de PayPal).
+//   · MISMO mes gratis: se difiere el primer cobro un mes con start_date.
 //
 // VARIABLES DE ENTORNO NECESARIAS:
-//   MP_ACCESS_TOKEN_TEST       Access Token de prueba (TEST-). En producción,
-//                              se cambia por el de producción (ver MP_ACCESS_TOKEN_PROD).
+//   MP_ACCESS_TOKEN_TEST       Access Token de prueba (TEST-).
 //   MP_ACCESS_TOKEN_PROD       (opcional) Access Token de producción.
-//   MP_ENV                     "live" para usar el de producción; cualquier otra
-//                              cosa = prueba. (default: prueba)
-//   MP_PLAN_BASE               Plan ID de Mercado Pago del tier Base
-//   MP_PLAN_PRO                Plan ID del tier Pro
-//   MP_PLAN_CORPORATE          Plan ID del tier Corporate
-//   MP_PLAN_ENTERPRISE         Plan ID del tier Enterprise
+//   MP_ENV                     "live" = usa el de producción; otra cosa = prueba.
 //   EPIMELEIA_BASE_URL         (opcional) default https://www.epimeleia.world
 //
 // QUÉ RECIBE (POST, JSON):
-//   {
-//     activoId:     "<uuid de la fila en activos>",   (requerido)
-//     email:        "titular@dominio.com",            (requerido)
-//     superficieHa: 1234.56,                          (requerido)
-//     pais:         "AR"                               (opcional, para la leyenda)
-//   }
+//   { activoId, email, superficieHa, pais }
 // ────────────────────────────────────────────────────────────────────────────
 
 const { createClient } = require("@supabase/supabase-js");
@@ -78,7 +77,14 @@ const MP_API = "https://api.mercadopago.com";
 
 const BASE_URL = process.env.EPIMELEIA_BASE_URL || "https://www.epimeleia.world";
 
-// Prueba salvo que se diga explícitamente "live".
+// El tipo de cambio simbólico. DEBE ser el mismo con el que se crearon los
+// planes (diag-crear-planes-mp.js). El valor real lo define el fundador.
+const TIPO_CAMBIO = 1600;
+
+// Techo de Mercado Pago sandbox por transacción. En producción no aplica igual;
+// se deja como aviso para que la prueba no falle en silencio con Enterprise.
+const TECHO_SANDBOX_ARS = 2000000;
+
 function obtenerToken() {
   const esLive = process.env.MP_ENV === "live";
   const token = esLive
@@ -86,38 +92,10 @@ function obtenerToken() {
     : process.env.MP_ACCESS_TOKEN_TEST;
   if (!token) {
     throw new Error(
-      esLive
-        ? "Falta MP_ACCESS_TOKEN_PROD (MP_ENV=live)."
-        : "Falta MP_ACCESS_TOKEN_TEST."
+      esLive ? "Falta MP_ACCESS_TOKEN_PROD (MP_ENV=live)." : "Falta MP_ACCESS_TOKEN_TEST."
     );
   }
-  return token;
-}
-
-// El Plan ID de Mercado Pago según el tier. Lee la variable MP_PLAN_* que
-// corresponde. Mismo criterio que planIdDePayPal en precios.js: si falta, lo
-// DICE, no inventa. (Se lee acá y no en precios.js para no tocar ese archivo,
-// que es compartido con el flujo de PayPal y es delicado.)
-function planIdDeMercadoPago(tierId) {
-  const mapa = {
-    base:       "MP_PLAN_BASE",
-    pro:        "MP_PLAN_PRO",
-    corporate:  "MP_PLAN_CORPORATE",
-    enterprise: "MP_PLAN_ENTERPRISE",
-  };
-  const envName = mapa[tierId];
-  if (!envName) {
-    return { ok: false, motivo: `No existe el tier "${tierId}".` };
-  }
-  const planId = process.env[envName];
-  if (!planId) {
-    return {
-      ok: false,
-      motivo: `Falta la variable de entorno ${envName} (Plan ID de Mercado Pago para el tier ${tierId}).`,
-      envPlan: envName,
-    };
-  }
-  return { ok: true, planId, envPlan: envName };
+  return { token, esLive };
 }
 
 // ─── Handler ─────────────────────────────────────────────────────────────────
@@ -150,8 +128,6 @@ module.exports = async (req, res) => {
     }
 
     // ── SIN FIRMA NO HAY PAGO ─────────────────────────────────────
-    // Igual que en PayPal: se verifica contra Supabase que el deslinde esté
-    // firmado. No se confía en lo que diga el navegador.
     const { data: activo, error: errActivo } = await supabase
       .from("activos")
       .select("id, nombre_activo, hash_firma, firma_version, superficie_ha")
@@ -172,11 +148,8 @@ module.exports = async (req, res) => {
       });
     }
 
-    // ── El precio, según la superficie ────────────────────────────
-    // MISMO cálculo de tier que PayPal (mismo lib/precios.js). El tier es el
-    // mismo; lo que cambia es la moneda y el plan con que se cobra.
+    // ── El precio, según la superficie (MISMO precios.js que PayPal) ──
     const precio = calcularPrecio(superficieHa, pais);
-
     if (!precio.ok) {
       return res.status(400).json({
         ok: false,
@@ -185,30 +158,44 @@ module.exports = async (req, res) => {
       });
     }
 
-    // ── El plan de Mercado Pago de ese tier ───────────────────────
-    const plan = planIdDeMercadoPago(precio.tier.id);
-    if (!plan.ok) {
-      console.error("[crear-suscripcion-mp] " + plan.motivo);
-      return res.status(500).json({
+    // ── El precio en pesos ────────────────────────────────────────
+    const precioARS = precio.precioMensualUSD * TIPO_CAMBIO;
+
+    // Aviso de techo de sandbox (no frena en producción).
+    const { token, esLive } = obtenerToken();
+    if (!esLive && precioARS > TECHO_SANDBOX_ARS) {
+      return res.status(400).json({
         ok: false,
-        error: "El plan de pago de este tier no está configurado en Mercado Pago. Avisale al equipo.",
-        detalle: plan.motivo,
+        error: `El precio (${precioARS} ARS) supera el techo de Mercado Pago sandbox (${TECHO_SANDBOX_ARS}). ` +
+               `Es un límite de la cuenta de prueba, no de producción. Probá con un tier más chico.`,
+        tier: precio.tier.nombre,
       });
     }
 
-    // ── Crear la suscripción en Mercado Pago ──────────────────────
-    const token = obtenerToken();
+    // ── El mes gratis: se difiere el primer cobro un mes ──────────
+    // Sin plan asociado no hay free_trial: se usa start_date un mes adelante,
+    // así el primer cobro cae dentro de un mes (mes de cortesía).
+    const inicio = new Date();
+    inicio.setMonth(inicio.getMonth() + 1);
+    const startDate = inicio.toISOString();
 
-    // external_reference: el gemelo del custom_id de PayPal. Viaja con la
-    // suscripción y vuelve en el webhook. Formato: "activoId|email|tier".
+    // external_reference: el gemelo del custom_id de PayPal.
     const externalReference = `${activoId}|${email}|${precio.tier.id}`;
 
+    // ── Crear la suscripción SIN plan asociado ────────────────────
     const cuerpo = {
-      preapproval_plan_id: plan.planId,
       reason: `EPIMELEIA ${precio.tier.nombre}`,
       external_reference: externalReference,
       payer_email: email,
       back_url: `${BASE_URL}/protocolo.html?suscripcion=ok&activo=${activoId}`,
+      status: "pending",              // pending = devuelve init_point para que el cliente pague
+      auto_recurring: {
+        frequency: 1,
+        frequency_type: "months",
+        transaction_amount: precioARS,
+        currency_id: "ARS",
+        start_date: startDate,        // primer cobro dentro de un mes (mes gratis)
+      },
     };
 
     const subResp = await fetch(`${MP_API}/preapproval`, {
@@ -231,7 +218,6 @@ module.exports = async (req, res) => {
       });
     }
 
-    // El link donde el cliente pone su tarjeta (equivalente al approvalUrl).
     const initPoint = subData.init_point || subData.sandbox_init_point || null;
 
     if (!initPoint) {
@@ -243,14 +229,11 @@ module.exports = async (req, res) => {
     }
 
     // ── Guardar el tier y el precio en el activo ──────────────────
-    // Igual que PayPal: constancia de qué se cobró. No frena el pago si falla.
-    // Nota: precio_anual_dolar guarda el valor en USD del tier (la referencia
-    // interna es siempre USD); la moneda con que se cobró queda como ARS.
     const { error: errUpd } = await supabase
       .from("activos")
       .update({
         tier:                precio.tier.nombre,
-        precio_anual_dolar:  precio.precioAnualUSD,
+        precio_anual_dolar:  precio.precioAnualUSD,   // referencia interna en USD
         moneda:              "ARS",
       })
       .eq("id", activoId);
@@ -261,15 +244,15 @@ module.exports = async (req, res) => {
 
     console.log(
       `[crear-suscripcion-mp] Suscripción ${subData.id} creada · activo ${activoId} · ` +
-      `${superficieHa} ha → tier ${precio.tier.nombre} · plan ${plan.planId}`
+      `${superficieHa} ha → tier ${precio.tier.nombre} · ARS ${precioARS}/mes`
     );
 
     // ── Respuesta al frontend ─────────────────────────────────────
     return res.status(200).json({
       ok: true,
       subscriptionId: subData.id,
-      approvalUrl: initPoint,         // ← el frontend manda al cliente acá (mismo nombre que PayPal)
-      initPoint,                      // ← alias explícito de Mercado Pago
+      approvalUrl: initPoint,         // mismo nombre que PayPal, para el frontend
+      initPoint,
       activoId,
       email,
       superficieHa,
@@ -279,7 +262,8 @@ module.exports = async (req, res) => {
       },
       precio: {
         mensualUSD: precio.precioMensualUSD,
-        anualUSD:   precio.precioAnualUSD,
+        mensualARS: precioARS,
+        tipoCambio: TIPO_CAMBIO,
         enTolerancia: precio.enTolerancia,
         nota: precio.nota,
       },
