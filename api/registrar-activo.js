@@ -133,7 +133,7 @@ export default async function handler(req, res) {
           .from('clientes')
           .insert({
             id:      datos.cliente_id,        // el mismo id de su cuenta Auth
-            email:   datos.cliente_email || null,
+            email:   (datos.cliente_email || '').toLowerCase().trim() || null,
             nombre:  datos.cliente_nombre || null,
             empresa: datos.cliente_empresa || null,
           })
