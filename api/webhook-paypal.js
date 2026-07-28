@@ -1,82 +1,54 @@
 // ────────────────────────────────────────────────────────────────────────────
 // EPIMELEIA V3.4 — Webhook de PayPal (SUSCRIPCIONES)
 // ────────────────────────────────────────────────────────────────────────────
-// URL pública: https://epimeleia.world/api/webhook-paypal
+// URL pública: https://www.epimeleia.world/api/webhook-paypal
 // Configurado en: developer.paypal.com → EPIMELEIA → Webhooks
 //
 // QUÉ HACE:
 //   Escucha lo que PayPal avisa sobre una suscripción y marca en Supabase
-//   HASTA CUÁNDO ese activo está pago. Nada más que eso.
+//   HASTA CUÁNDO ese activo está pago. Y cuando un activo se activa por
+//   primera vez, le manda al cliente el mail de bienvenida (Estación 4).
 //
 //   PayPal confirma un cobro  →  activos.cobertura_hasta = fecha + 1 mes
+//   Activo activado (1ra vez) →  mail de bienvenida al titular
 //
 //   Después, el scheduler del VPS lee esa fecha para decidir si certifica.
-//   El webhook escribe; el scheduler lee. Ninguno de los dos hace la otra cosa.
 //
 // ════════════════════════════════════════════════════════════════════════════
 // AJUSTE 38 (24/7/2026) — EL WEBHOOK ACTIVA EL ACTIVO
-// ════════════════════════════════════════════════════════════════════════════
-//
-// QUÉ CAMBIÓ Y POR QUÉ
-//
-// 1 · EL custom_id ESTABA DESACOPLADO — era el bug que rompía todo.
-//     Este archivo esperaba  "email|fecha|versionClausulas".
-//     crear-suscripcion.js manda  "activoId|email|tier".
-//     Resultado: al llegar el ACTIVATED, buscaba una arroba donde venía el
-//     activoId, no la encontraba, y caía al fallback. El activoId se perdía
-//     — justo el dato que hace falta para saber QUÉ activo activar.
-//     Ahora se lee el formato real que manda crear-suscripcion.js.
-//
-// 2 · SE ESCRIBE DIRECTO A SUPABASE. Antes se encolaba todo en Redis para
-//     que procesador-pagos.js (VPS) creara el activo y lo diera de alta
-//     on-chain. Ese diseño es de cuando EPI hacía el registro conversando.
-//     Hoy el activo YA EXISTE antes de pagar: lo dibujó y lo firmó el cliente
-//     en las Estaciones 1 y 2. Si el procesador actuara, insertaría una fila
-//     duplicada sin polígono. Entonces el webhook no crea: ACTUALIZA.
-//
-//     ⚠️ procesador-pagos.js NO se toca ni se para. Queda corriendo con la
-//        cola vacía, sin hacer nada, y su código de alta on-chain queda
-//        intacto para la Fase 7.
-//
-// 3 · SE SACÓ LA FIRMA ASUMIDA. Este archivo calculaba un hash de aceptación
-//     "asumiendo" que el cliente había aceptado las cláusulas (el clickwrap
-//     viejo). Desde la Estación 2 hay una firma REAL, sellada en Supabase
-//     (hash_firma, firma_version, firma_fecha), calculada por el servidor.
-//     Inventar una firma asumida al lado de una firma real es peor que no
-//     tener ninguna: son dos verdades sobre el mismo hecho.
-//
-// 4 · LOS DUPLICADOS SE CHEQUEAN CONTRA LA TABLA `pagos`, no contra Redis.
-//     PayPal reenvía notificaciones. Si el id externo ya está registrado,
-//     se ignora. Una sola fuente, la misma que guarda el historial.
-//
-// LO QUE SE DEJÓ INTACTO
-//   La verificación de firma contra la API de PayPal. Es la parte difícil,
-//   está bien hecha, y no había ninguna razón para tocarla.
+//   (ver historial completo en el repo — sin cambios en esta parte)
+//   1 · custom_id "activoId|email|tier"  2 · escribe directo a Supabase
+//   3 · sin firma asumida  4 · duplicados contra la tabla `pagos`
 //
 // ════════════════════════════════════════════════════════════════════════════
-// COLUMNAS NUEVAS QUE ESTE ARCHIVO NECESITA EN `activos`
+// AJUSTE 40 (27/7/2026) — EL MAIL DE BIENVENIDA (Estación 4)
 // ════════════════════════════════════════════════════════════════════════════
-//   suscripcion_id    text          ID de la suscripción de PayPal.
-//                                   Es la llave de los cobros siguientes: el
-//                                   aviso de cobro NO trae el activo, solo
-//                                   trae este número.
-//   cobertura_hasta   timestamptz   Hasta cuándo está pago.
 //
-// NO se toca la columna `estado` (hoy dice "alta" en todas las filas y no se
-// sabe quién más la lee). NO se toca la tabla `clientes` — unificar la
-// creación de clientes es otro tema, y mezclarlo acá sería esconderlo.
+//   Cuando un activo se activa por primera vez (ACTIVATED), se le manda al
+//   titular el mail de bienvenida. El mail NOMBRA su recurso (nombre + tipo),
+//   con el tono acordado: amigable, serio y cómplice. Remitente y contacto:
+//   info@epimeleia.world.
 //
-// ════════════════════════════════════════════════════════════════════════════
-// LA TOLERANCIA NO VIVE ACÁ
-// ════════════════════════════════════════════════════════════════════════════
-//   cobertura_hasta guarda exactamente lo que se pagó, sin regalar un día.
-//   La tolerancia (seguir certificando una ventana más después del
-//   vencimiento) es una decisión del scheduler, y vive allá.
-//   Acá se registra el hecho; allá se decide qué hacer con él.
+//   REGLAS DE ORO DE ESTE AGREGADO:
+//   · El mail NUNCA frena la activación. Si SendGrid falla o no está
+//     configurado, se anota el error y se sigue: el pago y la cobertura son lo
+//     que importa; el mail es un extra. (Se envía envuelto en try/catch propio.)
+//   · Solo se manda en la PRIMERA activación (ACTIVATED), no en cada cobro
+//     mensual (SALE.COMPLETED). Nadie quiere un "bienvenido" todos los meses.
+//   · El nombre del cliente se busca en `clientes`. Si no está, el mail arranca
+//     con "Hola," a secas — no se rompe ni se inventa un nombre.
+//   · El tipo del activo se traduce de código (HIDRICO, FORESTAL...) a una
+//     palabra amable. Si es un código desconocido, se omite el tipo.
+//
+//   ⚠️ PENDIENTE ANTES DE UN CLIENTE REAL: el mail promete "en la próxima
+//      ventana recibís tu primera certificación". Eso hoy no ocurre solo (alta
+//      on-chain = Fase 7). Confirmar que la primera certificación pase, o
+//      suavizar esa frase, antes de abrir a un cliente de verdad.
 //
 // VARIABLES DE ENTORNO
 //   PAYPAL_CLIENT_ID · PAYPAL_CLIENT_SECRET · PAYPAL_WEBHOOK_ID
 //   SUPABASE_URL · SUPABASE_SERVICE_KEY
+//   SENDGRID_API_KEY   (ya la usa el scheduler/procesador — no es nueva)
 // ────────────────────────────────────────────────────────────────────────────
 
 const { createClient } = require("@supabase/supabase-js");
@@ -89,6 +61,9 @@ const supabase = createClient(
 const PAYPAL_BASE = process.env.PAYPAL_ENV === "live"
   ? "https://api-m.paypal.com"
   : "https://api-m.sandbox.paypal.com";
+
+// Remitente y contacto del mail de bienvenida (decisión del fundador).
+const EMAIL_FROM = "info@epimeleia.world";
 
 // ─── Token de PayPal ─────────────────────────────────────────────────────────
 async function obtenerToken() {
@@ -114,8 +89,6 @@ async function obtenerToken() {
 }
 
 // ─── Verificación del evento contra la API de PayPal ─────────────────────────
-// (sin cambios respecto de la versión anterior — funciona y es lo que PayPal
-//  recomienda para webhooks)
 async function verificarEventoPayPal(req) {
   const webhookId = process.env.PAYPAL_WEBHOOK_ID;
 
@@ -159,7 +132,6 @@ async function verificarEventoPayPal(req) {
 
 // ─── El custom_id que manda crear-suscripcion.js ─────────────────────────────
 // Formato real: "activoId|email|tier"
-// (antes este archivo esperaba "email|fecha|version" — ese era el desacople)
 function parsearCustomId(customId) {
   if (!customId || typeof customId !== "string") {
     return { valido: false, motivo: "custom_id ausente" };
@@ -188,9 +160,6 @@ function parsearCustomId(customId) {
 }
 
 // ─── Un mes más, desde una fecha ─────────────────────────────────────────────
-// Se usa el calendario, no 30 días fijos: si se pagó el 31 de enero, la
-// cobertura va al 28 de febrero (JavaScript lo resuelve solo). Es lo mismo
-// que hace PayPal para el próximo cobro.
 function unMesDespues(fechaISO) {
   const d = new Date(fechaISO);
   if (isNaN(d.getTime())) return null;
@@ -200,7 +169,6 @@ function unMesDespues(fechaISO) {
 }
 
 // ─── ¿Este evento ya se procesó? ─────────────────────────────────────────────
-// PayPal reenvía notificaciones. El id externo se guarda en pagos.hash_pago.
 async function yaProcesado(idExterno) {
   const { data, error } = await supabase
     .from("pagos")
@@ -209,8 +177,6 @@ async function yaProcesado(idExterno) {
     .maybeSingle();
 
   if (error) {
-    // Si Supabase falla, se prefiere procesar de nuevo antes que perder un
-    // cobro. Un duplicado en el historial es reparable; un cobro perdido no.
     console.error("[webhook-paypal] Error chequeando duplicados:", error.message);
     return false;
   }
@@ -232,8 +198,6 @@ async function registrarPago({ email, monto, metodo, idExterno, payload }) {
 }
 
 // ─── Buscar el activo por el ID de suscripción ───────────────────────────────
-// Los cobros siguientes NO traen el activo: solo traen el número de la
-// suscripción. Por eso se guarda en el alta.
 async function activoPorSuscripcion(suscripcionId) {
   const { data, error } = await supabase
     .from("activos")
@@ -246,6 +210,128 @@ async function activoPorSuscripcion(suscripcionId) {
     return null;
   }
   return data;
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// AJUSTE 40 · EL MAIL DE BIENVENIDA
+// ════════════════════════════════════════════════════════════════════════════
+
+// Traduce el tipo (código) a una palabra amable para el cliente. Si no
+// reconoce el código, devuelve null y el mail omite el tipo (no inventa).
+function tipoLegible(tipo) {
+  if (tipo === null || tipo === undefined) return null;
+  const t = String(tipo).toUpperCase().trim();
+  const mapa = {
+    MINERIA:     "zona minera",
+    FORESTAL:    "recurso forestal",
+    NAVAL:       "recurso naval",
+    INDUSTRIAL:  "zona industrial",
+    DATA_CENTER: "centro de datos",
+    RESIDUOS:    "zona de residuos",
+    HIDROVIA:    "hidrovía",
+    HIDRICO:     "recurso hídrico",
+    GLACIAR:     "glaciar",
+    AGRICOLA:    "campo agrícola",
+    OTRO:        null,
+  };
+  return mapa[t] ?? null;
+}
+
+// Busca el nombre del cliente en la tabla `clientes`. Si no está, devuelve null
+// (el mail arranca con "Hola," a secas). Nunca frena por esto.
+async function nombreDelCliente(email) {
+  if (!email) return null;
+  try {
+    const { data } = await supabase
+      .from("clientes")
+      .select("nombre")
+      .eq("email", email)
+      .maybeSingle();
+    return data?.nombre || null;
+  } catch {
+    return null;
+  }
+}
+
+// Arma el texto del mail de bienvenida, con los datos del recurso.
+function textoBienvenida({ nombre, nombreActivo, tipo }) {
+  const saludo = nombre ? `Hola ${nombre},` : "Hola,";
+
+  // La línea que nombra el recurso: "—Mar de Aral, recurso hídrico—" o, si no
+  // hay tipo reconocible, solo "—Mar de Aral—".
+  const legible = tipoLegible(tipo);
+  const recurso = legible
+    ? `${nombreActivo}, ${legible}`
+    : `${nombreActivo}`;
+
+  return (
+`${saludo}
+
+Listo. Ya estás adentro.
+
+Te confirmamos que tu recurso —${recurso}— ya fue incorporado al protocolo EPIMELEIA y está siendo observado. Serás vos el que sabrá qué hacer con toda la info que te vamos a dar.
+
+Desde ahora tenés una herramienta que no todos tienen: un satélite observando el recurso que expusiste, y cada observación queda sellada de una forma que nadie —ni vos, ni nosotros— puede cambiar después. No te damos un dato suelto; te damos la prueba de que ese dato es real y de que nadie lo tocó.
+
+¿Para qué te sirve, en concreto? Para estar un paso adelante. Lo que pase con tu recurso lo vas a saber vos, con prueba en la mano, en lugar de enterarte tarde o por otros. Sirve para mostrarle a un banco, a un organismo o a quien sea que hacés las cosas bien, y sirve para tener tu propio registro, tuyo, que no depende de que nadie más lo confirme.
+
+Cómo sigue esto:
+
+· ${nombreActivo} ya está en la agenda del satélite. En la próxima ventana de observación empieza a medirse, y vas a recibir tu primera certificación.
+· Cada certificación te llega a este mismo correo, con su sello y su prueba.
+· Todo lo que quede registrado es tuyo. Nosotros somos el puente; el protagonista sos vos.
+
+Y algo importante: si algo no te cierra, si tenés una duda que las explicaciones o EPI no te terminan de resolver, escribinos a info@epimeleia.world. Del otro lado hay gente de verdad que te contesta. No estás solo con una pantalla.
+
+Gracias por confiar en nosotros. Nos alegra tenerte.
+
+El equipo de EPIMELEIA
+info@epimeleia.world`
+  );
+}
+
+// Envía el mail de bienvenida por SendGrid. Envuelto para que NUNCA frene la
+// activación: si algo falla, se anota y se sigue.
+async function enviarBienvenida({ email, nombreActivo, tipo }) {
+  const apiKey = process.env.SENDGRID_API_KEY;
+  if (!apiKey) {
+    console.warn("[webhook-paypal] SENDGRID_API_KEY no configurado — no se envía bienvenida");
+    return;
+  }
+  if (!email) {
+    console.warn("[webhook-paypal] Sin email del titular — no se envía bienvenida");
+    return;
+  }
+
+  try {
+    const nombre = await nombreDelCliente(email);
+    const cuerpo = textoBienvenida({ nombre, nombreActivo, tipo });
+
+    const resp = await fetch("https://api.sendgrid.com/v3/mail/send", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        personalizations: [{ to: [{ email }] }],
+        from: { email: EMAIL_FROM, name: "EPIMELEIA" },
+        reply_to: { email: EMAIL_FROM, name: "EPIMELEIA" },
+        subject: `${nombreActivo} ya fue incorporado al protocolo EPIMELEIA`,
+        content: [{ type: "text/plain", value: cuerpo }],
+      }),
+    });
+
+    if (resp.status === 202) {
+      console.log(`[webhook-paypal] Bienvenida enviada a ${email} (${nombreActivo})`);
+    } else {
+      const detalle = await resp.text().catch(() => "");
+      console.error(`[webhook-paypal] SendGrid devolvió ${resp.status} al enviar bienvenida: ${detalle}`);
+    }
+  } catch (error) {
+    // Nunca frena la activación.
+    console.error("[webhook-paypal] Error enviando bienvenida (no frena la activación):", error.message);
+  }
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -266,9 +352,6 @@ async function manejarSuscripcionActivada(resource) {
   const firma = parsearCustomId(resource.custom_id);
 
   if (!firma.valido) {
-    // Sin activoId no hay nada que activar. NO se inventa un activo ni se
-    // adivina cuál es: se avisa y se corta. Es preferible una alta pendiente
-    // y visible, a una activación silenciosa sobre el activo equivocado.
     console.error(
       `[webhook-paypal] ACTIVATED sin activoId utilizable (${firma.motivo}) — ` +
       `sub=${suscripcionId} email=${emailPayPal}`
@@ -283,9 +366,9 @@ async function manejarSuscripcionActivada(resource) {
     return { status: "error", reason: "custom_id_invalido", detalle: firma.motivo };
   }
 
-  // El mes de cortesía también es cobertura: el cliente está adentro.
   const coberturaHasta = unMesDespues(fechaInicio);
 
+  // Se traen también nombre_activo y tipo para el mail de bienvenida.
   const { data: actualizado, error: errUpd } = await supabase
     .from("activos")
     .update({
@@ -293,7 +376,7 @@ async function manejarSuscripcionActivada(resource) {
       cobertura_hasta: coberturaHasta,
     })
     .eq("id", firma.activoId)
-    .select("id, nombre_activo")
+    .select("id, nombre_activo, tipo")
     .maybeSingle();
 
   if (errUpd) {
@@ -308,7 +391,7 @@ async function manejarSuscripcionActivada(resource) {
 
   await registrarPago({
     email: firma.email || emailPayPal,
-    monto: 0,                       // mes de cortesía: sin cobro
+    monto: 0,
     metodo: "paypal-suscripcion",
     idExterno: suscripcionId,
     payload: {
@@ -326,6 +409,16 @@ async function manejarSuscripcionActivada(resource) {
     `activado — cobertura hasta ${coberturaHasta}`
   );
 
+  // ── AJUSTE 40 · el mail de bienvenida ─────────────────────────
+  // Va DESPUÉS de todo lo importante (activación + registro del pago), y
+  // envuelto para no frenar nada si falla. El email destino es el del titular
+  // (el del custom_id; si no, el de PayPal).
+  await enviarBienvenida({
+    email: firma.email || emailPayPal,
+    nombreActivo: actualizado.nombre_activo || "tu recurso",
+    tipo: actualizado.tipo,
+  });
+
   return {
     status: "ok",
     accion: "ACTIVADO",
@@ -337,7 +430,6 @@ async function manejarSuscripcionActivada(resource) {
 
 // ════════════════════════════════════════════════════════════════════════════
 // PAYMENT.SALE.COMPLETED
-// PayPal cobró un mes de verdad (el primero real, o cualquiera posterior).
 // ════════════════════════════════════════════════════════════════════════════
 async function manejarCobroMensual(resource) {
   const saleId        = resource.id;
@@ -353,8 +445,6 @@ async function manejarCobroMensual(resource) {
   }
 
   if (!suscripcionId) {
-    // Un cobro suelto, sin suscripción padre. No se puede saber a qué activo
-    // corresponde. Se registra para que quede rastro y se avisa.
     console.warn(`[webhook-paypal] Cobro ${saleId} sin billing_agreement_id`);
     await registrarPago({
       email: null, monto, metodo: "paypal-suscripcion", idExterno: saleId,
@@ -374,7 +464,6 @@ async function manejarCobroMensual(resource) {
     return { status: "error", reason: "activo_no_encontrado", subscription_id: suscripcionId };
   }
 
-  // Se extiende un mes desde la fecha del cobro.
   const coberturaHasta = unMesDespues(fechaCobro);
 
   const { error: errUpd } = await supabase
@@ -407,6 +496,9 @@ async function manejarCobroMensual(resource) {
     `("${activo.nombre_activo}") cubierto hasta ${coberturaHasta}`
   );
 
+  // Nota: acá NO se manda bienvenida. El "bienvenido" es solo de la primera
+  // activación; en los cobros mensuales el cliente ya está adentro.
+
   return {
     status: "ok",
     accion: "COBRO_REGISTRADO",
@@ -417,18 +509,8 @@ async function manejarCobroMensual(resource) {
 }
 
 // ════════════════════════════════════════════════════════════════════════════
-// BILLING.SUBSCRIPTION.CANCELLED
-// El cliente canceló, o PayPal canceló por falta de pago.
+// BILLING.SUBSCRIPTION.CANCELLED / EXPIRED / SUSPENDED
 // ════════════════════════════════════════════════════════════════════════════
-//
-// DECISIÓN DEL FUNDADOR: "el pago se respeta hasta el momento en que debía
-// entrar el próximo débito". Por eso acá NO se toca cobertura_hasta: la fecha
-// ya pagada sigue valiendo, y el activo se apaga solo cuando esa fecha pase.
-//
-// Tampoco se borra ni se cierra nada. El activo es del usuario, siempre: queda
-// dormido, con todo su historial intacto. Si vuelve a pagar, retoma.
-// Y no se registra ningún Hueco de Opacidad — un hueco significa que el
-// satélite no pudo ver, y dejar de pagar no es opacidad.
 async function manejarSuscripcionCancelada(resource) {
   const suscripcionId = resource.id;
   const fechaCancel   = resource.status_update_time || new Date().toISOString();
@@ -461,6 +543,9 @@ async function manejarSuscripcionCancelada(resource) {
     console.warn(`[webhook-paypal] CANCELLED: ningún activo con suscripción ${suscripcionId}`);
   }
 
+  // NOTA: acá irá, más adelante, el mail de DESPEDIDA (su gemelo). Se deja
+  // marcado para cuando se redacte. Mismo criterio: envuelto, nunca frena.
+
   return {
     status: "ok",
     accion: "BAJA_REGISTRADA",
@@ -485,15 +570,12 @@ module.exports = async (req, res) => {
   console.log(`[webhook-paypal] Notificación recibida — event_type=${eventType}`);
 
   try {
-    // PASO 1 · ¿Viene realmente de PayPal?
     const firma = await verificarEventoPayPal(req);
     if (!firma.valida) {
       console.warn(`[webhook-paypal] Firma inválida: ${firma.motivo}`);
-      // 200 para que PayPal no reintente al infinito. Internamente: nada.
       return res.status(200).json({ status: "ignored", reason: "invalid_signature" });
     }
 
-    // PASO 2 · Al manejador que corresponda
     const resource = req.body?.resource || {};
     let resultado;
 
@@ -509,8 +591,6 @@ module.exports = async (req, res) => {
       case "BILLING.SUBSCRIPTION.CANCELLED":
       case "BILLING.SUBSCRIPTION.EXPIRED":
       case "BILLING.SUBSCRIPTION.SUSPENDED":
-        // Los tres significan lo mismo para EPIMELEIA: dejó de haber cobro.
-        // La cobertura ya pagada se respeta igual.
         resultado = await manejarSuscripcionCancelada(resource);
         break;
 
