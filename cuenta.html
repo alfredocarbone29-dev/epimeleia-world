@@ -301,6 +301,31 @@ body::after {
     </div>
   </div>
 
+  <!-- ── AJUSTE 42 · pantalla para escribir la nueva contraseña ──
+       Aparece sola cuando el cliente vuelve del enlace de recuperación
+       que Supabase le mandó por mail. Sin esto, el enlace no llevaba a
+       ningún lado y el cliente quedaba sin poder recuperar el acceso. -->
+  <div class="screen" id="screen-nueva-clave">
+    <div class="auth-card">
+      <div class="auth-eyebrow">RECUPERAR ACCESO</div>
+      <h1 class="auth-title">Creá tu <em>nueva contraseña</em></h1>
+      <p class="auth-sub">Escribí una contraseña nueva para tu cuenta. Con eso vas a poder entrar de nuevo.</p>
+
+      <div class="field">
+        <label class="field-label" for="nClave">NUEVA CONTRASEÑA</label>
+        <input class="field-input" id="nClave" type="password" placeholder="Mínimo 8 caracteres" autocomplete="new-password">
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="nClave2">REPETILA</label>
+        <input class="field-input" id="nClave2" type="password" placeholder="La misma otra vez" autocomplete="new-password">
+      </div>
+
+      <div class="msg-box" id="msgNuevaClave"></div>
+      <button class="btn-main" id="btnNuevaClave" onclick="cambiarClave()">GUARDAR CONTRASEÑA</button>
+    </div>
+  </div>
+
   <!-- ═════════ PANTALLA: REVISÁ TU CORREO (post-registro) ═════════ -->
   <div class="screen" id="screen-verifica">
     <div class="auth-card">
@@ -415,7 +440,7 @@ function irA(nombre) {
   const el = document.getElementById('screen-' + nombre);
   if (el) el.classList.add('active');
   // Limpiar mensajes
-  ['msgRegistro','msgLogin','msgOlvide','msgCuenta'].forEach(id=>{
+  ['msgRegistro','msgLogin','msgOlvide','msgCuenta','msgNuevaClave'].forEach(id=>{
     const m = document.getElementById(id); if (m){ m.textContent=''; m.className='msg-box'; }
   });
   // Mostrar/ocultar botones de la barra según dónde estés
@@ -614,9 +639,68 @@ function traducirError(msg) {
   return 'No se pudo completar. Intentá de nuevo en un momento.';
 }
 
+/* ── AJUSTE 42 · guardar la nueva contraseña ──
+   El cliente llegó acá desde el enlace del mail. Supabase ya lo dejó en una
+   sesión especial de recuperación, así que updateUser({password}) le cambia
+   la clave. No pide la vieja: el enlace del mail ES la prueba de identidad. */
+async function cambiarClave(){
+  if (!supabaseListo) { return mostrarMsg('msgNuevaClave', 'Falta conectar Supabase.', 'err'); }
+
+  const c1 = (document.getElementById('nClave').value || '');
+  const c2 = (document.getElementById('nClave2').value || '');
+
+  if (c1.length < 8)  { return mostrarMsg('msgNuevaClave', 'La contraseña debe tener al menos 8 caracteres.', 'err'); }
+  if (c1 !== c2)      { return mostrarMsg('msgNuevaClave', 'Las dos contraseñas no coinciden.', 'err'); }
+
+  mostrarMsg('msgNuevaClave', 'Guardando…', 'ok');
+  const btn = document.getElementById('btnNuevaClave');
+  if (btn) btn.disabled = true;
+
+  const { error } = await supa.auth.updateUser({ password: c1 });
+
+  if (btn) btn.disabled = false;
+
+  if (error) {
+    // El caso típico: el enlace venció (Supabase los hace de un solo uso y con
+    // vencimiento). Se le explica sin tecnicismos.
+    const msg = (error.message || '').toLowerCase();
+    if (msg.includes('expired') || msg.includes('invalid') || msg.includes('session')) {
+      return mostrarMsg('msgNuevaClave', 'El enlace venció o ya se usó. Pedí uno nuevo desde "Olvidaste tu contraseña".', 'err');
+    }
+    return mostrarMsg('msgNuevaClave', 'No se pudo guardar. Probá de nuevo o pedí un enlace nuevo.', 'err');
+  }
+
+  mostrarMsg('msgNuevaClave', '¡Listo! Tu contraseña quedó cambiada. Entrando…', 'ok');
+  // Ya quedó logueado con la sesión de recuperación → lo llevamos a su cuenta.
+  setTimeout(async () => { await cargarCuenta(); }, 1200);
+}
+
+/* ── AJUSTE 42 · detectar el regreso del enlace de recuperación ──
+   Cuando el cliente vuelve del enlace del mail, Supabase dispara el evento
+   'PASSWORD_RECOVERY'. Ahí, en vez de mandarlo a su cuenta, lo llevamos a la
+   pantalla para escribir la nueva contraseña. Se registra ANTES del chequeo
+   de sesión, para no perdernos el evento. */
+if (supabaseListo) {
+  supa.auth.onAuthStateChange((event) => {
+    if (event === 'PASSWORD_RECOVERY') {
+      irA('nueva-clave');
+    }
+  });
+}
+
 /* ── Al abrir: si ya hay sesión iniciada, llevar directo a la cuenta ── */
 (async function alAbrir(){
   if (!supabaseListo) return; // sin credenciales, se queda en el login para ver el diseño
+
+  // Si la URL trae el rastro de una recuperación de contraseña, no seguir de
+  // largo a la cuenta: dejar que el evento PASSWORD_RECOVERY muestre la pantalla
+  // de nueva contraseña. (El hash del enlace incluye type=recovery.)
+  const hash = window.location.hash || '';
+  if (hash.includes('type=recovery')) {
+    irA('nueva-clave');
+    return;
+  }
+
   const { data: { session } } = await supa.auth.getSession();
   if (session) { await cargarCuenta(); }
 })();
