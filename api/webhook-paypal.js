@@ -267,13 +267,11 @@ function textoBienvenida({ nombre, nombreActivo, tipo }) {
   return (
 `${saludo}
 
-Listo. Ya estás adentro.
+Te confirmamos que tu activo ambiental —${recurso}— ya fue incorporado al protocolo EPIMELEIA y está siendo observado. Serás vos el que sabrá qué hacer con toda la info que te vamos a dar.
 
-Te confirmamos que tu recurso —${recurso}— ya fue incorporado al protocolo EPIMELEIA y está siendo observado. Serás vos el que sabrá qué hacer con toda la info que te vamos a dar.
+Desde ahora tenés una herramienta que no todos tienen: un satélite observando el activo que expusiste, y cada observación queda sellada de una forma que nadie —ni vos, ni nosotros— puede cambiar después. No te damos un dato suelto; te damos la prueba de que ese dato es real y de que nadie lo tocó.
 
-Desde ahora tenés una herramienta que no todos tienen: un satélite observando el recurso que expusiste, y cada observación queda sellada de una forma que nadie —ni vos, ni nosotros— puede cambiar después. No te damos un dato suelto; te damos la prueba de que ese dato es real y de que nadie lo tocó.
-
-¿Para qué te sirve, en concreto? Para estar un paso adelante. Lo que pase con tu recurso lo vas a saber vos, con prueba en la mano, en lugar de enterarte tarde o por otros. Sirve para mostrarle a un banco, a un organismo o a quien sea que hacés las cosas bien, y sirve para tener tu propio registro, tuyo, que no depende de que nadie más lo confirme.
+¿Para qué te sirve, en concreto? Para estar un paso adelante. Lo que pase con tu activo lo vas a saber vos, con prueba en la mano, en lugar de enterarte tarde o por otros. Sirve para mostrarle a un banco, a un organismo o a quien sea que hacés las cosas bien, y sirve para tener tu propio registro, tuyo, que no depende de que nadie más lo confirme.
 
 Cómo sigue esto:
 
@@ -331,6 +329,75 @@ async function enviarBienvenida({ email, nombreActivo, tipo }) {
   } catch (error) {
     // Nunca frena la activación.
     console.error("[webhook-paypal] Error enviando bienvenida (no frena la activación):", error.message);
+  }
+}
+
+// ─── El texto del mail de DESPEDIDA (Ajuste 41) ──────────────────────────────
+// Sin reproche, agradecido, puerta abierta. Pide feedback por la experiencia.
+function textoDespedida({ nombre, nombreActivo }) {
+  const saludo = nombre ? `Hola ${nombre},` : "Hola,";
+  const activo = nombreActivo || "tu activo ambiental";
+
+  return (
+`${saludo}
+
+Recibimos la baja de tu suscripción, y queríamos despedirnos como corresponde, agradeciéndote.
+
+Tres cosas importantes, para tu tranquilidad:
+
+· Tu activo ambiental —${activo}— sigue siendo tuyo. Nada de lo que se certificó mientras estuviste se borra ni se toca: tu historial queda intacto, sellado, disponible.
+· Lo que ya pagaste sigue vigente hasta el final del período. No cortamos nada antes de tiempo.
+· Si algún día querés volver, acá estamos. Retomás donde lo dejaste, sin empezar de cero.
+
+Y te pedimos un favor, si tenés un minuto: por la experiencia que viviste dentro del protocolo, contanos en qué podríamos mejorar. Lo que no te cerró, lo que te faltó, lo que harías distinto. Respondé este mismo correo o escribinos a info@epimeleia.world. Nos ayuda de verdad, y lo leemos nosotros.
+
+Gracias por haber confiado en EPIMELEIA. Ojalá nos volvamos a cruzar.
+
+El equipo de EPIMELEIA
+info@epimeleia.world`
+  );
+}
+
+// Envía el mail de despedida por SendGrid. Igual que la bienvenida: envuelto
+// para que NUNCA frene el procesamiento de la baja.
+async function enviarDespedida({ email, nombreActivo }) {
+  const apiKey = process.env.SENDGRID_API_KEY;
+  if (!apiKey) {
+    console.warn("[webhook-paypal] SENDGRID_API_KEY no configurado — no se envía despedida");
+    return;
+  }
+  if (!email) {
+    console.warn("[webhook-paypal] Sin email del titular — no se envía despedida");
+    return;
+  }
+
+  try {
+    const nombre = await nombreDelCliente(email);
+    const cuerpo = textoDespedida({ nombre, nombreActivo });
+
+    const resp = await fetch("https://api.sendgrid.com/v3/mail/send", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        personalizations: [{ to: [{ email }] }],
+        from: { email: EMAIL_FROM, name: "EPIMELEIA" },
+        reply_to: { email: EMAIL_FROM, name: "EPIMELEIA" },
+        subject: "Tu activo ambiental sigue siendo tuyo · gracias por confiar en EPIMELEIA",
+        content: [{ type: "text/plain", value: cuerpo }],
+      }),
+    });
+
+    if (resp.status === 202) {
+      console.log(`[webhook-paypal] Despedida enviada a ${email} (${nombreActivo || "sin nombre de activo"})`);
+    } else {
+      const detalle = await resp.text().catch(() => "");
+      console.error(`[webhook-paypal] SendGrid devolvió ${resp.status} al enviar despedida: ${detalle}`);
+    }
+  } catch (error) {
+    console.error("[webhook-paypal] Error enviando despedida (no frena la baja):", error.message);
   }
 }
 
@@ -517,6 +584,11 @@ async function manejarSuscripcionCancelada(resource) {
 
   console.log(`[webhook-paypal] CANCELLED — sub=${suscripcionId}`);
 
+  // Anti-duplicado: si PayPal reenvía el CANCELLED, no repetir baja ni mail.
+  if (await yaProcesado(`cancel-${suscripcionId}`)) {
+    return { status: "duplicate", subscription_id: suscripcionId };
+  }
+
   const activo = await activoPorSuscripcion(suscripcionId);
 
   await registrarPago({
@@ -543,8 +615,21 @@ async function manejarSuscripcionCancelada(resource) {
     console.warn(`[webhook-paypal] CANCELLED: ningún activo con suscripción ${suscripcionId}`);
   }
 
-  // NOTA: acá irá, más adelante, el mail de DESPEDIDA (su gemelo). Se deja
-  // marcado para cuando se redacte. Mismo criterio: envuelto, nunca frena.
+  // ── AJUSTE 41 · el mail de despedida ──────────────────────────
+  // Envuelto para no frenar la baja si falla. Buscar el email del titular:
+  // primero el de PayPal, si no el de la tabla clientes.
+  let emailTitular = resource.subscriber?.email_address || null;
+  if (!emailTitular && activo?.cliente_id) {
+    try {
+      const { data: cli } = await supabase
+        .from("clientes").select("email").eq("id", activo.cliente_id).maybeSingle();
+      emailTitular = cli?.email || null;
+    } catch { /* no frena */ }
+  }
+  await enviarDespedida({
+    email: emailTitular,
+    nombreActivo: activo?.nombre_activo || null,
+  });
 
   return {
     status: "ok",
