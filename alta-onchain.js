@@ -155,12 +155,17 @@ async function registrarUno(activo, contexto) {
   try { yaVerificado = await coreFounder.emailsVerificados(emailHash); } catch { yaVerificado = false; }
 
   if (!yaVerificado) {
+    // El contrato (EpimeleiaCore.sol línea 311) exige que verificarEmail lo
+    // llame LA MISMA wallet a la que se asignó el código:
+    //   require(codigosVerificacion[codigo] == msg.sender)
+    // Se emite el código a nombre de registroWallet → entonces verificarEmail
+    // debe llamarlo coreRegistro (esa misma wallet), NO coreFounder.
     const codigo = ethers.keccak256(ethers.toUtf8Bytes(`epimeleia-${email}-${Date.now()}`));
     L(`   · emitiendo código de verificación…`);
     const tx1 = await coreFounder.registrarCodigoVerificacion(codigo, registroWallet.address);
     await tx1.wait();
     L(`   · verificando email…`);
-    const tx2 = await coreFounder.verificarEmail(codigo, emailHash);
+    const tx2 = await coreRegistro.verificarEmail(codigo, emailHash);   // ← coreRegistro, no coreFounder
     await tx2.wait();
   } else {
     L(`   · email ya verificado on-chain`);
