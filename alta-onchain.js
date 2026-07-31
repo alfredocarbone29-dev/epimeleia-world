@@ -51,10 +51,15 @@ const CORE_ABI = [
   "function verificarEmail(bytes32 codigo, bytes32 emailHash) external",
 ];
 
+// El enum del contrato (EpimeleiaCore.sol línea 63) SOLO tiene estos 8 valores:
+//   MINERIA=0 FORESTAL=1 NAVAL=2 INDUSTRIAL=3 DATA_CENTER=4 RESIDUOS=5 HIDROVIA=6 OTRO=7
+// Cualquier tipo que NO esté en esta lista (glaciar, hídrico, agrícola, etc.) va
+// a OTRO=7. Pasar un número fuera de rango hace revertir el contrato (require false).
 const TIPO_ACTIVIDAD = {
-  MINERIA: 0, FORESTAL: 1, NAVAL: 2, INDUSTRIAL: 3, DATA_CENTER: 4,
-  RESIDUOS: 5, HIDROVIA: 6, HIDRICO: 7, GLACIAR: 8, AGRICOLA: 9, OTRO: 0,
+  MINERIA: 0, FORESTAL: 1, NAVAL: 2, INDUSTRIAL: 3,
+  DATA_CENTER: 4, RESIDUOS: 5, HIDROVIA: 6, OTRO: 7,
 };
+const TIPO_OTRO = 7; // comodín para tipos que el contrato no conoce
 
 const args = process.argv.slice(2);
 const EJECUTAR = args.includes('--ejecutar');
@@ -126,7 +131,7 @@ function calcularDatos(activo) {
   if (!cr) return null;
   return {
     nombre:  activo.nombre_activo || 'Activo EPIMELEIA',
-    tipoNum: TIPO_ACTIVIDAD[String(activo.tipo || 'OTRO').toUpperCase()] ?? 0,
+    tipoNum: TIPO_ACTIVIDAD[String(activo.tipo || 'OTRO').toUpperCase()] ?? TIPO_OTRO,
     nivel:   Number(activo.nivel) || 0,
     latE6:   aEntero6(cr.cLat),   // el contrato guarda lat x1e6
     lonE6:   aEntero6(cr.cLon),   // y long x1e6
