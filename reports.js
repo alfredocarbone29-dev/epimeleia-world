@@ -4,6 +4,7 @@
  * Generación y envío de reportes trimestrales por email — Ajuste 21.
  * Descarga de datos satelitales completos — Ajuste 20.
  * Alertas de saldo bajo y notificaciones webhook — Ajuste 5.
+ * Aviso QUINCENAL de evidencia de ventana (días 2 y 16) — nuevo.
  */
 
 const axios    = require('axios');
@@ -224,6 +225,255 @@ function _generarHTMLReporte({ activoId, owner, año, q, datosBilling, certs, hu
 </html>`;
 }
 
+// ─── Aviso QUINCENAL de evidencia de ventana (días 2 y 16) ──────
+//
+// Hermano más simple del reporte trimestral. Se dispara desde el
+// scheduler, dentro de _procesarActivoVentana, JUSTO DESPUÉS de sellar
+// la evidencia (caso 'sellado') o cuando el satélite no alcanzó a
+// sellar (caso 'no_visto'). Reusa la misma paleta y el mismo _enviarEmail.
+//
+// FILOSOFÍA (definida por el fundador): el mail dice solo lo que es verdad.
+//   · sellado con calidad ≥ 70  → "se vio bien", con link a la tx real.
+//   · sellado con calidad < 70  → "visibilidad parcial", igual sellado y con link.
+//   · no_visto (climática)      → el satélite pasó pero la nube no dejó sellar.
+//   · no_visto (sin dato)       → no hubo observación utilizable. Sin causa inventada.
+//
+// En 'no_visto' NO hay transacción de esta quincena (la ausencia es el
+// registro), así que el mail NO lleva link a una tx inexistente: apunta al
+// historial público del contrato, que sí es real.
+
+/**
+ * Envía el aviso quincenal de una ventana satelital.
+ *
+ * @param {Object} p
+ * @param {number} p.activoId
+ * @param {string} p.nombreActivo
+ * @param {string} p.emailDestino
+ * @param {number} p.trimestre               - Ej: 20263 = Q3 2026
+ * @param {number} p.quincenaDelTrimestre    - 1..6
+ * @param {string} p.caso                    - 'sellado' | 'no_visto'
+ * // Solo cuando caso === 'sellado':
+ * @param {number} [p.calidadPct]            - 0..100 (≥70 bien, <70 parcial)
+ * @param {string} [p.satelite]
+ * @param {string|Date} [p.fechaPasada]
+ * @param {string} [p.hashEvidencia]         - keccak256 de la evidencia
+ * @param {string} [p.txHash]                - hash de la tx que selló (receipt.hash)
+ * @param {number} [p.bloque]                - número de bloque
+ * // Solo cuando caso === 'no_visto':
+ * @param {boolean} [p.esClimatica]          - true = pasó pero nube; false = sin dato
+ */
+async function enviarEvidenciaQuincenal(p) {
+  const {
+    activoId, nombreActivo, emailDestino,
+    trimestre, quincenaDelTrimestre,
+    caso,
+    calidadPct, satelite, fechaPasada, hashEvidencia, txHash, bloque,
+    esClimatica,
+  } = p;
+
+  const q       = trimestre % 10;
+  const anio    = Math.floor(trimestre / 10);
+  const sellado = caso === 'sellado';
+  const parcial = sellado && typeof calidadPct === 'number' && calidadPct < 70;
+
+  let asunto;
+  if (sellado && !parcial) {
+    asunto = `[EPIMELEIA] Evidencia sellada · ${nombreActivo}`;
+  } else if (sellado && parcial) {
+    asunto = `[EPIMELEIA] Evidencia sellada (visibilidad parcial) · ${nombreActivo}`;
+  } else {
+    asunto = `[EPIMELEIA] Reporte quincenal · ${nombreActivo}`;
+  }
+
+  const html = _generarHTMLQuincenal({
+    activoId, nombreActivo, q, anio, quincenaDelTrimestre,
+    sellado, parcial,
+    calidadPct, satelite, fechaPasada, hashEvidencia, txHash, bloque,
+    esClimatica,
+  });
+
+  log('EMAIL', `Enviando aviso quincenal`, { activoId, trimestre, caso, emailDestino });
+  await _enviarEmail({ para: emailDestino, asunto, html });
+  log('EMAIL', `Aviso quincenal enviado`, { activoId, caso, emailDestino });
+}
+
+/** Fecha corta y legible; si no se puede parsear, devuelve el valor tal cual. */
+function _fechaCorta(v) {
+  if (!v) return '—';
+  const d = (v instanceof Date) ? v : new Date(v);
+  if (isNaN(d.getTime())) return String(v);
+  return d.toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+/**
+ * HTML del aviso quincenal. Misma paleta que el certificado que el fundador
+ * ya aprobó (hueso #f4f0e8, verde #0f1a0f, dorado, serif + monospace).
+ */
+function _generarHTMLQuincenal({
+  activoId, nombreActivo, q, anio, quincenaDelTrimestre,
+  sellado, parcial, calidadPct, satelite, fechaPasada, hashEvidencia, txHash, bloque,
+  esClimatica,
+}) {
+  const contratoCert = config.contratos?.cert || '';
+  const urlTx        = txHash ? `https://polygonscan.com/tx/${txHash}` : '';
+  const urlContrato  = contratoCert ? `https://polygonscan.com/address/${contratoCert}` : '';
+
+  // Eyebrow (línea chica de arriba) + subtítulo según el caso.
+  const eyebrow  = sellado ? 'EVIDENCIA QUINCENAL SELLADA' : 'REPORTE QUINCENAL';
+  const subtitulo = sellado
+    ? `Observación satelital · quincena ${quincenaDelTrimestre}/6 · pasada del ${_fechaCorta(fechaPasada)}`
+    : `Quincena ${quincenaDelTrimestre}/6 · Q${q} · ${anio}`;
+
+  // Mensaje humano, calmo, según el caso.
+  let mensaje;
+  if (sellado && !parcial) {
+    mensaje = `Esta quincena el satélite observó <strong>${nombreActivo}</strong> y la lectura quedó sellada en Polygon.
+      Acá está tu prueba: nadie puede tocarla ni cambiarla, y cualquiera puede verificarla.`;
+  } else if (sellado && parcial) {
+    mensaje = `Esta quincena el satélite observó <strong>${nombreActivo}</strong> y la lectura quedó sellada en Polygon.
+      La visibilidad fue parcial, pero alcanzó para sellar: el registro queda igual de firme y verificable.`;
+  } else if (esClimatica) {
+    mensaje = `Esta quincena el satélite pasó sobre <strong>${nombreActivo}</strong>, pero la visibilidad no alcanzó
+      para sellar con la calidad que exigimos. No es una falta ni penaliza nada: se retoma en la próxima ventana.
+      Todo lo que sí se selló antes sigue público y verificable en la cadena.`;
+  } else {
+    mensaje = `Esta quincena no se obtuvo una observación utilizable de <strong>${nombreActivo}</strong>.
+      No penaliza nada: se retoma en la próxima ventana. Y todo lo que sí se selló antes sigue público y
+      verificable en la cadena.`;
+  }
+
+  // Fila técnica (solo cuando se selló: hay pasada y calidad reales).
+  const filaTecnica = sellado ? `
+  <tr>
+    <td style="padding:20px 40px;border-bottom:1px solid #eee;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
+        <tr>
+          <td style="padding:10px 12px;border:1px solid #e6e0d4;width:33%;">
+            <div style="font-family:monospace;font-size:9px;letter-spacing:2px;color:#8a9e8a;">SATÉLITE</div>
+            <div style="font-family:monospace;font-size:13px;color:#0f1a0f;margin-top:4px;">${satelite || 'Sentinel-2 L2A'}</div>
+          </td>
+          <td style="padding:10px 12px;border:1px solid #e6e0d4;width:34%;">
+            <div style="font-family:monospace;font-size:9px;letter-spacing:2px;color:#8a9e8a;">FUENTE</div>
+            <div style="font-family:monospace;font-size:13px;color:#0f1a0f;margin-top:4px;">ESA · Copernicus</div>
+          </td>
+          <td style="padding:10px 12px;border:1px solid #e6e0d4;width:33%;">
+            <div style="font-family:monospace;font-size:9px;letter-spacing:2px;color:#8a9e8a;">CALIDAD</div>
+            <div style="font-family:monospace;font-size:13px;color:#0f1a0f;margin-top:4px;">${typeof calidadPct === 'number' ? calidadPct + '%' : '—'}</div>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>` : '';
+
+  // Bloque de prueba pública (verde). Cambia según haya tx o no.
+  const bloquePrueba = sellado ? `
+  <tr>
+    <td style="padding:28px 40px;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="background:#0f1a0f;border-radius:2px;">
+        <tr>
+          <td style="padding:28px 32px;">
+            <div style="font-family:monospace;font-size:9px;letter-spacing:3px;color:#c9a84a;">PRUEBA PÚBLICA · VERIFICABLE POR CUALQUIERA</div>
+            <div style="font-family:'Georgia',serif;font-size:19px;color:#f4f0e8;margin:10px 0 16px 0;">Nadie tocó este dato. Y se puede probar.</div>
+            <div style="font-family:monospace;font-size:10px;color:#8a9e8a;">Huella de evidencia</div>
+            <div style="font-family:monospace;font-size:11px;color:#c9a84a;word-break:break-all;margin:2px 0 10px 0;">${hashEvidencia || '—'}</div>
+            <div style="font-family:monospace;font-size:11px;color:#8a9e8a;">Contrato · ${contratoCert} · Polygon Mainnet</div>
+            ${bloque != null ? `<div style="font-family:monospace;font-size:11px;color:#8a9e8a;margin-top:4px;">Sellado · bloque #${bloque}</div>` : ''}
+            ${urlTx ? `
+            <div style="margin-top:18px;">
+              <a href="${urlTx}" style="display:inline-block;background:#c9a84a;color:#0f1a0f;font-family:monospace;font-size:12px;letter-spacing:1px;text-decoration:none;padding:12px 22px;">Verificar en Polygonscan →</a>
+            </div>` : ''}
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>` : `
+  <tr>
+    <td style="padding:28px 40px;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="background:#0f1a0f;border-radius:2px;">
+        <tr>
+          <td style="padding:28px 32px;">
+            <div style="font-family:monospace;font-size:9px;letter-spacing:3px;color:#c9a84a;">REGISTRO PÚBLICO · VERIFICABLE POR CUALQUIERA</div>
+            <div style="font-family:'Georgia',serif;font-size:19px;color:#f4f0e8;margin:10px 0 16px 0;">Esta quincena quedó registrada tal cual fue.</div>
+            <p style="font-family:'Georgia',serif;font-size:13px;color:rgba(244,240,232,0.75);line-height:1.7;margin:0 0 12px 0;">
+              Lo que el satélite sí pudo sellar antes está grabado y no se puede alterar. La verdad siempre está en la cadena.
+            </p>
+            <div style="font-family:monospace;font-size:11px;color:#8a9e8a;">Contrato · ${contratoCert} · Polygon Mainnet</div>
+            ${urlContrato ? `
+            <div style="margin-top:18px;">
+              <a href="${urlContrato}" style="display:inline-block;background:#c9a84a;color:#0f1a0f;font-family:monospace;font-size:12px;letter-spacing:1px;text-decoration:none;padding:12px 22px;">Ver el historial en la cadena →</a>
+            </div>` : ''}
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>`;
+
+  return `
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#f4f0e8;font-family:'Georgia',serif;">
+
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f0e8;padding:40px 20px;">
+<tr><td>
+<table width="600" cellpadding="0" cellspacing="0" style="margin:0 auto;background:#f4f0e8;border:1px solid #e0d8c8;">
+
+  <!-- HEADER -->
+  <tr>
+    <td style="background:#0f1a0f;padding:28px 40px;">
+      <div style="font-family:'Georgia',serif;font-size:22px;letter-spacing:4px;color:#f4f0e8;">EPIMELEIA</div>
+      <div style="font-family:monospace;font-size:10px;color:#8a9e8a;letter-spacing:2px;margin-top:4px;">
+        NOTARIO DIGITAL AMBIENTAL · POLYGON MAINNET
+      </div>
+    </td>
+  </tr>
+
+  <!-- TÍTULO -->
+  <tr>
+    <td style="padding:32px 40px 24px 40px;">
+      <div style="font-family:monospace;font-size:10px;letter-spacing:3px;color:#8a9e8a;margin-bottom:10px;">${eyebrow}</div>
+      <h1 style="font-family:'Georgia',serif;font-size:26px;font-weight:400;color:#0f1a0f;margin:0 0 6px 0;">${nombreActivo}</h1>
+      <div style="font-family:'Georgia',serif;font-style:italic;font-size:14px;color:#5a6a5a;">${subtitulo}</div>
+      <div style="font-family:monospace;font-size:11px;color:#8a9e8a;margin-top:8px;">Activo ID: ${activoId}</div>
+    </td>
+  </tr>
+
+  <!-- MENSAJE -->
+  <tr>
+    <td style="padding:0 40px 24px 40px;">
+      <p style="font-family:'Georgia',serif;font-size:15px;color:#3a4a3a;line-height:1.75;margin:0;">${mensaje}</p>
+    </td>
+  </tr>
+
+  ${filaTecnica}
+  ${bloquePrueba}
+
+  <!-- CIERRE -->
+  <tr>
+    <td style="padding:8px 40px 28px 40px;text-align:center;">
+      <div style="font-family:'Georgia',serif;font-style:italic;font-size:15px;color:#5a6a5a;">No vendemos el dato.</div>
+      <div style="font-family:'Georgia',serif;font-size:16px;color:#0f1a0f;margin-top:2px;">Vendemos la prueba de que nadie lo tocó.</div>
+    </td>
+  </tr>
+
+  <!-- FOOTER -->
+  <tr>
+    <td style="padding:22px 40px;background:#0f1a0f;">
+      <p style="color:rgba(244,240,232,0.6);font-size:11px;font-family:monospace;margin:0;line-height:1.8;">
+        Aviso generado automáticamente por el protocolo EPIMELEIA.<br>
+        <a href="mailto:info@epimeleia.world" style="color:#4a7c4a;">info@epimeleia.world</a>
+        &nbsp;·&nbsp; <a href="https://www.epimeleia.world" style="color:#4a7c4a;">epimeleia.world</a>
+      </p>
+    </td>
+  </tr>
+
+</table>
+</td></tr>
+</table>
+</body>
+</html>`;
+}
+
 // ─── Alerta de saldo bajo (Ajuste 5) ───────────────────────────
 
 async function enviarAlertaSaldo(params) {
@@ -315,6 +565,7 @@ async function _enviarEmail({ para, asunto, html }) {
 
 module.exports = {
   enviarReporteTrimestral,
+  enviarEvidenciaQuincenal,
   enviarAlertaSaldo,
   notificarAdmin,
 };
