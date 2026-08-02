@@ -515,6 +515,30 @@ async function _procesarActivoVentana(activoId, periodo, simular = false) {
         causa:                evaluacion.causa,
         esClimatica:          evaluacion.esClimatica || false,
       });
+
+      // ── AVISO QUINCENAL AL CLIENTE (caso: no se vio) ──────────────
+      // Esta quincena NO se selló nada on-chain (la ausencia es el registro),
+      // así que el mail no lleva link a una tx: el reports arma el mensaje
+      // honesto según esClimatica (pasó pero nube / sin dato utilizable).
+      // En su propio try para no romper la ventana si el envío falla.
+      try {
+        const emailDestino = process.env[`EMAIL_ACTIVO_${activoId}`] || process.env.ADMIN_EMAIL || '';
+        if (emailDestino) {
+          await reports.enviarEvidenciaQuincenal({
+            activoId,
+            nombreActivo:         filaSupabase.nombreActivo,
+            emailDestino,
+            trimestre:            periodo.trimestre,
+            quincenaDelTrimestre: periodo.quincenaDelTrimestre,
+            caso:                 'no_visto',
+            esClimatica:          evaluacion.esClimatica || false,
+          });
+        } else {
+          log('WARN', `Activo ${activoId}: sin email destino — no se envía aviso quincenal (no visto)`);
+        }
+      } catch (err) {
+        log('ERROR', `No se pudo enviar el aviso quincenal (no visto) del activo ${activoId}: ${err.message}`);
+      }
     }
 
     // Si además es el cierre del trimestre, el hueco sí se registra.
@@ -564,7 +588,7 @@ async function _procesarActivoVentana(activoId, periodo, simular = false) {
       fechaPasada: medicion.fechaPasada,
     });
   } else {
-    await blockchain.registrarEvidenciaVentana({
+    const recibo = await blockchain.registrarEvidenciaVentana({
       activoId,
       trimestre:    periodo.trimestre,
       hashEvidencia,
@@ -585,6 +609,34 @@ async function _procesarActivoVentana(activoId, periodo, simular = false) {
       regla:                medicion.reglaLectura,
       timestamp:            new Date().toISOString(),
     });
+
+    // ── AVISO QUINCENAL AL CLIENTE (caso: se vio y se selló) ──────
+    // El mail es secundario: la evidencia YA quedó grabada arriba. Si el
+    // envío falla, se loguea pero NO se rompe la ventana ni se reintenta el
+    // sellado (que ya está hecho y gastó gas). Por eso va en su propio try.
+    try {
+      const emailDestino = process.env[`EMAIL_ACTIVO_${activoId}`] || process.env.ADMIN_EMAIL || '';
+      if (emailDestino) {
+        await reports.enviarEvidenciaQuincenal({
+          activoId,
+          nombreActivo:         filaSupabase.nombreActivo,
+          emailDestino,
+          trimestre:            periodo.trimestre,
+          quincenaDelTrimestre: periodo.quincenaDelTrimestre,
+          caso:                 'sellado',
+          calidadPct:           medicion.calidadPct,
+          satelite:             medicion.satelite,
+          fechaPasada:          medicion.fechaPasada,
+          hashEvidencia,
+          txHash:               recibo?.hash || null,
+          bloque:               recibo?.blockNumber != null ? Number(recibo.blockNumber) : null,
+        });
+      } else {
+        log('WARN', `Activo ${activoId}: sin email destino (EMAIL_ACTIVO_${activoId} / ADMIN_EMAIL) — no se envía aviso quincenal`);
+      }
+    } catch (err) {
+      log('ERROR', `No se pudo enviar el aviso quincenal del activo ${activoId}: ${err.message}`);
+    }
   }
 
   const resultado = { evidencia: true };
