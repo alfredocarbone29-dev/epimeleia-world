@@ -718,18 +718,6 @@ section { position:relative; }
   </div>
 </div>
 
-<!-- CARTELITO adherirse (en preparación) -->
-<div class="overlay soon" id="ovSoon">
-  <div class="modal">
-    <button class="modal-close" onclick="cerrar('ovSoon')">✕</button>
-    <div class="soon-ico">✦</div>
-    <div class="modal-title">Estamos abriendo la puerta</div>
-    <div class="modal-body">
-      <p>La adhesión al protocolo se habilita en la próxima etapa. Toda la tecnología ya está funcionando por detrás — estamos terminando la puerta de entrada.</p>
-      <p>Si querés avanzar ya, escribinos a <strong>info@epimeleia.world</strong> y te acompañamos.</p>
-    </div>
-  </div>
-</div>
 
 <script>
 /* ─── ACTIVOS REALES ON-CHAIN (datos verificables · Polygon Mainnet) ───
@@ -927,14 +915,11 @@ function toggleFaq(i){ document.querySelectorAll('.faq-item')[i].classList.toggl
 
 /* ─── ADHERIRSE (puerta a la próxima etapa) ─── */
 function adherir(){
-  /* Cuando cuenta.html esté publicada, reemplazar la línea de abajo por:
-     window.location.href = 'cuenta.html';  */
-  document.getElementById('ovSoon').classList.add('active');
-  document.body.style.overflow = 'hidden';
+  window.location.href = 'cuenta.html';
 }
 
 function cerrar(id){ document.getElementById(id).classList.remove('active'); document.body.style.overflow=''; }
-['ovModal','ovSoon'].forEach(id=>{ document.getElementById(id).addEventListener('click', e=>{ if(e.target.id===id) cerrar(id); }); });
+['ovModal'].forEach(id=>{ document.getElementById(id).addEventListener('click', e=>{ if(e.target.id===id) cerrar(id); }); });
 
 /* ─── EMAIL ─── */
 function copiarEmail(el){
