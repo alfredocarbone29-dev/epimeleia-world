@@ -215,6 +215,32 @@ section { position:relative; }
 .cert-foot { display:flex; flex-wrap:wrap; justify-content:space-between; gap:10px; margin-top:20px; padding-top:14px; border-top:1px solid var(--cert-line); font-family:'JetBrains Mono',monospace; font-size:8px; letter-spacing:1px; color:var(--cert-muted); }
 .cert-caption { text-align:center; font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:2px; color:var(--dim); margin-top:22px; }
 
+/* dos evidencias reales lado a lado (avisos quincenales) */
+.evid-pair { display:grid; grid-template-columns:1fr 1fr; gap:18px; max-width:940px; margin:0 auto; }
+.evid { background:var(--cert-bg); color:var(--cert-ink); border:1px solid rgba(27,44,27,0.18); padding:clamp(22px,3vw,30px); box-shadow:0 24px 56px rgba(0,0,0,0.5); display:flex; flex-direction:column; }
+.evid-brand { font-family:'Playfair Display',serif; font-size:18px; letter-spacing:5px; color:var(--cert-ink); }
+.evid-brand-sub { font-family:'JetBrains Mono',monospace; font-size:7px; letter-spacing:2px; color:var(--cert-gold); margin-top:5px; }
+.evid-rule { height:1px; background:var(--cert-line); margin:16px 0 18px; }
+.evid-eyebrow { font-family:'JetBrains Mono',monospace; font-size:8px; letter-spacing:2px; color:var(--cert-muted); margin-bottom:8px; }
+.evid-name { font-family:'Playfair Display',serif; font-size:clamp(20px,2.4vw,26px); color:var(--cert-ink); line-height:1.1; }
+.evid-obs { font-family:'Playfair Display',serif; font-style:italic; font-size:13px; color:var(--cert-muted); margin-top:6px; }
+.evid-id { font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--cert-muted); margin-top:6px; }
+.evid-msg { font-size:14.5px; color:var(--cert-ink); line-height:1.6; margin:16px 0; }
+.evid-meta { display:grid; grid-template-columns:repeat(3,1fr); border:1px solid var(--cert-line); margin-bottom:16px; }
+.evid-meta div { padding:9px 10px; border-right:1px solid var(--cert-line); }
+.evid-meta div:last-child { border-right:none; }
+.evid-meta-k { font-family:'JetBrains Mono',monospace; font-size:7px; letter-spacing:1px; color:var(--cert-muted); margin-bottom:4px; }
+.evid-meta-v { font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--cert-ink); }
+.evid-seal { background:var(--cert-seal); padding:18px 18px; margin-top:auto; }
+.evid-seal-tag { font-family:'JetBrains Mono',monospace; font-size:7px; letter-spacing:2px; color:rgba(184,150,63,0.85); }
+.evid-seal-title { font-family:'Playfair Display',serif; font-size:15px; color:var(--cert-bg); margin:8px 0 10px; }
+.evid-seal-note { font-size:12px; color:rgba(244,240,232,0.72); line-height:1.6; margin-bottom:10px; }
+.evid-seal-line { font-family:'JetBrains Mono',monospace; font-size:9px; color:rgba(244,240,232,0.6); line-height:1.7; word-break:break-all; }
+.evid-seal-line b { color:rgba(184,150,63,0.85); font-weight:400; }
+.evid-seal-btn { display:inline-block; margin-top:12px; font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:1px; color:var(--cert-seal); background:var(--gold2); text-decoration:none; padding:11px 16px; transition:background .2s; }
+.evid-seal-btn:hover { background:var(--gold); }
+@media(max-width:720px){ .evid-pair { grid-template-columns:1fr; } }
+
 /* registro on-chain (ledger) */
 .ledger-head { text-align:center; margin:clamp(52px,7vw,80px) auto clamp(28px,4vw,40px); }
 .ledger-head .eyebrow { margin-bottom:14px; }
@@ -368,6 +394,14 @@ section { position:relative; }
 .epi-send:hover { background:var(--gold2); }
 .epi-hint { font-family:'JetBrains Mono',monospace; font-size:7px; letter-spacing:1px; color:var(--dim); text-align:center; margin-top:9px; }
 
+/* ─── ADHERIRSE FLOTANTE (acompaña como EPI, del lado izquierdo) ─── */
+.adh-float { position:fixed; left:clamp(16px,3vw,32px); bottom:clamp(16px,3vw,32px); z-index:400; display:inline-flex; align-items:center; gap:9px; font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:2px; color:var(--void); background:var(--gold2); border:none; padding:15px 22px; cursor:pointer; box-shadow:0 8px 30px rgba(0,0,0,0.5); transition:background .2s, transform .2s; }
+.adh-float:hover { background:var(--gold); transform:translateY(-2px); }
+.adh-float svg { width:14px; height:14px; }
+.adh-float .spark-lg { fill:var(--void); }
+.adh-float .spark-sm { fill:var(--void); }
+@media(max-width:520px){ .adh-float { font-size:10px; padding:13px 16px; letter-spacing:1px; } }
+
 /* ─── MODALES ─── */
 .overlay { display:none; position:fixed; inset:0; z-index:500; background:rgba(4,9,4,0.93); backdrop-filter:blur(8px); overflow-y:auto; padding:40px 20px; }
 .overlay.active { display:flex; align-items:flex-start; justify-content:center; }
@@ -403,65 +437,246 @@ section { position:relative; }
 </head>
 <body>
 
-<!-- TOPBAR -->
+<!-- TOPBAR (barra chica · volver al inicio) -->
 <div class="topbar">
-  <div class="brand">EPIMELEIA <span>· PLATAFORMA</span></div>
+  <div class="brand"><a href="index.html" style="color:var(--white);text-decoration:none;">← VER EPIMELEIA</a> <span>· PLATAFORMA</span></div>
   <nav class="topnav">
     <button onclick="abrir('comoFunciona')">CÓMO FUNCIONA</button>
-    <a class="nav-prueba" href="plataforma.html#prueba" style="text-decoration:none;display:inline-block;">LA PRUEBA</a>
-    <button onclick="abrir('historia')">NUESTRA HISTORIA</button>
+    <button class="nav-prueba" onclick="irA('prueba')">LA PRUEBA</button>
     <button onclick="abrir('faqs')">PREGUNTAS FRECUENTES</button>
     <button class="nav-gratis" onclick="abrir('mesGratis')">¿UN MES GRATIS?</button>
   </nav>
 </div>
 
-<!-- HERO -->
-<section class="hero">
-  <div class="hero-mark">EPIMELEIA</div>
-  <div class="hero-welcome">BIENVENIDOS</div>
-  <div class="hero-rule"></div>
-  <p class="hero-lead">Elegís un lugar del planeta y un satélite empieza a observarlo. Lo que ve queda registrado — y después, <em>nadie puede cambiarlo</em>.</p>
-  <p class="hero-plain">Somos una plataforma tecnológica. Un vínculo directo entre vos y un satélite: elegís qué observar, lo certificamos, y te informamos qué está pasando con tu bien. Sin software que instalar, sin procesos largos, nada oculto.</p>
-
-  <div class="bifurca">
-    <p class="bifurca-lead">EPIMELEIA incorpora <span>inteligencia artificial</span> en tu experiencia. Y vos elegís el camino que te pertenece:</p>
-    <div class="bifurca-grid">
-      <a class="camino prod" href="plataforma.html">
-        <span class="camino-ia" aria-label="Con asistente IA">
-          <svg viewBox="0 0 24 24"><path class="spark-lg" d="M12 2l1.6 5.2L19 9l-5.4 1.8L12 16l-1.6-5.2L5 9l5.4-1.8z"/><path class="spark-sm" d="M18.5 14l.7 2.3 2.3.7-2.3.7-.7 2.3-.7-2.3-2.3-.7 2.3-.7z"/></svg> EPI
-        </span>
-        <div class="camino-k">PARA VOS</div>
-        <div class="camino-name">EPIMELEIA</div>
-        <div class="camino-sub">¿Qué necesitás observar y certificar? Agro, minería, agua, forestal, real estate, data centers, energía, residuos, glaciares… y más.</div>
-        <div class="camino-arrow">ENTRAR →</div>
-      </a>
-      <a class="camino bancos" href="instituciones.html">
-        <span class="camino-ia" aria-label="Con asistente IA">
-          <svg viewBox="0 0 24 24"><path class="spark-lg" d="M12 2l1.6 5.2L19 9l-5.4 1.8L12 16l-1.6-5.2L5 9l5.4-1.8z"/><path class="spark-sm" d="M18.5 14l.7 2.3 2.3.7-2.3.7-.7 2.3-.7-2.3-2.3-.7 2.3-.7z"/></svg> EPI
-        </span>
-        <div class="camino-k">BANCOS VERDES · INSTITUCIONES</div>
-        <div class="camino-name">EPIMELEIA<br>Servicios Financieros</div>
-        <div class="camino-sub">Sos un banco, un fondo o emitís deuda verde y necesitás prueba a escala de cartera.</div>
-        <div class="camino-arrow">ENTRAR →</div>
-      </a>
-    </div>
+<!-- CUATRO CLICKS -->
+<section class="sec sec-narrow">
+  <div class="head">
+    <div class="eyebrow">DE UNA IDEA AL SATÉLITE</div>
+    <h2 class="head-title">En <em>cuatro clicks</em> estás conectado a un satélite</h2>
+    <p class="head-sub">Sin software que instalar. Sin billetera cripto. Sin técnicos. La ingeniería pesada trabaja por detrás — vos solo elegís y confirmás.</p>
   </div>
+  <div class="cc-steps">
+    <div class="cc-step"><div class="cc-num">01</div><div class="cc-ico">🔍</div><div class="cc-step-t">Buscás el lugar</div><div class="cc-step-d">Un campo, un río, una planta. Lo encontrás en el mapa.</div></div>
+    <div class="cc-step"><div class="cc-num">02</div><div class="cc-ico">✏️</div><div class="cc-step-t">Marcás el contorno</div><div class="cc-step-d">Dibujás los límites de lo que querés observar. En segundos.</div></div>
+    <div class="cc-step"><div class="cc-num">03</div><div class="cc-ico">✓</div><div class="cc-step-t">Confirmás</div><div class="cc-step-d">Revisás y das el ok. El satélite ya tiene tus coordenadas.</div></div>
+    <div class="cc-step"><div class="cc-num">04</div><div class="cc-ico">🛰</div><div class="cc-step-t">Quedás conectado</div><div class="cc-step-d">Desde ahí, el satélite observa y cada resultado se graba en blockchain.</div></div>
+  </div>
+  <div class="cc-nofriction">
+    <div class="cc-tag"><span>✓</span> SIN INSTALAR NADA</div>
+    <div class="cc-tag"><span>✓</span> SIN BILLETERA CRIPTO</div>
+    <div class="cc-tag"><span>✓</span> SIN TÉCNICOS</div>
+    <div class="cc-tag"><span>✓</span> DATO SATELITAL EUROPEO · COPERNICUS</div>
+  </div>
+  <p class="cc-close">Lo difícil ya lo resolvimos nosotros. Del otro lado, para vos, son cuatro toques.</p>
 </section>
 
 <div class="divider"></div>
 
-<!-- CÓMO FUNCIONA -->
-<section class="sec" id="comoFunciona-sec">
-  <div class="head">
-    <div class="eyebrow">ASÍ FUNCIONA</div>
-    <h2 class="head-title">Tres cosas pasan, y ninguna depende de una persona</h2>
-  </div>
-  <div class="steps">
-    <div class="step"><div class="step-k">VOS</div><div class="step-t">Elegís qué observar</div><div class="step-d">Un campo, un río, un bosque, un terreno. Marcás los límites y elegís el satélite: público o privado.</div></div>
-    <div class="step"><div class="step-k">EL SATÉLITE</div><div class="step-t">Observa y certifica</div><div class="step-d">Mira desde el espacio, sin pisar el lugar. El resultado se graba en blockchain sin pasar por manos humanas.</div></div>
-    <div class="step"><div class="step-k">NADIE</div><div class="step-t">Lo puede tocar después</div><div class="step-d">Ni vos, ni EPIMELEIA, ni el satélite. Una vez escrito, queda — y cualquiera puede verificarlo.</div></div>
-  </div>
+<!-- GUARDIA VIVA -->
+<section class="sec">
+  <div class="eyebrow" style="text-align:center;margin-bottom:24px;">LA GUARDIA QUE NO DUERME</div>
+  <p class="gv-statement">El satélite no mira una vez. Mira, y vuelve, y vuelve — <span>también cuando vos estás en otra cosa</span>.</p>
+  <p class="gv-lead">Cada pasada compara lo nuevo con lo de antes. Si algo cambió, lo registra. Y si ese cambio merece tu atención, te avisa.</p>
 </section>
+
+<div class="divider"></div>
+
+<!-- DIFERENCIAL -->
+<section class="sec sec-narrow" style="text-align:center;">
+  <div class="eyebrow" style="margin-bottom:26px;">EL DIFERENCIAL</div>
+  <p class="dif-statement">No vendemos el dato. Vendemos <span>la prueba de que nadie lo tocó</span>.</p>
+  <p class="dif-intro">Una imagen satelital la consigue cualquiera. Lo que no se compra en otro lado es que esa imagen quede registrada de un modo que después nadie —ni vos, ni nosotros, ni el satélite— pueda alterar.</p>
+  <div class="opa-grid">
+    <div class="opa-cell"><div class="opa-tag">CUANDO HAY OBSERVACIÓN</div><p class="opa-text">El satélite ve, registra, y el resultado queda <strong>grabado en blockchain</strong>. Nadie puede cambiarlo después — ni el cliente, ni nosotros.</p></div>
+    <div class="opa-cell"><div class="opa-tag">CUANDO NO LA HAY</div><p class="opa-text">Si las nubes o una falla impiden ver, ese vacío también se escribe: lo llamamos <strong>hueco de opacidad</strong>. No es un castigo — es el contrato funcionando.</p></div>
+  </div>
+  <p class="opa-foot">La ausencia de dato también es un dato. Y tampoco se puede esconder ni inventar.</p>
+  <p class="dif-close">Por eso, cuando importe, <strong>nadie va a poder discutirte los hechos</strong>: que el cauce del río cambió, que la ocupación del predio fue antes o después, que la zona seguía intacta. Queda la prueba, con fecha, y no depende de que nadie la confirme.</p>
+</section>
+
+<div class="divider"></div>
+
+<!-- ══════════ LA PRUEBA (certificado real + registro on-chain) ══════════ -->
+<section class="prueba" id="prueba">
+  <div class="head">
+    <div class="eyebrow" style="color:var(--gold2);">NO ES UNA PROMESA · YA ESTÁ FUNCIONANDO</div>
+    <h2 class="head-title">Esto no es una maqueta. Es un certificado <em>real</em>, sellado en cadena.</h2>
+    <p class="head-sub">Así se ve lo que recibe un cliente. Los mismos números que midió el satélite, la misma huella que quedó grabada. Verificable por cualquiera, sin pedirnos permiso.</p>
+  </div>
+
+  <!-- DOS EVIDENCIAS REALES (avisos quincenales de hoy · Polygon Mainnet) -->
+  <div class="cert-wrap" style="max-width:940px;">
+    <div class="evid-pair">
+
+      <!-- 1) SELLADA · perito moreno (datos reales del 2/8/2026) -->
+      <article class="evid">
+        <div class="evid-brand">EPIMELEIA</div>
+        <div class="evid-brand-sub">NOTARIO DIGITAL AMBIENTAL · POLYGON MAINNET</div>
+        <div class="evid-rule"></div>
+        <div class="evid-eyebrow">EVIDENCIA QUINCENAL SELLADA</div>
+        <div class="evid-name">perito moreno</div>
+        <div class="evid-obs">Observación satelital · quincena 2/6 · pasada del 29 jul 2026</div>
+        <div class="evid-id">Activo ID: 5</div>
+        <p class="evid-msg">Esta quincena el satélite observó <strong>perito moreno</strong> y la lectura quedó sellada en Polygon. La visibilidad fue parcial, pero alcanzó para sellar: el registro queda igual de firme y verificable.</p>
+        <div class="evid-meta">
+          <div><div class="evid-meta-k">SATÉLITE</div><div class="evid-meta-v">Sentinel-2 L2A</div></div>
+          <div><div class="evid-meta-k">FUENTE</div><div class="evid-meta-v">ESA · Copernicus</div></div>
+          <div><div class="evid-meta-k">CALIDAD</div><div class="evid-meta-v">53%</div></div>
+        </div>
+        <div class="evid-seal">
+          <div class="evid-seal-tag">PRUEBA PÚBLICA · VERIFICABLE POR CUALQUIERA</div>
+          <div class="evid-seal-title">Nadie tocó este dato. Y se puede probar.</div>
+          <div class="evid-seal-line">
+            <b>Huella de evidencia</b><br>0xb7ec531476e4a968a46f6dcfcb917e84e8499f5cb551705d66c764683d3ebdf6<br>
+            <b>Contrato</b> · 0xf59BCFB98Ba9e05dC82d44E508d90917AF8bbc93 · Polygon Mainnet<br>
+            <b>Sellado</b> · bloque #91317931
+          </div>
+          <a class="evid-seal-btn" href="https://polygonscan.com/tx/0xa3344ad6404ce2cc5f25c189c5826e7a1a9f71e47b4f965e62ff230ccdc53a2a" target="_blank" rel="noopener">VERIFICAR EN POLYGONSCAN →</a>
+        </div>
+      </article>
+
+      <!-- 2) NO VISTO · quiulacocha (SATELLITE_LOSS real del 2/8/2026) -->
+      <article class="evid">
+        <div class="evid-brand">EPIMELEIA</div>
+        <div class="evid-brand-sub">NOTARIO DIGITAL AMBIENTAL · POLYGON MAINNET</div>
+        <div class="evid-rule"></div>
+        <div class="evid-eyebrow">REPORTE QUINCENAL</div>
+        <div class="evid-name">quiulacocha</div>
+        <div class="evid-obs">Quincena 2/6 · Q3 · 2026</div>
+        <div class="evid-id">Activo ID: 8</div>
+        <p class="evid-msg">Esta quincena no se obtuvo una observación utilizable de <strong>quiulacocha</strong>. No penaliza nada: se retoma en la próxima ventana. Y todo lo que sí se selló antes sigue público y verificable en la cadena.</p>
+        <div class="evid-seal">
+          <div class="evid-seal-tag">REGISTRO PÚBLICO · VERIFICABLE POR CUALQUIERA</div>
+          <div class="evid-seal-title">Esta quincena quedó registrada tal cual fue.</div>
+          <p class="evid-seal-note">Lo que el satélite sí pudo sellar antes está grabado y no se puede alterar. La verdad siempre está en la cadena.</p>
+          <div class="evid-seal-line">
+            <b>Contrato</b> · 0xf59BCFB98Ba9e05dC82d44E508d90917AF8bbc93 · Polygon Mainnet
+          </div>
+          <a class="evid-seal-btn" href="https://polygonscan.com/address/0xf59BCFB98Ba9e05dC82d44E508d90917AF8bbc93" target="_blank" rel="noopener">VER EL HISTORIAL EN LA CADENA →</a>
+        </div>
+      </article>
+
+    </div>
+    <p class="cert-caption">DOS AVISOS REALES DEL PROTOCOLO · NO ES UN EJEMPLO INVENTADO</p>
+  </div>
+
+  <!-- REGISTRO ON-CHAIN: activos reales registrados en mainnet -->
+  <div class="ledger-head">
+    <div class="eyebrow" style="color:var(--gold2);">EL REGISTRO PÚBLICO</div>
+    <h3>Estos activos ya están escritos en Polygon. Tocá cualquiera y lo verificás vos.</h3>
+  </div>
+  <div class="ledger" id="ledger"></div>
+  <p class="ledger-cap">
+    TODOS EMITIDOS DESDE LA MISMA WALLET DEL PROTOCOLO · POLYGON MAINNET<br>
+    <a href="https://polygonscan.com/address/0xD8F60cE55020197a98Ab00B31ecF394E65Ca87d4" target="_blank" rel="noopener">VER TODA LA ACTIVIDAD ON-CHAIN →</a>
+  </p>
+
+  <p class="prueba-close">Cualquiera puede prometer. <span>Pocos pueden mostrarte la prueba, con fecha, imposible de retocar.</span></p>
+</section>
+
+<div class="divider"></div>
+
+<!-- QUÉ ESTÁ EN JUEGO -->
+<section class="sec">
+  <div class="head">
+    <div class="eyebrow">QUÉ ESTÁ EN JUEGO</div>
+    <h2 class="head-title">Hoy, en muchos lugares, la prueba dejó de ser opcional</h2>
+    <p class="head-sub" style="font-style:italic;">No inventamos estos problemas. Así funciona el mundo ahora — el que ya lo vive, sabe de qué hablamos.</p>
+  </div>
+  <div class="qj-grid">
+    <div class="qj-cell"><div class="qj-tag">EXPORTAR</div><div class="qj-scene">Vender a Europa sin prueba de origen</div><div class="qj-fact">La Unión Europea le pide a quien exporta soja, carne, madera o café demostrar que su producto no viene de tierra deforestada. La declaración firmada ya no alcanza: piden evidencia trazable.</div><div class="qj-conseq"><strong>Sin esa prueba, la mercadería no entra.</strong></div></div>
+    <div class="qj-cell"><div class="qj-tag">FINANCIARSE</div><div class="qj-scene">Aplicar a un crédito verde</div><div class="qj-fact">Bancos y fondos financian proyectos ambientales, pero cada vez exigen datos verificables de que lo que financian es real. Una carpeta con promesas, y sin registro trazable, no pasa la mesa de evaluación.</div><div class="qj-conseq"><strong>Con prueba en la mano, la conversación cambia.</strong></div></div>
+    <div class="qj-cell"><div class="qj-tag">DEFENDERTE</div><div class="qj-scene">Que te acusen, y no poder demostrar</div><div class="qj-fact">Alguien dice que contaminaste un río, o que ocupaste un predio, en una fecha determinada. Sin un registro con fecha que nadie pueda falsificar, es tu palabra contra la suya.</div><div class="qj-conseq"><strong>Con la prueba, no hay discusión posible.</strong></div></div>
+  </div>
+  <p class="qj-close">Nada de esto es una amenaza que traemos nosotros. Es el terreno donde ya estás parado. Lo único que hacemos es <strong>que llegues con la prueba, y no con las manos vacías</strong>.</p>
+</section>
+
+<div class="divider"></div>
+
+<!-- RECURSOS -->
+<section class="sec">
+  <div class="head">
+    <div class="eyebrow">QUÉ PODÉS PONER A OBSERVAR</div>
+    <h2 class="head-title">Si deja una huella en el territorio, se puede certificar</h2>
+    <p class="recursos-sub">Tocá cualquiera para ver cómo funciona</p>
+  </div>
+  <div class="recursos-grid" id="recGrid"></div>
+</section>
+
+<div class="divider"></div>
+
+<!-- PRECIO -->
+<section class="sec">
+  <div class="head">
+    <div class="eyebrow">EL TRATO · SIN LETRA CHICA</div>
+    <h2 class="head-title tr-title">El primer mes es de cortesía. Después, pagás según <em>cuánto observás</em>.</h2>
+  </div>
+  <div class="tr-deal">
+    <div class="tr-cell"><div class="tr-cell-k">EL PRIMER MES</div><div class="tr-cell-t">Gratis y completo</div><div class="tr-cell-d">Certificación real, grabada en blockchain, igual que un cliente que ya paga. No es una demo recortada.</div></div>
+    <div class="tr-cell"><div class="tr-cell-k">TU TARJETA</div><div class="tr-cell-t">La gestiona PayPal</div><div class="tr-cell-d">Nunca EPIMELEIA. No vemos ni guardamos los datos de tu medio de pago.</div></div>
+    <div class="tr-cell"><div class="tr-cell-k">CUÁNDO QUIERAS</div><div class="tr-cell-t">Cancelás sin vueltas</div><div class="tr-cell-d">Si en los 30 días no te sirve, cancelás y no se debita un peso. Sin explicaciones.</div></div>
+  </div>
+  <div class="tr-price">
+    <div class="tr-price-from">DESDE</div>
+    <div class="tr-price-num">US$180<span> / mes</span></div>
+    <div class="tr-price-note">El precio escala según la superficie del activo. No adivines dónde caés — poné tus hectáreas abajo y te lo decimos exacto.</div>
+  </div>
+  <div class="tr-tiers">
+    <div class="tr-tier" data-tier="base"><div class="tr-tier-name">BASE</div><div class="tr-tier-price">180<span>/mes</span></div><div class="tr-tier-sz">HASTA 500 HA</div></div>
+    <div class="tr-tier" data-tier="pro"><div class="tr-tier-name">PRO</div><div class="tr-tier-price">450<span>/mes</span></div><div class="tr-tier-sz">501 – 5.000 HA</div></div>
+    <div class="tr-tier" data-tier="corporate"><div class="tr-tier-name">CORPORATE</div><div class="tr-tier-price">900<span>/mes</span></div><div class="tr-tier-sz">5.001 – 25.000 HA</div></div>
+    <div class="tr-tier" data-tier="enterprise"><div class="tr-tier-name">ENTERPRISE</div><div class="tr-tier-price">1800<span>/mes</span></div><div class="tr-tier-sz">25.001 – 62.500 HA</div></div>
+  </div>
+  <div class="tr-tiers-cap">TODOS EN DÓLARES · EL PRIMER MES NO SE COBRA EN NINGUNO</div>
+
+  <!-- CALCULADORA (misma lógica que calcularPrecio() del backend) -->
+  <div class="calc">
+    <div class="calc-eyebrow">CALCULÁ TU PLAN</div>
+    <div class="calc-title">¿Cuántas hectáreas tiene tu activo?</div>
+    <div class="calc-inputrow">
+      <input id="calcInput" type="number" inputmode="decimal" min="0" placeholder="ej: 409" aria-label="Superficie en hectáreas">
+      <div class="calc-unit">ha</div>
+    </div>
+    <div class="calc-result">
+      <div class="calc-hint" id="calcHint">Escribí la superficie y te mostramos el plan.</div>
+      <div class="calc-out" id="calcOut" style="display:none;"></div>
+    </div>
+  </div>
+
+  <p class="tr-fine">El límite por activo es <strong>62.500 ha</strong> (25×25 km, el borde que abarca una pasada del satélite). Si tu superficie es mayor, se divide en varios activos — cada uno es un registro propio. Cualquier cambio futuro se anuncia antes: <strong>nunca se cobra de sorpresa</strong>.</p>
+</section>
+
+<!-- PUERTA / ADHERIRSE -->
+<section class="door">
+  <div class="door-eyebrow">CUANDO QUIERAS EMPEZAR</div>
+  <p class="door-lead">Elegís tu primer activo, y el satélite empieza a observarlo.</p>
+  <button class="door-btn" onclick="adherir()">ADHERIRSE AL PROTOCOLO →</button>
+  <div class="door-note">EL PRIMER MES ES DE CORTESÍA</div>
+</section>
+
+<!-- FOOTER / CONTACTO -->
+<footer class="footer">
+  <div class="footer-in">
+    <div class="footer-eyebrow">DEL OTRO LADO HAY ALGUIEN</div>
+    <p class="footer-lead">¿Preferís hablar con una persona?</p>
+    <p class="footer-sub">No estás solo frente a una pantalla. Escribinos y te responde un humano de verdad — sin formularios, sin vueltas.</p>
+    <button class="footer-mail" onclick="copiarEmail(this)">✉ info@epimeleia.world</button>
+    <div class="footer-secondary">
+      <button class="footer-btn" onclick="abrir('terminos')">TÉRMINOS DE USO</button>
+      <button class="footer-btn" onclick="abrir('privacidad')">PRIVACIDAD</button>
+    </div>
+    <div class="footer-fine">
+      <a href="https://www.epimeleia.world">www.epimeleia.world</a><br>
+      Polygon Mainnet · 2026 · Sin publicidad
+    </div>
+  </div>
+</footer>
+
+<!-- ADHERIRSE FLOTANTE (acompaña toda la página, como EPI) -->
+<button class="adh-float" onclick="adherir()" aria-label="Adherirse al protocolo">
+  <svg viewBox="0 0 24 24"><path class="spark-lg" d="M12 2l1.6 5.2L19 9l-5.4 1.8L12 16l-1.6-5.2L5 9l5.4-1.8z"/><path class="spark-sm" d="M18.5 14l.7 2.3 2.3.7-2.3.7-.7 2.3-.7-2.3-2.3-.7 2.3-.7z"/></svg>
+  ADHERIRSE AL PROTOCOLO
+</button>
 
 <!-- EPI BURBUJA -->
 <button class="epi-bubble" id="epiBubble" onclick="abrirEpi()" aria-label="Hablar con EPI">
@@ -503,6 +718,18 @@ section { position:relative; }
   </div>
 </div>
 
+<!-- CARTELITO adherirse (en preparación) -->
+<div class="overlay soon" id="ovSoon">
+  <div class="modal">
+    <button class="modal-close" onclick="cerrar('ovSoon')">✕</button>
+    <div class="soon-ico">✦</div>
+    <div class="modal-title">Estamos abriendo la puerta</div>
+    <div class="modal-body">
+      <p>La adhesión al protocolo se habilita en la próxima etapa. Toda la tecnología ya está funcionando por detrás — estamos terminando la puerta de entrada.</p>
+      <p>Si querés avanzar ya, escribinos a <strong>info@epimeleia.world</strong> y te acompañamos.</p>
+    </div>
+  </div>
+</div>
 
 <script>
 /* ─── ACTIVOS REALES ON-CHAIN (datos verificables · Polygon Mainnet) ───
@@ -619,7 +846,7 @@ const RECURSOS = {
   tuyo:      { ico:'✦', name:'Lo tuyo', hint:'EL PRÓXIMO REGISTRO', body:'<p>Si tu actividad deja una huella sobre el territorio — agua, vegetación, suelo, instalaciones — se puede certificar.</p><p><strong>Puede ser lo próximo que quede registrado</strong>, con prueba inmutable, defendible ante gobiernos, bancos y fondos.</p><p>El primer mes es de cortesía.</p>', applies:'Cualquier organización cuya huella pueda observarse desde el espacio y necesite dejarla probada.' }
 };
 const grid = document.getElementById('recGrid');
-if (grid) Object.entries(RECURSOS).forEach(([key, r]) => {
+Object.entries(RECURSOS).forEach(([key, r]) => {
   const b = document.createElement('button');
   b.className = 'recurso' + (key === 'tuyo' ? ' comodin' : '');
   b.onclick = () => abrirRecurso(key);
@@ -700,11 +927,14 @@ function toggleFaq(i){ document.querySelectorAll('.faq-item')[i].classList.toggl
 
 /* ─── ADHERIRSE (puerta a la próxima etapa) ─── */
 function adherir(){
-  window.location.href = 'cuenta.html';
+  /* Cuando cuenta.html esté publicada, reemplazar la línea de abajo por:
+     window.location.href = 'cuenta.html';  */
+  document.getElementById('ovSoon').classList.add('active');
+  document.body.style.overflow = 'hidden';
 }
 
 function cerrar(id){ document.getElementById(id).classList.remove('active'); document.body.style.overflow=''; }
-['ovModal'].forEach(id=>{ document.getElementById(id).addEventListener('click', e=>{ if(e.target.id===id) cerrar(id); }); });
+['ovModal','ovSoon'].forEach(id=>{ document.getElementById(id).addEventListener('click', e=>{ if(e.target.id===id) cerrar(id); }); });
 
 /* ─── EMAIL ─── */
 function copiarEmail(el){
