@@ -623,7 +623,8 @@ section { position:relative; }
 <section class="sec">
   <div class="head">
     <div class="eyebrow">EL TRATO · SIN LETRA CHICA</div>
-    <h2 class="head-title tr-title">El primer mes es de cortesía. Después, pagás según <em>cuánto observás</em>.</h2>
+    <h2 class="head-title tr-title">El primer mes es de cortesía. Después, pagás por la superficie que <em>dejás sellada</em>.</h2>
+    <p class="tr-price-note" style="margin-top:14px;">No es un monitoreo por hectárea. Es una prueba sellada, imposible de alterar, que se sostiene sola ante un banco, un comprador o un regulador.</p>
   </div>
   <div class="tr-deal">
     <div class="tr-cell"><div class="tr-cell-k">EL PRIMER MES</div><div class="tr-cell-t">Gratis y completo</div><div class="tr-cell-d">Certificación real, grabada en blockchain, igual que un cliente que ya paga. No es una demo recortada.</div></div>
@@ -632,14 +633,14 @@ section { position:relative; }
   </div>
   <div class="tr-price">
     <div class="tr-price-from">DESDE</div>
-    <div class="tr-price-num">US$180<span> / mes</span></div>
-    <div class="tr-price-note">El precio escala según la superficie del activo. No adivines dónde caés — poné tus hectáreas abajo y te lo decimos exacto.</div>
+    <div class="tr-price-num">US$90<span> / mes</span></div>
+    <div class="tr-price-note">El precio va por la superficie certificada. No adivines dónde caés — poné tus hectáreas abajo y te lo decimos exacto.</div>
   </div>
   <div class="tr-tiers">
-    <div class="tr-tier" data-tier="base"><div class="tr-tier-name">BASE</div><div class="tr-tier-price">180<span>/mes</span></div><div class="tr-tier-sz">HASTA 500 HA</div></div>
-    <div class="tr-tier" data-tier="pro"><div class="tr-tier-name">PRO</div><div class="tr-tier-price">450<span>/mes</span></div><div class="tr-tier-sz">501 – 5.000 HA</div></div>
-    <div class="tr-tier" data-tier="corporate"><div class="tr-tier-name">CORPORATE</div><div class="tr-tier-price">900<span>/mes</span></div><div class="tr-tier-sz">5.001 – 25.000 HA</div></div>
-    <div class="tr-tier" data-tier="enterprise"><div class="tr-tier-name">ENTERPRISE</div><div class="tr-tier-price">1800<span>/mes</span></div><div class="tr-tier-sz">25.001 – 62.500 HA</div></div>
+    <div class="tr-tier" data-tier="base"><div class="tr-tier-name">BASE</div><div class="tr-tier-price">90<span>/mes</span></div><div class="tr-tier-sz">HASTA 500 HA</div></div>
+    <div class="tr-tier" data-tier="pro"><div class="tr-tier-name">PRO</div><div class="tr-tier-price">290<span>/mes</span></div><div class="tr-tier-sz">501 – 5.000 HA</div></div>
+    <div class="tr-tier" data-tier="corporate"><div class="tr-tier-name">CORPORATE</div><div class="tr-tier-price">650<span>/mes</span></div><div class="tr-tier-sz">5.001 – 25.000 HA</div></div>
+    <div class="tr-tier" data-tier="enterprise"><div class="tr-tier-name">ENTERPRISE</div><div class="tr-tier-price">1400<span>/mes</span></div><div class="tr-tier-sz">25.001 – 62.500 HA</div></div>
   </div>
   <div class="tr-tiers-cap">TODOS EN DÓLARES · EL PRIMER MES NO SE COBRA EN NINGUNO</div>
 
@@ -775,10 +776,10 @@ function irA(id){
    Mismos tiers y mismo tope que el código en producción. */
 const MAX_HECTAREAS = 62500;
 const TIERS = [
-  { id:'base',       nombre:'Base',       hasta:500,   precio:180  },
-  { id:'pro',        nombre:'Pro',        hasta:5000,  precio:450  },
-  { id:'corporate',  nombre:'Corporate',  hasta:25000, precio:900  },
-  { id:'enterprise', nombre:'Enterprise', hasta:62500, precio:1800 }
+  { id:'base',       nombre:'Base',       hasta:500,   precio:90   },
+  { id:'pro',        nombre:'Pro',        hasta:5000,  precio:290  },
+  { id:'corporate',  nombre:'Corporate',  hasta:25000, precio:650  },
+  { id:'enterprise', nombre:'Enterprise', hasta:62500, precio:1400 }
 ];
 function tierBase(ha){ for (const t of TIERS){ if (ha <= t.hasta) return t; } return null; }
 function fmtHa(n){ return n.toLocaleString('es-AR', { maximumFractionDigits:2 }); }
