@@ -215,6 +215,71 @@
   .gate-toggle { margin-top: 16px; font-size: 11px; color: var(--muted); }
   .gate-toggle a { color: var(--cyan); text-decoration: none; cursor: pointer; }
   .gate-legal { margin-top: 22px; font-size: 10px; color: var(--muted); line-height: 1.5; }
+
+  /* ════════════════════════════════════════════════════════════════
+     MÓVIL · el panel se vuelve una "hoja de abajo" (bottom sheet)
+     ────────────────────────────────────────────────────────────────
+     En la computadora NO cambia nada: todo esto vive dentro de la
+     regla de pantalla angosta. En el celular, el panel deja de tapar
+     el mapa: se ancla abajo, con una manija para subirlo/bajarlo.
+     Cuando la persona toca "Dibujar contorno", la hoja se baja sola y
+     deja el mapa entero para tocar; abajo queda una barra con la
+     superficie en vivo y los botones Deshacer / Confirmar.
+     ════════════════════════════════════════════════════════════════ */
+
+  /* La manija: oculta en computadora, se muestra solo en celular. */
+  #sheetHandle { display: none; }
+
+  @media (max-width: 720px) {
+    /* El panel pasa a ser una tarjeta anclada al pie de la pantalla. */
+    #panel {
+      position: fixed; left: 0; right: 0; bottom: 0; top: auto;
+      width: 100%; max-width: none;
+      max-height: 82vh; overflow-y: auto;
+      border-radius: 18px 18px 0 0;
+      border-bottom: none;
+      padding: 0 16px 18px;
+      transition: transform .32s cubic-bezier(.22,.61,.36,1);
+      will-change: transform;
+    }
+
+    /* La manija, pegajosa arriba del panel: siempre visible, es lo que
+       se toca para subir/bajar la hoja. */
+    #sheetHandle {
+      display: block; position: sticky; top: 0; z-index: 2;
+      margin: 0 -16px; padding: 10px 16px 8px;
+      background: var(--panel);
+      border-radius: 18px 18px 0 0;
+      cursor: pointer; user-select: none;
+    }
+    #sheetHandle .grabber {
+      width: 42px; height: 4px; border-radius: 4px;
+      background: var(--line); margin: 0 auto 8px;
+    }
+    /* La fila de superficie + botones: solo se ve cuando la hoja está baja. */
+    #sheetHandle .peekRow { display: none; align-items: center; gap: 10px; }
+    #app.collapsed #sheetHandle .peekRow { display: flex; }
+    #sheetHandle .peekArea { flex: 1; min-width: 0; line-height: 1.15; }
+    #sheetHandle .peekArea .peekLabel { display: block; font-size: 8px; letter-spacing: 0.2em; color: var(--muted); }
+    #sheetHandle .peekArea #peekArea { font-size: 19px; font-weight: 700; color: var(--cyan); }
+    #sheetHandle .peekArea #peekArea small { font-size: 11px; color: var(--cyan-dim); font-weight: 500; }
+    #sheetHandle .peekBtns { display: flex; gap: 8px; flex-shrink: 0; }
+    #sheetHandle .peekBtn {
+      font-family: var(--mono); font-size: 12px; letter-spacing: 0.03em;
+      padding: 10px 14px; border-radius: 8px; cursor: pointer;
+      border: 1px solid var(--line); background: transparent; color: var(--text);
+    }
+    #sheetHandle .peekBtn.primary { background: var(--cyan); color: #04262b; border-color: var(--cyan); font-weight: 700; }
+    #sheetHandle .peekBtn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+    /* La marca queda con un poco de aire bajo la manija. */
+    #panel .brand { margin-top: 4px; }
+
+    /* Cuando la hoja está baja, se desplaza hacia abajo dejando solo la
+       manija asomando. El desplazamiento exacto lo calcula el JS según
+       la altura real de la manija (transform inline). */
+    #app.collapsed #panel { box-shadow: 0 -8px 30px rgba(0,0,0,0.5); }
+  }
 </style>
 </head>
 <body>
@@ -234,6 +299,21 @@
   </div>
 
   <div id="panel">
+    <!-- ── Manija de la hoja (solo se ve en celular) ── -->
+    <div id="sheetHandle">
+      <div class="grabber"></div>
+      <div class="peekRow">
+        <div class="peekArea">
+          <span class="peekLabel">SUPERFICIE</span>
+          <span id="peekArea">— <small>ha</small></span>
+        </div>
+        <div class="peekBtns">
+          <button id="peekUndo" class="peekBtn" type="button" disabled>Deshacer</button>
+          <button id="peekConfirm" class="peekBtn primary" type="button" disabled>Confirmar</button>
+        </div>
+      </div>
+    </div>
+
     <div class="brand"><b>EPIMELEIA</b><span>MAPA DEL ACTIVO</span></div>
     <p class="subtitle">Dibujá el contorno real de tu terreno sobre la imagen del satélite. Este dibujo es la ubicación que se va a certificar.</p>
 
@@ -419,6 +499,37 @@
   var areaValueLocked = el('areaValueLocked'), vtxSubLocked = el('vtxSubLocked'), coordsOut = el('coordsOut');
   var drawingView = el('drawing'), confirmedView = el('confirmed');
 
+  // ── HOJA DE ABAJO (celular) ──────────────────────────────────────
+  // Solo actúa en pantallas angostas. En computadora estas funciones
+  // no hacen nada visible (limpian cualquier transform y listo).
+  var appEl = el('app'), panelEl = el('panel'), sheetHandle = el('sheetHandle');
+  function esMovil() { return window.matchMedia('(max-width: 720px)').matches; }
+  function ubicarHoja() {
+    if (!esMovil()) { panelEl.style.transform = ''; return; }
+    if (appEl.classList.contains('collapsed')) {
+      // Baja la hoja dejando solo la manija asomando.
+      var h = sheetHandle.offsetHeight || 84;
+      panelEl.style.transform = 'translateY(calc(100% - ' + h + 'px))';
+    } else {
+      panelEl.style.transform = 'translateY(0)';
+    }
+  }
+  function bajarHoja()  { appEl.classList.add('collapsed'); ubicarHoja(); }
+  function subirHoja()  { appEl.classList.remove('collapsed'); ubicarHoja(); }
+  function alternarHoja(){ appEl.classList.toggle('collapsed'); ubicarHoja(); }
+
+  // Tocar la manija sube/baja la hoja (menos si se tocó un botón).
+  sheetHandle.addEventListener('click', function (e) {
+    if (e.target.closest('.peekBtn')) return;
+    alternarHoja();
+  });
+  // Los botones de la barra disparan los botones reales del panel.
+  el('peekUndo').addEventListener('click', function (e) { e.stopPropagation(); el('undoBtn').click(); });
+  el('peekConfirm').addEventListener('click', function (e) { e.stopPropagation(); el('confirmBtn').click(); });
+
+  // Si cambia el tamaño/orientación, reubicar la hoja.
+  window.addEventListener('resize', ubicarHoja);
+
   function geodesicArea(coords) { // coords: [{lng,lat}]
     var n = coords.length, area = 0, d2r = Math.PI / 180, p1, p2;
     if (n < 3) return 0;
@@ -458,6 +569,11 @@
     vtxSub.textContent = points.length + ' punto' + (points.length === 1 ? '' : 's') + ' marcados' + (points.length < 3 ? ' · faltan al menos ' + (3 - points.length) : '') + '.';
     undoBtn.disabled = points.length === 0; clearBtn.disabled = points.length === 0; confirmBtn.disabled = points.length < 3;
     warnBig.style.display = (m2 / 10000 > BIG_HA) ? 'block' : 'none';
+
+    // Espejo en la barra de la hoja (celular).
+    el('peekArea').innerHTML = (points.length >= 3 ? haText(m2) : '—') + ' <small>ha</small>';
+    el('peekUndo').disabled = points.length === 0;
+    el('peekConfirm').disabled = points.length < 3;
   }
 
   map.on('load', function () {
@@ -477,6 +593,7 @@
     drawing = true; drawBtn.disabled = true;
     map.getCanvas().style.cursor = 'crosshair';
     hint.innerHTML = '<b>Dibujando.</b> Tocá el mapa para marcar cada límite. Necesitás al menos 3 puntos. Cuando esté bien, tocá <b>Confirmar activo</b>.';
+    if (esMovil()) bajarHoja();   // deja el mapa libre para tocar
   });
 
   undoBtn.addEventListener('click', function () {
@@ -493,6 +610,10 @@
     areaValue.innerHTML = '— <small>ha</small>'; vtxSub.textContent = 'Todavía no dibujaste nada.';
     undoBtn.disabled = true; clearBtn.disabled = true; confirmBtn.disabled = true; warnBig.style.display = 'none';
     hint.innerHTML = '<b>1.</b> Acercate hasta ver tu terreno.<br /><b>2.</b> Tocá <b>Dibujar contorno</b>.<br /><b>3.</b> Marcá cada límite tocando el mapa (mínimo 3 puntos).<br /><b>4.</b> Cuando esté bien, tocá <b>Confirmar activo</b>.';
+    // Barra de la hoja de vuelta a cero, y subir para ver las instrucciones.
+    el('peekArea').innerHTML = '— <small>ha</small>';
+    el('peekUndo').disabled = true; el('peekConfirm').disabled = true;
+    if (esMovil()) subirHoja();
   }
   clearBtn.addEventListener('click', resetAll);
 
@@ -528,6 +649,7 @@
     map.fitBounds(b, { padding: 60, duration: 600 });
 
     drawingView.style.display = 'none'; confirmedView.style.display = 'block';
+    if (esMovil()) subirHoja();   // muestra nombre/tipo/continuar
     // Para el sistema real: window.parent.postMessage({ tipo: 'activo_confirmado', geojson: geojson }, '*');
   });
 
