@@ -45,22 +45,32 @@ const readline = require('readline');
 const { config: _cfg } = (() => { try { return {}; } catch (e) { return {}; } })();
 
 // Los tiers y precios salen de la fuente única de verdad.
-// (Buscamos precios.js en ./lib o en ../lib, según desde dónde se corra.)
+// Usamos la ruta ABSOLUTA basada en dónde está ESTE script (__dirname),
+// así funciona sin importar desde qué carpeta se ejecute node.
+const path = require('path');
 let precios;
-try {
-  precios = require('./lib/precios');
-} catch (e1) {
+const rutasPosibles = [
+  path.join(__dirname, 'lib', 'precios.js'),   // script en la raíz, lib/ al lado
+  path.join(__dirname, '..', 'lib', 'precios.js'), // script dentro de una subcarpeta
+  path.join(process.cwd(), 'lib', 'precios.js'),   // por las dudas, desde el cwd
+];
+let ultimoError = null;
+for (const ruta of rutasPosibles) {
   try {
-    precios = require('../lib/precios');
-  } catch (e2) {
-    console.error('');
-    console.error('  ✗ No encontré lib/precios.js.');
-    console.error('    Poné este script en la raíz del repo (donde está la carpeta lib/),');
-    console.error('    o en la misma carpeta que el script viejo. Rutas probadas:');
-    console.error('      ./lib/precios.js   y   ../lib/precios.js');
-    console.error('');
-    process.exit(1);
+    precios = require(ruta);
+    break;
+  } catch (e) {
+    ultimoError = e;
   }
+}
+if (!precios) {
+  console.error('');
+  console.error('  ✗ No pude cargar lib/precios.js.');
+  console.error('    Rutas probadas:');
+  for (const r of rutasPosibles) console.error('      ' + r);
+  console.error('    Error real:', ultimoError ? ultimoError.message : '(desconocido)');
+  console.error('');
+  process.exit(1);
 }
 
 const { TIERS } = precios;
