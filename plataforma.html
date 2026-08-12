@@ -950,11 +950,18 @@ function copiarEmail(el){
   navigator.clipboard.writeText('info@epimeleia.world').then(()=>{ el.innerHTML='✓ copiado'; setTimeout(()=>el.innerHTML=original,1600); }).catch(()=>{});
 }
 
-/* ─── EPI (maqueta visual, sin API) ─── */
+/* ─── EPI (conectado a /api/chat · solo conversa) ─── */
+/* Memoria SOLO de la charla abierta: vive mientras la página está abierta. */
+let epiHistorial = [];
+let epiPensando = false;
+let epiCerrada = false;
+
 function abrirEpi(){
   document.getElementById('epiPanel').classList.add('open');
   document.getElementById('epiBubble').classList.add('hidden');
-  if(!document.getElementById('epiMsgs').hasChildNodes()) epiMsg('agent','Hola. Soy EPI. Estoy para explicarte cualquier cosa que no se entienda de cómo funciona EPIMELEIA.\n\nPreguntame lo que quieras — qué se puede observar, cómo funciona el mes de cortesía, qué es eso de que nadie puede modificar el dato.');
+  if(!document.getElementById('epiMsgs').hasChildNodes()){
+    epiMsg('agent', 'Hola. Soy EPI. Estoy para explicarte cualquier cosa que no se entienda de cómo funciona EPIMELEIA.\n\nPreguntame lo que quieras — qué se puede observar, cómo funciona el mes de cortesía, qué es eso de que nadie puede modificar el dato.');
+  }
 }
 function cerrarEpi(){
   document.getElementById('epiPanel').classList.remove('open');
@@ -966,12 +973,50 @@ function epiMsg(rol, texto){
   const html = texto.replace(/\n\n/g,'</p><p>').replace(/^/,'<p>').replace(/$/,'</p>');
   w.innerHTML = `<div class="emsg-av ${rol}">${rol==='agent'?'EP':'VOS'}</div><div class="emsg-b ${rol}">${html}</div>`;
   c.appendChild(w); c.scrollTop = c.scrollHeight;
+  return w;
 }
-function epiEnviar(){
+async function epiEnviar(){
   const t = document.getElementById('epiText');
-  const v = t.value.trim(); if(!v) return;
-  epiMsg('user', v); t.value=''; t.style.height='auto';
-  setTimeout(()=>epiMsg('agent','(Demo visual — EPI todavía no está conectado. Cuando lo esté, va a responder tu consulta acá mismo. Su única función será explicar; nunca decidir ni hacer tu adhesión.)'), 500);
+  const v = t.value.trim();
+  if(!v || epiPensando || epiCerrada) return;
+  epiMsg('user', v);
+  epiHistorial.push({ role:'user', content:v });
+  t.value=''; t.style.height='auto';
+  epiPensando = true;
+  const pensando = epiMsg('agent', '…');
+  try {
+    const resp = await fetch('/api/chat', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify({ messages: epiHistorial })
+    });
+    const data = await resp.json();
+    pensando.remove();
+    let textoEpi = '';
+    if (data && Array.isArray(data.content)) {
+      textoEpi = data.content.filter(b => b.type === 'text').map(b => b.text).join('\n').trim();
+    }
+    if (!textoEpi) {
+      textoEpi = 'Disculpá, tuve un problema para responder. Probá de nuevo en un momento, o escribí a info@epimeleia.world.';
+    }
+    const debeCerrar = textoEpi.includes('[[FIN_CHARLA]]');
+    textoEpi = textoEpi.replace(/\[\[FIN_CHARLA\]\]/g, '').trim();
+    if (textoEpi) {
+      epiMsg('agent', textoEpi);
+      epiHistorial.push({ role:'assistant', content:textoEpi });
+    }
+    if (debeCerrar) {
+      epiCerrada = true;
+      const box = document.getElementById('epiText');
+      box.disabled = true;
+      box.placeholder = 'Conversación finalizada.';
+    }
+  } catch (e) {
+    pensando.remove();
+    epiMsg('agent', 'No pude conectarme en este momento. Revisá tu conexión y probá de nuevo, o escribí a info@epimeleia.world.');
+  } finally {
+    epiPensando = false;
+  }
 }
 document.getElementById('epiText').addEventListener('keydown', e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); epiEnviar(); } });
 document.getElementById('epiText').addEventListener('input', function(){ this.style.height='auto'; this.style.height=Math.min(this.scrollHeight,110)+'px'; });
