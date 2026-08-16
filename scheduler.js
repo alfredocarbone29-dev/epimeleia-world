@@ -116,6 +116,41 @@
  *    chequeo no encuentra la fila y el activo cae igual por "sin polígono"
  *    más abajo. Queda escrito y correcto para cuando la Fase 7 ate los dos
  *    mundos; a partir de ahí empieza a cortar de verdad, sin tocar nada más.
+ *
+ * ════════════════════════════════════════════════════════════════
+ * AJUSTE 40 (16/8/2026) — EMAIL AL TITULAR EN LOS DOS RITMOS
+ * ════════════════════════════════════════════════════════════════
+ *
+ * QUÉ SE ENCONTRÓ (corrida real del 16/8, primera de producción):
+ *   · El aviso QUINCENAL al cliente ya existía y funcionó (casos
+ *     "sellado" y "no visto"), pero falló en encontrar destinatario:
+ *     los activos de prueba no tienen EMAIL_ACTIVO_X configurado.
+ *   · El reporte TRIMESTRAL al cliente (reports.enviarReporteTrimestral)
+ *     existía pero SOLO se disparaba desde la escucha de eventos
+ *     (iniciarEscuchaEventos), que está DESACTIVADA desde index.js.
+ *     Resultado: al cierre del Q se certificaba on-chain pero el
+ *     cliente nunca recibía su balance trimestral.
+ *
+ * QUÉ HACE ESTE AJUSTE:
+ *   1. _emailDestinoDe(): UNA sola función resuelve el destinatario,
+ *      en este orden:
+ *        a) email del titular en Supabase (filaSupabase.emailTitular,
+ *           cuando activo-supabase lo traiga — Fase 7 lo puebla)
+ *        b) EMAIL_ACTIVO_{id} del .env (override manual por activo)
+ *        c) ADMIN_EMAIL del .env (red de seguridad: siempre le llega
+ *           al fundador si no hay titular configurado)
+ *      Las 4 apariciones repetidas de la línea vieja usan ahora esto.
+ *   2. El reporte trimestral se envía DIRECTO en el PASO 6, justo
+ *      después de certificarQ(), con el mismo patrón del quincenal:
+ *      en su propio try, porque el mail es secundario — la
+ *      certificación YA quedó sellada y no se rompe si el envío falla.
+ *      Ya no depende de la escucha de eventos desactivada.
+ *
+ * QUÉ NO SE TOCÓ:
+ *   · El reloj, los cron, el healthcheck — idénticos.
+ *   · La lógica de medición, sellado, huecos, cobertura — idéntica.
+ *   · iniciarEscuchaEventos() queda como estaba (desactivada desde
+ *     index.js); si algún día se reactiva, también usa el helper.
  * ════════════════════════════════════════════════════════════════
  */
 
@@ -211,6 +246,28 @@ function _etiqueta(p) {
   const q   = p.trimestre % 10;
   const anio = Math.floor(p.trimestre / 10);
   return `Q${q}/${anio} · quincena ${p.quincenaDelTrimestre}/6`;
+}
+
+// ─── AJUSTE 40: resolución única del email destino ──────────────
+
+/**
+ * Resuelve a quién se le envían los avisos de un activo.
+ *
+ * Orden de prioridad:
+ *   1. Email del titular en Supabase (filaSupabase.emailTitular).
+ *      Hoy activo-supabase todavía no trae ese campo; cuando la Fase 7
+ *      lo agregue, este helper lo toma solo, sin tocar nada más.
+ *   2. EMAIL_ACTIVO_{id} del .env — override manual por activo.
+ *   3. ADMIN_EMAIL del .env — red de seguridad: si no hay titular,
+ *      el aviso le llega al fundador (que puede reenviarlo a mano).
+ *
+ * Devuelve '' si no hay ninguno configurado (el llamador loguea WARN).
+ */
+function _emailDestinoDe(activoId, filaSupabase = null) {
+  if (filaSupabase && filaSupabase.emailTitular) {
+    return filaSupabase.emailTitular;
+  }
+  return process.env[`EMAIL_ACTIVO_${activoId}`] || process.env.ADMIN_EMAIL || '';
 }
 
 // ─── AJUSTE 33: helpers del nudo ────────────────────────────────
@@ -391,6 +448,9 @@ async function procesarVentanaSatelital(opciones = {}) {
  *
  * AJUSTE 33: mide el POLÍGONO REAL de Supabase, no el punto + radio.
  * AJUSTE 39: antes de medir, chequea que el activo esté al día (cobertura).
+ * AJUSTE 40: al cierre del Q, además de certificar, se envía el reporte
+ *            trimestral al titular (antes dependía de la escucha de
+ *            eventos, que está desactivada — nunca llegaba).
  */
 async function _procesarActivoVentana(activoId, periodo, simular = false) {
   const datos = await blockchain.getDatosActivo(activoId);
@@ -522,7 +582,7 @@ async function _procesarActivoVentana(activoId, periodo, simular = false) {
       // honesto según esClimatica (pasó pero nube / sin dato utilizable).
       // En su propio try para no romper la ventana si el envío falla.
       try {
-        const emailDestino = process.env[`EMAIL_ACTIVO_${activoId}`] || process.env.ADMIN_EMAIL || '';
+        const emailDestino = _emailDestinoDe(activoId, filaSupabase);   // AJUSTE 40
         if (emailDestino) {
           await reports.enviarEvidenciaQuincenal({
             activoId,
@@ -615,7 +675,7 @@ async function _procesarActivoVentana(activoId, periodo, simular = false) {
     // envío falla, se loguea pero NO se rompe la ventana ni se reintenta el
     // sellado (que ya está hecho y gastó gas). Por eso va en su propio try.
     try {
-      const emailDestino = process.env[`EMAIL_ACTIVO_${activoId}`] || process.env.ADMIN_EMAIL || '';
+      const emailDestino = _emailDestinoDe(activoId, filaSupabase);   // AJUSTE 40
       if (emailDestino) {
         await reports.enviarEvidenciaQuincenal({
           activoId,
@@ -675,6 +735,45 @@ async function _procesarActivoVentana(activoId, periodo, simular = false) {
       timestamp:  new Date().toISOString(),
     });
 
+    // ── AJUSTE 40 · REPORTE TRIMESTRAL AL TITULAR ────────────────
+    // Antes, este reporte dependía de la escucha de eventos
+    // (iniciarEscuchaEventos), que está desactivada desde index.js:
+    // la certificación se sellaba pero el cliente nunca recibía su
+    // balance del trimestre. Ahora se envía acá, directo, apenas
+    // certifica. Mismo patrón que el quincenal: en su propio try,
+    // porque el mail es secundario — el sello ya está en la cadena.
+    try {
+      const emailDestino = _emailDestinoDe(activoId, filaSupabase);
+      if (emailDestino) {
+        // El billing suma contexto al balance, pero si falla no
+        // frena el envío: se manda el reporte con lo que hay.
+        let billing = null;
+        try {
+          billing = await blockchain.getEstadoBilling(activoId);
+        } catch (e) {
+          log('WARN', `Sin datos de billing para el reporte trimestral del activo ${activoId}: ${e.message}`);
+        }
+
+        await reports.enviarReporteTrimestral({
+          activoId,
+          owner:         datos?.owner || '',
+          trimestre:     periodo.trimestre,
+          datosBilling:  billing,
+          certs:         [],      // se obtendría del contrato cert (Junta A)
+          huecos:        [],
+          indiceCont:    0,
+          emailDestino,
+          nombreActivo:  filaSupabase.nombreActivo || datos?.nombre || `Activo ${activoId}`,
+        });
+
+        log('EMAIL', `Reporte trimestral enviado`, { activoId, trimestre: periodo.trimestre });
+      } else {
+        log('WARN', `Activo ${activoId}: sin email destino — no se envía reporte trimestral`);
+      }
+    } catch (err) {
+      log('ERROR', `No se pudo enviar el reporte trimestral del activo ${activoId}: ${err.message}`);
+    }
+
     resultado.certificado = true;
   }
 
@@ -686,6 +785,9 @@ async function _procesarActivoVentana(activoId, periodo, simular = false) {
 /**
  * Escucha ReporteTrimestralTrigger para despachar reportes por email — Ajuste 21.
  * NOTA: hoy está desactivada desde index.js (los filtros contra el RPC se rompían).
+ * AJUSTE 40: el reporte trimestral ya NO depende de esta escucha — se envía
+ * directo desde _procesarActivoVentana() al certificar. Esta escucha queda
+ * como estaba, por si algún día se reactiva (usaría el mismo helper).
  */
 function iniciarEscuchaEventos() {
   blockchain.escucharReportesTrimestrales(async ({ activoId, owner, trimestre }) => {
@@ -694,7 +796,7 @@ function iniciarEscuchaEventos() {
 
       // En producción, aquí se obtiene el email del activo desde un registro externo
       // (el email no se guarda on-chain por privacidad, solo el hash)
-      const emailDestino = process.env[`EMAIL_ACTIVO_${activoId}`] || process.env.ADMIN_EMAIL || '';
+      const emailDestino = _emailDestinoDe(activoId);   // AJUSTE 40
 
       if (!emailDestino) {
         log('WARN', `Email no configurado para activo ${activoId}`);
@@ -721,7 +823,7 @@ function iniciarEscuchaEventos() {
   });
 
   blockchain.escucharAlertasSaldo(async ({ activoId, owner, diasRestantes }) => {
-    const emailDestino = process.env[`EMAIL_ACTIVO_${activoId}`] || process.env.ADMIN_EMAIL || '';
+    const emailDestino = _emailDestinoDe(activoId);   // AJUSTE 40
     if (!emailDestino) return;
 
     const billing = await blockchain.getEstadoBilling(activoId);
