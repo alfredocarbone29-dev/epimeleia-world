@@ -455,6 +455,24 @@ section { position:relative; }
 @media(max-width:600px){ .pasada-line { display:none; } .pasadas { gap:14px; } .cert-metrics { grid-template-columns:1fr; } }
 @media(max-width:440px){ .cc-steps { grid-template-columns:1fr; } .cert-grid { grid-template-columns:1fr; } }
 @media(prefers-reduced-motion: reduce){ *, *::before, *::after { animation:none !important; transition:none !important; } html { scroll-behavior:auto; } }
+
+/* ══════════════════════════════════════════════════════════════════
+   BOTÓN FLOTANTE · PROBAR EL MAPA EN MODO INVITADO  (AGREGADO)
+   Abajo a la IZQUIERDA, APILADO ENCIMA del .adh-float existente
+   (por eso su 'bottom' es mayor). No se tocó el .adh-float.
+   Lleva a protocolo.html. EPI sigue a la derecha, sin cambios.
+   ══════════════════════════════════════════════════════════════════ */
+.mapa-float { position:fixed; left:clamp(16px,3vw,32px); bottom:clamp(78px,calc(3vw + 62px),96px); z-index:400; display:flex; align-items:center; gap:12px; max-width:min(78vw,310px); background:var(--gold2); color:var(--void); text-decoration:none; padding:13px 18px; box-shadow:0 8px 30px rgba(0,0,0,0.55); transition:background .2s, transform .2s; animation:mapaFloatIn .5s ease both; }
+.mapa-float:hover { background:var(--gold); transform:translateY(-2px); }
+@keyframes mapaFloatIn { from{opacity:0; transform:translateY(14px);} to{opacity:1; transform:translateY(0);} }
+.mapa-float-ico { flex-shrink:0; display:flex; }
+.mapa-float-ico svg { width:22px; height:22px; }
+.mapa-float-txt { display:flex; flex-direction:column; line-height:1.2; min-width:0; }
+.mapa-float-txt b { font-family:'Playfair Display',serif; font-size:14.5px; font-weight:600; }
+.mapa-float-txt small { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:0.4px; opacity:0.82; margin-top:3px; }
+.mapa-float:focus-visible { outline:2px solid var(--white); outline-offset:3px; }
+@media(max-width:520px){ .mapa-float { max-width:66vw; padding:11px 14px; gap:9px; left:14px; bottom:72px; } .mapa-float-txt b{ font-size:12.5px; } .mapa-float-txt small{ font-size:8px; } .mapa-float-ico svg{ width:19px; height:19px; } }
+@media(prefers-reduced-motion: reduce){ .mapa-float{ animation:none; } }
 </style>
 </head>
 <body>
@@ -700,6 +718,21 @@ section { position:relative; }
   <svg viewBox="0 0 24 24"><path class="spark-lg" d="M12 2l1.6 5.2L19 9l-5.4 1.8L12 16l-1.6-5.2L5 9l5.4-1.8z"/><path class="spark-sm" d="M18.5 14l.7 2.3 2.3.7-2.3.7-.7 2.3-.7-2.3-2.3-.7 2.3-.7z"/></svg>
   ADHERIRSE AL PROTOCOLO
 </button>
+
+<!-- BOTÓN FLOTANTE · PROBAR EL MAPA EN MODO INVITADO (AGREGADO) -->
+<a class="mapa-float" href="protocolo.html" aria-label="Dibujá y certificá tu recurso en el mapa, sin registrarte">
+  <span class="mapa-float-ico">
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 21.5s7-5.7 7-11.5a7 7 0 1 0-14 0c0 5.8 7 11.5 7 11.5z" fill="currentColor" opacity="0.22"/>
+      <path d="M12 21.5s7-5.7 7-11.5a7 7 0 1 0-14 0c0 5.8 7 11.5 7 11.5z" stroke="currentColor" stroke-width="1.6"/>
+      <circle cx="12" cy="10" r="2.5" fill="currentColor"/>
+    </svg>
+  </span>
+  <span class="mapa-float-txt">
+    <b>Dibujá y certificá tu recurso</b>
+    <small>Probalo en vivo, sin registrarte →</small>
+  </span>
+</a>
 
 <!-- EPI BURBUJA -->
 <button class="epi-bubble" id="epiBubble" onclick="abrirEpi()" aria-label="Hablar con EPI">

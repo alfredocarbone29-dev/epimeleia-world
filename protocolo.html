@@ -8,7 +8,7 @@
 <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Crimson+Pro:ital,wght@0,400;1,400&display=swap" rel="stylesheet" />
 
 <style>
   :root {
@@ -96,6 +96,9 @@
   #panel { top: 62px; }
   @media (max-width: 720px) { #steps .st .t { display: none; } }
 
+  /* ── AGREGADO (AJUSTE 41): distintivo de modo invitado en la topbar ── */
+  #whoInvitado { display: none; font-size: 9px; letter-spacing: 0.1em; color: var(--warn); border: 1px solid rgba(255,210,74,0.4); border-radius: 5px; padding: 3px 7px; margin-left: 10px; }
+
   /* botón continuar (segunda confirmación) — ES LA ACCIÓN PRINCIPAL */
   #continueWrap { margin-bottom: 14px; }
   #continueBtn {
@@ -173,7 +176,67 @@
   #toast.show { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
   #toast.err { border-color: var(--warn); color: var(--warn); }
 
-  /* ── AGREGADO: pantalla de ENTRADA (login) ── */
+  /* ── AGREGADO (AJUSTE 41): cartel de "necesitás una cuenta" ──
+     Reutiliza el mismo lenguaje visual de #deslindeModal, en vez de la
+     pantalla de login vieja (#gate, que quedó sin usar más abajo). */
+  #registroModal { display:none; position:fixed; inset:0; z-index:55; background:rgba(4,7,11,0.85); backdrop-filter:blur(3px); align-items:center; justify-content:center; padding:20px; }
+  #registroModal.show { display:flex; }
+  #registroModal .box { background:var(--panel,#0c1219); border:1px solid var(--cyan); border-radius:12px; max-width:420px; width:100%; padding:30px 26px; text-align:center; box-shadow:0 20px 60px rgba(0,0,0,0.5); }
+  #registroModal .k { font-size:9px; letter-spacing:0.2em; color:var(--cyan); text-transform:uppercase; }
+  #registroModal h3 { font-size:19px; color:var(--text); margin:12px 0 10px; font-weight:700; line-height:1.3; }
+  #registroModal p { font-size:12px; color:var(--muted); line-height:1.6; margin:0 0 20px; }
+  #registroModal p strong { color:var(--cyan-dim); }
+  #registroModal .botones { display:flex; flex-direction:column; gap:10px; }
+  #registroModal .botones a.action, #registroModal .botones button.action { text-decoration:none; text-align:center; display:block; }
+  #registroModal .fine { margin-top:16px; font-size:9px; color:var(--muted); line-height:1.5; }
+
+  /* ── AGREGADO (AJUSTE 41): EPI, portado de plataforma.html ──
+     Misma lógica y mismo /api/chat — colores adaptados a la paleta
+     cian de esta página (emerald→lock, gold2→warn, teal→cyan-dim,
+     void→bg, surface→panel, line2→line, dim→muted, white→text). */
+  .epi-bubble { position:fixed; right:18px; bottom:18px; z-index:400; width:56px; height:56px; border-radius:50%; background:radial-gradient(circle at 35% 30%, var(--panel), var(--bg)); border:1px solid rgba(0,240,255,0.35); cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 6px 26px rgba(0,0,0,0.5); transition:transform .25s ease, box-shadow .3s ease, opacity .3s ease; animation:epiPulse 3.4s ease-in-out infinite; }
+  .epi-bubble:hover { transform:scale(1.08); }
+  @keyframes epiPulse { 0%,100%{box-shadow:0 6px 26px rgba(0,0,0,0.5), 0 0 0 0 rgba(0,240,255,0.28);} 50%{box-shadow:0 6px 26px rgba(0,0,0,0.5), 0 0 0 10px rgba(0,240,255,0);} }
+  .epi-bubble svg { width:24px; height:24px; }
+  .epi-bubble .spark-lg { fill:var(--cyan); }
+  .epi-bubble .spark-sm { fill:var(--warn); }
+  .epi-bubble.hidden { opacity:0; pointer-events:none; transform:scale(0.6); }
+  .epi-panel { position:fixed; right:18px; bottom:18px; z-index:401; width:min(360px, calc(100vw - 32px)); height:min(520px, calc(100vh - 64px)); background:var(--bg); border:1px solid var(--line); display:none; flex-direction:column; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,0.6); animation:epiOpen .28s cubic-bezier(.2,.8,.2,1); border-radius:10px; }
+  .epi-panel.open { display:flex; }
+  @keyframes epiOpen { from{opacity:0; transform:translateY(16px) scale(.97);} to{opacity:1; transform:translateY(0) scale(1);} }
+  .epi-top { flex-shrink:0; padding:14px 16px; border-bottom:1px solid var(--line); display:flex; align-items:center; justify-content:space-between; background:rgba(5,7,10,0.6); }
+  .epi-top-l { display:flex; align-items:center; gap:10px; }
+  .epi-top-ico { width:24px; height:24px; }
+  .epi-top-ico .spark-lg { fill:var(--cyan); }
+  .epi-top-ico .spark-sm { fill:var(--warn); }
+  .epi-top-name { font-family:var(--mono); font-size:10px; letter-spacing:3px; color:var(--text); }
+  .epi-top-sub { font-family:var(--mono); font-size:7px; letter-spacing:1px; color:var(--muted); margin-top:2px; }
+  .epi-close { background:none; border:none; color:var(--muted); font-size:16px; cursor:pointer; font-family:var(--mono); transition:color .2s; }
+  .epi-close:hover { color:var(--text); }
+  .epi-msgs { flex:1; overflow-y:auto; padding:18px 14px; display:flex; flex-direction:column; gap:14px; }
+  .epi-msgs::-webkit-scrollbar { width:2px; }
+  .epi-msgs::-webkit-scrollbar-thumb { background:var(--muted); }
+  .emsg { display:flex; gap:9px; animation:msgIn .3s ease; }
+  @keyframes msgIn { from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);} }
+  .emsg.user { flex-direction:row-reverse; }
+  .emsg-av { width:20px; height:20px; flex-shrink:0; border:1px solid var(--line); display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-size:6px; margin-top:2px; border-radius:4px; }
+  .emsg-av.agent { color:var(--cyan); background:var(--panel); }
+  .emsg-av.user { color:var(--muted); background:var(--panel); }
+  .emsg-b { max-width:calc(100% - 32px); padding:11px 13px; font-size:13px; line-height:1.6; border:1px solid; border-radius:8px; font-family:'Crimson Pro',Georgia,serif; }
+  .emsg-b.agent { background:var(--panel); border-color:var(--line); color:var(--text); }
+  .emsg-b.user { background:rgba(0,240,255,0.06); border-color:var(--line); color:rgba(223,238,240,0.8); }
+  .epi-input { flex-shrink:0; padding:12px 14px; border-top:1px solid var(--line); background:rgba(5,7,10,0.7); }
+  .epi-input-row { display:flex; gap:8px; align-items:flex-end; }
+  .epi-input textarea { flex:1; background:var(--panel); border:1px solid var(--line); border-radius:6px; color:var(--text); font-family:'Crimson Pro',Georgia,serif; font-size:14px; padding:10px 12px; outline:none; resize:none; min-height:40px; max-height:100px; line-height:1.5; transition:border-color .2s; }
+  .epi-input textarea:focus { border-color:var(--cyan); }
+  .epi-input textarea::placeholder { color:var(--muted); font-style:italic; }
+  .epi-send { width:40px; height:40px; flex-shrink:0; background:var(--cyan); border:none; border-radius:6px; color:#04262b; font-size:16px; cursor:pointer; transition:background .2s; }
+  .epi-send:hover { background:#5df6ff; }
+  .epi-hint { font-family:var(--mono); font-size:7px; letter-spacing:1px; color:var(--muted); text-align:center; margin-top:8px; }
+
+  /* ── AGREGADO: pantalla de ENTRADA (login) ──
+     CSS histórico, sin HTML asociado — nunca se usó (se optó por
+     redirigir a cuenta.html en su lugar). Se deja intacto, sin tocar. */
   #gate {
     position: fixed; inset: 0; z-index: 20;
     background: radial-gradient(ellipse at 50% 0%, #0a1420 0%, var(--bg) 70%);
@@ -279,6 +342,9 @@
        manija asomando. El desplazamiento exacto lo calcula el JS según
        la altura real de la manija (transform inline). */
     #app.collapsed #panel { box-shadow: 0 -8px 30px rgba(0,0,0,0.5); }
+
+    /* EPI no debe tapar la hoja de abajo en celular */
+    .epi-bubble, .epi-panel { bottom: 14px; }
   }
 </style>
 </head>
@@ -295,7 +361,7 @@
       <div class="st" data-s="3"><span class="b">3</span><span class="t">Pagar</span><span class="bar"></span></div>
       <div class="st" data-s="4"><span class="b">4</span><span class="t">Certificado</span></div>
     </div>
-    <div class="who">Hola, <b id="whoName">invitado</b><a href="#" id="logoutLink">salir</a></div>
+    <div class="who">Hola, <b id="whoName">invitado</b><span id="whoInvitado">MODO PRUEBA</span><a href="#" id="logoutLink">salir</a></div>
   </div>
 
   <div id="panel">
@@ -465,6 +531,45 @@
   </div>
 </div>
 
+<!-- ── AGREGADO (AJUSTE 41): cartel de "necesitás una cuenta" ──
+     Aparece en vez de registrar de verdad, cuando quien firma es un
+     invitado. No se pierde nada: el contorno, el nombre y el tipo ya
+     quedaron guardados y se restauran solos al volver logueado. ── -->
+<div id="registroModal">
+  <div class="box">
+    <div class="k">CASI LISTO</div>
+    <h3>Para certificar esto de verdad, necesitás una cuenta</h3>
+    <p>Es gratis y toma un minuto. <strong id="registroActivoNombre">Tu activo</strong> ya está guardado — cuando vuelvas, vas a estar exactamente acá, sin dibujar de nuevo.</p>
+    <div class="botones">
+      <a class="action primary" id="registroIrBtn" href="cuenta.html">Crear cuenta gratis →</a>
+      <button class="action" id="registroVolverBtn" type="button">Seguir mirando</button>
+    </div>
+    <div class="fine">No se te va a cobrar nada por crear la cuenta. El primer mes de certificación también es gratis.</div>
+  </div>
+</div>
+
+<!-- ── AGREGADO (AJUSTE 41): EPI, portado de plataforma.html ── -->
+<button class="epi-bubble" id="epiBubble" onclick="abrirEpi()" aria-label="Hablar con EPI">
+  <svg viewBox="0 0 24 24"><path class="spark-lg" d="M12 2l1.6 5.2L19 9l-5.4 1.8L12 16l-1.6-5.2L5 9l5.4-1.8z"/><path class="spark-sm" d="M18.5 14l.7 2.3 2.3.7-2.3.7-.7 2.3-.7-2.3-2.3-.7 2.3-.7z"/></svg>
+</button>
+<div class="epi-panel" id="epiPanel">
+  <div class="epi-top">
+    <div class="epi-top-l">
+      <svg class="epi-top-ico" viewBox="0 0 24 24"><path class="spark-lg" d="M12 2l1.6 5.2L19 9l-5.4 1.8L12 16l-1.6-5.2L5 9l5.4-1.8z"/><path class="spark-sm" d="M18.5 14l.7 2.3 2.3.7-2.3.7-.7 2.3-.7-2.3-2.3-.7 2.3-.7z"/></svg>
+      <div><div class="epi-top-name">EPI</div><div class="epi-top-sub">RESPONDE TUS DUDAS</div></div>
+    </div>
+    <button class="epi-close" onclick="cerrarEpi()">✕</button>
+  </div>
+  <div class="epi-msgs" id="epiMsgs"></div>
+  <div class="epi-input">
+    <div class="epi-input-row">
+      <textarea id="epiText" placeholder="Escribí tu consulta…" rows="1"></textarea>
+      <button class="epi-send" onclick="epiEnviar()">↑</button>
+    </div>
+    <div class="epi-hint">EPI SOLO EXPLICA · NO REALIZA TU ADHESIÓN</div>
+  </div>
+</div>
+
 <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
 
 <script>
@@ -500,14 +605,11 @@
   var drawingView = el('drawing'), confirmedView = el('confirmed');
 
   // ── HOJA DE ABAJO (celular) ──────────────────────────────────────
-  // Solo actúa en pantallas angostas. En computadora estas funciones
-  // no hacen nada visible (limpian cualquier transform y listo).
   var appEl = el('app'), panelEl = el('panel'), sheetHandle = el('sheetHandle');
   function esMovil() { return window.matchMedia('(max-width: 720px)').matches; }
   function ubicarHoja() {
     if (!esMovil()) { panelEl.style.transform = ''; return; }
     if (appEl.classList.contains('collapsed')) {
-      // Baja la hoja dejando solo la manija asomando.
       var h = sheetHandle.offsetHeight || 84;
       panelEl.style.transform = 'translateY(calc(100% - ' + h + 'px))';
     } else {
@@ -518,19 +620,16 @@
   function subirHoja()  { appEl.classList.remove('collapsed'); ubicarHoja(); }
   function alternarHoja(){ appEl.classList.toggle('collapsed'); ubicarHoja(); }
 
-  // Tocar la manija sube/baja la hoja (menos si se tocó un botón).
   sheetHandle.addEventListener('click', function (e) {
     if (e.target.closest('.peekBtn')) return;
     alternarHoja();
   });
-  // Los botones de la barra disparan los botones reales del panel.
   el('peekUndo').addEventListener('click', function (e) { e.stopPropagation(); el('undoBtn').click(); });
   el('peekConfirm').addEventListener('click', function (e) { e.stopPropagation(); el('confirmBtn').click(); });
 
-  // Si cambia el tamaño/orientación, reubicar la hoja.
   window.addEventListener('resize', ubicarHoja);
 
-  function geodesicArea(coords) { // coords: [{lng,lat}]
+  function geodesicArea(coords) {
     var n = coords.length, area = 0, d2r = Math.PI / 180, p1, p2;
     if (n < 3) return 0;
     for (var i = 0; i < n; i++) {
@@ -570,7 +669,6 @@
     undoBtn.disabled = points.length === 0; clearBtn.disabled = points.length === 0; confirmBtn.disabled = points.length < 3;
     warnBig.style.display = (m2 / 10000 > BIG_HA) ? 'block' : 'none';
 
-    // Espejo en la barra de la hoja (celular).
     el('peekArea').innerHTML = (points.length >= 3 ? haText(m2) : '—') + ' <small>ha</small>';
     el('peekUndo').disabled = points.length === 0;
     el('peekConfirm').disabled = points.length < 3;
@@ -581,6 +679,10 @@
     map.addLayer({ id: 'draw-fill', type: 'fill', source: 'draw', filter: ['==', '$type', 'Polygon'], paint: { 'fill-color': '#00f0ff', 'fill-opacity': 0.12 } });
     map.addLayer({ id: 'draw-line', type: 'line', source: 'draw', filter: ['in', '$type', 'Polygon', 'LineString'], paint: { 'line-color': '#00f0ff', 'line-width': 2 } });
     map.addLayer({ id: 'draw-verts', type: 'circle', source: 'draw', filter: ['==', '$type', 'Point'], paint: { 'circle-radius': 5, 'circle-color': '#05070a', 'circle-stroke-color': '#00f0ff', 'circle-stroke-width': 2 } });
+
+    // AGREGADO (AJUSTE 41): si hay un borrador pendiente Y ya hay identidad
+    // real, se restaura acá — recién cuando el mapa tiene sus capas listas.
+    intentarRestaurarBorrador();
   });
 
   map.on('click', function (e) {
@@ -593,7 +695,7 @@
     drawing = true; drawBtn.disabled = true;
     map.getCanvas().style.cursor = 'crosshair';
     hint.innerHTML = '<b>Dibujando.</b> Tocá el mapa para marcar cada límite. Necesitás al menos 3 puntos. Cuando esté bien, tocá <b>Confirmar activo</b>.';
-    if (esMovil()) bajarHoja();   // deja el mapa libre para tocar
+    if (esMovil()) bajarHoja();
   });
 
   undoBtn.addEventListener('click', function () {
@@ -610,12 +712,40 @@
     areaValue.innerHTML = '— <small>ha</small>'; vtxSub.textContent = 'Todavía no dibujaste nada.';
     undoBtn.disabled = true; clearBtn.disabled = true; confirmBtn.disabled = true; warnBig.style.display = 'none';
     hint.innerHTML = '<b>1.</b> Acercate hasta ver tu terreno.<br /><b>2.</b> Tocá <b>Dibujar contorno</b>.<br /><b>3.</b> Marcá cada límite tocando el mapa (mínimo 3 puntos).<br /><b>4.</b> Cuando esté bien, tocá <b>Confirmar activo</b>.';
-    // Barra de la hoja de vuelta a cero, y subir para ver las instrucciones.
     el('peekArea').innerHTML = '— <small>ha</small>';
     el('peekUndo').disabled = true; el('peekConfirm').disabled = true;
     if (esMovil()) subirHoja();
   }
   clearBtn.addEventListener('click', resetAll);
+
+  // Dibuja el polígono confirmado en el mapa a partir de un GeoJSON dado
+  // (se usa tanto al confirmar a mano como al restaurar un borrador).
+  function pintarConfirmado(geojson) {
+    points = geojson.geometry.coordinates[0].slice(0, -1).map(function (c) {
+      return { lng: c[0], lat: c[1] };
+    });
+    geojsonConfirmado = geojson;
+
+    var m2 = geodesicArea(points);
+    areaValueLocked.innerHTML = haText(m2) + ' <small>ha</small>';
+    vtxSubLocked.textContent = points.length + ' puntos · contorno cerrado';
+    coordsOut.textContent = JSON.stringify(geojson, null, 2);
+
+    confirmed = true; drawing = false;
+    map.getCanvas().style.cursor = '';
+    map.setPaintProperty('draw-fill', 'fill-color', '#4ade80');
+    map.setPaintProperty('draw-line', 'line-color', '#4ade80');
+    var fc = buildFC();
+    fc.features = fc.features.filter(function (f) { return f.geometry.type === 'Polygon'; });
+    map.getSource('draw').setData(fc);
+
+    var b = new mapboxgl.LngLatBounds();
+    points.forEach(function (p) { b.extend([p.lng, p.lat]); });
+    map.fitBounds(b, { padding: 60, duration: 600 });
+
+    drawingView.style.display = 'none'; confirmedView.style.display = 'block';
+    if (esMovil()) subirHoja();
+  }
 
   confirmBtn.addEventListener('click', function () {
     if (points.length < 3) return;
@@ -627,30 +757,7 @@
       geometry: { type: 'Polygon', coordinates: [ring] },
       properties: { superficie_ha: +(m2 / 10000).toFixed(4), vertices: points.length, confirmado_en: new Date().toISOString() }
     };
-
-    geojsonConfirmado = geojson;   // AGREGADO: lo guardamos para el registro
-
-    areaValueLocked.innerHTML = haText(m2) + ' <small>ha</small>';
-    vtxSubLocked.textContent = points.length + ' puntos · contorno cerrado';
-    coordsOut.textContent = JSON.stringify(geojson, null, 2);
-
-    confirmed = true; drawing = false;
-    map.getCanvas().style.cursor = '';
-    // Pinta el contorno confirmado en verde y saca los vertices
-    map.setPaintProperty('draw-fill', 'fill-color', '#4ade80');
-    map.setPaintProperty('draw-line', 'line-color', '#4ade80');
-    var fc = buildFC();
-    fc.features = fc.features.filter(function (f) { return f.geometry.type === 'Polygon'; });
-    map.getSource('draw').setData(fc);
-
-    // Encuadra el activo
-    var b = new mapboxgl.LngLatBounds();
-    points.forEach(function (p) { b.extend([p.lng, p.lat]); });
-    map.fitBounds(b, { padding: 60, duration: 600 });
-
-    drawingView.style.display = 'none'; confirmedView.style.display = 'block';
-    if (esMovil()) subirHoja();   // muestra nombre/tipo/continuar
-    // Para el sistema real: window.parent.postMessage({ tipo: 'activo_confirmado', geojson: geojson }, '*');
+    pintarConfirmado(geojson);
   });
 
   editBtn.addEventListener('click', function () {
@@ -668,46 +775,6 @@
   el('searchBtn').addEventListener('click', doSearch);
   el('search').addEventListener('keydown', function (e) { if (e.key === 'Enter') doSearch(); });
 
-  // ═══════════════════════════════════════════════════════════
-  //  AGREGADO — reconocimiento del cliente + registro + secuencia
-  // ═══════════════════════════════════════════════════════════
-
-  // Datos del cliente (los deja cuenta.html al entrar). 
-  var CLIENTE = { nombre: 'invitado', email: null, pais: null, empresa: null, cliente_id: null };
-  function cargarCliente() {
-    try {
-      var g = sessionStorage.getItem('epi_cliente');
-      if (g) { CLIENTE = Object.assign(CLIENTE, JSON.parse(g)); }
-    } catch (e) {}
-
-    // ── PUERTA: sin identidad no se entra al motor ──────────────
-    // Si alguien abre protocolo.html directo (sin pasar por cuenta.html),
-    // no sabemos quién es. Antes lo dejábamos dibujar como "invitado" y el
-    // activo quedaba huérfano, sin dueño. Eso ensucia la base y va contra el
-    // principio de que cada activo tiene su cliente.
-    // Ahora: si no hay identidad, se vuelve a la puerta.
-    if (!CLIENTE.cliente_id) {
-      document.body.innerHTML =
-        '<div style="height:100vh;display:flex;align-items:center;justify-content:center;' +
-        'background:#05070a;color:#dfeef0;font-family:' + "'JetBrains Mono',monospace" + ';text-align:center;padding:24px;">' +
-        '<div><div style="font-size:20px;letter-spacing:.14em;color:#00f0ff;margin-bottom:14px;">EPIMELEIA</div>' +
-        '<div style="font-size:13px;color:#7d8b90;line-height:1.7;max-width:340px;">' +
-        'Para certificar un activo necesitás entrar a tu cuenta.<br>Te llevamos a la puerta…</div></div></div>';
-      setTimeout(function () { window.location.href = 'cuenta.html'; }, 1600);
-      return false;
-    }
-
-    el('whoName').textContent = CLIENTE.nombre || 'cliente';
-    return true;
-  }
-  if (!cargarCliente()) return;   // si no hay cliente, el motor no arranca
-
-  el('logoutLink').addEventListener('click', function (e) {
-    e.preventDefault();
-    window.location.href = 'cuenta.html';
-  });
-
-  // marca de progreso
   function paso(n) {
     var sts = document.querySelectorAll('#steps .st');
     sts.forEach(function (st) {
@@ -720,7 +787,6 @@
     if (st) { st.classList.remove('on'); st.classList.add('done'); }
   }
 
-  // toast
   var toastT;
   function toast(msg, err) {
     var t = el('toast');
@@ -730,15 +796,106 @@
     toastT = setTimeout(function () { t.className = ''; }, 3400);
   }
 
-  // ── SEGUNDA CONFIRMACIÓN: abrir el deslinde antes de registrar ──
-  // La primera confirmación es "Confirmar activo" (fija el contorno).
-  // Esta es la segunda: el cliente decide registrarlo de verdad — pero antes
-  // tiene que leer y aceptar el deslinde (Estación 2, Camino 1 atómico).
-  // El registro real ocurre al FIRMAR en el modal, no acá.
+  // ═══════════════════════════════════════════════════════════
+  //  AGREGADO (AJUSTE 41) — MODO INVITADO
+  // ═══════════════════════════════════════════════════════════
+  //
+  // Antes: sin cliente_id, la página se bloqueaba entera y redirigía a
+  // cuenta.html antes de dejar tocar nada (ver historial más abajo, se
+  // mantiene documentado por qué se hizo así).
+  //
+  // Ahora: se deja entrar como invitado. Dibujar (Estación 1) y leer/firmar
+  // el deslinde (Estación 2) funcionan igual para todos — es información y
+  // un gesto, no escribe nada en la base todavía.
+  //
+  // El corte real está en el REGISTRO: "Firmar y registrar" es lo que
+  // escribe el activo en Supabase, y eso requiere una identidad real (es
+  // lo que evita volver a ensuciar la base con activos huérfanos, el
+  // problema que ya se había resuelto antes). Si sos invitado en ese
+  // momento, el contorno + nombre + tipo se guardan en este navegador
+  // (sessionStorage) y se te pide una cuenta. Al volver logueado, el
+  // sistema te muestra el mismo contorno para que lo vuelvas a confirmar
+  // vos mismo — nada queda automático ni se da por sentado que sigue
+  // siendo lo que querés (la gente desconfía de lo nuevo, con razón).
 
-  // Texto de la v3.0.0 (español). Es EXACTAMENTE el mismo que en
-  // lib/hash-clausulas.js — de ese texto sale el hash. Si se cambia uno,
-  // hay que cambiar el otro (y en rigor, crear una v4). No editar a la ligera.
+  var CLIENTE = { nombre: 'invitado', email: null, pais: null, empresa: null, cliente_id: null };
+  var MODO_INVITADO = true;
+  var CLAVE_BORRADOR = 'epi_borrador_pendiente';
+
+  function cargarCliente() {
+    try {
+      var g = sessionStorage.getItem('epi_cliente');
+      if (g) { CLIENTE = Object.assign(CLIENTE, JSON.parse(g)); }
+    } catch (e) {}
+
+    MODO_INVITADO = !CLIENTE.cliente_id;
+
+    el('whoName').textContent = MODO_INVITADO ? 'invitado' : (CLIENTE.nombre || 'cliente');
+    el('whoInvitado').style.display = MODO_INVITADO ? 'inline-block' : 'none';
+    // Como invitado, "salir" no tiene mucho sentido — lo convertimos en
+    // el atajo directo para crear cuenta, sin perder lo que ya dibujó.
+    el('logoutLink').textContent = MODO_INVITADO ? 'crear cuenta' : 'salir';
+  }
+  cargarCliente();
+
+  el('logoutLink').addEventListener('click', function (e) {
+    e.preventDefault();
+    if (MODO_INVITADO) { mostrarRegistro(); return; }
+    window.location.href = 'cuenta.html';
+  });
+
+  // Guarda el borrador (contorno + nombre + tipo) para retomarlo después
+  // de crear la cuenta. No incluye la aceptación del deslinde: eso se
+  // vuelve a pedir con identidad real (ver arriba, por qué).
+  function guardarBorrador() {
+    if (!geojsonConfirmado) return;
+    try {
+      sessionStorage.setItem(CLAVE_BORRADOR, JSON.stringify({
+        geojson: geojsonConfirmado,
+        nombre: el('actNombre').value.trim(),
+        tipo:   el('actTipo').value
+      }));
+    } catch (e) {}
+  }
+
+  // Al cargar la página con identidad real, si hay un borrador pendiente,
+  // se restaura el contorno en el mapa — pero SIN avanzar solo: la persona
+  // tiene que volver a tocar "Confirmar y continuar" ella misma.
+  function intentarRestaurarBorrador() {
+    if (MODO_INVITADO) return;   // solo tiene sentido con identidad real
+    var raw;
+    try { raw = sessionStorage.getItem(CLAVE_BORRADOR); } catch (e) { return; }
+    if (!raw) return;
+
+    var borrador;
+    try { borrador = JSON.parse(raw); } catch (e) { return; }
+    if (!borrador || !borrador.geojson) return;
+
+    pintarConfirmado(borrador.geojson);
+    el('actNombre').value = borrador.nombre || '';
+    el('actTipo').value   = borrador.tipo || '';
+    toast('Volviste con tu contorno guardado. Revisalo y confirmá para seguir.');
+  }
+
+  function mostrarRegistro() {
+    guardarBorrador();
+    var nombre = el('actNombre').value.trim();
+    el('registroActivoNombre').textContent = nombre ? '"' + nombre + '"' : 'Tu activo';
+    el('registroModal').classList.add('show');
+  }
+  el('registroVolverBtn').addEventListener('click', function () {
+    el('registroModal').classList.remove('show');
+  });
+  // El link "Crear cuenta gratis →" ya apunta a cuenta.html por HTML;
+  // antes de irse, nos aseguramos de que el borrador quedó guardado.
+  el('registroIrBtn').addEventListener('click', function () {
+    guardarBorrador();
+  });
+
+  // ═══════════════════════════════════════════════════════════
+  //  ESTACIÓN 2 · EL DESLINDE
+  // ═══════════════════════════════════════════════════════════
+
   var DESLINDE_TEXTO =
 'EPIMELEIA — Protocolo de Notaría Ambiental — Términos de Aceptación (v3.0.0)\n\n' +
 '1. EPIMELEIA actúa exclusivamente como notario técnico. Observa, a través de imágenes satelitales Sentinel-2 provistas por la Agencia Espacial Europea (Copernicus), el estado ambiental del área geográfica (el "Activo") definida por el Cliente, y registra esa observación en la blockchain de Polygon como evidencia inmutable.\n\n' +
@@ -747,8 +904,6 @@
 '4. El Cliente declara tener el derecho de solicitar la observación del Activo, y es el único responsable de los límites geográficos (el polígono) que define.\n\n' +
 '5. EPIMELEIA se reserva el derecho de incorporar mejoras y nuevas fuentes satelitales al protocolo, sin alterar los registros ya sellados.';
 
-  // Guardamos acá los datos del activo listos para registrar, mientras el
-  // cliente lee el deslinde.
   var activoPendiente = null;
 
   el('continueBtn').addEventListener('click', function () {
@@ -763,8 +918,6 @@
     var props = geojsonConfirmado.properties || {};
     var areaHa = props.superficie_ha || 0;
 
-    // Se arma el paquete y se guarda pendiente. El registro real ocurre
-    // cuando el cliente firma el deslinde.
     activoPendiente = {
       nombre: nombreActivo,
       tipo: tipoActivo,
@@ -775,38 +928,44 @@
       cliente_email:   CLIENTE.email,
       cliente_nombre:  CLIENTE.nombre,
       cliente_empresa: CLIENTE.empresa
-      // aceptado: true  → se agrega al firmar en el modal
     };
 
-    // Abrir el modal del deslinde.
+    // El deslinde se puede LEER sin cuenta — es información, no un
+    // compromiso. Lo que cambia según MODO_INVITADO es qué pasa al firmar.
     el('deslindeTexto').textContent = DESLINDE_TEXTO;
     el('deslindeCheck').checked = false;
     el('deslindeFirmar').disabled = true;
     el('deslindeModal').classList.add('show');
   });
 
-  // El botón "Firmar" se habilita solo si el checkbox está tildado.
   el('deslindeCheck').addEventListener('change', function () {
     el('deslindeFirmar').disabled = !this.checked;
   });
 
-  // "Volver": cierra el modal sin registrar nada.
   el('deslindeCancelar').addEventListener('click', function () {
     el('deslindeModal').classList.remove('show');
     activoPendiente = null;
   });
 
-  // "Firmar y registrar": ahora sí se registra el activo, CON aceptado: true.
+  // "Firmar y registrar": acá está el corte real.
   el('deslindeFirmar').addEventListener('click', function () {
     if (!activoPendiente) { el('deslindeModal').classList.remove('show'); return; }
     if (!el('deslindeCheck').checked) return;
 
+    // ── Invitado: no se escribe nada en la base. Se guarda el borrador
+    //    (ya con nombre/tipo confirmados) y se pide una cuenta. ──
+    if (MODO_INVITADO) {
+      el('deslindeModal').classList.remove('show');
+      activoPendiente = null;
+      mostrarRegistro();
+      return;
+    }
+
+    // ── Con identidad real: exactamente el comportamiento de siempre. ──
     var fbtn = el('deslindeFirmar');
     fbtn.disabled = true; fbtn.textContent = 'Registrando…';
 
-    // La intención de aceptar. El hash lo calcula el SERVIDOR (Ajuste 36).
     activoPendiente.aceptado = true;
-
     var nombreActivo = activoPendiente.nombre;
 
     fetch('/api/registrar-activo', {
@@ -823,9 +982,9 @@
         confirmedView.style.display = 'none';
         el('est-firmar').style.display = 'block';
 
-        // ── Estación 3: mostrar el precio según la superficie ──
-        // El activoId viene de la respuesta del registro. Es lo que el pago
-        // necesita para saber QUÉ activo se está pagando.
+        // Ya no hace falta el borrador — el activo quedó registrado real.
+        try { sessionStorage.removeItem(CLAVE_BORRADOR); } catch (e) {}
+
         var idActivo = (data.activo && data.activo.id) || data.activoId || null;
         var haActivo = activoPendiente ? activoPendiente.area_ha : null;
         activoPendiente = null;
@@ -847,15 +1006,11 @@
   // ═══════════════════════════════════════════════════════════
   //  ESTACIÓN 3 · EL PRECIO Y EL PAGO
   // ═══════════════════════════════════════════════════════════
-  //
-  // El cliente ve el precio ANTES de ir a PayPal. Es lo honesto: nadie
-  // debería llegar a una pasarela de pago sin saber cuánto le van a cobrar.
-  //
-  // El precio lo calcula el SERVIDOR (lib/precios.js), no el navegador. Así
-  // hay una sola fuente de verdad para los precios, y el cliente no puede
-  // manipular lo que se le cobra.
+  // Este bloque solo se alcanza con identidad real (el modo invitado se
+  // desvía antes, en "Firmar y registrar"), así que sigue exactamente
+  // igual que siempre — nada nuevo que aprender acá.
 
-  var datosPago = null;   // { activoId, superficieHa } — para cuando apriete pagar
+  var datosPago = null;
 
   function mostrarPrecio(activoId, superficieHa) {
     el('est-pagar').style.display = 'block';
@@ -872,14 +1027,12 @@
       .then(function (p) {
         el('precioCargando').style.display = 'none';
 
-        // El activo supera el máximo del satélite: hay que dividirlo.
         if (!p.ok) {
           el('precioError').style.display = 'block';
           el('precioError').textContent = p.motivo || 'No se pudo calcular el precio.';
           return;
         }
 
-        // Mostrar el precio.
         el('pcSuperficie').textContent = Number(p.superficieHa).toLocaleString('es-AR', { maximumFractionDigits: 2 }) + ' ha';
         el('pcTier').textContent = p.tier.nombre;
         el('pcMonto').innerHTML = 'USD ' + p.precioMensualUSD + ' <small>/ mes</small>';
@@ -905,7 +1058,6 @@
       });
   }
 
-  // El botón: crea la suscripción en PayPal y manda al cliente a poner su tarjeta.
   el('pagarBtn').addEventListener('click', function () {
     if (!datosPago) { toast('Falta calcular el precio.', true); return; }
 
@@ -925,7 +1077,6 @@
     .then(function (r) { return r.json(); })
     .then(function (data) {
       if (data && data.ok && data.approvalUrl) {
-        // A PayPal. El cliente vuelve a protocolo.html con ?suscripcion=ok
         window.location.href = data.approvalUrl;
       } else {
         toast('No se pudo iniciar el pago: ' + ((data && data.error) || 'error'), true);
@@ -938,7 +1089,6 @@
     });
   });
 
-  // ── Si el cliente vuelve de PayPal, mostrarle qué pasó ──
   (function volverDePayPal() {
     var params = new URLSearchParams(window.location.search);
     var estado = params.get('suscripcion');
@@ -949,6 +1099,79 @@
       toast('Cancelaste el pago. Tu activo quedó registrado, podés suscribirte cuando quieras.', true);
     }
   })();
+
+  // ═══════════════════════════════════════════════════════════
+  //  AGREGADO (AJUSTE 41) — EPI, portado de plataforma.html
+  //  Misma lógica exacta, mismo /api/chat. Funciona igual acá que allá.
+  // ═══════════════════════════════════════════════════════════
+  var epiHistorial = [];
+  var epiPensando = false;
+  var epiCerrada = false;
+
+  window.abrirEpi = function () {
+    el('epiPanel').classList.add('open');
+    el('epiBubble').classList.add('hidden');
+    if (!el('epiMsgs').hasChildNodes()) {
+      epiMsg('agent', 'Hola. Soy EPI. Estoy para explicarte cualquier cosa que no se entienda de cómo funciona EPIMELEIA.\n\nPreguntame lo que quieras — qué se puede observar, cómo funciona el mes de cortesía, qué es eso de que nadie puede modificar el dato.');
+    }
+  };
+  window.cerrarEpi = function () {
+    el('epiPanel').classList.remove('open');
+    el('epiBubble').classList.remove('hidden');
+  };
+  function epiMsg(rol, texto) {
+    var c = el('epiMsgs');
+    var w = document.createElement('div'); w.className = 'emsg ' + rol;
+    var html = texto.replace(/\n\n/g, '</p><p>').replace(/^/, '<p>').replace(/$/, '</p>');
+    w.innerHTML = '<div class="emsg-av ' + rol + '">' + (rol === 'agent' ? 'EP' : 'VOS') + '</div><div class="emsg-b ' + rol + '">' + html + '</div>';
+    c.appendChild(w); c.scrollTop = c.scrollHeight;
+    return w;
+  }
+  window.epiEnviar = async function () {
+    var t = el('epiText');
+    var v = t.value.trim();
+    if (!v || epiPensando || epiCerrada) return;
+    epiMsg('user', v);
+    epiHistorial.push({ role: 'user', content: v });
+    t.value = ''; t.style.height = 'auto';
+    epiPensando = true;
+    var pensando = epiMsg('agent', '…');
+    try {
+      var resp = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: epiHistorial })
+      });
+      var data = await resp.json();
+      pensando.remove();
+      var textoEpi = '';
+      if (data && Array.isArray(data.content)) {
+        textoEpi = data.content.filter(function (b) { return b.type === 'text'; }).map(function (b) { return b.text; }).join('\n').trim();
+      }
+      if (!textoEpi) {
+        textoEpi = 'Disculpá, tuve un problema para responder. Probá de nuevo en un momento, o escribí a info@epimeleia.world.';
+      }
+      var debeCerrar = textoEpi.includes('[[FIN_CHARLA]]');
+      textoEpi = textoEpi.replace(/\[\[FIN_CHARLA\]\]/g, '').trim();
+      if (textoEpi) {
+        epiMsg('agent', textoEpi);
+        epiHistorial.push({ role: 'assistant', content: textoEpi });
+      }
+      if (debeCerrar) {
+        epiCerrada = true;
+        var box = el('epiText');
+        box.disabled = true;
+        box.placeholder = 'Conversación finalizada.';
+      }
+    } catch (e) {
+      pensando.remove();
+      epiMsg('agent', 'No pude conectarme en este momento. Revisá tu conexión y probá de nuevo, o escribí a info@epimeleia.world.');
+    } finally {
+      epiPensando = false;
+    }
+  };
+  el('epiText').addEventListener('keydown', function (e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); epiEnviar(); } });
+  el('epiText').addEventListener('input', function () { this.style.height = 'auto'; this.style.height = Math.min(this.scrollHeight, 100) + 'px'; });
 
 })();
 </script>
