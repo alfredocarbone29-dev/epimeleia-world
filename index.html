@@ -90,6 +90,22 @@ section { position:relative; }
 .hero-proofline .dot { width:6px; height:6px; border-radius:50%; background:var(--emerald); animation:blink 2.5s ease-in-out infinite; }
 .hero-proofline span { color:var(--emerald); }
 
+/* ─── CTA PRINCIPAL DEL HERO (el mapa, primero) ─── */
+.hero-cta-wrap { margin:clamp(30px,4vw,44px) auto 0; display:flex; flex-direction:column; align-items:center; gap:14px; }
+.hero-cta {
+  display:inline-flex; align-items:center; gap:14px;
+  background:var(--gold2); color:var(--void); text-decoration:none;
+  padding:20px 34px; font-family:'Playfair Display',serif; font-weight:600; font-size:clamp(17px,2vw,21px);
+  box-shadow:0 10px 40px rgba(200,168,75,0.28); transition:background .2s, transform .2s, box-shadow .2s;
+  border:1px solid rgba(0,0,0,0.05);
+}
+.hero-cta:hover { background:var(--gold); transform:translateY(-2px); box-shadow:0 14px 48px rgba(200,168,75,0.4); }
+.hero-cta-ico { flex-shrink:0; display:flex; }
+.hero-cta-ico svg { width:26px; height:26px; }
+.hero-cta-sub { font-family:'JetBrains Mono',monospace; font-size:10.5px; letter-spacing:1.5px; color:var(--muted); }
+.hero-cta-sub b { color:var(--emerald); }
+@media(max-width:520px){ .hero-cta { padding:16px 24px; font-size:16px; gap:10px; } .hero-cta-ico svg{ width:21px; height:21px; } }
+
 /* ─── BIFURCACIÓN (dos caminos) ─── */
 .bifurca { max-width:880px; margin:clamp(46px,7vw,74px) auto 0; }
 .bifurca-lead { font-family:'Playfair Display',serif; font-style:italic; font-size:clamp(18px,2.3vw,25px); color:var(--white); line-height:1.4; max-width:640px; margin:0 auto clamp(28px,4vw,40px); }
@@ -112,6 +128,12 @@ section { position:relative; }
 .camino-ia .spark-sm { fill:var(--gold2); }
 .camino.bancos .camino-ia .spark-lg { fill:var(--azure); }
 @media(max-width:640px){ .bifurca-grid { grid-template-columns:1fr; } }
+
+/* ─── LINKS SECUNDARIOS (reemplazan la bifurcación de tarjetas) ─── */
+.bifurca-mini { margin:clamp(40px,6vw,60px) auto 0; max-width:640px; display:flex; flex-direction:column; gap:10px; }
+.bifurca-mini p { font-size:14px; color:rgba(232,228,218,0.55); line-height:1.6; }
+.bifurca-mini a { color:var(--emerald); text-decoration:none; border-bottom:1px solid rgba(95,173,95,0.35); transition:border-color .2s; }
+.bifurca-mini a:hover { border-color:var(--emerald); }
 
 /* ─── SECCIÓN genérica ─── */
 .sec { max-width:1080px; margin:0 auto; padding:clamp(52px,8vw,96px) clamp(24px,5vw,64px); }
@@ -420,10 +442,10 @@ section { position:relative; }
 
 <!-- TOPBAR -->
 <div class="topbar">
-  <div class="brand">EPIMELEIA <span>· PLATAFORMA</span></div>
+  <div class="brand">EPIMELEIA</div>
   <nav class="topnav">
     <button onclick="abrir('comoFunciona')">CÓMO FUNCIONA</button>
-    <a class="nav-prueba" href="plataforma.html#prueba" style="text-decoration:none;display:inline-block;">LA PRUEBA</a>
+    <a class="nav-prueba" href="protocolo.html" style="text-decoration:none;display:inline-block;">LA PRUEBA</a>
     <button onclick="abrir('historia')">NUESTRA HISTORIA</button>
     <button onclick="abrir('faqs')">PREGUNTAS FRECUENTES</button>
     <button class="nav-gratis" onclick="abrir('mesGratis')">¿UN MES GRATIS?</button>
@@ -436,30 +458,26 @@ section { position:relative; }
   <div class="hero-welcome">BIENVENIDOS</div>
   <div class="hero-rule"></div>
   <p class="hero-lead">Elegís un lugar del planeta y un satélite empieza a observarlo. Lo que ve queda registrado — y después, <em>nadie puede cambiarlo</em>.</p>
+
+  <div class="hero-cta-wrap">
+    <a class="hero-cta" href="protocolo.html" aria-label="Dibujá y certificá tu recurso en el mapa, sin registrarte">
+      <span class="hero-cta-ico">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 21.5s7-5.7 7-11.5a7 7 0 1 0-14 0c0 5.8 7 11.5 7 11.5z" fill="currentColor" opacity="0.22"/>
+          <path d="M12 21.5s7-5.7 7-11.5a7 7 0 1 0-14 0c0 5.8 7 11.5 7 11.5z" stroke="currentColor" stroke-width="1.6"/>
+          <circle cx="12" cy="10" r="2.5" fill="currentColor"/>
+        </svg>
+      </span>
+      Dibujá y certificá tu recurso
+    </a>
+    <div class="hero-cta-sub"><b>PROBALO EN VIVO</b> · sin registrarte</div>
+  </div>
+
   <p class="hero-plain">Somos una plataforma tecnológica. Un vínculo directo entre vos y un satélite: elegís qué observar, sellamos su estado ambiental con una prueba inalterable y verificable por terceros, y te informamos qué está pasando con tu bien. Sin software que instalar, sin procesos largos, nada oculto.</p>
 
-  <div class="bifurca">
-    <p class="bifurca-lead">EPIMELEIA incorpora <span>inteligencia artificial</span> en tu experiencia. Y vos elegís el camino que te pertenece:</p>
-    <div class="bifurca-grid">
-      <a class="camino prod" href="plataforma.html">
-        <span class="camino-ia" aria-label="Con asistente IA">
-          <svg viewBox="0 0 24 24"><path class="spark-lg" d="M12 2l1.6 5.2L19 9l-5.4 1.8L12 16l-1.6-5.2L5 9l5.4-1.8z"/><path class="spark-sm" d="M18.5 14l.7 2.3 2.3.7-2.3.7-.7 2.3-.7-2.3-2.3-.7 2.3-.7z"/></svg> EPI
-        </span>
-        <div class="camino-k">PARA VOS</div>
-        <div class="camino-name">EPIMELEIA</div>
-        <div class="camino-sub">¿Qué necesitás observar y certificar? Agro, minería, agua, forestal, real estate, data centers, energía, residuos, glaciares… y más.</div>
-        <div class="camino-arrow">ENTRAR →</div>
-      </a>
-      <a class="camino bancos" href="instituciones.html">
-        <span class="camino-ia" aria-label="Con asistente IA">
-          <svg viewBox="0 0 24 24"><path class="spark-lg" d="M12 2l1.6 5.2L19 9l-5.4 1.8L12 16l-1.6-5.2L5 9l5.4-1.8z"/><path class="spark-sm" d="M18.5 14l.7 2.3 2.3.7-2.3.7-.7 2.3-.7-2.3-2.3-.7 2.3-.7z"/></svg> EPI
-        </span>
-        <div class="camino-k">BANCOS VERDES · INSTITUCIONES</div>
-        <div class="camino-name">EPIMELEIA<br>Servicios Financieros</div>
-        <div class="camino-sub">Sos un banco, un fondo o emitís deuda verde y necesitás prueba a escala de cartera.</div>
-        <div class="camino-arrow">ENTRAR →</div>
-      </a>
-    </div>
+  <div class="bifurca-mini">
+    <p>¿Querés ver todos los casos de uso — agro, minería, agua, forestal, energía y más? <a href="plataforma.html">Conocé el detalle →</a></p>
+    <p>¿Sos un banco, fondo o institución financiera y necesitás prueba a escala de cartera? <a href="instituciones.html">Ver propuesta institucional →</a></p>
   </div>
 </section>
 
@@ -485,21 +503,6 @@ section { position:relative; }
     <path class="spark-sm" d="M18.5 14l.7 2.3 2.3.7-2.3.7-.7 2.3-.7-2.3-2.3-.7 2.3-.7z"/>
   </svg>
 </button>
-
-<!-- BOTÓN FLOTANTE · PROBAR EL MAPA EN MODO INVITADO (AGREGADO) -->
-<a class="mapa-float" href="protocolo.html" aria-label="Dibujá y certificá tu recurso en el mapa, sin registrarte">
-  <span class="mapa-float-ico">
-    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M12 21.5s7-5.7 7-11.5a7 7 0 1 0-14 0c0 5.8 7 11.5 7 11.5z" fill="currentColor" opacity="0.22"/>
-      <path d="M12 21.5s7-5.7 7-11.5a7 7 0 1 0-14 0c0 5.8 7 11.5 7 11.5z" stroke="currentColor" stroke-width="1.6"/>
-      <circle cx="12" cy="10" r="2.5" fill="currentColor"/>
-    </svg>
-  </span>
-  <span class="mapa-float-txt">
-    <b>Dibujá y certificá tu recurso</b>
-    <small>Probalo en vivo, sin registrarte →</small>
-  </span>
-</a>
 
 <!-- EPI PANEL -->
 <div class="epi-panel" id="epiPanel">
