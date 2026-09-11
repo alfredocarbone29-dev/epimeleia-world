@@ -241,6 +241,15 @@ function _generarHTMLReporte({ activoId, owner, año, q, datosBilling, certs, hu
 // En 'no_visto' NO hay transacción de esta quincena (la ausencia es el
 // registro), así que el mail NO lleva link a una tx inexistente: apunta al
 // historial público del contrato, que sí es real.
+//
+// AJUSTE 41 — LA INFORMACIÓN DE POLYGONSCAN, TAMBIÉN EN EL CUERPO DEL MAIL
+// Hasta acá el mail mostraba el hash de evidencia y un botón "Verificar en
+// Polygonscan", pero el hash de LA TRANSACCIÓN (lo primero que Polygonscan
+// muestra en la página de una tx) solo vivía adentro del link del botón —
+// si el destinatario no hacía click, ese dato nunca llegaba a existir para
+// él. Ahora el txHash se imprime como texto plano, igual que en Polygonscan,
+// arriba del botón. El botón sigue estando, para el que quiera verificar
+// por su cuenta — pero el dato ya no depende de que alguien haga click.
 
 /**
  * Envía el aviso quincenal de una ventana satelital.
@@ -366,6 +375,11 @@ function _generarHTMLQuincenal({
   </tr>` : '';
 
   // Bloque de prueba pública (verde). Cambia según haya tx o no.
+  //
+  // AJUSTE 41: cuando hay txHash, se imprime como texto monospace ANTES
+  // del botón — igual que aparece en la página de la transacción en
+  // Polygonscan. El botón sigue estando para el que quiera verificar por
+  // su cuenta, pero el dato mismo ya no depende de hacer click.
   const bloquePrueba = sellado ? `
   <tr>
     <td style="padding:28px 40px;">
@@ -376,11 +390,14 @@ function _generarHTMLQuincenal({
             <div style="font-family:'Georgia',serif;font-size:19px;color:#f4f0e8;margin:10px 0 16px 0;">Nadie tocó este dato. Y se puede probar.</div>
             <div style="font-family:monospace;font-size:10px;color:#8a9e8a;">Huella de evidencia</div>
             <div style="font-family:monospace;font-size:11px;color:#c9a84a;word-break:break-all;margin:2px 0 10px 0;">${hashEvidencia || '—'}</div>
+            ${txHash ? `
+            <div style="font-family:monospace;font-size:10px;color:#8a9e8a;">Hash de transacción</div>
+            <div style="font-family:monospace;font-size:11px;color:#c9a84a;word-break:break-all;margin:2px 0 10px 0;">${txHash}</div>` : ''}
             <div style="font-family:monospace;font-size:11px;color:#8a9e8a;">Contrato · ${contratoCert} · Polygon Mainnet</div>
             ${bloque != null ? `<div style="font-family:monospace;font-size:11px;color:#8a9e8a;margin-top:4px;">Sellado · bloque #${bloque}</div>` : ''}
             ${urlTx ? `
             <div style="margin-top:18px;">
-              <a href="${urlTx}" style="display:inline-block;background:#c9a84a;color:#0f1a0f;font-family:monospace;font-size:12px;letter-spacing:1px;text-decoration:none;padding:12px 22px;">Verificar en Polygonscan →</a>
+              <a href="${urlTx}" style="display:inline-block;background:#c9a84a;color:#0f1a0f;font-family:monospace;font-size:12px;letter-spacing:1px;text-decoration:none;padding:12px 22px;">Ver la transacción completa en Polygonscan →</a>
             </div>` : ''}
           </td>
         </tr>
