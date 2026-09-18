@@ -23,6 +23,15 @@
  * Se apoya en las mismas variables de entorno que ya usa /api/scheduler.js:
  *   SUPABASE_URL, SUPABASE_SERVICE_KEY
  * (Ya están configuradas en Vercel. No hay que tocar nada.)
+ *
+ * ── AGREGADO (18/9) — CHEQUEO HISTÓRICO DE DEFORESTACIÓN ──
+ * En el momento en que se recibe el polígono, se consulta la GFW Data API
+ * (dataset umd_tree_cover_loss, Hansen et al.) para saber si hubo pérdida
+ * de cobertura forestal en el predio desde 2020 hasta hoy. El resultado se
+ * guarda junto al activo, para usarlo después en el certificado.
+ * Esto NUNCA debe bloquear el registro del activo: si GFW falla, se guarda
+ * igual y el campo queda en null — se puede reintentar después.
+ * Requiere la variable de entorno GFW_API_KEY configurada en Vercel.
  */
 
 import { createClient } from '@supabase/supabase-js';
@@ -34,6 +43,7 @@ import {
   HASH_CLAUSULAS_VIGENTE,
   calcularHashAceptacion,
 } from '../lib/hash-clausulas.js';
+import { consultarDeforestacionHistorica } from '../lib/consultarDeforestacionHistorica.js';
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -102,6 +112,20 @@ export default async function handler(req, res) {
       type: 'Polygon',
       coordinates: [datos.coordinates],  // GeoJSON envuelve el anillo en un array
     };
+
+    // ── 2b) CHEQUEO HISTÓRICO DE DEFORESTACIÓN (GFW) ──
+    // Se dispara acá, apenas tenemos el polígono armado. Si falla por
+    // cualquier motivo (API caída, falta la key, etc.), NO se corta el
+    // registro del activo — se guarda con este campo en null y se puede
+    // reintentar después a mano.
+    let deforestacionHistorica = null;
+    try {
+      deforestacionHistorica = await consultarDeforestacionHistorica(poligono);
+      console.log('[registrar-activo] Chequeo GFW OK:', deforestacionHistorica.huboDeforestacion ? 'hubo pérdida' : 'sin pérdida detectada');
+    } catch (errGfw) {
+      console.error('[registrar-activo] Chequeo GFW falló (no bloquea el registro):', errGfw.message);
+      deforestacionHistorica = null;
+    }
 
     // ── 3) MAPEAR el tipo del mapa al tipo interno ──
     const tipoInterno = MAPA_TIPOS[datos.tipo] || 'OTRO';
@@ -185,6 +209,8 @@ export default async function handler(req, res) {
       hash_firma:             firmaHash,
       firma_version:          firmaVersion,
       firma_fecha:            firmaFecha,
+      // Chequeo histórico de deforestación (GFW). Puede ser null si falló.
+      deforestacion_historica: deforestacionHistorica,
       // fecha_alta y fecha_creacion las pone Supabase solas (default now()).
     };
 
@@ -192,7 +218,7 @@ export default async function handler(req, res) {
     const { data, error } = await supabase
       .from('activos')
       .insert(fila)
-      .select('id, nombre_activo, tipo, superficie_ha, estado, cliente_id, hash_firma, firma_version, firma_fecha')
+      .select('id, nombre_activo, tipo, superficie_ha, estado, cliente_id, hash_firma, firma_version, firma_fecha, deforestacion_historica')
       .single();
 
     if (error) {
@@ -223,6 +249,8 @@ export default async function handler(req, res) {
         hash:             data.hash_firma,
         clausulasVigente: HASH_CLAUSULAS_VIGENTE,
       },
+      // Chequeo histórico de deforestación (null si GFW falló al momento del registro).
+      deforestacion_historica: data.deforestacion_historica,
       // Nota honesta para el front: guardado sí, certificado todavía no.
       siguiente_paso: 'El activo está registrado y el deslinde aceptado. El pago viene después.',
     });
