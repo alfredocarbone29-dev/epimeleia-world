@@ -78,7 +78,7 @@ const { armarPaquete } = require('./paquete-evidencia');
 const activoSupabase = require('./activo-supabase');
 
 // ── AJUSTE 18/9: redactar el chequeo histórico de deforestación ──
-const { redactarDeforestacionHistorica } = require('./redactarDeforestacionHistorica');
+const { redactarDeforestacionHistorica } = require('./lib/redactarDeforestacionHistorica');
 
 // ── AJUSTES (cambialos cuando quieras) ───────────────────────
 const EMAIL_DESTINO = 'alfredocarbone29@gmail.com';
