@@ -90,6 +90,12 @@ section { position:relative; }
 .hero-proofline .dot { width:6px; height:6px; border-radius:50%; background:var(--emerald); animation:blink 2.5s ease-in-out infinite; }
 .hero-proofline span { color:var(--emerald); }
 
+/* ─── BLOQUE EUDR (nuevo · debajo de la frase madre, arriba del botón) ─── */
+.hero-eudr { max-width:720px; margin:clamp(30px,5vw,44px) auto 0; padding:clamp(22px,3vw,30px) clamp(24px,4vw,34px); border:1px solid rgba(95,173,95,0.3); border-left:2px solid var(--emerald); background:linear-gradient(135deg, rgba(95,173,95,0.06), transparent); text-align:left; }
+.hero-eudr-tag { font-family:'JetBrains Mono',monospace; font-size:clamp(10px,1.3vw,12px); letter-spacing:3px; color:var(--emerald); margin-bottom:14px; }
+.hero-eudr-body { font-size:clamp(16px,1.7vw,19px); color:rgba(232,228,218,0.85); line-height:1.65; }
+.hero-eudr-body strong { color:var(--white); font-weight:600; }
+
 /* ─── CTA PRINCIPAL DEL HERO (el mapa, primero) ─── */
 .hero-cta-wrap { margin:clamp(30px,4vw,44px) auto 0; display:flex; flex-direction:column; align-items:center; gap:14px; }
 .hero-cta {
@@ -448,7 +454,6 @@ section { position:relative; }
     <a class="nav-prueba" href="protocolo.html" style="text-decoration:none;display:inline-block;">LA PRUEBA</a>
     <button onclick="abrir('historia')">NUESTRA HISTORIA</button>
     <button onclick="abrir('faqs')">PREGUNTAS FRECUENTES</button>
-    <button class="nav-gratis" onclick="abrir('mesGratis')">¿UN MES GRATIS?</button>
   </nav>
 </div>
 
@@ -458,6 +463,14 @@ section { position:relative; }
   <div class="hero-welcome">BIENVENIDOS</div>
   <div class="hero-rule"></div>
   <p class="hero-lead">Elegís un lugar del planeta y un satélite empieza a observarlo. Lo que ve queda registrado — y después, <em>nadie puede cambiarlo</em>.</p>
+
+  <div class="hero-eudr">
+    <div class="hero-eudr-tag">ESPECIALISTAS EN CUMPLIMIENTO EUDR</div>
+    <p class="hero-eudr-body">Desde diciembre de 2026, vender a la Unión Europea exige probar que tu territorio no se deforestó desde 2020. Nuestra plataforma te lo confirma <strong>en minutos</strong>, con prueba satelital sellada e imposible de alterar.</p>
+    <p class="hero-eudr-body" style="margin-top:14px;">Usamos la misma lógica de datos que gobiernos y ONG de todo el mundo, y te decimos con exactitud si hubo deforestación —y en qué año— desde 2020 hasta hoy. Con clientes en distintos países del mundo.</p>
+    <p class="hero-eudr-body" style="margin-top:14px;">Como el registro queda sellado en blockchain, es una prueba objetiva y verificable por cualquiera —el operador, su comprador, la autoridad— sin depender de nuestra palabra. El satélite no opina: registra. Y ese registro no lo puede alterar nadie, en ningún lado.</p>
+    <p style="margin-top:20px; padding-top:16px; border-top:1px solid var(--line2); font-size:clamp(13px,1.4vw,15px); color:rgba(232,228,218,0.6); line-height:1.6;">No cuestionamos el ordenamiento jurídico de los países en los que actuamos: lo respetamos. Solo buscamos darte herramientas anticipatorias para tus decisiones. Ante cualquier duda, escribinos a <a href="mailto:info@epimeleia.world" style="color:var(--emerald); text-decoration:none;">info@epimeleia.world</a> y te respondemos personalmente.</p>
+  </div>
 
   <div class="hero-cta-wrap">
     <a class="hero-cta" href="protocolo.html" aria-label="Dibujá y certificá tu recurso en el mapa, sin registrarte">
@@ -649,7 +662,7 @@ const RECURSOS = {
   mineria:   { ico:'⛏', name:'Minería', hint:'HUELLA · EXPANSIÓN', body:'<p>Se registra la huella de la operación sobre el terreno: su extensión, escombreras, balsas, y el avance de esa huella.</p><p>El impacto queda documentado en el tiempo, sin edición posible.</p>', applies:'Empresas mineras que necesitan probar, ante reguladores o inversores, que su impacto se mantiene dentro de lo declarado.' },
   proteg:    { ico:'🛡', name:'Áreas protegidas', hint:'RESERVAS · CONSERVACIÓN', body:'<p>El satélite documenta que una zona sigue intacta — o que alguien la tocó, y cuándo.</p><p>Prueba objetiva del estado de conservación, defendible ante cualquiera.</p>', applies:'ONGs, fundaciones, gobiernos y municipios que deben probar que una zona protegida se mantiene, o registrar una intrusión.' },
   industria: { ico:'🏭', name:'Industria', hint:'INSTALACIONES · ÁREA', body:'<p>Se registra la extensión de las instalaciones y los cambios en el área ocupada a lo largo del tiempo.</p><p>La huella territorial de la operación queda documentada y verificable.</p>', applies:'Plantas industriales, centros de datos, gestión de residuos, y cualquier instalación cuya huella deba documentarse.' },
-  tuyo:      { ico:'✦', name:'Lo tuyo', hint:'EL PRÓXIMO REGISTRO', body:'<p>Si tu actividad deja una huella sobre el territorio — agua, vegetación, suelo, instalaciones — se puede certificar.</p><p><strong>Puede ser lo próximo que quede registrado</strong>, con prueba inmutable, defendible ante gobiernos, bancos y fondos.</p><p>El primer mes es de cortesía.</p>', applies:'Cualquier organización cuya huella pueda observarse desde el espacio y necesite dejarla probada.' }
+  tuyo:      { ico:'✦', name:'Lo tuyo', hint:'EL PRÓXIMO REGISTRO', body:'<p>Si tu actividad deja una huella sobre el territorio — agua, vegetación, suelo, instalaciones — se puede certificar.</p><p><strong>Puede ser lo próximo que quede registrado</strong>, con prueba inmutable, defendible ante gobiernos, bancos y fondos.</p>', applies:'Cualquier organización cuya huella pueda observarse desde el espacio y necesite dejarla probada.' }
 };
 const grid = document.getElementById('recGrid');
 if (grid) Object.entries(RECURSOS).forEach(([key, r]) => {
@@ -688,15 +701,8 @@ const INFO = {
 <h4>CBAM · UE</h4><p>El mecanismo de ajuste de carbono en frontera de la Unión Europea.</p>
 <h4>TAXONOMÍA VERDE · UE</h4><p>La clasificación europea de actividades sostenibles.</p>
 <h4>GRI · TCFD</h4><p>Los estándares internacionales de reporte de sostenibilidad y clima.</p>` },
-  mesGratis: { eyebrow:'¿UN MES GRATIS?', title:'El primer mes es de cortesía',
-    body:`<p>Sí. El primer mes es <strong>completo</strong>: la certificación satelital real, grabada en blockchain, igual que un cliente que ya paga. No es una demo recortada.</p>
-<h4>CÓMO FUNCIONA</h4>
-<p>Al darte de alta dejás tu medio de pago desde el inicio — eso lo gestiona <strong>PayPal</strong>, nunca EPIMELEIA: no vemos ni tocamos los datos de tu tarjeta.</p>
-<p>Durante 30 días no se te cobra nada. Si decidís que no es para vos, cancelás y no se debita un peso. Si no hacés nada, al mes el servicio continúa y ahí empieza el cobro.</p>
-<h4>SIN LETRA CHICA</h4>
-<p>El precio se te informa antes de empezar. Cancelás cuando quieras, sin explicaciones.</p>` },
   terminos: { eyebrow:'TÉRMINOS DE USO', title:'Términos de Uso',
-    body:`<h4>QUÉ ES EPIMELEIA</h4><p>EPIMELEIA registra observación satelital de forma permanente e inmutable en blockchain. No es auditor ni organismo regulatorio: es un registro neutral.</p><h4>PERMANENCIA</h4><p>Todo registro escrito en blockchain es <strong>permanente e inmutable</strong>. No existe mecanismo de eliminación.</p><h4>RESPONSABILIDAD</h4><p>La responsabilidad sobre los datos declarados es de quien registra el activo.</p><h4>MEMBRESÍA</h4><p>De carácter mensual. El primer mes es de cortesía. Los valores pueden modificarse informando previamente.</p><h4>CONTACTO</h4><p><strong>info@epimeleia.world</strong></p>` },
+    body:`<h4>QUÉ ES EPIMELEIA</h4><p>EPIMELEIA registra observación satelital de forma permanente e inmutable en blockchain. No es auditor ni organismo regulatorio: es un registro neutral.</p><h4>PERMANENCIA</h4><p>Todo registro escrito en blockchain es <strong>permanente e inmutable</strong>. No existe mecanismo de eliminación.</p><h4>RESPONSABILIDAD</h4><p>La responsabilidad sobre los datos declarados es de quien registra el activo.</p><h4>CONTACTO</h4><p><strong>info@epimeleia.world</strong></p>` },
   privacidad: { eyebrow:'PRIVACIDAD', title:'Privacidad',
     body:`<h4>PÚBLICO EN BLOCKCHAIN</h4><p>El estado de certificación de cada activo es público y verificable.</p><h4>PRIVADO</h4><p>Coordenadas exactas, email, razón social y datos de contacto son <strong>estrictamente privados</strong>.</p><h4>EMAIL</h4><p>Se almacena como hash criptográfico. El email real nunca queda en la blockchain.</p><h4>SIN VENTA DE DATOS</h4><p>EPIMELEIA no vende ni comparte datos de clientes con terceros.</p><h4>CONTACTO</h4><p><strong>info@epimeleia.world</strong></p>` }
 };
@@ -707,7 +713,6 @@ const FAQS = [
   { q:'¿Cómo sé que la imagen es real y no manipulada?', a:'EPIMELEIA no toma ni edita imágenes: las recibe de la fuente satelital y las registra tal como llegan. Una fuente posible es Copernicus Sentinel-2, de la Agencia Espacial Europea.' },
   { q:'¿Pueden modificar una certificación después?', a:'No. Ni el cliente, ni EPIMELEIA. No existe un botón para eso: es, literalmente, imposible.' },
   { q:'¿Cualquiera puede ver mis certificaciones?', a:'El registro on-chain (que algo se certificó, cuándo, y su hash) es público. Tus datos sensibles —email, identidad, coordenadas exactas— son privados y nunca van a la blockchain.' },
-  { q:'¿Puedo cancelar cuando quiera?', a:'Sí, cuando lo consideres. No hay compromiso de permanencia.' },
   { q:'¿Es lo mismo que un bono de carbono?', a:'No. Un bono depende de certificadores humanos. Una certificación EPIMELEIA es un dato observado por satélite y escrito en una cadena que nadie edita. No vendemos compensación: vendemos prueba.' },
   { q:'¿En qué se diferencia de una auditoría tradicional?', a:'Una auditoría depende de que alguien viaje, inspeccione y firme en un momento puntual. EPIMELEIA observa de forma continua, sin presencia en el lugar, y deja un registro que no depende de la firma de nadie.' },
   { q:'¿Funciona en cualquier lugar del mundo?', a:'Sí. El satélite orbita el planeta entero. El proceso es el mismo en cualquier punto.' },
@@ -755,7 +760,7 @@ function abrirEpi(){
   document.getElementById('epiPanel').classList.add('open');
   document.getElementById('epiBubble').classList.add('hidden');
   if(!document.getElementById('epiMsgs').hasChildNodes()){
-    epiMsg('agent','Hola. Soy EPI. Estoy para explicarte cómo funciona EPIMELEIA — qué se puede observar y certificar, cómo es el mes de cortesía, o eso de que una vez sellado el dato ya nadie lo puede tocar.\n\nPreguntame lo que quieras sobre el protocolo.');
+    epiMsg('agent','Hola. Soy EPI. Estoy para explicarte cómo funciona EPIMELEIA — qué se puede observar y certificar, o eso de que una vez sellado el dato ya nadie lo puede tocar.\n\nPreguntame lo que quieras sobre el protocolo.');
   }
 }
 function cerrarEpi(){
