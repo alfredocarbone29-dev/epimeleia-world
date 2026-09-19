@@ -62,30 +62,17 @@
  * ═════════════════════════════════════════════════════════════
  */
 
-// Carga el .env cuando el archivo se corre SUELTO (node activo-supabase.js).
-// Cuando corre dentro de scheduler.js no hace falta —el proceso principal ya
-// lo cargó—, pero suelto arranca sin las variables y Supabase no encuentra la
-// URL. dotenv ya está instalado (lo usa procesador-pagos.js). No molesta que
-// se llame dos veces: la segunda es un no-op.
 require('dotenv').config();
 
 const { createClient } = require('@supabase/supabase-js');
 
-// Cliente Supabase con service key (mismo patrón que procesador-pagos.js).
-// Se crea una sola vez al cargar el módulo.
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_KEY
 );
 
-// Nombre de la tabla y de las columnas, TAL CUAL las nombró el fundador.
-// Si algún día cambian en Supabase, se cambian ACÁ, en un solo lugar.
 const TABLA = 'activos';
 
-// Traducción del tipo interno (FORESTAL, HIDRICO...) al número que usa
-// config.indicadoresPorTipo. Espejo del enum del contrato y de MAPA_TIPOS
-// en registrar-activo.js. Si el activo ya guarda el tipo como número, se
-// usa tal cual.
 const TIPO_A_NUMERO = {
   MINERIA:    0,
   FORESTAL:   1,
@@ -93,31 +80,20 @@ const TIPO_A_NUMERO = {
   INDUSTRIAL: 3,
   DATA_CENTER:4,
   RESIDUOS:   5,
-  HIDROVIA:   6,   // en el contrato es HIDROVIA
-  HIDRICO:    6,   // registrar-activo.js usa HIDRICO para cuenca/agua
-  GLACIAR:    7,   // no hay enum propio → OTRO
-  AGRICOLA:   1,   // vegetación agrícola → mismo grupo que FORESTAL
+  HIDROVIA:   6,
+  HIDRICO:    6,
+  GLACIAR:    7,
+  AGRICOLA:   1,
   OTRO:       7,
 };
 
-/**
- * Normaliza el tipo del activo a número (el que espera el satélite).
- * Acepta número directo o string (FORESTAL, HIDRICO, ...).
- */
 function _tipoANumero(tipo) {
-  if (tipo === null || tipo === undefined) return 7; // OTRO por defecto
+  if (tipo === null || tipo === undefined) return 7;
   if (typeof tipo === 'number') return tipo;
   const t = String(tipo).toUpperCase().trim();
   return TIPO_A_NUMERO[t] ?? 7;
 }
 
-/**
- * Normaliza el polígono guardado en Supabase a un GeoJSON Polygon.
- *
- * En Supabase el polígono puede venir como objeto JSON ya parseado, o
- * como string (según el tipo de columna). Se aceptan las dos formas.
- * Si no es un Polygon válido, devuelve null (y el que llama decide).
- */
 function _normalizarPoligono(poligono) {
   if (!poligono) return null;
 
@@ -129,33 +105,12 @@ function _normalizarPoligono(poligono) {
   if (p && p.type === 'Polygon' && Array.isArray(p.coordinates)) {
     return p;
   }
-  // A veces se guarda envuelto en un Feature.
   if (p && p.type === 'Feature' && p.geometry?.type === 'Polygon') {
     return p.geometry;
   }
   return null;
 }
 
-/**
- * Trae de Supabase el activo cuyo activo_id_onchain coincide con el ID
- * que scheduler.js tiene de la cadena.
- *
- * Devuelve un objeto LISTO para pasarle a medirIndicadores():
- *   {
- *     encontrado: true/false,
- *     motivo: string (si no se encontró),
- *     activoIdOnchain, filaId, clienteId,
- *     nombreActivo, tipo (número), tipoTexto,
- *     geometria (GeoJSON Polygon), esPoligonoReal,
- *     superficieHa, superficieKm2,
- *     estado,
- *   }
- *
- * NUNCA lanza por "no encontrado": eso es un resultado válido, no un
- * error. Solo lanza si Supabase mismo falla (red, credenciales).
- *
- * @param {number|string} activoIdOnchain
- */
 async function traerActivoPorOnchainId(activoIdOnchain) {
   if (activoIdOnchain === null || activoIdOnchain === undefined) {
     return { encontrado: false, motivo: 'No se pasó activo_id_onchain.' };
@@ -174,16 +129,15 @@ async function traerActivoPorOnchainId(activoIdOnchain) {
       'cliente_id',
       'activo_id_onchain',
       'estado',
+      'deforestacion_historica',
     ].join(', '))
     .eq('activo_id_onchain', activoIdOnchain)
     .maybeSingle();
 
-  // Error REAL de Supabase (no "no encontrado"): se propaga.
   if (error) {
     throw new Error(`Supabase falló leyendo activo ${activoIdOnchain}: ${error.message}`);
   }
 
-  // No hay fila con ese activo_id_onchain. Es un resultado honesto.
   if (!data) {
     return {
       encontrado: false,
@@ -203,36 +157,16 @@ async function traerActivoPorOnchainId(activoIdOnchain) {
     nombreActivo:   data.nombre_activo ?? null,
     tipo:           _tipoANumero(data.tipo),
     tipoTexto:      data.tipo ?? null,
-    geometria,                              // GeoJSON Polygon o null
-    esPoligonoReal: geometria !== null,     // false si no hay polígono válido
+    geometria,
+    esPoligonoReal: geometria !== null,
     poligonoConfirmado: data.poligono_confirmado === true,
     superficieHa:   data.superficie_ha ?? null,
     superficieKm2:  data.superficie_km2 ?? null,
     estado:         data.estado ?? null,
+    deforestacionHistorica: data.deforestacion_historica ?? null,
   };
 }
 
-/**
- * Trae un activo por el ID DE SU FILA en Supabase (no el on-chain), y
- * cruza a la tabla `clientes` para traer el TITULAR.
- *
- * ¿Por qué por id de fila y no por activo_id_onchain?
- *   Porque activo_id_onchain está vacío hasta la Fase 7. El id de la
- *   fila SÍ existe desde que el activo se registra (Estación 1). Esto
- *   permite generar el certificado de un activo real HOY, para probar,
- *   sin depender de que el alta on-chain lo haya atado.
- *
- * Cruza a `clientes` por cliente_id para traer nombre y empresa del
- * titular. Si el activo no tiene cliente_id, o el cliente no está,
- * el titular queda null y SE DICE — no se inventa un nombre.
- * (Los "activos huérfanos" sin cliente_id son una deuda conocida:
- *  el choque en la tabla clientes. Esta función los muestra tal cual.)
- *
- * Devuelve el MISMO formato que traerActivoPorOnchainId, más el titular:
- *   { ..., titular: { nombre, empresa, email } | null, titularMotivo }
- *
- * @param {number|string} filaId  el id (uuid) de la fila en `activos`
- */
 async function traerActivoParaCertificado(filaId) {
   if (filaId === null || filaId === undefined || filaId === '') {
     return { encontrado: false, motivo: 'No se pasó el id de la fila.' };
@@ -251,6 +185,7 @@ async function traerActivoParaCertificado(filaId) {
       'cliente_id',
       'activo_id_onchain',
       'estado',
+      'deforestacion_historica',
     ].join(', '))
     .eq('id', filaId)
     .maybeSingle();
@@ -268,7 +203,6 @@ async function traerActivoParaCertificado(filaId) {
 
   const geometria = _normalizarPoligono(data.poligono);
 
-  // ── Cruce a clientes para el titular ──────────────────────────
   let titular = null;
   let titularMotivo = null;
 
@@ -282,7 +216,6 @@ async function traerActivoParaCertificado(filaId) {
       .maybeSingle();
 
     if (errCli) {
-      // No frenamos el certificado por esto: se anota y el titular queda null.
       titularMotivo = `No se pudo leer el cliente ${data.cliente_id}: ${errCli.message}`;
     } else if (!cli) {
       titularMotivo = `El activo apunta a cliente_id ${data.cliente_id}, pero ese cliente no existe.`;
@@ -309,16 +242,12 @@ async function traerActivoParaCertificado(filaId) {
     superficieHa:   data.superficie_ha ?? null,
     superficieKm2:  data.superficie_km2 ?? null,
     estado:         data.estado ?? null,
-    titular,                    // { nombre, empresa, email } o null
-    titularMotivo,              // por qué no hay titular, si es el caso
+    titular,
+    titularMotivo,
+    deforestacionHistorica: data.deforestacion_historica ?? null,
   };
 }
 
-/**
- * Lista todos los activos que hay en Supabase, para diagnóstico.
- * Muestra cuáles ya tienen activo_id_onchain (atados a la cadena) y
- * cuáles no. Solo lectura.
- */
 async function listarActivos() {
   const { data, error } = await supabase
     .from(TABLA)
@@ -328,10 +257,6 @@ async function listarActivos() {
   if (error) throw new Error(`Supabase falló listando activos: ${error.message}`);
   return data || [];
 }
-
-// ═══════════════════════════════════════════════════════════════
-//  PRUEBA  ·  node activo-supabase.js  [activoIdOnchain]
-// ═══════════════════════════════════════════════════════════════
 
 async function _prueba() {
   const L = (t = '') => console.log(t);
@@ -350,7 +275,6 @@ async function _prueba() {
   L('  EPIMELEIA · activo-supabase.js — prueba (solo lee Supabase)');
   L('═'.repeat(62));
 
-  // Siempre listamos, para ver el panorama.
   L('');
   L('  Activos en Supabase:');
   L('');
@@ -377,7 +301,6 @@ async function _prueba() {
     }
   }
 
-  // Cuántos están atados a la cadena.
   const atados = lista.filter(a => a.activo_id_onchain != null).length;
   L('');
   L(`  ${atados} de ${lista.length} activos tienen activo_id_onchain (atados a la cadena).`);
@@ -387,7 +310,6 @@ async function _prueba() {
     L('    nudo no tiene por dónde cruzar, y esta función lo dice honestamente.');
   }
 
-  // Si pasaron un ID, probamos traerlo.
   if (arg !== undefined) {
     L('');
     L('─'.repeat(62));

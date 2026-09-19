@@ -45,6 +45,20 @@
  *   · El titular sigue siendo de ejemplo (IDENTIDAD). Que salga de
  *     Supabase es la Pieza 2 de la Fase 4, aparte.
  * ════════════════════════════════════════════════════════════════
+ * AJUSTE (18/9/2026) — CHEQUEO HISTÓRICO DE DEFORESTACIÓN EN EL CERTIFICADO
+ *
+ * Se agrega una sección nueva, después de "Lo que vio el satélite",
+ * que muestra en lenguaje humano el resultado del chequeo histórico
+ * de GFW (2020→hoy) que ya corre en el registro del activo (Vercel).
+ * Ese resultado se guarda en Supabase, en la columna
+ * `deforestacion_historica` de la tabla `activos`.
+ *
+ * DECISIÓN DE HONESTIDAD: si ese dato no está disponible (activo
+ * registrado antes de esta función, o el chequeo falló en su momento),
+ * la sección NO SE MUESTRA — en vez de mostrar un aviso técnico tipo
+ * "dato no disponible" en un certificado que va a leer un cliente o
+ * un comprador. Se prefiere omitir a mostrar un hueco que no aporta.
+ * ════════════════════════════════════════════════════════════════
  */
 
 require('dotenv').config();
@@ -62,6 +76,9 @@ const { armarPaquete } = require('./paquete-evidencia');
 
 // ── AJUSTE 35: leer el activo real de Supabase (Fase 4 · Pieza 2)
 const activoSupabase = require('./activo-supabase');
+
+// ── AJUSTE 18/9: redactar el chequeo histórico de deforestación ──
+const { redactarDeforestacionHistorica } = require('./redactarDeforestacionHistorica');
 
 // ── AJUSTES (cambialos cuando quieras) ───────────────────────
 const EMAIL_DESTINO = 'alfredocarbone29@gmail.com';
@@ -92,6 +109,7 @@ const IDENTIDAD = {
   empresa:   'Agropecuaria del Norte S.A.',
   clienteId: '00000000-0000-0000-0000-000000000000',
   email:     'titular@ejemplo.com',
+  deforestacionHistorica: null, // se llena más abajo si hay activo real
 };
 
 // ── El reloj del protocolo (AJUSTE 29) ───────────────────────
@@ -170,6 +188,16 @@ function construirHTML(datos) {
       <div class="dato"><div class="k">Titular</div><div class="v">${datos.titular}${datos.empresa ? ' · ' + datos.empresa : ''}</div></div>`
     : '';
 
+  // AJUSTE 18/9 — sección del chequeo histórico de deforestación.
+  // Se omite por completo si no hay dato (ver nota de honestidad arriba).
+  const seccionDeforestacionHistorica = datos.deforestacionHistorica
+    ? `
+      <div class="seccion-tit"><span>Historial de deforestación del predio</span></div>
+      <div class="historico">
+        <p>${redactarDeforestacionHistorica(datos.deforestacionHistorica)}</p>
+      </div>`
+    : '';
+
   return `<!DOCTYPE html>
 <html lang="es">
 <head>
@@ -214,6 +242,8 @@ function construirHTML(datos) {
   .chip.calidad{ background:transparent; color:var(--ink-soft); border:1px solid var(--line); }
   .reglapie{ margin-top:12px; padding-left:2px; font-family:'JetBrains Mono',monospace; font-size:8.5px; color:var(--ink-soft); letter-spacing:.03em; line-height:1.9; }
   .reglapie b{ color:var(--green); font-weight:500; }
+  .historico{ border:1px solid var(--line); border-left:3px solid var(--gold); padding:18px 20px; background:#faf7ef; }
+  .historico p{ font-size:14.5px; color:var(--ink); line-height:1.75; margin:0; }
   .satstrip{ display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:var(--line); border:1px solid var(--line); margin-top:20px; }
   .satstrip .cel{ background:#faf7ef; padding:11px 14px; }
   .satstrip .k{ font-family:'JetBrains Mono',monospace; font-size:8.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--gold); }
@@ -263,6 +293,7 @@ function construirHTML(datos) {
       <section class="medidas">${filasMedidas}
       </section>
       ${pieRegla}
+      ${seccionDeforestacionHistorica}
       <div class="satstrip">
         <div class="cel"><div class="k">Satélite</div><div class="v">${datos.satelite}</div></div>
         <div class="cel"><div class="k">Fuente</div><div class="v">ESA · Copernicus</div></div>
@@ -441,6 +472,14 @@ async function enviarPDFPorEmail({ para, pdfBuffer, nombreActivo }) {
     identidad.superficieHa = fila.superficieHa != null ? `≈ ${fila.superficieHa} ha` : '—';
     // La ubicación no está en la tabla; se deja genérica hasta atarla.
     identidad.ubicacion    = 'Ubicación según polígono registrado';
+
+    // AJUSTE 18/9 — el chequeo histórico de deforestación, si existe.
+    identidad.deforestacionHistorica = fila.deforestacionHistorica ?? null;
+    if (identidad.deforestacionHistorica) {
+      console.log('   ✓ Chequeo histórico de deforestación disponible — se incluye en el certificado.');
+    } else {
+      console.log('   · Sin chequeo histórico de deforestación para este activo — esa sección se omite.');
+    }
 
     console.log(`   ✓ Activo real cargado: "${identidad.nombreActivo}" (${identidad.tipoNombre})`);
   } else {
