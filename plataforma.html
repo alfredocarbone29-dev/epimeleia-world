@@ -306,51 +306,17 @@ section { position:relative; }
 .recurso.comodin .recurso-name { color:var(--gold2); }
 .recurso.comodin .recurso-ico { color:var(--gold); }
 
-/* ─── PRECIO ─── */
-.tr-title em { font-style:italic; color:var(--gold2); }
+/* ─── EUDR (pasada única · reemplaza al precio de suscripción) ─── */
+.tr-title em { font-style:italic; color:var(--emerald); }
 .tr-deal { display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--line); border:1px solid var(--line); max-width:880px; margin:0 auto; }
 .tr-cell { background:var(--deep); padding:clamp(24px,3vw,32px) clamp(18px,2vw,26px); text-align:left; }
-.tr-cell-k { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:2px; color:var(--teal); margin-bottom:12px; }
+.tr-cell-k { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:2px; color:var(--emerald); margin-bottom:12px; }
 .tr-cell-t { font-family:'Playfair Display',serif; font-size:clamp(18px,2vw,22px); color:var(--white); margin-bottom:8px; }
 .tr-cell-d { font-size:14.5px; color:rgba(232,228,218,0.6); line-height:1.55; }
-.tr-price { text-align:center; margin:clamp(44px,6vw,60px) auto 0; }
-.tr-price-from { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:3px; color:var(--muted); margin-bottom:12px; }
-.tr-price-num { font-family:'Playfair Display',serif; font-size:clamp(42px,7vw,72px); color:var(--white); line-height:1; }
-.tr-price-num span { font-size:0.4em; color:var(--muted); letter-spacing:1px; }
-.tr-price-note { font-size:clamp(15px,1.5vw,17px); color:rgba(232,228,218,0.6); margin:16px auto 0; max-width:520px; line-height:1.6; }
-.tr-tiers { display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:var(--line); border:1px solid var(--line); max-width:880px; margin:clamp(36px,5vw,48px) auto 0; }
-.tr-tier { background:var(--deep); padding:22px 18px; text-align:center; }
-.tr-tier-name { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:2px; color:var(--teal); margin-bottom:10px; }
-.tr-tier-price { font-family:'Playfair Display',serif; font-size:clamp(20px,2.4vw,27px); color:var(--white); }
-.tr-tier-price span { font-size:0.5em; color:var(--muted); }
-.tr-tier-sz { font-family:'JetBrains Mono',monospace; font-size:8px; letter-spacing:1px; color:var(--dim); margin-top:8px; line-height:1.5; }
-.tr-tiers-cap { text-align:center; font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:1px; color:var(--dim); margin-top:18px; }
-.tr-fine { text-align:center; max-width:640px; margin:clamp(34px,5vw,46px) auto 0; font-size:clamp(15px,1.5vw,17px); color:rgba(232,228,218,0.66); line-height:1.7; }
+.tr-fine { text-align:center; max-width:680px; margin:clamp(34px,5vw,46px) auto 0; font-size:clamp(15px,1.5vw,17px); color:rgba(232,228,218,0.66); line-height:1.7; }
 .tr-fine strong { color:var(--white); font-weight:600; }
-/* tier activo (resaltado por la calculadora) */
-.tr-tier { transition:background .2s, box-shadow .2s; }
-.tr-tier.active { background:var(--surface); box-shadow:inset 0 0 0 1px var(--gold2); }
-.tr-tier.active .tr-tier-name { color:var(--gold2); }
-.tr-tier.active .tr-tier-price { color:var(--gold2); }
-/* calculadora */
-.calc { max-width:640px; margin:clamp(40px,6vw,56px) auto 0; border:1px solid var(--line2); background:var(--deep); padding:clamp(24px,3.5vw,36px); text-align:center; }
-.calc-eyebrow { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:3px; color:var(--gold2); margin-bottom:8px; }
-.calc-title { font-family:'Playfair Display',serif; font-size:clamp(18px,2.2vw,24px); color:var(--white); margin-bottom:22px; }
-.calc-inputrow { display:flex; gap:10px; max-width:380px; margin:0 auto; align-items:stretch; }
-.calc-inputrow input { flex:1; min-width:0; background:var(--surface); border:1px solid var(--line2); color:var(--white); font-family:'JetBrains Mono',monospace; font-size:18px; text-align:right; padding:14px 16px; outline:none; transition:border-color .2s; }
-.calc-inputrow input:focus { border-color:var(--gold2); }
-.calc-inputrow input::placeholder { color:var(--dim); font-size:15px; }
-.calc-unit { display:flex; align-items:center; padding:0 18px; font-family:'JetBrains Mono',monospace; font-size:13px; letter-spacing:1px; color:var(--muted); border:1px solid var(--line2); border-left:none; background:var(--surface); }
-.calc-result { margin-top:24px; min-height:96px; display:flex; flex-direction:column; align-items:center; justify-content:center; }
-.calc-hint { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:1px; color:var(--dim); }
-.calc-out-tier { font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:3px; color:var(--gold2); }
-.calc-out-price { font-family:'Playfair Display',serif; font-size:clamp(34px,6vw,54px); color:var(--white); line-height:1.05; margin-top:6px; }
-.calc-out-price span { font-size:0.36em; color:var(--muted); letter-spacing:1px; }
-.calc-out-sub { font-size:15px; color:rgba(232,228,218,0.62); margin-top:10px; line-height:1.5; max-width:420px; }
-.calc-out-sub strong { color:var(--white); font-weight:600; }
-.calc-out.over .calc-out-tier { color:var(--amber); }
-.calc-out.over .calc-out-icon { font-size:30px; color:var(--amber); margin-bottom:6px; }
-.calc-free { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:1px; color:var(--emerald); margin-top:14px; }
+.tr-fine a { color:var(--emerald); text-decoration:none; border-bottom:1px solid rgba(95,173,95,0.35); }
+.tr-fine a:hover { border-color:var(--emerald); }
 
 /* ─── PUERTA / ADHERIRSE ─── */
 .door { text-align:center; padding:clamp(56px,9vw,104px) clamp(24px,5vw,64px); border-top:1px solid var(--line); }
@@ -450,7 +416,7 @@ section { position:relative; }
 
 @media(max-width:820px){ .cert-grid { grid-template-columns:repeat(2,1fr); } .cert-seal { grid-template-columns:1fr; text-align:center; } .cert-seal-stamp { margin:0 auto; } .cert-seal-line { text-align:left; } }
 @media(max-width:780px){ .qj-grid { grid-template-columns:1fr; } }
-@media(max-width:760px){ .steps { grid-template-columns:1fr; } .cc-steps { grid-template-columns:repeat(2,1fr); } .tr-deal { grid-template-columns:1fr; } .tr-tiers { grid-template-columns:repeat(2,1fr); } .topnav { display:none; } .cert-meta { grid-template-columns:repeat(2,1fr); } .cert-meta div:nth-child(2){ border-right:none; } .ledger-row { grid-template-columns:1fr auto; gap:8px 12px; } .ledger-id { display:none; } .ledger-date { grid-column:1; text-align:left; } }
+@media(max-width:760px){ .steps { grid-template-columns:1fr; } .cc-steps { grid-template-columns:repeat(2,1fr); } .tr-deal { grid-template-columns:1fr; } .topnav { display:none; } .cert-meta { grid-template-columns:repeat(2,1fr); } .cert-meta div:nth-child(2){ border-right:none; } .ledger-row { grid-template-columns:1fr auto; gap:8px 12px; } .ledger-id { display:none; } .ledger-date { grid-column:1; text-align:left; } }
 @media(max-width:720px){ .opa-grid { grid-template-columns:1fr; } }
 @media(max-width:600px){ .pasada-line { display:none; } .pasadas { gap:14px; } .cert-metrics { grid-template-columns:1fr; } }
 @media(max-width:440px){ .cc-steps { grid-template-columns:1fr; } .cert-grid { grid-template-columns:1fr; } }
@@ -484,7 +450,6 @@ section { position:relative; }
     <button onclick="abrir('comoFunciona')">CÓMO FUNCIONA</button>
     <button class="nav-prueba" onclick="irA('prueba')">LA PRUEBA</button>
     <button onclick="abrir('faqs')">PREGUNTAS FRECUENTES</button>
-    <button class="nav-gratis" onclick="abrir('mesGratis')">¿UN MES GRATIS?</button>
   </nav>
 </div>
 
@@ -645,46 +610,19 @@ section { position:relative; }
 
 <div class="divider"></div>
 
-<!-- PRECIO -->
-<section class="sec">
+<!-- ══════════ CUMPLIMIENTO EUDR · PASADA ÚNICA (reemplaza la suscripción) ══════════ -->
+<section class="sec" id="eudr">
   <div class="head">
-    <div class="eyebrow">EL TRATO · SIN LETRA CHICA</div>
-    <h2 class="head-title tr-title">El primer mes es de cortesía. Después, pagás por la superficie que <em>dejás sellada</em>.</h2>
-    <p class="tr-price-note" style="margin-top:14px;">No es un monitoreo por hectárea. Es una prueba sellada, imposible de alterar, que se sostiene sola ante un banco, un comprador o un regulador.</p>
+    <div class="eyebrow" style="color:var(--emerald);">CUMPLIMIENTO EUDR</div>
+    <h2 class="head-title tr-title">Una <em>prueba única</em>, sellada, de si tu territorio está limpio para Europa</h2>
+    <p class="head-sub">Desde diciembre de 2026, vender a la Unión Europea exige probar que tu campo no se deforestó desde 2020. Te lo confirmamos en minutos, con evidencia satelital sellada en blockchain e imposible de alterar.</p>
   </div>
   <div class="tr-deal">
-    <div class="tr-cell"><div class="tr-cell-k">EL PRIMER MES</div><div class="tr-cell-t">Gratis y completo</div><div class="tr-cell-d">Certificación real, grabada en blockchain, igual que un cliente que ya paga. No es una demo recortada.</div></div>
-    <div class="tr-cell"><div class="tr-cell-k">TU TARJETA</div><div class="tr-cell-t">La gestiona PayPal</div><div class="tr-cell-d">Nunca EPIMELEIA. No vemos ni guardamos los datos de tu medio de pago.</div></div>
-    <div class="tr-cell"><div class="tr-cell-k">CUÁNDO QUIERAS</div><div class="tr-cell-t">Cancelás sin vueltas</div><div class="tr-cell-d">Si en los 30 días no te sirve, cancelás y no se debita un peso. Sin explicaciones.</div></div>
+    <div class="tr-cell"><div class="tr-cell-k">LA FUENTE</div><div class="tr-cell-t">La misma que gobiernos y ONG</div><div class="tr-cell-d">Usamos la misma lógica de datos que gobiernos y organizaciones de todo el mundo. No inventamos nada: la registramos y la sellamos.</div></div>
+    <div class="tr-cell"><div class="tr-cell-k">EL ANÁLISIS</div><div class="tr-cell-t">Año por año, desde 2020</div><div class="tr-cell-d">Te decimos con exactitud si hubo deforestación en tu territorio —y en qué año— desde 2020 hasta hoy.</div></div>
+    <div class="tr-cell"><div class="tr-cell-k">EL RESPALDO</div><div class="tr-cell-t">La evidencia de tu DDS</div><div class="tr-cell-d">La prueba de no-deforestación sobre la que se apoya tu Declaración de Diligencia Debida, sellada en blockchain y verificable por tu comprador o el auditor.</div></div>
   </div>
-  <div class="tr-price">
-    <div class="tr-price-from">DESDE</div>
-    <div class="tr-price-num">US$90<span> / mes</span></div>
-    <div class="tr-price-note">El precio va por la superficie certificada. No adivines dónde caés — poné tus hectáreas abajo y te lo decimos exacto.</div>
-  </div>
-  <div class="tr-tiers">
-    <div class="tr-tier" data-tier="base"><div class="tr-tier-name">BASE</div><div class="tr-tier-price">90<span>/mes</span></div><div class="tr-tier-sz">HASTA 500 HA</div></div>
-    <div class="tr-tier" data-tier="pro"><div class="tr-tier-name">PRO</div><div class="tr-tier-price">290<span>/mes</span></div><div class="tr-tier-sz">501 – 5.000 HA</div></div>
-    <div class="tr-tier" data-tier="corporate"><div class="tr-tier-name">CORPORATE</div><div class="tr-tier-price">650<span>/mes</span></div><div class="tr-tier-sz">5.001 – 25.000 HA</div></div>
-    <div class="tr-tier" data-tier="enterprise"><div class="tr-tier-name">ENTERPRISE</div><div class="tr-tier-price">1400<span>/mes</span></div><div class="tr-tier-sz">25.001 – 62.500 HA</div></div>
-  </div>
-  <div class="tr-tiers-cap">TODOS EN DÓLARES · EL PRIMER MES NO SE COBRA EN NINGUNO</div>
-
-  <!-- CALCULADORA (misma lógica que calcularPrecio() del backend) -->
-  <div class="calc">
-    <div class="calc-eyebrow">CALCULÁ TU PLAN</div>
-    <div class="calc-title">¿Cuántas hectáreas tiene tu activo?</div>
-    <div class="calc-inputrow">
-      <input id="calcInput" type="number" inputmode="decimal" min="0" placeholder="ej: 409" aria-label="Superficie en hectáreas">
-      <div class="calc-unit">ha</div>
-    </div>
-    <div class="calc-result">
-      <div class="calc-hint" id="calcHint">Escribí la superficie y te mostramos el plan.</div>
-      <div class="calc-out" id="calcOut" style="display:none;"></div>
-    </div>
-  </div>
-
-  <p class="tr-fine">El límite por activo es <strong>62.500 ha</strong> (25×25 km, el borde que abarca una pasada del satélite). Si tu superficie es mayor, se divide en varios activos — cada uno es un registro propio. Cualquier cambio futuro se anuncia antes: <strong>nunca se cobra de sorpresa</strong>.</p>
+  <p class="tr-fine">Dibujá tu campo sobre el satélite y explorá cuando quieras — la prueba definitiva se sella al certificar. Ante cualquier duda, escribinos a <a href="mailto:info@epimeleia.world">info@epimeleia.world</a> y te respondemos personalmente.</p>
 </section>
 
 <!-- PUERTA / ADHERIRSE -->
@@ -692,7 +630,7 @@ section { position:relative; }
   <div class="door-eyebrow">CUANDO QUIERAS EMPEZAR</div>
   <p class="door-lead">Elegís tu primer activo, y el satélite empieza a observarlo.</p>
   <button class="door-btn" onclick="adherir()">ADHERIRSE AL PROTOCOLO →</button>
-  <div class="door-note">EL PRIMER MES ES DE CORTESÍA</div>
+  <div class="door-note">PROBALO PRIMERO EN EL MAPA · SIN REGISTRARTE</div>
 </section>
 
 <!-- FOOTER / CONTACTO -->
@@ -813,69 +751,6 @@ function irA(id){
   if (el) el.scrollIntoView({ behavior:'smooth', block:'start' });
 }
 
-/* ─── CALCULADORA DE PRECIO (espejo de calcularPrecio() del backend) ───
-   Mismos tiers y mismo tope que el código en producción. */
-const MAX_HECTAREAS = 62500;
-const TIERS = [
-  { id:'base',       nombre:'Base',       hasta:500,   precio:90   },
-  { id:'pro',        nombre:'Pro',        hasta:5000,  precio:290  },
-  { id:'corporate',  nombre:'Corporate',  hasta:25000, precio:650  },
-  { id:'enterprise', nombre:'Enterprise', hasta:62500, precio:1400 }
-];
-function tierBase(ha){ for (const t of TIERS){ if (ha <= t.hasta) return t; } return null; }
-function fmtHa(n){ return n.toLocaleString('es-AR', { maximumFractionDigits:2 }); }
-
-(function initCalc(){
-  const input = document.getElementById('calcInput');
-  const hint  = document.getElementById('calcHint');
-  const out   = document.getElementById('calcOut');
-  const tiers = document.querySelectorAll('.tr-tier');
-  if (!input) return;
-
-  function clearActive(){ tiers.forEach(t => t.classList.remove('active')); }
-
-  function render(){
-    const raw = input.value.trim();
-    const ha = Number(raw);
-
-    if (raw === '' || !isFinite(ha) || ha <= 0){
-      hint.style.display = 'block'; out.style.display = 'none'; out.className = 'calc-out';
-      clearActive();
-      hint.textContent = raw === '' ? 'Escribí la superficie y te mostramos el plan.'
-                                    : 'La superficie tiene que ser un número mayor que cero.';
-      return;
-    }
-
-    hint.style.display = 'none'; out.style.display = 'block';
-
-    if (ha > MAX_HECTAREAS){
-      clearActive();
-      out.className = 'calc-out over';
-      const partes = Math.ceil(ha / MAX_HECTAREAS);
-      out.innerHTML =
-        '<div class="calc-out-icon">⚠</div>' +
-        '<div class="calc-out-tier">SUPERA EL MÁXIMO POR ACTIVO</div>' +
-        '<div class="calc-out-sub">' + fmtHa(ha) + ' ha pasa el límite de <strong>62.500 ha</strong> que abarca una pasada del satélite. ' +
-        'Se divide en <strong>' + partes + ' activos</strong>, y cada uno es un registro propio. Escribinos y lo armamos con vos.</div>';
-      return;
-    }
-
-    const t = tierBase(ha);
-    out.className = 'calc-out';
-    out.innerHTML =
-      '<div class="calc-out-tier">PLAN ' + t.nombre.toUpperCase() + '</div>' +
-      '<div class="calc-out-price">US$' + t.precio.toLocaleString('es-AR') + '<span> / mes</span></div>' +
-      '<div class="calc-out-sub">Para un activo de <strong>' + fmtHa(ha) + ' ha</strong>.</div>' +
-      '<div class="calc-free">✓ EL PRIMER MES NO SE COBRA</div>';
-
-    clearActive();
-    const cell = document.querySelector('.tr-tier[data-tier="' + t.id + '"]');
-    if (cell) cell.classList.add('active');
-  }
-
-  input.addEventListener('input', render);
-})();
-
 /* ─── RECURSOS ─── */
 const RECURSOS = {
   campos:    { ico:'🌾', name:'Campos agrícolas', hint:'CULTIVOS · SUELO · ROTACIÓN', body:'<p>El satélite observa el estado del cultivo, la cobertura del suelo y sus cambios entre pasadas.</p><p>Sirve para dejar registrado cómo estaba tu campo en una fecha concreta — algo que nadie va a poder discutirte después.</p>', applies:'Productores que exportan y deben probar que no desmontan, arrendatarios, y quien necesita constancia del estado de su campo ante un tercero.' },
@@ -887,7 +762,7 @@ const RECURSOS = {
   mineria:   { ico:'⛏', name:'Minería', hint:'HUELLA · EXPANSIÓN', body:'<p>Se registra la huella de la operación sobre el terreno: su extensión, escombreras, balsas, y el avance de esa huella.</p><p>El impacto queda documentado en el tiempo, sin edición posible.</p>', applies:'Empresas mineras que necesitan probar, ante reguladores o inversores, que su impacto se mantiene dentro de lo declarado.' },
   proteg:    { ico:'🛡', name:'Áreas protegidas', hint:'RESERVAS · CONSERVACIÓN', body:'<p>El satélite documenta que una zona sigue intacta — o que alguien la tocó, y cuándo.</p><p>Prueba objetiva del estado de conservación, defendible ante cualquiera.</p>', applies:'ONGs, fundaciones, gobiernos y municipios que deben probar que una zona protegida se mantiene, o registrar una intrusión.' },
   industria: { ico:'🏭', name:'Industria', hint:'INSTALACIONES · ÁREA', body:'<p>Se registra la extensión de las instalaciones y los cambios en el área ocupada a lo largo del tiempo.</p><p>La huella territorial de la operación queda documentada y verificable.</p>', applies:'Plantas industriales, centros de datos, gestión de residuos, y cualquier instalación cuya huella deba documentarse.' },
-  tuyo:      { ico:'✦', name:'Lo tuyo', hint:'EL PRÓXIMO REGISTRO', body:'<p>Si tu actividad deja una huella sobre el territorio — agua, vegetación, suelo, instalaciones — se puede certificar.</p><p><strong>Puede ser lo próximo que quede registrado</strong>, con prueba inmutable, defendible ante gobiernos, bancos y fondos.</p><p>El primer mes es de cortesía.</p>', applies:'Cualquier organización cuya huella pueda observarse desde el espacio y necesite dejarla probada.' }
+  tuyo:      { ico:'✦', name:'Lo tuyo', hint:'EL PRÓXIMO REGISTRO', body:'<p>Si tu actividad deja una huella sobre el territorio — agua, vegetación, suelo, instalaciones — se puede certificar.</p><p><strong>Puede ser lo próximo que quede registrado</strong>, con prueba inmutable, defendible ante gobiernos, bancos y fondos.</p>', applies:'Cualquier organización cuya huella pueda observarse desde el espacio y necesite dejarla probada.' }
 };
 const grid = document.getElementById('recGrid');
 Object.entries(RECURSOS).forEach(([key, r]) => {
@@ -926,15 +801,8 @@ const INFO = {
 <h4>CBAM · UE</h4><p>El mecanismo de ajuste de carbono en frontera de la Unión Europea.</p>
 <h4>TAXONOMÍA VERDE · UE</h4><p>La clasificación europea de actividades sostenibles.</p>
 <h4>GRI · TCFD</h4><p>Los estándares internacionales de reporte de sostenibilidad y clima.</p>` },
-  mesGratis: { eyebrow:'¿UN MES GRATIS?', title:'El primer mes es de cortesía',
-    body:`<p>Sí. El primer mes es <strong>completo</strong>: la certificación satelital real, grabada en blockchain, igual que un cliente que ya paga. No es una demo recortada.</p>
-<h4>CÓMO FUNCIONA</h4>
-<p>Al darte de alta dejás tu medio de pago desde el inicio — eso lo gestiona <strong>PayPal</strong>, nunca EPIMELEIA: no vemos ni tocamos los datos de tu tarjeta.</p>
-<p>Durante 30 días no se te cobra nada. Si decidís que no es para vos, cancelás y no se debita un peso. Si no hacés nada, al mes el servicio continúa y ahí empieza el cobro.</p>
-<h4>SIN LETRA CHICA</h4>
-<p>El precio se te informa antes de empezar. Cancelás cuando quieras, sin explicaciones.</p>` },
   terminos: { eyebrow:'TÉRMINOS DE USO', title:'Términos de Uso',
-    body:`<h4>QUÉ ES EPIMELEIA</h4><p>EPIMELEIA registra observación satelital de forma permanente e inmutable en blockchain. No es auditor ni organismo regulatorio: es un registro neutral.</p><h4>PERMANENCIA</h4><p>Todo registro escrito en blockchain es <strong>permanente e inmutable</strong>. No existe mecanismo de eliminación.</p><h4>RESPONSABILIDAD</h4><p>La responsabilidad sobre los datos declarados es de quien registra el activo.</p><h4>MEMBRESÍA</h4><p>De carácter mensual. El primer mes es de cortesía. Los valores pueden modificarse informando previamente.</p><h4>CONTACTO</h4><p><strong>info@epimeleia.world</strong></p>` },
+    body:`<h4>QUÉ ES EPIMELEIA</h4><p>EPIMELEIA registra observación satelital de forma permanente e inmutable en blockchain. No es auditor ni organismo regulatorio: es un registro neutral.</p><h4>PERMANENCIA</h4><p>Todo registro escrito en blockchain es <strong>permanente e inmutable</strong>. No existe mecanismo de eliminación.</p><h4>RESPONSABILIDAD</h4><p>La responsabilidad sobre los datos declarados es de quien registra el activo.</p><h4>CONTACTO</h4><p><strong>info@epimeleia.world</strong></p>` },
   privacidad: { eyebrow:'PRIVACIDAD', title:'Privacidad',
     body:`<h4>PÚBLICO EN BLOCKCHAIN</h4><p>El estado de certificación de cada activo es público y verificable.</p><h4>PRIVADO</h4><p>Coordenadas exactas, email, razón social y datos de contacto son <strong>estrictamente privados</strong>.</p><h4>EMAIL</h4><p>Se almacena como hash criptográfico. El email real nunca queda en la blockchain.</p><h4>SIN VENTA DE DATOS</h4><p>EPIMELEIA no vende ni comparte datos de clientes con terceros.</p><h4>CONTACTO</h4><p><strong>info@epimeleia.world</strong></p>` }
 };
@@ -945,7 +813,6 @@ const FAQS = [
   { q:'¿Cómo sé que la imagen es real y no manipulada?', a:'EPIMELEIA no toma ni edita imágenes: las recibe de la fuente satelital y las registra tal como llegan. Una fuente posible es Copernicus Sentinel-2, de la Agencia Espacial Europea.' },
   { q:'¿Pueden modificar una certificación después?', a:'No. Ni el cliente, ni EPIMELEIA. No existe un botón para eso: es, literalmente, imposible.' },
   { q:'¿Cualquiera puede ver mis certificaciones?', a:'El registro on-chain (que algo se certificó, cuándo, y su hash) es público. Tus datos sensibles —email, identidad, coordenadas exactas— son privados y nunca van a la blockchain.' },
-  { q:'¿Puedo cancelar cuando quiera?', a:'Sí, cuando lo consideres. No hay compromiso de permanencia.' },
   { q:'¿Es lo mismo que un bono de carbono?', a:'No. Un bono depende de certificadores humanos. Una certificación EPIMELEIA es un dato observado por satélite y escrito en una cadena que nadie edita. No vendemos compensación: vendemos prueba.' },
   { q:'¿En qué se diferencia de una auditoría tradicional?', a:'Una auditoría depende de que alguien viaje, inspeccione y firme en un momento puntual. EPIMELEIA observa de forma continua, sin presencia en el lugar, y deja un registro que no depende de la firma de nadie.' },
   { q:'¿Funciona en cualquier lugar del mundo?', a:'Sí. El satélite orbita el planeta entero. El proceso es el mismo en cualquier punto.' },
@@ -993,7 +860,7 @@ function abrirEpi(){
   document.getElementById('epiPanel').classList.add('open');
   document.getElementById('epiBubble').classList.add('hidden');
   if(!document.getElementById('epiMsgs').hasChildNodes()){
-    epiMsg('agent', 'Hola. Soy EPI. Estoy para explicarte cualquier cosa que no se entienda de cómo funciona EPIMELEIA.\n\nPreguntame lo que quieras — qué se puede observar, cómo funciona el mes de cortesía, qué es eso de que nadie puede modificar el dato.');
+    epiMsg('agent', 'Hola. Soy EPI. Estoy para explicarte cualquier cosa que no se entienda de cómo funciona EPIMELEIA.\n\nPreguntame lo que quieras — qué se puede observar, cómo es el chequeo de deforestación para la EUDR, o eso de que nadie puede modificar el dato una vez sellado.');
   }
 }
 function cerrarEpi(){
