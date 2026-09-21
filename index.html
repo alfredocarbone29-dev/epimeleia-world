@@ -85,61 +85,53 @@ section { position:relative; }
 .hero-lead { font-family:'Playfair Display',serif; font-weight:400; font-style:italic; font-size:clamp(25px,3.8vw,44px); line-height:1.3; color:var(--white); max-width:860px; margin:0 auto; }
 .hero-lead em { font-style:italic; color:var(--emerald); }
 .hero-plain { font-size:clamp(17px,1.7vw,20px); color:rgba(232,228,218,0.7); max-width:660px; margin:32px auto 0; line-height:1.7; }
-.hero-proofline { display:inline-flex; align-items:center; gap:10px; margin-top:38px; font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:2px; color:var(--muted); border:1px solid var(--line2); padding:12px 20px; cursor:pointer; transition:border-color .2s, color .2s; background:transparent; }
-.hero-proofline:hover { border-color:var(--emerald); color:var(--text); }
-.hero-proofline .dot { width:6px; height:6px; border-radius:50%; background:var(--emerald); animation:blink 2.5s ease-in-out infinite; }
-.hero-proofline span { color:var(--emerald); }
 
-/* ─── BLOQUE EUDR (nuevo · debajo de la frase madre, arriba del botón) ─── */
-.hero-eudr { max-width:720px; margin:clamp(30px,5vw,44px) auto 0; padding:clamp(22px,3vw,30px) clamp(24px,4vw,34px); border:1px solid rgba(95,173,95,0.3); border-left:2px solid var(--emerald); background:linear-gradient(135deg, rgba(95,173,95,0.06), transparent); text-align:left; }
-.hero-eudr-tag { font-family:'JetBrains Mono',monospace; font-size:clamp(10px,1.3vw,12px); letter-spacing:3px; color:var(--emerald); margin-bottom:14px; }
-.hero-eudr-body { font-size:clamp(16px,1.7vw,19px); color:rgba(232,228,218,0.85); line-height:1.65; }
-.hero-eudr-body strong { color:var(--white); font-weight:600; }
-
-/* ─── CTA PRINCIPAL DEL HERO (el mapa, primero) ─── */
-.hero-cta-wrap { margin:clamp(30px,4vw,44px) auto 0; display:flex; flex-direction:column; align-items:center; gap:14px; }
-.hero-cta {
-  display:inline-flex; align-items:center; gap:14px;
-  background:var(--gold2); color:var(--void); text-decoration:none;
-  padding:20px 34px; font-family:'Playfair Display',serif; font-weight:600; font-size:clamp(17px,2vw,21px);
-  box-shadow:0 10px 40px rgba(200,168,75,0.28); transition:background .2s, transform .2s, box-shadow .2s;
-  border:1px solid rgba(0,0,0,0.05);
+/* ─── CUATRO PUERTAS (rectángulos grandes) ─── */
+.puertas { max-width:1000px; margin:clamp(44px,7vw,72px) auto 0; }
+.puertas-lead { font-family:'JetBrains Mono',monospace; font-size:clamp(10px,1.3vw,12px); letter-spacing:4px; color:var(--teal); margin-bottom:clamp(26px,4vw,38px); }
+.puertas-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; text-align:left; }
+.puerta {
+  display:flex; flex-direction:column; justify-content:space-between;
+  min-height:clamp(180px,24vw,230px);
+  background:var(--card); border:1px solid var(--line2);
+  padding:clamp(28px,3.5vw,40px);
+  cursor:pointer; text-decoration:none; font-family:inherit; width:100%;
+  position:relative; overflow:hidden;
+  transition:border-color .2s, background .2s, transform .18s, box-shadow .2s;
 }
-.hero-cta:hover { background:var(--gold); transform:translateY(-2px); box-shadow:0 14px 48px rgba(200,168,75,0.4); }
-.hero-cta-ico { flex-shrink:0; display:flex; }
-.hero-cta-ico svg { width:26px; height:26px; }
-.hero-cta-sub { font-family:'JetBrains Mono',monospace; font-size:10.5px; letter-spacing:1.5px; color:var(--muted); }
-.hero-cta-sub b { color:var(--emerald); }
-@media(max-width:520px){ .hero-cta { padding:16px 24px; font-size:16px; gap:10px; } .hero-cta-ico svg{ width:21px; height:21px; } }
+.puerta:hover { transform:translateY(-4px); background:var(--panel); box-shadow:0 18px 50px rgba(0,0,0,0.4); }
+.puerta-top { display:flex; align-items:flex-start; justify-content:space-between; gap:14px; }
+.puerta-k { font-family:'JetBrains Mono',monospace; font-size:clamp(9px,1.1vw,11px); letter-spacing:2px; }
+.puerta-ico { flex-shrink:0; display:flex; opacity:0.9; }
+.puerta-ico svg { width:clamp(26px,3.2vw,34px); height:clamp(26px,3.2vw,34px); }
+.puerta-name { font-family:'Playfair Display',serif; font-size:clamp(24px,3.4vw,38px); color:var(--white); line-height:1.08; margin-top:18px; }
+.puerta-sub { font-size:clamp(14.5px,1.5vw,17px); color:rgba(232,228,218,0.62); line-height:1.5; margin-top:12px; }
+.puerta-arrow { font-family:'JetBrains Mono',monospace; font-size:clamp(10px,1.2vw,12px); letter-spacing:1.5px; margin-top:22px; display:inline-flex; align-items:center; gap:8px; }
 
-/* ─── BIFURCACIÓN (dos caminos) ─── */
-.bifurca { max-width:880px; margin:clamp(46px,7vw,74px) auto 0; }
-.bifurca-lead { font-family:'Playfair Display',serif; font-style:italic; font-size:clamp(18px,2.3vw,25px); color:var(--white); line-height:1.4; max-width:640px; margin:0 auto clamp(28px,4vw,40px); }
-.bifurca-lead span { color:var(--emerald); font-style:normal; }
-.bifurca-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; text-align:left; }
-.camino { display:block; background:var(--card); border:1px solid var(--line2); padding:clamp(26px,3vw,38px) clamp(24px,2.6vw,32px); cursor:pointer; text-decoration:none; font-family:inherit; width:100%; position:relative; transition:border-color .2s, background .2s, transform .15s; }
-.camino:hover { transform:translateY(-3px); background:var(--panel); }
-.camino-k { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:2px; margin-bottom:16px; }
-.camino-name { font-family:'Playfair Display',serif; font-size:clamp(20px,2.5vw,28px); color:var(--white); line-height:1.12; margin-bottom:12px; }
-.camino-sub { font-size:14.5px; color:rgba(232,228,218,0.6); line-height:1.5; min-height:42px; }
-.camino-arrow { font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:1px; margin-top:20px; }
-.camino.prod:hover { border-color:var(--emerald); }
-.camino.prod .camino-k, .camino.prod .camino-arrow { color:var(--emerald); }
-.camino.bancos { background:linear-gradient(150deg, var(--card), rgba(143,176,218,0.06)); }
-.camino.bancos:hover { border-color:var(--azure); }
-.camino.bancos .camino-k, .camino.bancos .camino-arrow { color:var(--azure); }
-.camino-ia { position:absolute; top:clamp(20px,2.4vw,26px); right:clamp(20px,2.4vw,26px); display:inline-flex; align-items:center; gap:6px; font-family:'JetBrains Mono',monospace; font-size:8px; letter-spacing:1px; color:var(--muted); border:1px solid var(--line2); padding:5px 9px; }
-.camino-ia svg { width:11px; height:11px; }
-.camino-ia .spark-lg { fill:var(--emerald); }
-.camino-ia .spark-sm { fill:var(--gold2); }
-.camino.bancos .camino-ia .spark-lg { fill:var(--azure); }
-@media(max-width:640px){ .bifurca-grid { grid-template-columns:1fr; } }
+/* puerta EUDR — la estrella (verde esmeralda, resaltada) */
+.puerta.eudr { background:linear-gradient(150deg, rgba(95,173,95,0.10), var(--card) 60%); border-color:rgba(95,173,95,0.4); }
+.puerta.eudr:hover { border-color:var(--emerald); }
+.puerta.eudr .puerta-k, .puerta.eudr .puerta-arrow, .puerta.eudr .puerta-ico { color:var(--emerald); }
+.puerta.eudr .puerta-ico svg { stroke:var(--emerald); }
 
-/* ─── LINKS SECUNDARIOS (reemplazan la bifurcación de tarjetas) ─── */
-.bifurca-mini { margin:clamp(40px,6vw,60px) auto 0; max-width:640px; display:flex; flex-direction:column; gap:10px; }
-.bifurca-mini p { font-size:14px; color:rgba(232,228,218,0.55); line-height:1.6; }
-.bifurca-mini a { color:var(--emerald); text-decoration:none; border-bottom:1px solid rgba(95,173,95,0.35); transition:border-color .2s; }
-.bifurca-mini a:hover { border-color:var(--emerald); }
+/* puerta Plataforma */
+.puerta.plataforma:hover { border-color:var(--teal); }
+.puerta.plataforma .puerta-k, .puerta.plataforma .puerta-arrow, .puerta.plataforma .puerta-ico { color:var(--teal); }
+.puerta.plataforma .puerta-ico svg { stroke:var(--teal); }
+
+/* puerta Instituciones (tono azul corporativo) */
+.puerta.instituciones { background:linear-gradient(150deg, rgba(143,176,218,0.08), var(--card) 60%); }
+.puerta.instituciones:hover { border-color:var(--azure); }
+.puerta.instituciones .puerta-k, .puerta.instituciones .puerta-arrow, .puerta.instituciones .puerta-ico { color:var(--azure); }
+.puerta.instituciones .puerta-ico svg { stroke:var(--azure); }
+
+/* puerta Dibujá y certificá (dorada, acción directa) */
+.puerta.dibuja { background:linear-gradient(150deg, rgba(200,168,75,0.10), var(--card) 60%); border-color:rgba(200,168,75,0.35); }
+.puerta.dibuja:hover { border-color:var(--gold); }
+.puerta.dibuja .puerta-k, .puerta.dibuja .puerta-arrow, .puerta.dibuja .puerta-ico { color:var(--gold2); }
+.puerta.dibuja .puerta-ico svg { stroke:var(--gold2); }
+
+@media(max-width:680px){ .puertas-grid { grid-template-columns:1fr; } .puerta { min-height:0; } }
 
 /* ─── SECCIÓN genérica ─── */
 .sec { max-width:1080px; margin:0 auto; padding:clamp(52px,8vw,96px) clamp(24px,5vw,64px); }
@@ -157,113 +149,10 @@ section { position:relative; }
 .step-k { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:2px; color:var(--teal); margin-bottom:14px; }
 .step-t { font-family:'Playfair Display',serif; font-size:clamp(19px,2.1vw,24px); color:var(--white); margin-bottom:10px; }
 .step-d { font-size:15.5px; color:rgba(232,228,218,0.62); line-height:1.6; }
-.antip { max-width:780px; margin:clamp(44px,6vw,72px) auto 0; text-align:center; padding:clamp(30px,4vw,44px) clamp(24px,4vw,44px); border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
-.antip p { font-family:'Playfair Display',serif; font-style:italic; font-size:clamp(20px,2.5vw,29px); color:var(--white); line-height:1.4; }
-.antip span { color:var(--teal); font-style:normal; }
-
-/* ─── CUATRO CLICKS ─── */
-.cc-steps { display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:var(--line); border:1px solid var(--line); }
-.cc-step { background:var(--deep); padding:clamp(24px,2.6vw,32px) clamp(16px,1.8vw,24px); text-align:left; }
-.cc-num { font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:1px; color:var(--teal); margin-bottom:16px; }
-.cc-ico { font-size:26px; line-height:1; margin-bottom:14px; }
-.cc-step-t { font-family:'Playfair Display',serif; font-size:clamp(17px,1.8vw,21px); color:var(--white); margin-bottom:8px; }
-.cc-step-d { font-size:14.5px; color:rgba(232,228,218,0.6); line-height:1.55; }
-.cc-nofriction { display:flex; flex-wrap:wrap; justify-content:center; gap:10px; margin-top:clamp(32px,5vw,44px); }
-.cc-tag { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:1px; color:var(--muted); border:1px solid var(--line2); padding:11px 16px; }
-.cc-tag span { color:var(--emerald); }
-.cc-close { max-width:660px; margin:clamp(34px,5vw,48px) auto 0; text-align:center; font-family:'Playfair Display',serif; font-style:italic; font-size:clamp(18px,2.2vw,26px); color:var(--white); line-height:1.35; }
-
-/* ─── GUARDIA VIVA ─── */
-.gv-statement { font-family:'Playfair Display',serif; font-style:italic; font-weight:400; font-size:clamp(27px,4.4vw,50px); line-height:1.22; color:var(--white); max-width:800px; margin:0 auto; text-align:center; }
-.gv-statement span { font-style:normal; color:var(--emerald); }
-.gv-lead { font-size:clamp(16px,1.7vw,19px); color:rgba(232,228,218,0.68); line-height:1.7; max-width:620px; margin:28px auto 0; text-align:center; }
-.pasadas { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; margin:clamp(44px,6vw,64px) auto 0; }
-.pasada { display:flex; flex-direction:column; align-items:center; gap:8px; padding:0 clamp(10px,2vw,22px); }
-.pasada-dot { width:9px; height:9px; border-radius:50%; background:var(--emerald); }
-.pasada.alert .pasada-dot { background:var(--amber); animation:ping 2.4s ease-in-out infinite; }
-@keyframes ping { 0%,100%{box-shadow:0 0 0 0 rgba(200,154,74,0.45);} 50%{box-shadow:0 0 0 8px rgba(200,154,74,0);} }
-.pasada-date { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:1px; color:var(--muted); }
-.pasada.alert .pasada-date { color:var(--amber); }
-.pasada-line { flex:1; min-width:20px; height:1px; background:var(--line2); align-self:center; margin-top:-18px; }
-.pasadas-cap { text-align:center; font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:2px; color:var(--dim); margin-top:20px; }
-.gv-arrow { text-align:center; font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:2px; color:var(--teal); margin:clamp(36px,5vw,52px) 0 20px; }
-.alerta { max-width:540px; margin:0 auto; background:var(--panel); border:1px solid var(--line2); border-left:2px solid var(--amber); padding:22px 24px; box-shadow:0 16px 44px rgba(0,0,0,0.45); }
-.alerta-top { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:16px; padding-bottom:14px; border-bottom:1px solid var(--line); }
-.alerta-from { display:flex; align-items:center; gap:9px; }
-.alerta-livedot { width:6px; height:6px; border-radius:50%; background:var(--emerald); animation:blink 2.5s ease-in-out infinite; }
-@keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
-.alerta-fromtext { font-family:'JetBrains Mono',monospace; font-size:8px; letter-spacing:2px; color:var(--muted); }
-.alerta-time { font-family:'JetBrains Mono',monospace; font-size:8px; letter-spacing:1px; color:var(--dim); }
-.alerta-subject { font-family:'Playfair Display',serif; font-size:clamp(18px,2vw,22px); color:var(--white); line-height:1.3; margin-bottom:10px; }
-.alerta-body { font-size:15px; color:rgba(232,228,218,0.66); line-height:1.6; }
-.alerta-foot { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:18px; padding-top:14px; border-top:1px solid var(--line); }
-.alerta-seal { font-family:'JetBrains Mono',monospace; font-size:8px; letter-spacing:1px; color:var(--emerald); }
-.alerta-link { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:1px; color:var(--teal); }
-.gv-close { max-width:640px; margin:clamp(38px,6vw,58px) auto 0; text-align:center; font-family:'Playfair Display',serif; font-style:italic; font-size:clamp(19px,2.4vw,28px); color:var(--white); line-height:1.35; }
-.gv-close span { font-style:normal; color:var(--teal); }
-.amigo { max-width:720px; margin:clamp(30px,4vw,44px) auto 0; text-align:center; padding-top:clamp(28px,4vw,40px); border-top:1px solid var(--line); font-size:clamp(17px,1.8vw,21px); color:rgba(232,228,218,0.78); line-height:1.75; font-style:italic; }
-.amigo strong { color:var(--white); font-weight:600; font-style:normal; }
-
-/* ─── DIFERENCIAL ─── */
-.dif-statement { font-family:'Playfair Display',serif; font-style:italic; font-weight:400; font-size:clamp(28px,4.6vw,54px); line-height:1.2; color:var(--white); max-width:900px; margin:0 auto; text-align:center; }
-.dif-statement span { font-style:normal; color:var(--emerald); }
-.dif-intro { font-size:clamp(16px,1.7vw,19px); color:rgba(232,228,218,0.68); line-height:1.7; max-width:680px; margin:30px auto 0; text-align:center; }
-.opa-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:1px; background:var(--line); max-width:860px; margin:clamp(40px,6vw,64px) auto 0; text-align:left; }
-.opa-cell { background:var(--deep); padding:clamp(24px,3vw,36px); }
-.opa-tag { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:2px; color:var(--teal); margin-bottom:14px; }
-.opa-text { font-size:clamp(15px,1.3vw,17px); color:rgba(232,228,218,0.72); line-height:1.65; }
-.opa-text strong { color:var(--white); font-weight:600; }
-.opa-foot { text-align:center; font-family:'Playfair Display',serif; font-style:italic; font-size:clamp(16px,1.5vw,21px); color:var(--muted); margin-top:clamp(32px,4vw,44px); }
-.dif-close { max-width:720px; margin:clamp(38px,6vw,56px) auto 0; text-align:center; padding-top:clamp(32px,4vw,44px); border-top:1px solid var(--line); font-size:clamp(16px,1.6vw,19px); color:rgba(232,228,218,0.74); line-height:1.7; }
-.dif-close strong { color:var(--white); font-weight:600; }
 
 /* ─── LA PRUEBA (certificado real + registro on-chain) ─── */
 .prueba { max-width:1080px; margin:0 auto; padding:clamp(52px,8vw,96px) clamp(24px,5vw,64px); }
 .prueba .head-title em { color:var(--gold2); }
-/* certificado — documento parchment real */
-.cert-wrap { max-width:720px; margin:0 auto; }
-.cert-shell { position:relative; }
-.cert-shell::before { content:''; position:absolute; inset:0; transform:translate(10px,12px); background:var(--card); border:1px solid var(--line); z-index:0; }
-.cert { position:relative; z-index:1; background:var(--cert-bg); color:var(--cert-ink); border:1px solid rgba(27,44,27,0.18); padding:clamp(26px,4.5vw,44px); box-shadow:0 30px 70px rgba(0,0,0,0.55); }
-.cert-brand { font-family:'Playfair Display',serif; font-size:clamp(22px,3vw,30px); letter-spacing:clamp(4px,1vw,10px); color:var(--cert-ink); }
-.cert-brand-sub { font-family:'JetBrains Mono',monospace; font-size:8px; letter-spacing:3px; color:var(--cert-gold); margin-top:6px; }
-.cert-rule { height:1px; background:var(--cert-line); margin:18px 0 22px; }
-.cert-title { font-family:'Playfair Display',serif; font-size:clamp(24px,3.8vw,38px); color:var(--cert-ink); line-height:1.12; }
-.cert-obs { font-family:'Playfair Display',serif; font-style:italic; font-size:clamp(14px,1.6vw,17px); color:var(--cert-muted); margin-top:8px; }
-.cert-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:20px 18px; margin-top:26px; }
-.cert-field-k { font-family:'JetBrains Mono',monospace; font-size:8px; letter-spacing:2px; color:var(--cert-muted); margin-bottom:5px; }
-.cert-field-v { font-family:'Crimson Pro',serif; font-size:15px; color:var(--cert-ink); line-height:1.3; }
-.cert-field-v.mono { font-family:'JetBrains Mono',monospace; font-size:11px; word-break:break-all; }
-.cert-seen { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:2px; color:var(--cert-muted); margin:30px 0 14px; display:flex; align-items:center; gap:12px; }
-.cert-seen::after { content:''; flex:1; height:1px; background:var(--cert-line); }
-.cert-metrics { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
-.cert-metric { border:1px solid var(--cert-line); border-left:3px solid var(--cert-green); padding:16px 18px; background:rgba(255,255,255,0.35); }
-.cert-metric-k { font-family:'JetBrains Mono',monospace; font-size:8px; letter-spacing:1.5px; color:var(--cert-muted); margin-bottom:8px; }
-.cert-metric-v { font-family:'JetBrains Mono',monospace; font-size:clamp(26px,4vw,34px); color:var(--cert-ink); letter-spacing:1px; line-height:1; }
-.cert-metric-d { font-family:'Playfair Display',serif; font-style:italic; font-size:13px; color:var(--cert-muted); margin-top:8px; }
-.cert-metric-tags { display:flex; gap:6px; margin-top:12px; }
-.cert-metric-tags span { font-family:'JetBrains Mono',monospace; font-size:8px; letter-spacing:1px; padding:4px 8px; }
-.cert-metric-tags .medido { background:var(--cert-green); color:var(--cert-bg); }
-.cert-metric-tags .calidad { border:1px solid var(--cert-line); color:var(--cert-muted); }
-.cert-meta { display:grid; grid-template-columns:repeat(4,1fr); border:1px solid var(--cert-line); margin-top:16px; }
-.cert-meta div { padding:12px 14px; border-right:1px solid var(--cert-line); }
-.cert-meta div:last-child { border-right:none; }
-.cert-meta-k { font-family:'JetBrains Mono',monospace; font-size:7px; letter-spacing:1.5px; color:var(--cert-muted); margin-bottom:5px; }
-.cert-meta-v { font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--cert-ink); }
-/* sello on-chain (dark) */
-.cert-seal { background:var(--cert-seal); margin-top:22px; padding:clamp(20px,3vw,28px); display:grid; grid-template-columns:auto 1fr; gap:20px; align-items:center; }
-.cert-seal-stamp { width:90px; height:90px; border:1px solid rgba(184,150,63,0.4); border-radius:50%; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; flex-shrink:0; }
-.cert-seal-stamp .epi { font-family:'JetBrains Mono',monospace; font-size:14px; letter-spacing:2px; color:var(--gold2); }
-.cert-seal-stamp .inm { font-family:'JetBrains Mono',monospace; font-size:6px; letter-spacing:2px; color:rgba(184,150,63,0.7); margin-top:4px; }
-.cert-seal-body { min-width:0; }
-.cert-seal-tag { font-family:'JetBrains Mono',monospace; font-size:8px; letter-spacing:2px; color:rgba(184,150,63,0.85); }
-.cert-seal-title { font-family:'Playfair Display',serif; font-size:clamp(16px,2vw,20px); color:var(--cert-bg); margin:8px 0 12px; }
-.cert-seal-line { font-family:'JetBrains Mono',monospace; font-size:10px; color:rgba(244,240,232,0.62); line-height:1.7; word-break:break-all; }
-.cert-seal-line b { color:rgba(184,150,63,0.85); font-weight:400; }
-.cert-seal-btn { display:inline-block; margin-top:14px; font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:1.5px; color:var(--cert-seal); background:var(--gold2); text-decoration:none; padding:12px 20px; transition:background .2s; }
-.cert-seal-btn:hover { background:var(--gold); }
-.cert-foot { display:flex; flex-wrap:wrap; justify-content:space-between; gap:10px; margin-top:20px; padding-top:14px; border-top:1px solid var(--cert-line); font-family:'JetBrains Mono',monospace; font-size:8px; letter-spacing:1px; color:var(--cert-muted); }
-.cert-caption { text-align:center; font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:2px; color:var(--dim); margin-top:22px; }
 
 /* registro on-chain (ledger) */
 .ledger-head { text-align:center; margin:clamp(52px,7vw,80px) auto clamp(28px,4vw,40px); }
@@ -284,91 +173,13 @@ section { position:relative; }
 .prueba-close { max-width:680px; margin:clamp(40px,6vw,58px) auto 0; text-align:center; padding-top:clamp(32px,4vw,44px); border-top:1px solid var(--line); font-family:'Playfair Display',serif; font-style:italic; font-size:clamp(18px,2.3vw,27px); color:var(--white); line-height:1.35; }
 .prueba-close span { font-style:normal; color:var(--gold2); }
 
-/* ─── QUÉ ESTÁ EN JUEGO ─── */
-.qj-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--line); border:1px solid var(--line); }
-.qj-cell { background:var(--deep); padding:clamp(26px,3vw,36px) clamp(20px,2.2vw,28px); display:flex; flex-direction:column; gap:14px; }
-.qj-tag { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:2px; color:var(--teal); }
-.qj-scene { font-family:'Playfair Display',serif; font-size:clamp(18px,2vw,22px); color:var(--white); line-height:1.3; }
-.qj-fact { font-size:15px; color:rgba(232,228,218,0.64); line-height:1.62; }
-.qj-conseq { font-size:14.5px; color:rgba(232,228,218,0.82); line-height:1.55; padding-top:12px; border-top:1px solid var(--line); }
-.qj-conseq strong { color:var(--white); font-weight:600; }
-.qj-close { max-width:700px; margin:clamp(38px,6vw,54px) auto 0; text-align:center; padding-top:clamp(30px,4vw,42px); border-top:1px solid var(--line); font-size:clamp(16px,1.7vw,20px); color:rgba(232,228,218,0.72); line-height:1.7; }
-.qj-close strong { color:var(--white); font-weight:600; }
-
-/* ─── RECURSOS ─── */
-.recursos-sub { font-size:15px; color:rgba(232,228,218,0.55); margin-top:12px; font-style:italic; }
-.recursos-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:10px; }
-.recurso { background:var(--card); border:1px solid var(--line2); padding:26px 24px; cursor:pointer; text-align:left; width:100%; font-family:inherit; display:flex; flex-direction:column; gap:14px; transition:border-color .2s, background .2s, transform .15s; }
-.recurso:hover { border-color:var(--teal); background:var(--panel); transform:translateY(-2px); }
-.recurso-ico { font-size:28px; line-height:1; }
-.recurso-name { font-family:'Playfair Display',serif; font-size:20px; color:var(--white); }
-.recurso-hint { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:1px; color:var(--muted); line-height:1.5; }
-.recurso.comodin { border-color:rgba(200,168,75,0.3); background:linear-gradient(140deg,var(--card),rgba(200,168,75,0.05)); }
-.recurso.comodin:hover { border-color:var(--gold); }
-.recurso.comodin .recurso-name { color:var(--gold2); }
-.recurso.comodin .recurso-ico { color:var(--gold); }
-
-/* ─── PRECIO ─── */
-.tr-title em { font-style:italic; color:var(--gold2); }
-.tr-deal { display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--line); border:1px solid var(--line); max-width:880px; margin:0 auto; }
-.tr-cell { background:var(--deep); padding:clamp(24px,3vw,32px) clamp(18px,2vw,26px); text-align:left; }
-.tr-cell-k { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:2px; color:var(--teal); margin-bottom:12px; }
-.tr-cell-t { font-family:'Playfair Display',serif; font-size:clamp(18px,2vw,22px); color:var(--white); margin-bottom:8px; }
-.tr-cell-d { font-size:14.5px; color:rgba(232,228,218,0.6); line-height:1.55; }
-.tr-price { text-align:center; margin:clamp(44px,6vw,60px) auto 0; }
-.tr-price-from { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:3px; color:var(--muted); margin-bottom:12px; }
-.tr-price-num { font-family:'Playfair Display',serif; font-size:clamp(42px,7vw,72px); color:var(--white); line-height:1; }
-.tr-price-num span { font-size:0.4em; color:var(--muted); letter-spacing:1px; }
-.tr-price-note { font-size:clamp(15px,1.5vw,17px); color:rgba(232,228,218,0.6); margin:16px auto 0; max-width:520px; line-height:1.6; }
-.tr-tiers { display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:var(--line); border:1px solid var(--line); max-width:880px; margin:clamp(36px,5vw,48px) auto 0; }
-.tr-tier { background:var(--deep); padding:22px 18px; text-align:center; }
-.tr-tier-name { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:2px; color:var(--teal); margin-bottom:10px; }
-.tr-tier-price { font-family:'Playfair Display',serif; font-size:clamp(20px,2.4vw,27px); color:var(--white); }
-.tr-tier-price span { font-size:0.5em; color:var(--muted); }
-.tr-tier-sz { font-family:'JetBrains Mono',monospace; font-size:8px; letter-spacing:1px; color:var(--dim); margin-top:8px; line-height:1.5; }
-.tr-tiers-cap { text-align:center; font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:1px; color:var(--dim); margin-top:18px; }
-.tr-fine { text-align:center; max-width:640px; margin:clamp(34px,5vw,46px) auto 0; font-size:clamp(15px,1.5vw,17px); color:rgba(232,228,218,0.66); line-height:1.7; }
-.tr-fine strong { color:var(--white); font-weight:600; }
-/* tier activo (resaltado por la calculadora) */
-.tr-tier { transition:background .2s, box-shadow .2s; }
-.tr-tier.active { background:var(--surface); box-shadow:inset 0 0 0 1px var(--gold2); }
-.tr-tier.active .tr-tier-name { color:var(--gold2); }
-.tr-tier.active .tr-tier-price { color:var(--gold2); }
-/* calculadora */
-.calc { max-width:640px; margin:clamp(40px,6vw,56px) auto 0; border:1px solid var(--line2); background:var(--deep); padding:clamp(24px,3.5vw,36px); text-align:center; }
-.calc-eyebrow { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:3px; color:var(--gold2); margin-bottom:8px; }
-.calc-title { font-family:'Playfair Display',serif; font-size:clamp(18px,2.2vw,24px); color:var(--white); margin-bottom:22px; }
-.calc-inputrow { display:flex; gap:10px; max-width:380px; margin:0 auto; align-items:stretch; }
-.calc-inputrow input { flex:1; min-width:0; background:var(--surface); border:1px solid var(--line2); color:var(--white); font-family:'JetBrains Mono',monospace; font-size:18px; text-align:right; padding:14px 16px; outline:none; transition:border-color .2s; }
-.calc-inputrow input:focus { border-color:var(--gold2); }
-.calc-inputrow input::placeholder { color:var(--dim); font-size:15px; }
-.calc-unit { display:flex; align-items:center; padding:0 18px; font-family:'JetBrains Mono',monospace; font-size:13px; letter-spacing:1px; color:var(--muted); border:1px solid var(--line2); border-left:none; background:var(--surface); }
-.calc-result { margin-top:24px; min-height:96px; display:flex; flex-direction:column; align-items:center; justify-content:center; }
-.calc-hint { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:1px; color:var(--dim); }
-.calc-out-tier { font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:3px; color:var(--gold2); }
-.calc-out-price { font-family:'Playfair Display',serif; font-size:clamp(34px,6vw,54px); color:var(--white); line-height:1.05; margin-top:6px; }
-.calc-out-price span { font-size:0.36em; color:var(--muted); letter-spacing:1px; }
-.calc-out-sub { font-size:15px; color:rgba(232,228,218,0.62); margin-top:10px; line-height:1.5; max-width:420px; }
-.calc-out-sub strong { color:var(--white); font-weight:600; }
-.calc-out.over .calc-out-tier { color:var(--amber); }
-.calc-out.over .calc-out-icon { font-size:30px; color:var(--amber); margin-bottom:6px; }
-.calc-free { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:1px; color:var(--emerald); margin-top:14px; }
-
-/* ─── PUERTA / ADHERIRSE ─── */
-.door { text-align:center; padding:clamp(56px,9vw,104px) clamp(24px,5vw,64px); border-top:1px solid var(--line); }
-.door-eyebrow { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:3px; color:var(--teal); margin-bottom:20px; }
-.door-lead { font-family:'Playfair Display',serif; font-size:clamp(24px,3.6vw,40px); color:var(--white); line-height:1.25; max-width:640px; margin:0 auto 34px; }
-.door-btn { font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:3px; color:var(--void); background:var(--gold2); border:none; padding:20px 46px; cursor:pointer; transition:background .2s, transform .15s; }
-.door-btn:hover { background:var(--gold); transform:translateY(-1px); }
-.door-note { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:1px; color:var(--dim); margin-top:18px; }
-
 /* ─── FOOTER / CONTACTO ─── */
 .footer { border-top:1px solid var(--line); background:var(--void); }
 .footer-in { max-width:820px; margin:0 auto; padding:clamp(52px,8vw,96px) clamp(24px,5vw,64px); text-align:center; }
 .footer-eyebrow { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:4px; color:var(--teal); margin-bottom:24px; }
 .footer-lead { font-family:'Playfair Display',serif; font-style:italic; font-size:clamp(28px,4.4vw,50px); color:var(--white); line-height:1.2; margin-bottom:18px; }
 .footer-sub { font-size:clamp(17px,1.8vw,21px); color:rgba(232,228,218,0.66); max-width:520px; margin:0 auto 40px; line-height:1.6; }
-.footer-mail { display:inline-flex; align-items:center; gap:12px; font-family:'JetBrains Mono',monospace; font-size:clamp(13px,1.6vw,16px); letter-spacing:1px; color:var(--void); background:var(--gold2); border:none; padding:20px 40px; cursor:pointer; transition:background .2s, transform .15s; }
+.footer-mail { display:inline-flex; align-items:center; gap:12px; font-family:'JetBrains Mono',monospace; font-size:clamp(13px,1.6vw,16px); letter-spacing:1px; color:var(--void); background:var(--gold2); border:none; padding:20px 40px; cursor:pointer; transition:background .2s, transform .15s; text-decoration:none; }
 .footer-mail:hover { background:var(--gold); transform:translateY(-1px); }
 .footer-secondary { display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin-top:34px; }
 .footer-btn { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:2px; color:var(--muted); background:transparent; border:1px solid var(--line2); padding:12px 18px; cursor:pointer; transition:border-color .2s, color .2s; }
@@ -376,6 +187,26 @@ section { position:relative; }
 .footer-fine { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:1px; color:var(--dim); line-height:2; margin-top:44px; padding-top:32px; border-top:1px solid var(--line); }
 .footer-fine a { color:var(--muted); text-decoration:none; }
 .footer-fine a:hover { color:var(--text); }
+
+/* ─── MODAL genérico ─── */
+.overlay { position:fixed; inset:0; z-index:500; background:rgba(2,5,2,0.86); backdrop-filter:blur(6px); display:none; align-items:flex-start; justify-content:center; padding:clamp(20px,5vw,60px) 20px; overflow-y:auto; }
+.overlay.active { display:flex; }
+.modal { position:relative; background:var(--panel); border:1px solid var(--line2); max-width:640px; width:100%; padding:clamp(30px,5vw,52px); }
+.modal-close { position:absolute; top:16px; right:16px; background:none; border:none; color:var(--muted); font-size:18px; cursor:pointer; font-family:'JetBrains Mono',monospace; transition:color .2s; }
+.modal-close:hover { color:var(--white); }
+.modal-eyebrow { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:3px; color:var(--teal); margin-bottom:14px; }
+.modal-title { font-family:'Playfair Display',serif; font-size:clamp(22px,3vw,32px); color:var(--white); line-height:1.2; margin-bottom:20px; }
+.modal-body { font-size:16px; color:rgba(232,228,218,0.8); line-height:1.75; }
+.modal-body p { margin-bottom:14px; }
+.modal-body h4 { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:2px; color:var(--teal); margin:22px 0 8px; }
+.modal-body .applies { margin-top:18px; padding-top:16px; border-top:1px solid var(--line); font-size:14.5px; color:rgba(232,228,218,0.62); }
+.modal-body .applies strong { color:var(--emerald); font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:1px; }
+.faq-item { border-bottom:1px solid var(--line); }
+.faq-q { width:100%; background:none; border:none; text-align:left; display:flex; align-items:center; justify-content:space-between; gap:14px; padding:18px 0; cursor:pointer; font-family:'Crimson Pro',serif; font-size:17px; color:var(--white); }
+.faq-ico { font-family:'JetBrains Mono',monospace; color:var(--teal); flex-shrink:0; }
+.faq-a { max-height:0; overflow:hidden; transition:max-height .3s ease, padding .3s ease; font-size:15.5px; color:rgba(232,228,218,0.66); line-height:1.7; }
+.faq-item.open .faq-a { max-height:400px; padding:0 0 18px; }
+.faq-item.open .faq-ico { transform:rotate(45deg); }
 
 /* ─── EPI BURBUJA ─── */
 .epi-bubble { position:fixed; right:clamp(16px,3vw,32px); bottom:clamp(16px,3vw,32px); z-index:400; width:60px; height:60px; border-radius:50%; background:radial-gradient(circle at 35% 30%, var(--panel), var(--surface)); border:1px solid rgba(95,173,95,0.35); cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 6px 26px rgba(0,0,0,0.5); transition:transform .25s ease, box-shadow .3s ease, opacity .3s ease; animation:epiPulse 3.4s ease-in-out infinite; }
@@ -418,29 +249,7 @@ section { position:relative; }
 .epi-send:hover { background:var(--gold2); }
 .epi-hint { font-family:'JetBrains Mono',monospace; font-size:7px; letter-spacing:1px; color:var(--dim); text-align:center; margin-top:9px; }
 
-/* ══════════════════════════════════════════════════════════════════
-   BOTÓN FLOTANTE · PROBAR EL MAPA EN MODO INVITADO  (AGREGADO)
-   Vive abajo a la IZQUIERDA (EPI queda a la derecha, no se pisan).
-   Lleva a protocolo.html — el mapa en modo invitado. Nada más se tocó.
-   ══════════════════════════════════════════════════════════════════ */
-.mapa-float { position:fixed; left:clamp(16px,3vw,32px); bottom:clamp(16px,3vw,32px); z-index:400; display:flex; align-items:center; gap:12px; max-width:min(78vw,310px); background:var(--gold2); color:var(--void); text-decoration:none; padding:13px 18px; box-shadow:0 8px 30px rgba(0,0,0,0.55); transition:background .2s, transform .2s; animation:mapaFloatIn .5s ease both; }
-.mapa-float:hover { background:var(--gold); transform:translateY(-2px); }
-@keyframes mapaFloatIn { from{opacity:0; transform:translateY(14px);} to{opacity:1; transform:translateY(0);} }
-.mapa-float-ico { flex-shrink:0; display:flex; }
-.mapa-float-ico svg { width:22px; height:22px; }
-.mapa-float-txt { display:flex; flex-direction:column; line-height:1.2; min-width:0; }
-.mapa-float-txt b { font-family:'Playfair Display',serif; font-size:14.5px; font-weight:600; }
-.mapa-float-txt small { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:0.4px; opacity:0.82; margin-top:3px; }
-.mapa-float:focus-visible { outline:2px solid var(--white); outline-offset:3px; }
-@media(max-width:520px){ .mapa-float { max-width:66vw; padding:11px 14px; gap:9px; left:14px; bottom:14px; } .mapa-float-txt b{ font-size:12.5px; } .mapa-float-txt small{ font-size:8px; } .mapa-float-ico svg{ width:19px; height:19px; } }
-@media(prefers-reduced-motion: reduce){ .mapa-float{ animation:none; } }
-
-@media(max-width:820px){ .cert-grid { grid-template-columns:repeat(2,1fr); } .cert-seal { grid-template-columns:1fr; text-align:center; } .cert-seal-stamp { margin:0 auto; } .cert-seal-line { text-align:left; } }
-@media(max-width:780px){ .qj-grid { grid-template-columns:1fr; } }
-@media(max-width:760px){ .steps { grid-template-columns:1fr; } .cc-steps { grid-template-columns:repeat(2,1fr); } .tr-deal { grid-template-columns:1fr; } .tr-tiers { grid-template-columns:repeat(2,1fr); } .topnav { display:none; } .cert-meta { grid-template-columns:repeat(2,1fr); } .cert-meta div:nth-child(2){ border-right:none; } .ledger-row { grid-template-columns:1fr auto; gap:8px 12px; } .ledger-id { display:none; } .ledger-date { grid-column:1; text-align:left; } }
-@media(max-width:720px){ .opa-grid { grid-template-columns:1fr; } }
-@media(max-width:600px){ .pasada-line { display:none; } .pasadas { gap:14px; } .cert-metrics { grid-template-columns:1fr; } }
-@media(max-width:440px){ .cc-steps { grid-template-columns:1fr; } .cert-grid { grid-template-columns:1fr; } }
+@media(max-width:760px){ .steps { grid-template-columns:1fr; } .topnav { display:none; } .ledger-row { grid-template-columns:1fr auto; gap:8px 12px; } .ledger-id { display:none; } .ledger-date { grid-column:1; text-align:left; } }
 @media(prefers-reduced-motion: reduce){ *, *::before, *::after { animation:none !important; transition:none !important; } html { scroll-behavior:auto; } }
 </style>
 </head>
@@ -464,33 +273,85 @@ section { position:relative; }
   <div class="hero-rule"></div>
   <p class="hero-lead">Elegís un lugar del planeta y un satélite empieza a observarlo. Lo que ve queda registrado — y después, <em>nadie puede cambiarlo</em>.</p>
 
-  <div class="hero-eudr">
-    <div class="hero-eudr-tag">ESPECIALISTAS EN CUMPLIMIENTO EUDR</div>
-    <p class="hero-eudr-body">Desde diciembre de 2026, vender a la Unión Europea exige probar que tu territorio no se deforestó desde 2020. Nuestra plataforma te lo confirma <strong>en minutos</strong>, con prueba satelital sellada e imposible de alterar.</p>
-    <p class="hero-eudr-body" style="margin-top:14px;">Usamos la misma lógica de datos que gobiernos y ONG de todo el mundo, y te decimos con exactitud si hubo deforestación —y en qué año— desde 2020 hasta hoy. Con clientes en distintos países del mundo.</p>
-    <p class="hero-eudr-body" style="margin-top:14px;">El respaldo de tu Declaración de Diligencia Debida: la evidencia de no-deforestación sobre la que se apoya tu DDS, sellada en blockchain y verificable por tu comprador o el auditor, sin depender de nuestra palabra.</p>
-    <p style="margin-top:20px; padding-top:16px; border-top:1px solid var(--line2); font-size:clamp(13px,1.4vw,15px); color:rgba(232,228,218,0.6); line-height:1.6;">No cuestionamos el ordenamiento jurídico de los países en los que actuamos: lo respetamos. Solo buscamos darte herramientas anticipatorias para tus decisiones. Ante cualquier duda, escribinos a <a href="mailto:info@epimeleia.world" style="color:var(--emerald); text-decoration:none;">info@epimeleia.world</a> y te respondemos personalmente.</p>
-  </div>
-
-  <div class="hero-cta-wrap">
-    <a class="hero-cta" href="protocolo.html" aria-label="Dibujá y certificá tu recurso en el mapa, sin registrarte">
-      <span class="hero-cta-ico">
-        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M12 21.5s7-5.7 7-11.5a7 7 0 1 0-14 0c0 5.8 7 11.5 7 11.5z" fill="currentColor" opacity="0.22"/>
-          <path d="M12 21.5s7-5.7 7-11.5a7 7 0 1 0-14 0c0 5.8 7 11.5 7 11.5z" stroke="currentColor" stroke-width="1.6"/>
-          <circle cx="12" cy="10" r="2.5" fill="currentColor"/>
-        </svg>
-      </span>
-      Dibujá y certificá tu recurso
-    </a>
-    <div class="hero-cta-sub"><b>PROBALO EN VIVO</b> · sin registrarte</div>
-  </div>
-
   <p class="hero-plain">Somos una plataforma tecnológica. Un vínculo directo entre vos y un satélite: elegís qué observar, sellamos su estado ambiental con una prueba inalterable y verificable por terceros, y te informamos qué está pasando con tu bien. Sin software que instalar, sin procesos largos, nada oculto.</p>
 
-  <div class="bifurca-mini">
-    <p>¿Querés ver todos los casos de uso — agro, minería, agua, forestal, energía y más? <a href="plataforma.html">Conocé el detalle →</a></p>
-    <p>¿Sos un banco, fondo o institución financiera y necesitás prueba a escala de cartera? <a href="instituciones.html">Ver propuesta institucional →</a></p>
+  <!-- CUATRO PUERTAS -->
+  <div class="puertas">
+    <div class="puertas-lead">ELEGÍ POR DÓNDE ENTRAR</div>
+    <div class="puertas-grid">
+
+      <!-- EUDR -->
+      <a class="puerta eudr" href="eudr.html">
+        <div class="puerta-top">
+          <span class="puerta-k">CUMPLIMIENTO EUDR</span>
+          <span class="puerta-ico">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 3l7 3v5c0 4.5-3 7.8-7 9-4-1.2-7-4.5-7-9V6l7-3z" stroke-width="1.5"/>
+              <path d="M9 12l2 2 4-4" stroke-width="1.6"/>
+            </svg>
+          </span>
+        </div>
+        <div>
+          <div class="puerta-name">EPIMELEIA EUDR</div>
+          <div class="puerta-sub">Probá que tu territorio no se deforestó desde 2020. El respaldo de tu DDS.</div>
+        </div>
+        <span class="puerta-arrow">ENTRAR →</span>
+      </a>
+
+      <!-- PLATAFORMA -->
+      <a class="puerta plataforma" href="plataforma.html">
+        <div class="puerta-top">
+          <span class="puerta-k">CASOS DE USO</span>
+          <span class="puerta-ico">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="12" cy="12" r="9" stroke-width="1.5"/>
+              <path d="M3 12h18M12 3c2.5 2.5 2.5 15.5 0 18M12 3c-2.5 2.5-2.5 15.5 0 18" stroke-width="1.3"/>
+            </svg>
+          </span>
+        </div>
+        <div>
+          <div class="puerta-name">EPIMELEIA PLATAFORMA</div>
+          <div class="puerta-sub">Todos los casos de uso: agro, minería, agua, forestal y más.</div>
+        </div>
+        <span class="puerta-arrow">ENTRAR →</span>
+      </a>
+
+      <!-- INSTITUCIONES -->
+      <a class="puerta instituciones" href="instituciones.html">
+        <div class="puerta-top">
+          <span class="puerta-k">BANCOS · FONDOS</span>
+          <span class="puerta-ico">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M4 10h16M6 10v7M10 10v7M14 10v7M18 10v7M3 20h18M12 3l8 4H4l8-4z" stroke-width="1.5"/>
+            </svg>
+          </span>
+        </div>
+        <div>
+          <div class="puerta-name">EPIMELEIA INSTITUCIONES</div>
+          <div class="puerta-sub">Prueba a escala de cartera para bancos, fondos e instituciones.</div>
+        </div>
+        <span class="puerta-arrow">ENTRAR →</span>
+      </a>
+
+      <!-- DIBUJÁ Y CERTIFICÁ -->
+      <a class="puerta dibuja" href="protocolo.html">
+        <div class="puerta-top">
+          <span class="puerta-k">PROBALO EN VIVO</span>
+          <span class="puerta-ico">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 21.5s7-5.7 7-11.5a7 7 0 1 0-14 0c0 5.8 7 11.5 7 11.5z" stroke-width="1.5"/>
+              <circle cx="12" cy="10" r="2.5" stroke-width="1.5"/>
+            </svg>
+          </span>
+        </div>
+        <div>
+          <div class="puerta-name">DIBUJÁ Y CERTIFICÁ</div>
+          <div class="puerta-sub">Marcá tu recurso en el mapa y probalo en vivo, sin registrarte.</div>
+        </div>
+        <span class="puerta-arrow">ABRIR EL MAPA →</span>
+      </a>
+
+    </div>
   </div>
 </section>
 
@@ -508,6 +369,42 @@ section { position:relative; }
     <div class="step"><div class="step-k">NADIE</div><div class="step-t">Lo puede tocar después</div><div class="step-d">Ni vos, ni EPIMELEIA, ni el satélite. Una vez escrito, queda — y cualquiera puede verificarlo.</div></div>
   </div>
 </section>
+
+<div class="divider"></div>
+
+<!-- LA PRUEBA -->
+<section class="prueba">
+  <div class="ledger-head">
+    <div class="eyebrow">REGISTRO PÚBLICO · POLYGON MAINNET</div>
+    <h3>Activos reales, ya sellados en la cadena. Verificalos vos mismo.</h3>
+  </div>
+  <div class="ledger" id="ledger"></div>
+  <div class="ledger-cap">
+    Cada fila es una transacción real en Polygon Mainnet. Tocá cualquiera para verla en <a href="https://polygonscan.com" target="_blank" rel="noopener">Polygonscan</a>.
+  </div>
+  <p class="prueba-close">No vendemos el dato. Vendemos <span>la prueba de que nadie lo tocó</span>.</p>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="footer-in">
+    <div class="footer-eyebrow">HABLEMOS</div>
+    <div class="footer-lead">¿Tenés algo que probar?</div>
+    <p class="footer-sub">Escribinos y te respondemos personalmente. Del otro lado hay gente de verdad.</p>
+    <a class="footer-mail" href="mailto:info@epimeleia.world">info@epimeleia.world</a>
+    <div class="footer-secondary">
+      <button class="footer-btn" onclick="abrir('comoFunciona')">CÓMO FUNCIONA</button>
+      <button class="footer-btn" onclick="abrir('historia')">NUESTRA HISTORIA</button>
+      <button class="footer-btn" onclick="abrir('faqs')">PREGUNTAS FRECUENTES</button>
+      <button class="footer-btn" onclick="abrir('terminos')">TÉRMINOS</button>
+      <button class="footer-btn" onclick="abrir('privacidad')">PRIVACIDAD</button>
+    </div>
+    <div class="footer-fine">
+      EPIMELEIA · Notario Digital Ambiental · Polygon Mainnet<br>
+      <a href="mailto:info@epimeleia.world">info@epimeleia.world</a>
+    </div>
+  </div>
+</footer>
 
 <!-- EPI BURBUJA -->
 <button class="epi-bubble" id="epiBubble" onclick="abrirEpi()" aria-label="Hablar con EPI">
@@ -549,11 +446,8 @@ section { position:relative; }
   </div>
 </div>
 
-
 <script>
-/* ─── ACTIVOS REALES ON-CHAIN (datos verificables · Polygon Mainnet) ───
-   Cada TX es una llamada real a registrarActivo() desde la wallet del protocolo.
-   activoId, nombre y timestamp salen del evento ActivoRegistrado emitido on-chain. */
+/* ─── ACTIVOS REALES ON-CHAIN (datos verificables · Polygon Mainnet) ─── */
 const ONCHAIN = [
   { id:8, nombre:'quiulacocha',       ts:1785504995, tx:'0x64063d6e0713d74025e6a8ef97ca6e7c73b60c6a57ae50da0c85f65206135fff' },
   { id:7, nombre:'mesa de los reyes', ts:1785504990, tx:'0xa27ff1128f075003fc293ff569acce7fdcc49a80240e17285fc0034b3b53b33d' },
@@ -582,105 +476,6 @@ const ONCHAIN = [
   });
 })();
 
-/* ─── SCROLL suave a secciones ─── */
-function irA(id){
-  const el = document.getElementById(id);
-  if (el) el.scrollIntoView({ behavior:'smooth', block:'start' });
-}
-
-/* ─── CALCULADORA DE PRECIO (espejo de calcularPrecio() del backend) ───
-   Mismos tiers y mismo tope que el código en producción. */
-const MAX_HECTAREAS = 62500;
-const TIERS = [
-  { id:'base',       nombre:'Base',       hasta:500,   precio:180  },
-  { id:'pro',        nombre:'Pro',        hasta:5000,  precio:450  },
-  { id:'corporate',  nombre:'Corporate',  hasta:25000, precio:900  },
-  { id:'enterprise', nombre:'Enterprise', hasta:62500, precio:1800 }
-];
-function tierBase(ha){ for (const t of TIERS){ if (ha <= t.hasta) return t; } return null; }
-function fmtHa(n){ return n.toLocaleString('es-AR', { maximumFractionDigits:2 }); }
-
-(function initCalc(){
-  const input = document.getElementById('calcInput');
-  const hint  = document.getElementById('calcHint');
-  const out   = document.getElementById('calcOut');
-  const tiers = document.querySelectorAll('.tr-tier');
-  if (!input) return;
-
-  function clearActive(){ tiers.forEach(t => t.classList.remove('active')); }
-
-  function render(){
-    const raw = input.value.trim();
-    const ha = Number(raw);
-
-    if (raw === '' || !isFinite(ha) || ha <= 0){
-      hint.style.display = 'block'; out.style.display = 'none'; out.className = 'calc-out';
-      clearActive();
-      hint.textContent = raw === '' ? 'Escribí la superficie y te mostramos el plan.'
-                                    : 'La superficie tiene que ser un número mayor que cero.';
-      return;
-    }
-
-    hint.style.display = 'none'; out.style.display = 'block';
-
-    if (ha > MAX_HECTAREAS){
-      clearActive();
-      out.className = 'calc-out over';
-      const partes = Math.ceil(ha / MAX_HECTAREAS);
-      out.innerHTML =
-        '<div class="calc-out-icon">⚠</div>' +
-        '<div class="calc-out-tier">SUPERA EL MÁXIMO POR ACTIVO</div>' +
-        '<div class="calc-out-sub">' + fmtHa(ha) + ' ha pasa el límite de <strong>62.500 ha</strong> que abarca una pasada del satélite. ' +
-        'Se divide en <strong>' + partes + ' activos</strong>, y cada uno es un registro propio. Escribinos y lo armamos con vos.</div>';
-      return;
-    }
-
-    const t = tierBase(ha);
-    out.className = 'calc-out';
-    out.innerHTML =
-      '<div class="calc-out-tier">PLAN ' + t.nombre.toUpperCase() + '</div>' +
-      '<div class="calc-out-price">US$' + t.precio.toLocaleString('es-AR') + '<span> / mes</span></div>' +
-      '<div class="calc-out-sub">Para un activo de <strong>' + fmtHa(ha) + ' ha</strong>.</div>' +
-      '<div class="calc-free">✓ EL PRIMER MES NO SE COBRA</div>';
-
-    clearActive();
-    const cell = document.querySelector('.tr-tier[data-tier="' + t.id + '"]');
-    if (cell) cell.classList.add('active');
-  }
-
-  input.addEventListener('input', render);
-})();
-
-/* ─── RECURSOS ─── */
-const RECURSOS = {
-  campos:    { ico:'🌾', name:'Campos agrícolas', hint:'CULTIVOS · SUELO · ROTACIÓN', body:'<p>El satélite observa el estado del cultivo, la cobertura del suelo y sus cambios entre pasadas.</p><p>Sirve para dejar registrado cómo estaba tu campo en una fecha concreta — algo que nadie va a poder discutirte después.</p>', applies:'Productores que exportan y deben probar que no desmontan, arrendatarios, y quien necesita constancia del estado de su campo ante un tercero.' },
-  bosques:   { ico:'🌿', name:'Bosques', hint:'COBERTURA VEGETAL', body:'<p>Se mide la cobertura vegetal y su densidad, y se detecta pérdida o recuperación de masa entre una observación y la siguiente.</p><p>La evolución del bosque queda anclada, sin edición posible.</p>', applies:'Empresas forestales, proyectos de reforestación, y quien exporta a la Unión Europea y necesita probar que no deforesta.' },
-  realstate: { ico:'🏙', name:'Real estate', hint:'TERRENOS · LOTEOS · OBRA', body:'<p>El satélite ve el estado de un terreno, el avance de obra y los límites en una fecha determinada.</p><p>Queda una constancia objetiva del estado del inmueble — útil cuando después hay que probarlo.</p>', applies:'Desarrolladores, compra-venta de terrenos, y quien necesita documentar el estado de un predio ante un litigio o un vecino.' },
-  cuencas:   { ico:'💧', name:'Cuencas y ríos', hint:'AGUA · CAUCES · NACIENTES', body:'<p>Se registra el nivel y la extensión del agua, la turbidez visible y los cambios en el cauce.</p><p>Si el cauce de un río cambió, queda documentado con fecha — nadie podrá decirte después que fue de otra manera.</p>', applies:'Empresas que captan o vierten agua, propietarios sobre cursos de agua, y quien necesita probar el estado de su fuente hídrica.' },
-  costas:    { ico:'🌊', name:'Costas y márgenes', hint:'EROSIÓN · LÍNEA DE AGUA', body:'<p>El satélite observa cómo avanza o retrocede la línea de agua sobre un terreno, y la erosión de la costa en el tiempo.</p><p>Queda registrado antes de que el problema esté encima.</p>', applies:'Propietarios de terrenos costeros o ribereños, y quien necesita documentar cómo el agua afecta su límite.' },
-  glaciares: { ico:'🏔', name:'Glaciares', hint:'HIELO · RETROCESO', body:'<p>Se observa la superficie de hielo y nieve y su retroceso o avance a lo largo del tiempo.</p><p>Cada pasada suma una observación a la trayectoria del glaciar, imposible de retocar.</p>', applies:'Operaciones de altura, represas que dependen del deshielo, y gobiernos que deben probar el estado de sus glaciares.' },
-  mineria:   { ico:'⛏', name:'Minería', hint:'HUELLA · EXPANSIÓN', body:'<p>Se registra la huella de la operación sobre el terreno: su extensión, escombreras, balsas, y el avance de esa huella.</p><p>El impacto queda documentado en el tiempo, sin edición posible.</p>', applies:'Empresas mineras que necesitan probar, ante reguladores o inversores, que su impacto se mantiene dentro de lo declarado.' },
-  proteg:    { ico:'🛡', name:'Áreas protegidas', hint:'RESERVAS · CONSERVACIÓN', body:'<p>El satélite documenta que una zona sigue intacta — o que alguien la tocó, y cuándo.</p><p>Prueba objetiva del estado de conservación, defendible ante cualquiera.</p>', applies:'ONGs, fundaciones, gobiernos y municipios que deben probar que una zona protegida se mantiene, o registrar una intrusión.' },
-  industria: { ico:'🏭', name:'Industria', hint:'INSTALACIONES · ÁREA', body:'<p>Se registra la extensión de las instalaciones y los cambios en el área ocupada a lo largo del tiempo.</p><p>La huella territorial de la operación queda documentada y verificable.</p>', applies:'Plantas industriales, centros de datos, gestión de residuos, y cualquier instalación cuya huella deba documentarse.' },
-  tuyo:      { ico:'✦', name:'Lo tuyo', hint:'EL PRÓXIMO REGISTRO', body:'<p>Si tu actividad deja una huella sobre el territorio — agua, vegetación, suelo, instalaciones — se puede certificar.</p><p><strong>Puede ser lo próximo que quede registrado</strong>, con prueba inmutable, defendible ante gobiernos, bancos y fondos.</p>', applies:'Cualquier organización cuya huella pueda observarse desde el espacio y necesite dejarla probada.' }
-};
-const grid = document.getElementById('recGrid');
-if (grid) Object.entries(RECURSOS).forEach(([key, r]) => {
-  const b = document.createElement('button');
-  b.className = 'recurso' + (key === 'tuyo' ? ' comodin' : '');
-  b.onclick = () => abrirRecurso(key);
-  b.innerHTML = `<span class="recurso-ico">${r.ico}</span><span class="recurso-name">${r.name}</span><span class="recurso-hint">${r.hint}</span>`;
-  grid.appendChild(b);
-});
-function abrirRecurso(key) {
-  const r = RECURSOS[key];
-  document.getElementById('mEyebrow').textContent = r.hint;
-  document.getElementById('mTitle').innerHTML = r.ico + ' ' + r.name;
-  document.getElementById('mBody').innerHTML = r.body + '<div class="applies"><strong>DÓNDE APLICA:</strong> ' + r.applies + '</div>';
-  document.getElementById('ovModal').classList.add('active');
-  document.body.style.overflow = 'hidden';
-}
-
 /* ─── MODALES INFO ─── */
 const INFO = {
   comoFunciona: { eyebrow:'CÓMO FUNCIONA', title:'Cuatro pasos, nada oculto',
@@ -694,13 +489,6 @@ const INFO = {
 <p>Usamos observación satelital —de fuentes públicas como Copernicus Sentinel-2, o privadas, según lo que elijas— y la registramos de forma que nadie la pueda alterar después.</p>
 <p>Ese es todo el truco, y no es magia: es blockchain. Una vez escrito, queda. Sin excepciones, ni siquiera para nosotros.</p>
 <p>Trabajamos con empresas, campos, gobiernos, municipios y organizaciones. Con cualquiera a quien le sirva tener la verdad de su bien registrada y a mano.</p>` },
-  marcos: { eyebrow:'A QUÉ ABRE LA PUERTA', title:'Lo que hoy piden fondos, bancos y reguladores',
-    body:`<p>Una trayectoria ambiental verificable es la base de los marcos que hoy condicionan financiamiento y acceso a mercados. Tener la prueba, y no solo la declaración, cambia la conversación.</p>
-<p>Le sirve especialmente a <strong>bancos que financian proyectos verdes</strong> y necesitan probarle a sus reguladores que lo que financiaron es real; a <strong>gobiernos y municipios</strong>; y a cualquier organización que rinda cuentas ante terceros.</p>
-<h4>ESG</h4><p>Los criterios ambientales, sociales y de gobernanza que usan fondos e inversores.</p>
-<h4>CBAM · UE</h4><p>El mecanismo de ajuste de carbono en frontera de la Unión Europea.</p>
-<h4>TAXONOMÍA VERDE · UE</h4><p>La clasificación europea de actividades sostenibles.</p>
-<h4>GRI · TCFD</h4><p>Los estándares internacionales de reporte de sostenibilidad y clima.</p>` },
   terminos: { eyebrow:'TÉRMINOS DE USO', title:'Términos de Uso',
     body:`<h4>QUÉ ES EPIMELEIA</h4><p>EPIMELEIA registra observación satelital de forma permanente e inmutable en blockchain. No es auditor ni organismo regulatorio: es un registro neutral.</p><h4>PERMANENCIA</h4><p>Todo registro escrito en blockchain es <strong>permanente e inmutable</strong>. No existe mecanismo de eliminación.</p><h4>RESPONSABILIDAD</h4><p>La responsabilidad sobre los datos declarados es de quien registra el activo.</p><h4>CONTACTO</h4><p><strong>info@epimeleia.world</strong></p>` },
   privacidad: { eyebrow:'PRIVACIDAD', title:'Privacidad',
@@ -735,23 +523,10 @@ function abrirFaqs(){
   document.body.style.overflow='hidden';
 }
 function toggleFaq(i){ document.querySelectorAll('.faq-item')[i].classList.toggle('open'); }
-
-/* ─── ADHERIRSE (puerta a la próxima etapa) ─── */
-function adherir(){
-  window.location.href = 'cuenta.html';
-}
-
 function cerrar(id){ document.getElementById(id).classList.remove('active'); document.body.style.overflow=''; }
-['ovModal'].forEach(id=>{ document.getElementById(id).addEventListener('click', e=>{ if(e.target.id===id) cerrar(id); }); });
-
-/* ─── EMAIL ─── */
-function copiarEmail(el){
-  const original = el.innerHTML;
-  navigator.clipboard.writeText('info@epimeleia.world').then(()=>{ el.innerHTML='✓ copiado'; setTimeout(()=>el.innerHTML=original,1600); }).catch(()=>{});
-}
+document.getElementById('ovModal').addEventListener('click', e=>{ if(e.target.id==='ovModal') cerrar('ovModal'); });
 
 /* ─── EPI (conectado a /api/chat · solo conversa) ─── */
-/* Memoria SOLO de la charla abierta: vive mientras la página está abierta. */
 let epiHistorial = [];
 let epiPensando = false;
 let epiCerrada = false;
