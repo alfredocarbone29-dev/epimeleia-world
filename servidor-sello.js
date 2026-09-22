@@ -16,9 +16,9 @@
  *   habla a Vercel, Vercel le habla a esta puerta, y esta puerta sella.
  *
  * SEGURIDAD — TRES CANDADOS:
- *   1. Solo escucha en 127.0.0.1 (localhost). Nadie de afuera llega
- *      directo: solo procesos del propio servidor. (Nginx lo expone hacia
- *      afuera de forma controlada — ver más abajo.)
+ *   1. Escucha en la IP pública del VPS, pero SOLO responde a pedidos
+ *      que traigan la clave secreta correcta. Sin clave → "No autorizado".
+ *      (No hay Nginx en este VPS; Vercel llega directo, con la clave.)
  *   2. Clave secreta compartida (SELLO_SECRET): todo pedido tiene que
  *      traerla en un header. Sin la clave correcta, se rechaza. Esa clave
  *      solo la conocen Vercel y este servidor.
@@ -268,8 +268,10 @@ const server = http.createServer((req, res) => {
   });
 });
 
-// CANDADO 1: solo escucha en localhost. Nadie de afuera llega directo.
-server.listen(PORT, '127.0.0.1', () => {
-  L(`escuchando en http://127.0.0.1:${PORT}/sellar`);
-  if (!SECRET) L('⚠  ATENCION: SELLO_SECRET no esta configurada. Configurala en el .env antes de usar en serio.');
+// El servidor escucha en 0.0.0.0 (todas las interfaces) para que Vercel,
+// desde afuera, pueda tocarlo. La seguridad la da la CLAVE SECRETA (candado 2):
+// sin la clave correcta, todo pedido se rechaza con "No autorizado".
+server.listen(PORT, '0.0.0.0', () => {
+  L(`escuchando en http://0.0.0.0:${PORT}/sellar (accesible desde afuera, protegido por clave)`);
+  if (!SECRET) L('⚠  ATENCION: SELLO_SECRET no esta configurada. El servidor rechaza TODO hasta configurarla en el .env.');
 });
