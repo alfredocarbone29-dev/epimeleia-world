@@ -160,9 +160,9 @@ section { position:relative; }
 /* ─── MAPA (botón secundario) ─── */
 .mapa-cta { max-width:640px; margin:clamp(36px,5vw,52px) auto 0; text-align:center; padding-top:clamp(30px,4vw,42px); border-top:1px solid var(--line); }
 .mapa-cta p { font-size:clamp(15px,1.6vw,18px); color:rgba(232,228,218,0.66); line-height:1.6; margin-bottom:20px; }
-.mapa-cta a { display:inline-flex; align-items:center; gap:10px; font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:2px; color:var(--emerald); border:1px solid rgba(95,173,95,0.35); padding:14px 26px; text-decoration:none; transition:border-color .2s, background .2s; }
-.mapa-cta a:hover { border-color:var(--emerald); background:rgba(95,173,95,0.06); }
-.mapa-cta svg { width:18px; height:18px; stroke:var(--emerald); }
+.mapa-cta a { display:inline-flex; align-items:center; gap:12px; font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:2px; color:var(--void); background:var(--gold2); border:1px solid rgba(0,0,0,0.05); padding:18px 34px; text-decoration:none; box-shadow:0 8px 30px rgba(200,168,75,0.25); transition:background .2s, transform .2s, box-shadow .2s; }
+.mapa-cta a:hover { background:var(--gold); transform:translateY(-2px); box-shadow:0 12px 40px rgba(200,168,75,0.38); }
+.mapa-cta svg { width:20px; height:20px; stroke:var(--void); }
 
 /* ─── CONTACTO (fundamental, destacado) ─── */
 .contacto { border-top:1px solid var(--line); background:var(--void); }
@@ -179,6 +179,20 @@ section { position:relative; }
 /* ─── nota legal (respeto al marco) ─── */
 .legal-note { max-width:720px; margin:clamp(30px,4vw,42px) auto 0; padding-top:clamp(24px,3vw,32px); border-top:1px solid var(--line); font-size:clamp(13px,1.4vw,15px); color:rgba(232,228,218,0.55); line-height:1.7; text-align:center; }
 .legal-note a { color:var(--emerald); text-decoration:none; }
+
+
+/* ─── BOTÓN FLOTANTE FIJO · DIBUJÁ Y CERTIFICÁ (a la vista todo el recorrido) ─── */
+.mapa-float { position:fixed; left:clamp(16px,3vw,32px); bottom:clamp(16px,3vw,32px); z-index:400; display:flex; align-items:center; gap:12px; max-width:min(78vw,310px); background:var(--gold2); color:var(--void); text-decoration:none; padding:13px 18px; box-shadow:0 8px 30px rgba(0,0,0,0.55); transition:background .2s, transform .2s; animation:mapaFloatIn .5s ease both; }
+.mapa-float:hover { background:var(--gold); transform:translateY(-2px); }
+@keyframes mapaFloatIn { from{opacity:0; transform:translateY(14px);} to{opacity:1; transform:translateY(0);} }
+.mapa-float-ico { flex-shrink:0; display:flex; }
+.mapa-float-ico svg { width:22px; height:22px; }
+.mapa-float-txt { display:flex; flex-direction:column; line-height:1.2; min-width:0; }
+.mapa-float-txt b { font-family:'Playfair Display',serif; font-size:14.5px; font-weight:600; }
+.mapa-float-txt small { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:0.4px; opacity:0.82; margin-top:3px; }
+.mapa-float:focus-visible { outline:2px solid var(--white); outline-offset:3px; }
+@media(max-width:520px){ .mapa-float { max-width:66vw; padding:11px 14px; gap:9px; left:14px; bottom:14px; } .mapa-float-txt b{ font-size:12.5px; } .mapa-float-txt small{ font-size:8px; } .mapa-float-ico svg{ width:19px; height:19px; } }
+@media(prefers-reduced-motion: reduce){ .mapa-float{ animation:none; } }
 
 /* ─── EPI BURBUJA (igual que el index) ─── */
 .epi-bubble { position:fixed; right:clamp(16px,3vw,32px); bottom:clamp(16px,3vw,32px); z-index:400; width:60px; height:60px; border-radius:50%; background:radial-gradient(circle at 35% 30%, var(--panel), var(--surface)); border:1px solid rgba(95,173,95,0.35); cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 6px 26px rgba(0,0,0,0.5); transition:transform .25s ease, box-shadow .3s ease, opacity .3s ease; animation:epiPulse 3.4s ease-in-out infinite; }
@@ -399,6 +413,21 @@ section { position:relative; }
     </div>
   </div>
 </section>
+
+<!-- BOTÓN FLOTANTE FIJO · DIBUJÁ Y CERTIFICÁ (a la vista todo el recorrido, pareja de EPI) -->
+<a class="mapa-float" href="protocolo.html" aria-label="Dibujá y certificá tu recurso en el mapa, sin registrarte">
+  <span class="mapa-float-ico">
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 21.5s7-5.7 7-11.5a7 7 0 1 0-14 0c0 5.8 7 11.5 7 11.5z" fill="currentColor" opacity="0.22"/>
+      <path d="M12 21.5s7-5.7 7-11.5a7 7 0 1 0-14 0c0 5.8 7 11.5 7 11.5z" stroke="currentColor" stroke-width="1.6"/>
+      <circle cx="12" cy="10" r="2.5" fill="currentColor"/>
+    </svg>
+  </span>
+  <span class="mapa-float-txt">
+    <b>Dibujá y certificá tu recurso</b>
+    <small>Probalo en vivo, sin registrarte →</small>
+  </span>
+</a>
 
 <!-- EPI BURBUJA -->
 <button class="epi-bubble" id="epiBubble" onclick="abrirEpi()" aria-label="Hablar con EPI">
