@@ -503,6 +503,16 @@
         Te vamos a llevar a PayPal para que dejes tu método de pago.<br>
         Podés cancelar la suscripción cuando quieras.
       </div>
+
+      <!-- ══ ATAJO FOUNDER · certificar directo, sin pago (solo visible para el founder) ══ -->
+      <div id="founderAtajo" style="display:none; margin-top:18px; padding-top:16px; border-top:1px solid rgba(255,255,255,0.12);">
+        <div style="font-family:monospace; font-size:9px; letter-spacing:0.2em; color:var(--gold, #E5C870); text-transform:uppercase; text-align:center; margin-bottom:10px;">PANEL FOUNDER · SIN PASAR POR EL PAGO</div>
+        <button class="action" id="founderCertBtn" type="button" style="width:100%; font-size:13px; font-weight:700; padding:13px; background:#E5C870; color:#111; border:none; cursor:pointer;">
+          CERTIFICAR DIRECTO (FOUNDER) →
+        </button>
+        <div id="founderCertOut" style="display:none; font-family:monospace; font-size:11px; line-height:1.7; color:#9fb0c9; background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.1); padding:14px; margin-top:12px; white-space:pre-wrap; word-break:break-word;"></div>
+        <div style="font-family:monospace; font-size:8px; color:var(--muted, #667); text-align:center; margin-top:8px;">SIMULACRO no gasta gas · el sellado real escribe en Polygon</div>
+      </div>
     </div>
   </div>
 </div>
@@ -570,6 +580,7 @@
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
 
 <script>
@@ -1050,6 +1061,9 @@
         el('pagarNota').style.display = 'block';
 
         datosPago = { activoId: activoId, superficieHa: superficieHa, pais: pais };
+
+        // ── ATAJO FOUNDER: si sos el founder, mostrar el botón de certificar directo ──
+        chequearFounder(activoId);
       })
       .catch(function () {
         el('precioCargando').style.display = 'none';
@@ -1174,6 +1188,105 @@
   el('epiText').addEventListener('input', function () { this.style.height = 'auto'; this.style.height = Math.min(this.scrollHeight, 100) + 'px'; });
 
 })();
+
+  // ══════════════════════════════════════════════════════════════════
+  //  ATAJO FOUNDER · certificar directo desde protocolo.html, sin pago
+  //  Reusa el mismo puente (/api/confirmar-sello) que ya está probado.
+  //  Aparece SOLO si el que recorre el flujo está logueado como founder.
+  // ══════════════════════════════════════════════════════════════════
+  var FOUNDER_EMAIL_PROTO = 'alfredocarbone29@gmail.com';
+  var PUENTE_SELLO_PROTO  = 'https://www.epimeleia.world/api/confirmar-sello';
+  var _supaProto = null;
+  var _founderActivoId = null;
+
+  // Config de Supabase (la misma pública que usa cuenta.html)
+  var SB_URL  = 'https://rfpiirxsdhfnvstwjjbh.supabase.co';
+  var SB_ANON = 'sb_publishable_Ym3gRRPfLZPGm4srzFDdTw_dcWvqxZ2';
+
+  function _initSupaProto() {
+    if (_supaProto) return _supaProto;
+    try {
+      if (window.supabase && SB_URL.indexOf('http') === 0) {
+        _supaProto = window.supabase.createClient(SB_URL, SB_ANON);
+      }
+    } catch (e) {}
+    return _supaProto;
+  }
+
+  // ¿El que está recorriendo el flujo es el founder? Se chequea contra
+  // su sesión de Supabase. Si lo es, se muestra el atajo.
+  async function chequearFounder(activoId) {
+    _founderActivoId = activoId;
+    var supa = _initSupaProto();
+    if (!supa) return;
+    try {
+      var res = await supa.auth.getUser();
+      var user = res && res.data ? res.data.user : null;
+      if (user && (user.email || '').toLowerCase().trim() === FOUNDER_EMAIL_PROTO) {
+        el('founderAtajo').style.display = 'block';
+      }
+    } catch (e) {}
+  }
+
+  // El botón: sella directo, reusando el puente. Primero simulacro, después real.
+  var _founderYaSimulo = false;
+  el('founderCertBtn').addEventListener('click', async function () {
+    var supa = _initSupaProto();
+    var out = el('founderCertOut');
+    out.style.display = 'block';
+
+    if (!supa || !_founderActivoId) {
+      out.innerHTML = 'No se pudo iniciar. Recargá la página.';
+      return;
+    }
+
+    // La primera vez: simulacro (no gasta gas). La segunda: sella de verdad.
+    var ejecutar = _founderYaSimulo;
+    if (ejecutar && !confirm('Esto SELLA de verdad en Polygon y gasta gas real. ¿Seguro?')) return;
+
+    var sesion = await supa.auth.getSession();
+    var token = sesion && sesion.data && sesion.data.session ? sesion.data.session.access_token : null;
+    if (!token) { out.innerHTML = 'No hay sesión activa. Entrá a tu cuenta primero.'; return; }
+
+    var btn = el('founderCertBtn');
+    btn.disabled = true;
+    out.innerHTML = ejecutar ? 'Sellando en Polygon… puede tardar un minuto. No cierres la página.' : 'Midiendo el campo contra el satélite…';
+
+    try {
+      var r = await fetch(PUENTE_SELLO_PROTO, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filaId: _founderActivoId, ejecutar: ejecutar, token: token })
+      });
+      var data = await r.json();
+
+      if (!data.ok) {
+        out.innerHTML = '✗ ' + (data.error || 'No se pudo.');
+      } else if (data.simulacro) {
+        var t = '✓ SIMULACRO OK — no se gastó nada\n';
+        t += 'Activo: ' + (data.activo || '—') + ' (' + (data.tipo || '—') + ')\n';
+        t += 'Calidad: ' + (data.calidad != null ? data.calidad + '%' : '—') + '\n';
+        if (data.mediciones) for (var i=0;i<data.mediciones.length;i++){ var m=data.mediciones[i]; t += '  · ' + m.etiqueta + ': ' + m.valor + ' (' + m.interpretacion + ')\n'; }
+        t += '\nTocá otra vez el botón para SELLAR DE VERDAD.';
+        out.innerHTML = t;
+        _founderYaSimulo = true;
+        btn.textContent = 'SELLAR DE VERDAD (FOUNDER) →';
+      } else if (data.sellado) {
+        var s = '✓ SELLADO EN POLYGON — real e inmutable\n';
+        s += 'Activo on-chain #' + data.onchain + '\n';
+        s += 'Tx: ' + data.txHash + '\n';
+        s += 'Bloque: ' + data.bloque + '\n\n';
+        s += '<a href="' + data.polygonscan + '" target="_blank" rel="noopener" style="color:#8FB0DA;">Ver en Polygonscan →</a>';
+        out.innerHTML = s;
+        btn.style.display = 'none';
+      }
+    } catch (e) {
+      out.innerHTML = '✗ No se pudo contactar al servidor. Probá de nuevo.';
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
 </script>
 </body>
 </html>
