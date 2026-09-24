@@ -194,6 +194,31 @@ body::after {
 /* spinner mínimo */
 .loading-dot { display:inline-block; width:5px; height:5px; border-radius:50%; background:var(--void); animation:blink 1.2s infinite; }
 @keyframes blink { 0%,60%,100%{opacity:0.3;} 30%{opacity:1;} }
+
+/* ══ PANEL FOUNDER · sellado desde la página (solo visible para el founder) ══ */
+.founder-block { display:none; margin:28px 0; padding:24px; background:linear-gradient(135deg, rgba(200,168,75,0.10), rgba(74,138,74,0.04)); border:1px solid var(--gold); position:relative; }
+.founder-block.visible { display:block; }
+.founder-eyebrow { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:3px; color:var(--gold2); margin-bottom:8px; }
+.founder-title { font-family:'Playfair Display',serif; font-size:22px; color:var(--white); font-weight:400; margin-bottom:6px; line-height:1.2; }
+.founder-title em { font-style:italic; color:var(--gold2); }
+.founder-sub { font-family:'Crimson Pro',serif; font-size:14px; color:var(--muted); line-height:1.6; margin-bottom:18px; max-width:560px; }
+.founder-tools { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:18px; }
+.founder-input { flex:1; min-width:220px; background:var(--surface); border:1px solid var(--line2); color:var(--text); font-family:'JetBrains Mono',monospace; font-size:13px; padding:12px 14px; outline:none; transition:border-color .2s; }
+.founder-input:focus { border-color:var(--gold2); }
+.founder-input::placeholder { color:var(--dim); }
+.founder-btn { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:2px; padding:12px 20px; cursor:pointer; border:none; transition:all .2s; }
+.founder-btn.sim { background:var(--card); border:1px solid var(--line2); color:var(--text); }
+.founder-btn.sim:hover { border-color:var(--gold2); color:var(--white); }
+.founder-btn.real { background:var(--gold2); color:var(--void); }
+.founder-btn.real:hover { background:var(--gold); }
+.founder-btn:disabled { opacity:0.5; cursor:not-allowed; }
+.founder-out { font-family:'JetBrains Mono',monospace; font-size:12px; line-height:1.7; color:var(--muted); background:var(--void); border:1px solid var(--line); padding:16px; margin-top:16px; min-height:20px; white-space:pre-wrap; word-break:break-word; display:none; }
+.founder-out.visible { display:block; }
+.founder-out .ok { color:var(--emerald); }
+.founder-out .err { color:var(--amber); }
+.founder-out .link { color:var(--glacier); }
+.founder-hint { font-family:'JetBrains Mono',monospace; font-size:8px; letter-spacing:1px; color:var(--dim); margin-top:10px; line-height:1.6; }
+
 </style>
 </head>
 <body>
@@ -359,6 +384,20 @@ body::after {
         <div class="cb-title">Certificá un <em>activo</em></div>
         <div class="cb-sub">Dibujá el contorno de tu recurso sobre el satélite y grabá su estado ambiental de forma permanente. La ubicación exacta la vas a marcar vos en el mapa.</div>
         <button class="btn-certificar" onclick="irAlMotor()">DIBUJAR Y CERTIFICAR →</button>
+      </div>
+
+      <!-- ══ PANEL FOUNDER · aparece solo si entrás con tu email de founder ══ -->
+      <div class="founder-block" id="founderBlock">
+        <div class="founder-eyebrow">PANEL FOUNDER · SELLADO DIRECTO</div>
+        <div class="founder-title">Sellar un activo <em>desde acá</em></div>
+        <div class="founder-sub">Pegá el id de fila del activo (de Supabase) y sellalo sin pasar por el pago. Empezá siempre con "Probar" (simulacro, no gasta gas): mide el campo y te muestra qué sellaría. Si los números cierran, "Sellar de verdad".</div>
+        <div class="founder-tools">
+          <input class="founder-input" id="founderFila" type="text" placeholder="id de fila del activo (ej: e63e2f1c-0e75-...)" autocomplete="off">
+          <button class="founder-btn sim" id="founderBtnSim" onclick="founderSellar(false)">PROBAR (SIMULACRO)</button>
+          <button class="founder-btn real" id="founderBtnReal" onclick="founderSellar(true)">SELLAR DE VERDAD</button>
+        </div>
+        <div class="founder-out" id="founderOut"></div>
+        <div class="founder-hint">SIMULACRO = mide y muestra, no gasta gas · SELLAR DE VERDAD = escribe en Polygon (gasta gas real)</div>
       </div>
 
       <div class="panel-label">TUS DATOS · TOCÁ PARA EDITAR Y GUARDÁ AL FINAL</div>
@@ -576,7 +615,91 @@ async function cargarCuenta() {
   document.getElementById('aPais').value              = meta.pais || '';
   document.getElementById('aUbicacionRecurso').value  = meta.ubicacion_recurso || '';
 
+  // ── PANEL FOUNDER: se muestra SOLO si el email logueado es el del founder ──
+  if ((user.email || '').toLowerCase().trim() === FOUNDER_EMAIL) {
+    document.getElementById('founderBlock').classList.add('visible');
+  }
+
   irA('cuenta');
+}
+
+// ══ SELLADO DESDE LA PÁGINA (solo founder) ══════════════════════════════
+// El email del founder — el mismo que verifica el servidor. Acá solo decide
+// si se MUESTRA el panel; la seguridad de verdad la pone el servidor (que
+// verifica el token contra Supabase). Este chequeo del navegador es cosmético.
+const FOUNDER_EMAIL = 'alfredocarbone29@gmail.com';
+
+// La URL del puente en Vercel (el dominio bueno, con www).
+const PUENTE_SELLO = 'https://www.epimeleia.world/api/confirmar-sello';
+
+async function founderSellar(ejecutar) {
+  const fila = (document.getElementById('founderFila').value || '').trim();
+  const out  = document.getElementById('founderOut');
+  const bSim = document.getElementById('founderBtnSim');
+  const bReal= document.getElementById('founderBtnReal');
+
+  out.classList.add('visible');
+
+  if (!fila) {
+    out.innerHTML = '<span class="err">Pegá el id de fila del activo primero.</span>';
+    return;
+  }
+
+  // Confirmación extra para el sellado real (gasta gas).
+  if (ejecutar && !confirm('Esto SELLA de verdad en Polygon y gasta gas real. ¿Seguro?')) {
+    return;
+  }
+
+  // Sacar el token de la sesión actual (la prueba de que sos vos).
+  const { data: { session } } = await supa.auth.getSession();
+  if (!session || !session.access_token) {
+    out.innerHTML = '<span class="err">No hay sesión activa. Iniciá sesión de nuevo.</span>';
+    return;
+  }
+
+  bSim.disabled = true; bReal.disabled = true;
+  out.innerHTML = ejecutar
+    ? 'Sellando en Polygon… esto puede tardar un minuto (mide el satélite y escribe on-chain). No cierres la página.'
+    : 'Midiendo el campo contra el satélite… un momento.';
+
+  try {
+    const resp = await fetch(PUENTE_SELLO, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ filaId: fila, ejecutar: ejecutar, token: session.access_token })
+    });
+    const data = await resp.json();
+
+    if (!data.ok) {
+      out.innerHTML = '<span class="err">✗ ' + (data.error || 'No se pudo.') + '</span>';
+    } else if (data.simulacro) {
+      let txt = '<span class="ok">✓ SIMULACRO OK — no se gastó nada</span>\n';
+      txt += 'Activo: ' + (data.activo || '—') + '  (' + (data.tipo || '—') + ')\n';
+      txt += 'Calidad de lectura: ' + (data.calidad != null ? data.calidad + '%' : '—') + '\n';
+      txt += 'Pasada del satélite: ' + (data.fechaPasada || '—') + '\n';
+      if (Array.isArray(data.mediciones)) {
+        for (const m of data.mediciones) {
+          txt += '  · ' + m.etiqueta + ': ' + m.valor + '  (' + m.interpretacion + ')\n';
+        }
+      }
+      txt += '\nSi los números cierran, tocá "SELLAR DE VERDAD".';
+      out.innerHTML = txt;
+    } else if (data.sellado) {
+      let txt = '<span class="ok">✓ SELLADO EN POLYGON — real, inmutable</span>\n';
+      txt += 'Activo: ' + (data.activo || '—') + '  ·  on-chain #' + data.onchain + '\n';
+      txt += 'Huella: ' + data.huella + '\n';
+      txt += 'Transacción: ' + data.txHash + '\n';
+      txt += 'Bloque: ' + data.bloque + '\n\n';
+      txt += '<a class="link" href="' + data.polygonscan + '" target="_blank" rel="noopener">Ver en Polygonscan →</a>';
+      out.innerHTML = txt;
+    } else {
+      out.innerHTML = '<span class="ok">✓ Listo.</span> ' + JSON.stringify(data);
+    }
+  } catch (e) {
+    out.innerHTML = '<span class="err">✗ No se pudo contactar al servidor. Probá de nuevo en un momento.</span>';
+  } finally {
+    bSim.disabled = false; bReal.disabled = false;
+  }
 }
 
 /* ── GUARDAR CAMBIOS DE DATOS ── */
