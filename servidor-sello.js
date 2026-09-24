@@ -58,6 +58,7 @@ const satellite      = require('./satellite');
 const scheduler      = require('./scheduler');       // solo para periodoDeVentana
 const blockchain     = require('./blockchain');
 const activoSupabase = require('./activo-supabase');
+const reports        = require('./reports');       // para disparar el email del certificado
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 
@@ -213,11 +214,48 @@ async function procesarSello(filaId, ejecutar) {
     if (onchainId == null) return { ok: false, error: 'El alta no devolvio id on-chain. Revisar en Polygonscan.' };
   }
   const sello = await sellarEvidencia(onchainId, m);
+
+  // ── DISPARAR EL EMAIL DEL CERTIFICADO ──────────────────────────────
+  // Reusa reports.enviarEvidenciaQuincenal (el mismo mail del sello, con
+  // hash, txHash y link a Polygonscan). Va en su PROPIO try: si el mail
+  // falla, el sello YA quedó grabado y no se pierde. El destino es el email
+  // del titular del activo (en Supabase).
+  var emailEnviado = false;
+  var emailMotivo = null;
+  try {
+    var emailDestino = (activo.titular && activo.titular.email) || null;
+    if (emailDestino) {
+      await reports.enviarEvidenciaQuincenal({
+        activoId:             onchainId,
+        nombreActivo:         activo.nombreActivo,
+        emailDestino:         emailDestino,
+        trimestre:            sello.trimestre,
+        quincenaDelTrimestre: 1,
+        caso:                 'sellado',
+        calidadPct:           m.calidadPct,
+        satelite:             m.satelite,
+        fechaPasada:          m.fechaPasada,
+        hashEvidencia:        sello.hashEvidencia,
+        txHash:               sello.txHash,
+        bloque:               sello.bloque,
+      });
+      emailEnviado = true;
+      L('email del certificado enviado a ' + emailDestino);
+    } else {
+      emailMotivo = 'el activo no tiene email de titular en Supabase';
+      L('sin email destino - no se envia el certificado');
+    }
+  } catch (errMail) {
+    emailMotivo = errMail.message;
+    L('el email fallo (el sello igual quedo): ' + errMail.message);
+  }
+
   return {
     ok: true, sellado: true,
     activo: activo.nombreActivo, onchain: onchainId,
     huella: sello.hashEvidencia, txHash: sello.txHash, bloque: sello.bloque,
     polygonscan: `https://polygonscan.com/tx/${sello.txHash}`,
+    emailEnviado: emailEnviado, emailMotivo: emailMotivo,
   };
 }
 
