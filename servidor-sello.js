@@ -238,6 +238,7 @@ async function procesarSello(filaId, ejecutar) {
         hashEvidencia:        sello.hashEvidencia,
         txHash:               sello.txHash,
         bloque:               sello.bloque,
+        deforestacion:        activo.deforestacionHistorica || null,
       });
       emailEnviado = true;
       L('email del certificado enviado a ' + emailDestino);
@@ -250,12 +251,24 @@ async function procesarSello(filaId, ejecutar) {
     L('el email fallo (el sello igual quedo): ' + errMail.message);
   }
 
+  // Veredicto de deforestación (ya viene calculado en el activo, de cuando se registró).
+  var def = activo.deforestacionHistorica || null;
+  var deforestacionResumen = null;
+  if (def && typeof def.huboDeforestacion === 'boolean') {
+    deforestacionResumen = {
+      hubo:            def.huboDeforestacion,
+      totalHectareas:  def.totalHectareasPerdidas != null ? def.totalHectareasPerdidas : null,
+      periodo:         def.periodoAnalizado || null,
+    };
+  }
+
   return {
     ok: true, sellado: true,
     activo: activo.nombreActivo, onchain: onchainId,
     huella: sello.hashEvidencia, txHash: sello.txHash, bloque: sello.bloque,
     polygonscan: `https://polygonscan.com/tx/${sello.txHash}`,
     emailEnviado: emailEnviado, emailMotivo: emailMotivo,
+    deforestacion: deforestacionResumen,
   };
 }
 

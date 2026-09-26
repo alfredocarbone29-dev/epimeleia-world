@@ -1293,6 +1293,18 @@
         s += 'Activo on-chain #' + data.onchain + '\n';
         s += 'Tx: ' + data.txHash + '\n';
         s += 'Bloque: ' + data.bloque + '\n';
+        if (data.deforestacion) {
+          if (data.deforestacion.hubo) {
+            s += '\nDEFORESTACION (EUDR): HUBO';
+            if (data.deforestacion.totalHectareas != null) s += ' - ' + data.deforestacion.totalHectareas + ' ha';
+            if (data.deforestacion.periodo) s += ' (' + data.deforestacion.periodo + ')';
+            s += '\n';
+          } else {
+            s += '\nDEFORESTACION (EUDR): SIN DEFORESTACION';
+            if (data.deforestacion.periodo) s += ' (' + data.deforestacion.periodo + ')';
+            s += '\n';
+          }
+        }
         out.textContent = s;
         var a = document.createElement('a');
         a.href = data.polygonscan; a.target = '_blank'; a.rel = 'noopener';

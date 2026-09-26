@@ -5,6 +5,7 @@
  * Descarga de datos satelitales completos — Ajuste 20.
  * Alertas de saldo bajo y notificaciones webhook — Ajuste 5.
  * Aviso QUINCENAL de evidencia de ventana (días 2 y 16) — nuevo.
+ * Veredicto de deforestación histórica (EUDR) en el aviso quincenal — nuevo.
  */
 
 const axios    = require('axios');
@@ -250,6 +251,13 @@ function _generarHTMLReporte({ activoId, owner, año, q, datosBilling, certs, hu
 // él. Ahora el txHash se imprime como texto plano, igual que en Polygonscan,
 // arriba del botón. El botón sigue estando, para el que quiera verificar
 // por su cuenta — pero el dato ya no depende de que alguien haga click.
+//
+// DEFORESTACIÓN EUDR — VEREDICTO HISTÓRICO EN EL MISMO MAIL
+// Cuando el activo trae el chequeo de deforestación histórica (columna
+// deforestacion_historica de Supabase, calculada al registrar contra
+// GFW/Hansen), el mail suma una sección con el veredicto: hubo / no hubo
+// deforestación en el período analizado, y cuántas hectáreas. Mismo espíritu
+// honesto: si no hay dato de chequeo, la sección no aparece (no se inventa).
 
 /**
  * Envía el aviso quincenal de una ventana satelital.
@@ -270,6 +278,10 @@ function _generarHTMLReporte({ activoId, owner, año, q, datosBilling, certs, hu
  * @param {number} [p.bloque]                - número de bloque
  * // Solo cuando caso === 'no_visto':
  * @param {boolean} [p.esClimatica]          - true = pasó pero nube; false = sin dato
+ * // Opcional, en cualquier caso:
+ * @param {Object} [p.deforestacion]         - contenido de la columna deforestacion_historica
+ *                                             { huboDeforestacion, totalHectareasPerdidas,
+ *                                               detallePorAnio, periodoAnalizado, fuente, resolucion }
  */
 async function enviarEvidenciaQuincenal(p) {
   const {
@@ -278,6 +290,7 @@ async function enviarEvidenciaQuincenal(p) {
     caso,
     calidadPct, satelite, fechaPasada, hashEvidencia, txHash, bloque,
     esClimatica,
+    deforestacion,
   } = p;
 
   const q       = trimestre % 10;
@@ -299,6 +312,7 @@ async function enviarEvidenciaQuincenal(p) {
     sellado, parcial,
     calidadPct, satelite, fechaPasada, hashEvidencia, txHash, bloque,
     esClimatica,
+    deforestacion,
   });
 
   log('EMAIL', `Enviando aviso quincenal`, { activoId, trimestre, caso, emailDestino });
@@ -315,13 +329,73 @@ function _fechaCorta(v) {
 }
 
 /**
+ * Sección de deforestación EUDR para el mail quincenal.
+ * Devuelve '' si no hay dato de chequeo (mismo espíritu honesto: no se inventa).
+ * Verde sobrio si NO hubo deforestación; ámbar de atención si SÍ hubo.
+ */
+function _seccionDeforestacion(deforestacion) {
+  if (!deforestacion || typeof deforestacion.huboDeforestacion !== 'boolean') return '';
+
+  const hubo      = deforestacion.huboDeforestacion;
+  const totalHa   = (typeof deforestacion.totalHectareasPerdidas === 'number')
+    ? deforestacion.totalHectareasPerdidas : null;
+  const periodo   = deforestacion.periodoAnalizado || '—';
+  const fuente    = deforestacion.fuente || 'Global Forest Watch / UMD GLAD';
+  const resol     = deforestacion.resolucion || '30m';
+
+  // Colores según el veredicto (sobrios, sin alarmismo).
+  const acento    = hubo ? '#8a6a1a' : '#3a6a3a';      // ámbar / verde
+  const fondo     = hubo ? '#faf6ec' : '#f2f6f0';
+  const borde     = hubo ? '#e6d9b8' : '#d6e4d2';
+  const titulo    = hubo ? 'Se detectó pérdida de cobertura en el período' : 'Sin pérdida de cobertura en el período';
+  const veredicto = hubo ? 'HUBO DEFORESTACIÓN' : 'SIN DEFORESTACIÓN';
+
+  // Detalle por año, solo si hubo y hay desglose.
+  let detalleAnios = '';
+  if (hubo && Array.isArray(deforestacion.detallePorAnio) && deforestacion.detallePorAnio.length) {
+    const filas = deforestacion.detallePorAnio
+      .filter(d => d && Number(d.hectareas) > 0)
+      .map(d => `<tr>
+        <td style="padding:4px 10px;font-family:monospace;font-size:11px;color:#5a6a5a;">${d.anio}</td>
+        <td style="padding:4px 10px;font-family:monospace;font-size:11px;color:${acento};text-align:right;">${d.hectareas} ha</td>
+      </tr>`).join('');
+    if (filas) {
+      detalleAnios = `
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:10px;border-top:1px solid ${borde};">
+        ${filas}
+      </table>`;
+    }
+  }
+
+  return `
+  <tr>
+    <td style="padding:0 40px 24px 40px;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="background:${fondo};border:1px solid ${borde};border-radius:2px;">
+        <tr>
+          <td style="padding:20px 24px;">
+            <div style="font-family:monospace;font-size:9px;letter-spacing:2px;color:#8a9e8a;">CHEQUEO DE DEFORESTACIÓN · EUDR</div>
+            <div style="font-family:'Georgia',serif;font-size:18px;color:${acento};margin:8px 0 4px 0;">${veredicto}</div>
+            <div style="font-family:'Georgia',serif;font-size:13px;color:#3a4a3a;line-height:1.6;">${titulo}${totalHa != null ? ` — <strong>${totalHa} ha</strong>` : ''}.</div>
+            ${detalleAnios}
+            <div style="font-family:monospace;font-size:10px;color:#8a9e8a;margin-top:12px;line-height:1.6;">
+              Período analizado: ${periodo}<br>
+              Fuente: ${fuente} · resolución ${resol}
+            </div>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>`;
+}
+
+/**
  * HTML del aviso quincenal. Misma paleta que el certificado que el fundador
  * ya aprobó (hueso #f4f0e8, verde #0f1a0f, dorado, serif + monospace).
  */
 function _generarHTMLQuincenal({
   activoId, nombreActivo, q, anio, quincenaDelTrimestre,
   sellado, parcial, calidadPct, satelite, fechaPasada, hashEvidencia, txHash, bloque,
-  esClimatica,
+  esClimatica, deforestacion,
 }) {
   const contratoCert = config.contratos?.cert || '';
   const urlTx        = txHash ? `https://polygonscan.com/tx/${txHash}` : '';
@@ -373,6 +447,9 @@ function _generarHTMLQuincenal({
       </table>
     </td>
   </tr>` : '';
+
+  // Sección de deforestación EUDR (vacía si no hay dato de chequeo).
+  const seccionDeforestacion = _seccionDeforestacion(deforestacion);
 
   // Bloque de prueba pública (verde). Cambia según haya tx o no.
   //
@@ -463,6 +540,7 @@ function _generarHTMLQuincenal({
   </tr>
 
   ${filaTecnica}
+  ${seccionDeforestacion}
   ${bloquePrueba}
 
   <!-- CIERRE -->
