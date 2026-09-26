@@ -119,6 +119,39 @@
  * ⚠️ NO SE TOCÓ generarHashEvidencia(). Sigue sin cubrir las
  *    mediciones ni el polígono ni la regla (ver Junta A del brief).
  *    Está marcado abajo.
+ *
+ * ════════════════════════════════════════════════════════════════
+ * AJUSTE 31 (26/9/2026) — MULTI-PASADA: LA MEJOR, NO LA ÚLTIMA
+ * ════════════════════════════════════════════════════════════════
+ *
+ * EL PROBLEMA: Sentinel-2 pasa cada ~5 días, pero una sola pasada
+ * puede caer justo con nube alta y cortar el sello ("demasiada nube,
+ * se retoma en otra pasada"). Antes, de todas las pasadas limpias de
+ * la ventana de 45 días, se tomaba la MÁS RECIENTE. Si esa última
+ * estaba tapada pero otra de la ventana estaba limpia, se perdía igual.
+ *
+ * EL CAMBIO: de todas las pasadas VÁLIDAS de la ventana, se toma la
+ * MÁS LIMPIA (mayor % de píxeles del polígono sin nube). Empate en
+ * calidad → la más reciente. Es la misma idea que ya usa
+ * _seleccionarMejorProducto para el otro camino: "mejor = menos nube".
+ * Ahora medirIndicadores() es consistente con eso.
+ *
+ * QUÉ CAMBIÓ, exactamente y nada más:
+ *   · _ultimaMedicionValida() ordena por calidadPct (no por fecha) y
+ *     devuelve la mejor pasada. Una sola función. Un solo criterio nuevo.
+ *
+ * QUÉ **NO** CAMBIÓ:
+ *   · La honestidad: si NINGUNA pasada de la ventana es válida, se
+ *     devuelve null igual que antes → "sin dato" → hueco declarado.
+ *     No se inventa nada para tapar el clima.
+ *   · La ventana de 45 días, la fórmula de calidad (ajuste 28), la
+ *     regla de lectura (ajuste 30), el hash, la nubosidad del polígono.
+ *   · El certificado sigue diciendo la FECHA REAL de la pasada usada,
+ *     que ahora puede ser más vieja que la última (es la de la mejor).
+ *
+ * ⚠️ El nombre _ultimaMedicionValida quedó heredado: ya no devuelve
+ *    "la última" sino "la mejor". Se dejó el nombre para no tocar el
+ *    lugar que la llama. Renombrarlo es cosmético y queda pendiente.
  * ════════════════════════════════════════════════════════════════
  */
 
@@ -488,7 +521,9 @@ function _geometriaDeActivo(datosActivo) {
   };
 }
 
-// De la respuesta de la Statistical API, toma la pasada VÁLIDA más reciente.
+// De la respuesta de la Statistical API, toma la MEJOR pasada válida de la
+// ventana: la más limpia (menos nube). Empate en calidad → la más reciente.
+// (AJUSTE 31, 26/9/2026 — antes tomaba la más reciente; ver cabecera.)
 //
 // ⚠️ AJUSTE 28 (10/7/2026) — LA CALIDAD SE CALCULABA MAL.
 //
@@ -528,21 +563,33 @@ function _ultimaMedicionValida(intervalos) {
       };
     })
     .filter(Boolean)
-    .sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+    // ── AJUSTE 31 (26/9/2026) · MULTI-PASADA ─────────────────────
+    //   Se ordena por CALIDAD (píxeles limpios del polígono), no por
+    //   fecha. De todas las pasadas de la ventana, la última del array
+    //   —la que se devuelve— queda siendo la MÁS LIMPIA (menos nube).
+    //   Empate en calidad → la más reciente. Si una nube tapó la última
+    //   pasada pero hubo otra más limpia en la ventana, se usa esa. Si
+    //   NINGUNA pasada es válida, validos queda vacío y se devuelve null:
+    //   no se inventa, se declara el hueco. Nada más del flujo cambia.
+    .sort((a, b) => {
+      if (a.calidadPct !== b.calidadPct) return a.calidadPct - b.calidadPct; // peor → mejor
+      return new Date(a.fecha) - new Date(b.fecha);                          // empate: vieja → nueva
+    });
 
-  return validos.length ? validos[validos.length - 1] : null;
+  return validos.length ? validos[validos.length - 1] : null; // el último = el mejor
 }
 
-// Llama a la Statistical API por un índice y devuelve su última medición.
+// Llama a la Statistical API por un índice y devuelve su mejor medición.
 //
 // AJUSTE 28: la ventana pasa de 30 a 45 días.
 //   Sentinel-2 revisita cada ~5 días, pero las nubes tapan muchas pasadas.
 //   Se comprobó el 10/7 contra Copernicus: Pergamino en invierno, en 30 días,
 //   a veces devuelve 0 pasadas limpias por pura mala suerte de nubes; en 45
-//   días casi siempre hay al menos una. No es trampa: se sigue tomando la
-//   pasada MÁS RECIENTE que esté limpia, solo que se mira un poco más atrás
-//   antes de declarar un hueco. El certificado sigue diciendo la fecha real
-//   de la pasada, que puede no ser la de hoy. Eso ya es honesto y está declarado.
+//   días casi siempre hay al menos una. No es trampa: se toma una pasada
+//   limpia de la ventana —desde AJUSTE 31 (26/9), la MÁS LIMPIA; antes la más
+//   reciente—, solo que se mira un poco más atrás antes de declarar un hueco.
+//   El certificado sigue diciendo la fecha real de la pasada, que puede no ser
+//   la de hoy. Eso ya es honesto y está declarado.
 async function _pedirEstadistica(indice, geometria, token, dias = 45) {
   const desde = new Date(Date.now() - dias * 24 * 3600 * 1000).toISOString();
   const hasta = new Date().toISOString();
@@ -714,8 +761,9 @@ async function medirIndicadores(datosActivo) {
   const fechaPasada = principal ? principal.fecha : null;
 
   // ── Los índices se piden por separado. Cada uno se queda con SU
-  //    pasada más reciente. Pueden no ser del mismo día. Si eso pasa,
-  //    el certificado no puede hablar de "una" pasada. Se avisa.
+  //    mejor pasada (AJUSTE 31: la más limpia). Pueden no ser del mismo
+  //    día. Si eso pasa, el certificado no puede hablar de "una" pasada.
+  //    Se avisa.
   const fechasUnicas = Array.from(new Set(conDato.map(m => m.fecha)));
   const fechasDistintas = fechasUnicas.length > 1;
   if (fechasDistintas) {
