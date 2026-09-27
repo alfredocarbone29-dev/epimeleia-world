@@ -59,6 +59,31 @@
 
   .warn { display: none; margin-top: 12px; font-size: 11px; line-height: 1.5; color: var(--warn); border: 1px solid rgba(255, 210, 74, 0.4); border-radius: 7px; padding: 10px; }
 
+  /* ══════════════════════════════════════════════════════════════
+     AGREGADO (AJUSTE 42) · CARGA MANUAL DE COORDENADAS
+     ──────────────────────────────────────────────────────────────
+     Segunda vía para dar el polígono, además del dibujo: pegar
+     GeoJSON o una lista de coordenadas, o subir un archivo
+     .geojson/.kml. Estilo alineado a la paleta existente. Todo
+     desemboca en pintarConfirmado(), el mismo embudo que el dibujo.
+     ══════════════════════════════════════════════════════════════ */
+  #coordManual { margin-top: 6px; }
+  .cm-sep { display: flex; align-items: center; gap: 10px; margin: 16px 0 12px; color: var(--muted); font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; }
+  .cm-sep::before, .cm-sep::after { content: ''; flex: 1; height: 1px; background: var(--line); }
+  .cm-nota { font-size: 10px; line-height: 1.6; color: var(--muted); margin: 0 0 10px; }
+  .cm-nota b { color: var(--cyan-dim); font-weight: 500; }
+  #cmTexto { width: 100%; min-height: 70px; max-height: 160px; background: transparent; border: 1px solid var(--line); border-radius: 6px; color: var(--text); font-family: var(--mono); font-size: 11px; padding: 9px 10px; resize: vertical; }
+  #cmTexto::placeholder { color: var(--muted); }
+  #cmTexto:focus { outline: 2px solid var(--cyan); border-color: transparent; }
+  .cm-row { margin-top: 8px; }
+  .cm-file { display: inline-block; font-size: 10px; letter-spacing: 0.04em; color: var(--cyan); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; cursor: pointer; }
+  .cm-file:hover { border-color: var(--cyan); }
+  .cm-filename { font-size: 9px; color: var(--cyan-dim); margin-top: 6px; min-height: 12px; word-break: break-all; }
+  #cmUsar { width: 100%; margin-top: 12px; }
+  .cm-msg { font-size: 10px; line-height: 1.5; margin-top: 8px; min-height: 14px; }
+  .cm-msg.err { color: var(--warn); }
+  .cm-msg.ok { color: var(--lock); }
+
   #confirmed { display: none; }
   #confirmed .lock-head { display: flex; align-items: center; gap: 8px; color: var(--lock); font-size: 12px; letter-spacing: 0.1em; margin-bottom: 10px; }
   #confirmed .lock-head .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--lock); box-shadow: 0 0 10px var(--lock); }
@@ -410,6 +435,31 @@
       </div>
 
       <div class="warn" id="warnBig">El área marcada es muy grande. ¿Seguro que es esto? Podés seguir igual, o borrar y ajustar.</div>
+
+      <!-- ══════════════════════════════════════════════════════════
+           AGREGADO (AJUSTE 42) · CARGA MANUAL DE COORDENADAS
+           Segunda vía, además del dibujo. El cliente puede pegar su
+           polígono (GeoJSON o lista de coordenadas) o subir un archivo
+           .geojson/.kml. Al usarlas, el polígono se DIBUJA en el mapa
+           y se hace zoom hacia él: el cliente ve dónde cayó su terreno
+           antes de confirmar (red de seguridad visual). Todo desemboca
+           en pintarConfirmado(), el mismo embudo que el dibujo.
+           ══════════════════════════════════════════════════════════ -->
+      <div id="coordManual">
+        <div class="cm-sep"><span>o cargá tus coordenadas exactas</span></div>
+        <p class="cm-nota">Dibujar y cargar coordenadas certifican con el <b>mismo rigor</b>. El dibujo es una aproximación visual; las coordenadas definen el terreno con precisión y la exactitud del dato queda de tu lado. Para EUDR, recomendamos cargar coordenadas.</p>
+
+        <textarea id="cmTexto" placeholder="Pegá tu polígono en GeoJSON, o una lista de coordenadas (una por línea, formato: latitud, longitud)"></textarea>
+
+        <div class="cm-row">
+          <label class="cm-file" for="cmArchivo">Subir archivo (.geojson / .kml)</label>
+          <input id="cmArchivo" type="file" accept=".geojson,.json,.kml" hidden />
+        </div>
+        <div class="cm-filename" id="cmFilename"></div>
+
+        <button class="action primary" id="cmUsar" type="button">Usar estas coordenadas →</button>
+        <div class="cm-msg" id="cmMsg"></div>
+      </div>
     </div>
 
     <div id="confirmed">
@@ -774,6 +824,168 @@
   editBtn.addEventListener('click', function () {
     confirmedView.style.display = 'none'; drawingView.style.display = 'block';
     coordsOut.textContent = ''; resetAll();
+  });
+
+  // ═══════════════════════════════════════════════════════════
+  //  AGREGADO (AJUSTE 42) · CARGA MANUAL DE COORDENADAS
+  //  ───────────────────────────────────────────────────────────
+  //  El cliente puede dar el polígono exacto sin dibujarlo: pegando
+  //  GeoJSON o una lista de coordenadas, o subiendo un .geojson/.kml.
+  //  Todo termina en pintarConfirmado() — el MISMO embudo que el
+  //  dibujo — así que el flujo firmar→registrar→sellar no cambia.
+  //
+  //  RED DE SEGURIDAD: pintarConfirmado() dibuja el polígono y hace
+  //  zoom hacia él. Si las coordenadas están mal/al revés, el contorno
+  //  aparece en el lugar equivocado y el cliente lo ve antes de firmar.
+  //
+  //  RESPONSABILIDAD: al cargar coordenadas propias, la exactitud del
+  //  dato queda del lado del cliente (es lo que declara como su campo).
+  // ═══════════════════════════════════════════════════════════
+
+  function cmError(msg) { var m = el('cmMsg'); m.className = 'cm-msg err'; m.textContent = msg; }
+  function cmOk(msg)    { var m = el('cmMsg'); m.className = 'cm-msg ok';  m.textContent = msg; }
+
+  // Valida un anillo [[lng,lat],...] y devuelve los puntos {lng,lat}
+  // (sin el punto de cierre). Lanza Error con mensaje claro si algo falla.
+  function validarAnillo(ring) {
+    if (!Array.isArray(ring) || ring.length < 3) {
+      throw new Error('Se necesitan al menos 3 coordenadas.');
+    }
+    var pts = [];
+    for (var i = 0; i < ring.length; i++) {
+      var c = ring[i];
+      if (!Array.isArray(c) || c.length < 2) throw new Error('Coordenada inválida en la posición ' + (i + 1) + '.');
+      var lng = Number(c[0]), lat = Number(c[1]);
+      if (!isFinite(lng) || !isFinite(lat)) throw new Error('Hay un valor que no es un número (posición ' + (i + 1) + ').');
+      if (lat < -90 || lat > 90)   throw new Error('Latitud fuera de rango (' + lat + '). Si pegaste GeoJSON, el orden es longitud, latitud.');
+      if (lng < -180 || lng > 180) throw new Error('Longitud fuera de rango (' + lng + ').');
+      pts.push({ lng: lng, lat: lat });
+    }
+    return pts;
+  }
+
+  // GeoJSON → anillo [lng,lat]. Acepta FeatureCollection, Feature o Geometry.
+  function ringDeGeoJSON(obj) {
+    var g = obj;
+    if (g.type === 'FeatureCollection' && Array.isArray(g.features)) {
+      var f = g.features.filter(function (x) {
+        return x && x.geometry && (x.geometry.type === 'Polygon' || x.geometry.type === 'MultiPolygon');
+      })[0];
+      if (!f) throw new Error('El GeoJSON no tiene ningún polígono.');
+      g = f.geometry;
+    } else if (g.type === 'Feature') {
+      g = g.geometry;
+    }
+    if (!g || !g.type) throw new Error('No se reconoce el formato GeoJSON.');
+    if (g.type === 'Polygon')      return g.coordinates[0];
+    if (g.type === 'MultiPolygon') return g.coordinates[0][0];
+    throw new Error('La geometría no es un polígono (es ' + g.type + ').');
+  }
+
+  // Lista de texto "latitud, longitud" (una por línea) → anillo [lng,lat].
+  function ringDeLista(texto) {
+    var ring = [];
+    texto.split(/\r?\n/).forEach(function (linea) {
+      linea = linea.trim();
+      if (!linea) return;
+      var partes = linea.split(/[,;\s]+/).filter(Boolean);
+      if (partes.length < 2) return;
+      var lat = Number(partes[0]), lng = Number(partes[1]);
+      ring.push([lng, lat]);   // se ingresa lat,lon → se guarda [lng,lat]
+    });
+    if (ring.length < 3) throw new Error('Poné al menos 3 coordenadas, una por línea, con el formato: latitud, longitud.');
+    return ring;
+  }
+
+  // KML → anillo. Toma el primer <coordinates> (lon,lat,alt por espacios).
+  function ringDeKML(texto) {
+    var m = texto.match(/<coordinates>([\s\S]*?)<\/coordinates>/i);
+    if (!m) throw new Error('El archivo KML no tiene coordenadas reconocibles.');
+    var ring = [];
+    m[1].trim().split(/\s+/).forEach(function (tupla) {
+      var p = tupla.split(',');
+      if (p.length < 2) return;
+      var lng = Number(p[0]), lat = Number(p[1]);
+      ring.push([lng, lat]);   // KML viene en lon,lat
+    });
+    if (ring.length < 3) throw new Error('El KML no tiene un polígono con suficientes puntos.');
+    return ring;
+  }
+
+  // Detecta el formato del texto y devuelve el anillo [lng,lat].
+  function parsearCoordenadas(texto, esKml) {
+    texto = (texto || '').trim();
+    if (!texto) throw new Error('Pegá tus coordenadas o subí un archivo.');
+    if (esKml || /<kml|<coordinates>/i.test(texto)) return ringDeKML(texto);
+    if (texto.charAt(0) === '{' || texto.charAt(0) === '[') {
+      var obj;
+      try { obj = JSON.parse(texto); } catch (e) { throw new Error('El GeoJSON tiene un error de formato (JSON inválido).'); }
+      if (Array.isArray(obj)) {
+        if (obj.length && Array.isArray(obj[0])) return obj;   // ya es [[lng,lat],...]
+        throw new Error('No se reconoce ese formato de coordenadas.');
+      }
+      return ringDeGeoJSON(obj);
+    }
+    return ringDeLista(texto);
+  }
+
+  // Cierra el anillo, valida, arma el GeoJSON y lo manda al mismo embudo
+  // que el dibujo (pintarConfirmado). Muestra el resultado en el mapa.
+  function usarCoordenadas(texto, esKml) {
+    var ringLL, pts;
+    try {
+      var ring = parsearCoordenadas(texto, esKml);
+      // cerrar el anillo si no viene cerrado
+      var a = ring[0], b = ring[ring.length - 1];
+      if (!a || !b || a[0] !== b[0] || a[1] !== b[1]) ring = ring.concat([[ring[0][0], ring[0][1]]]);
+      pts = validarAnillo(ring);           // valida rangos; pts = [{lng,lat}...] con cierre
+    } catch (e) {
+      cmError(e.message || 'No se pudieron leer las coordenadas.');
+      return;
+    }
+
+    // superficie, calculada igual que en el camino del dibujo
+    var puntosAbiertos = pts.slice(0, -1);   // sin el punto de cierre
+    var m2 = geodesicArea(puntosAbiertos);
+
+    var ringCoords = pts.map(function (p) { return [p.lng, p.lat]; });
+    var geojson = {
+      type: 'Feature',
+      geometry: { type: 'Polygon', coordinates: [ringCoords] },
+      properties: {
+        superficie_ha: +(m2 / 10000).toFixed(4),
+        vertices: puntosAbiertos.length,
+        confirmado_en: new Date().toISOString(),
+        origen: 'coordenadas_manuales'
+      }
+    };
+
+    function pintar() {
+      pintarConfirmado(geojson);
+      cmOk('Coordenadas cargadas. Revisá en el mapa que el contorno caiga sobre tu terreno, y confirmá.');
+      el('cmTexto').value = '';
+      el('cmFilename').textContent = '';
+      el('cmMsg').className = 'cm-msg';
+      el('cmMsg').textContent = '';
+    }
+    if (map.isStyleLoaded && map.isStyleLoaded()) pintar(); else map.once('load', pintar);
+  }
+
+  el('cmUsar').addEventListener('click', function () {
+    usarCoordenadas(el('cmTexto').value, false);
+  });
+
+  el('cmArchivo').addEventListener('change', function (ev) {
+    var file = ev.target.files && ev.target.files[0];
+    if (!file) return;
+    el('cmFilename').textContent = 'Archivo: ' + file.name;
+    var esKml = /\.kml$/i.test(file.name);
+    var reader = new FileReader();
+    reader.onload = function () { usarCoordenadas(String(reader.result || ''), esKml); };
+    reader.onerror = function () { cmError('No se pudo leer el archivo.'); };
+    reader.readAsText(file);
+    // permite volver a elegir el mismo archivo si hace falta
+    ev.target.value = '';
   });
 
   function doSearch() {
