@@ -593,7 +593,10 @@ async function irAlMotor() {
     ubicacion:  meta.ubicacion_recurso || ''
   };
   try { sessionStorage.setItem('epi_cliente', JSON.stringify(cliente)); } catch (e) {}
-  window.location.href = 'protocolo.html';
+  // AGREGADO: si el cliente vino de EUDR/Instituciones (cuenta.html?origen=eudr),
+  // se pasa la marca al mapa para que muestre "Caso a medida" en vez del PayPal.
+  var _o = new URLSearchParams(window.location.search).get('origen');
+  window.location.href = 'protocolo.html' + (_o ? '?origen=' + encodeURIComponent(_o) : '');
 }
 
 /* ── CARGAR EL ÁREA PRIVADA ── */
