@@ -59,6 +59,7 @@ const scheduler      = require('./scheduler');       // solo para periodoDeVenta
 const blockchain     = require('./blockchain');
 const activoSupabase = require('./activo-supabase');
 const reports        = require('./reports');       // para disparar el email del certificado
+const paqueteEvidencia = require('./paquete-evidencia'); // PASO D-3: hash del paquete verificable
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 
@@ -158,21 +159,64 @@ async function darDeAltaOnChain(activo, datosAlta, email) {
   return activoIdOnchain;
 }
 
-async function sellarEvidencia(onchainId, medicion) {
+// ── PASO D-3 · SE SELLA EL PAQUETE, NO SOLO 7 CAMPOS DE METADATA ──
+// Antes: el hash cubría 7 campos (satélite, uuid, nubosidad, timestamp…).
+// El polígono y el veredicto NO entraban → "confiá en mi base".
+// Ahora: se arma el PAQUETE DE INSCRIPCIÓN (polígono + veredicto + mediciones
+// + regla + titular-huella), se calcula su hash canónico, y se sella ESE hash
+// en Polygon. El paquete canónico se guarda en Supabase para publicarlo en
+// /api/verificar → cualquiera recomputa el hash y comprueba. Verificable de
+// verdad.
+//
+// Recibe el `activo` completo (además de onchainId y medicion) para tener a
+// mano el polígono, la deforestación y el email del titular.
+async function sellarEvidencia(onchainId, medicion, activo) {
   const nub = nubosidadParaContrato(medicion.nubosidadPct);
   const periodo = scheduler.periodoDeVentana(new Date());
-  const reporteParaHash = {
-    activoId: onchainId, satelite: medicion.satelite,
-    uuid: `POLY_${onchainId}_${medicion.fechaPasada || 'sinfecha'}`,
-    nubosidadPct: nub, bandaEspectral: medicion.bandaEspectral,
-    timestamp: medicion.timestamp, fuente: medicion.fuente,
-  };
-  const hashEvidencia = satellite.generarHashEvidencia(reporteParaHash);
+
+  // 1) Armar el paquete de inscripción y su hash canónico (paquete-evidencia.js).
+  //    Este hash es el que va a la cadena y el que un tercero recomputa.
+  const { paquete, canonical, hash: hashPaquete } = paqueteEvidencia.construirYSellar({
+    activoIdOnchain: onchainId,
+    nombreActivo:    activo.nombreActivo,
+    tipoTexto:       activo.tipoTexto,
+    trimestre:       periodo.trimestre,
+    titularEmail:    (activo.titular && activo.titular.email) || null,
+    poligono:        activo.geometria,
+    medicion,                                   // trae satelite, fuente, calidad, mediciones, regla…
+    deforestacion:   activo.deforestacionHistorica || null,
+  });
+
+  // 2) Sellar el hash del paquete en Polygon (mismo evento de evidencia).
   const recibo = await blockchain.registrarEvidenciaVentana({
-    activoId: onchainId, trimestre: periodo.trimestre, hashEvidencia,
+    activoId: onchainId, trimestre: periodo.trimestre, hashEvidencia: hashPaquete,
     satelite: medicion.satelite, nubosidadPct: nub, urlDescarga: '',
   });
-  return { txHash: recibo.hash, bloque: Number(recibo.blockNumber), hashEvidencia, trimestre: periodo.trimestre };
+
+  // 3) Guardar el paquete canónico + su hash en Supabase (columnas nuevas del
+  //    Paso D-1). Va en su PROPIO try: si esto falla, el sello on-chain YA
+  //    quedó grabado y no se pierde — el activo simplemente no será verificable
+  //    en la página hasta que se re-guarde. Nunca se rompe el sello por esto.
+  try {
+    await supabase.from('activos').update({
+      paquete_evidencia:  canonical,
+      paquete_hash:       hashPaquete,
+      paquete_sellado_en: new Date().toISOString(),
+    }).eq('id', activo.filaId);
+    L('paquete verificable guardado en Supabase (hash ' + hashPaquete.slice(0, 12) + '…)');
+  } catch (errPaq) {
+    L('no se pudo guardar el paquete verificable (el sello igual quedo): ' + errPaq.message);
+  }
+
+  return {
+    txHash: recibo.hash,
+    bloque: Number(recibo.blockNumber),
+    hashEvidencia: hashPaquete,     // el hash del paquete es ahora "la huella"
+    hashPaquete,
+    canonical,
+    paquete,
+    trimestre: periodo.trimestre,
+  };
 }
 
 // ── El trabajo completo: leer activo → medir → (alta) → sellar ──
@@ -213,7 +257,7 @@ async function procesarSello(filaId, ejecutar) {
     }, email);
     if (onchainId == null) return { ok: false, error: 'El alta no devolvio id on-chain. Revisar en Polygonscan.' };
   }
-  const sello = await sellarEvidencia(onchainId, m);
+  const sello = await sellarEvidencia(onchainId, m, activo);
 
   // ── DISPARAR EL EMAIL DEL CERTIFICADO ──────────────────────────────
   // Reusa reports.enviarEvidenciaQuincenal (el mismo mail del sello, con

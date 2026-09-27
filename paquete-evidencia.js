@@ -1,381 +1,195 @@
 /**
- * EPIMELEIA · paquete-evidencia.js
+ * EPIMELEIA · paquete-evidencia.js  (PASO A — prueba aislada)
  * ═════════════════════════════════════════════════════════════
- * EL PAQUETE DE EVIDENCIA — FASE 2 DEL PLAN.
+ * LA JUNTA A, resuelta: el hash que SÍ prueba lo que el certificado dice.
  *
- * Esto es el corazón de la Junta A, y es la parte SIN RIESGO:
- * pura matemática. No escribe en la cadena. No lee Supabase. No
- * llama al satélite. Entra data, sale huella. Se prueba con datos
- * inventados y se corre mil veces sin consecuencias.
+ * Hoy generarHashEvidencia() (satellite.js) sella 7 campos de metadata.
+ * El polígono, el veredicto de deforestación y las mediciones NO entran
+ * al hash: viven en Supabase, y "confiá en mí". Este módulo cierra eso.
  *
- * ─────────────────────────────────────────────────────────────
- * QUÉ RESUELVE
- * ─────────────────────────────────────────────────────────────
+ * QUÉ HACE:
+ *   1. construirPaquete(datos)  → arma el "paquete de inscripción": todo
+ *      lo que define la prueba (polígono + deforestación + mediciones +
+ *      regla + activo), con las coordenadas redondeadas a 6 decimales y
+ *      SIN datos personales del titular (solo su huella — ver abajo).
+ *   2. canonicalizar(obj)       → produce UNA cadena JSON canónica:
+ *      claves ordenadas alfabéticamente en todos los niveles, sin
+ *      espacios. Misma entrada → misma cadena, siempre.
+ *   3. sellarPaquete(paquete)   → devuelve { canonical, hash } donde
+ *      hash = keccak256(bytes utf-8 de canonical).
  *
- * Hoy el certificado muestra un hash (generarHashEvidencia) que
- * cubre 7 campos de metadata: satélite, uuid, nubosidad, timestamp,
- * fuente... NO cubre el NDVI. NO cubre el polígono. NO cubre al
- * titular. Alguien podría cambiar 0.347 por 0.900 y el sello
- * seguiría válido — nunca miró ese número.
+ * CÓMO SE VERIFICA (la clave del diseño):
+ *   Se PUBLICA la cadena `canonical` tal cual (bytes exactos) en un
+ *   endpoint de epimeleia.world. Un tercero baja ESA cadena, le aplica
+ *   keccak256, y compara con el hash que está en Polygon. No re-serializa
+ *   nada: hashea los bytes publicados. Por eso es verificable en cualquier
+ *   lenguaje — es "hasheá estos bytes y compará", nada más.
  *
- * Debajo, el certificado dice "Nadie tocó este dato. Y se puede
- * probar." Hoy eso NO es verdad. Este archivo lo hace verdad.
- *
- * ─────────────────────────────────────────────────────────────
- * QUÉ ES EL PAQUETE
- * ─────────────────────────────────────────────────────────────
- *
- * El TEXTO EXACTO que se va a sellar. Todo lo que el certificado
- * afirma como hecho, ordenado de forma canónica (siempre igual),
- * del que sale una huella keccak256.
- *
- * QUÉ ENTRA (decisiones del fundador, ya tomadas):
- *   · el titular declarado (nombre, empresa, cliente_id, email)
- *   · el polígono confirmado, tal cual lo dibujó el cliente
- *   · el nombre del activo, su tipo, su superficie (en hectáreas)
- *   · las mediciones (valor, fecha, calidad de cada índice)
- *   · la TRADUCCIÓN de lo que vio el satélite  ← ESTO ES EL SERVICIO
- *   · la regla de lectura y su huella
- *   · el trimestre del protocolo
- *
- * QUÉ NO ENTRA:
- *   · el diseño. Tipografías, colores, el dibujo del sello.
- *   · nada que sea presentación y no afirmación.
- *
- * La regla: entra todo lo que el certificado afirma como HECHO.
- * Queda afuera lo que es PRESENTACIÓN.
- *
- * ─────────────────────────────────────────────────────────────
- * POR QUÉ "CANÓNICO"
- * ─────────────────────────────────────────────────────────────
- *
- * Para que un tercero (el banco de Juan, por ejemplo) pueda
- * RECALCULAR la huella y comprobarla, el mismo contenido tiene que
- * dar SIEMPRE el mismo texto. JSON.stringify no garantiza eso: el
- * orden de las claves depende de cómo se armó el objeto.
- *
- * Por eso se serializa con canonico(): claves ordenadas
- * alfabéticamente, sin espacios, en todos los niveles. Mismo
- * contenido → mismo texto → misma huella.
- *
- * ⚠️ DECISIÓN DE DISEÑO: canonico() se REUTILIZA de reglas-lectura.js.
- *    NO se escribe otra igual. Si hubiera dos y difirieran en un
- *    detalle, las huellas no coincidirían y nadie sabría por qué.
- *    Una sola forma de serializar en todo el sistema.
- *
- * ─────────────────────────────────────────────────────────────
- * DÓNDE VIVE EL PAQUETE (decisión del fundador)
- * ─────────────────────────────────────────────────────────────
- *
- * En Polygon va SOLO la huella (bytes32). Pública, inmutable, no
- * dice nada de nadie.
- *
- * El PAQUETE COMPLETO es del TITULAR: le llega con su certificado,
- * y él se lo muestra a quien quiera. EPIMELEIA nunca lo entrega.
- * "El cliente es el protagonista absoluto, EPIMELEIA el puente."
- *
- * Por eso este archivo devuelve las DOS cosas por separado:
- *   · huella   → lo que va a la cadena
- *   · paquete  → lo que se le da al titular (el texto canónico)
- *
- * ─────────────────────────────────────────────────────────────
- * CÓMO PROBARLO
- * ─────────────────────────────────────────────────────────────
- *
- *   node paquete-evidencia.js
- *
- * Arma un paquete de ejemplo, muestra el texto y la huella, y
- * comprueba que:
- *   · la misma data da SIEMPRE la misma huella
- *   · cambiar un solo decimal del NDVI cambia la huella
- *   · cambiar el titular cambia la huella
- *   · el orden en que se pasan los campos NO cambia la huella
+ * PRIVACIDAD (decisión importante):
+ *   El paquete es PÚBLICO. Por eso NO lleva el email ni el nombre del
+ *   titular — eso sería exponer datos personales. Lleva `titularHash`,
+ *   la huella keccak256 del email normalizado. Eso prueba que el sello
+ *   está atado a un titular específico, sin revelar quién es. El dueño,
+ *   que sí conoce su email, puede demostrar que le corresponde.
  * ═════════════════════════════════════════════════════════════
  */
 
 const { ethers } = require('ethers');
 
-// canonico() se reutiliza de reglas-lectura.js — una sola forma de
-// serializar en todo el sistema. NO se reescribe.
-const { canonico } = require('./reglas-lectura');
+// La versión del formato del paquete. Si algún día cambia la forma en
+// que se arma, se sube a v2 y los viejos siguen verificándose con v1.
+const PAQUETE_VERSION = 'paquete-v1';
 
-// La versión del formato del paquete. Si algún día cambia QUÉ campos
-// entran o CÓMO se arma, se sube esta versión y entra al hash. Así un
-// paquete viejo siempre se puede recalcular con su propio formato.
-// (Misma lógica que la regla de lectura: el formato también se versiona.)
-const FORMATO_PAQUETE = 'pkg-v1';
-
-/**
- * Normaliza un número a una cantidad fija de decimales, como STRING.
- *
- * Por qué string y no number: 0.347 y 0.3470 son el mismo número para
- * JavaScript, pero un tercero que recalcule podría escribir uno u otro.
- * Fijando los decimales como texto, "0.347" es siempre "0.347".
- *
- * Por qué hace falta: el NDVI entra al hash. Si el número no está
- * normalizado, dos representaciones del mismo valor darían huellas
- * distintas, y la prueba se rompería sin que nadie lo note.
- */
-function _num(valor, decimales = 3) {
-  if (valor === null || valor === undefined || !isFinite(valor)) return null;
-  return Number(valor).toFixed(decimales);
+// ─── Canonicalización ───────────────────────────────────────────
+// Ordena las claves de todo objeto alfabéticamente, en todos los
+// niveles, y serializa sin espacios. Los arrays mantienen su orden
+// (en un polígono el orden de los vértices importa). El resultado es
+// una cadena estable: la misma entrada da siempre la misma cadena.
+function canonicalizar(valor) {
+  return JSON.stringify(_ordenar(valor));
 }
 
-/**
- * Normaliza el polígono a una forma canónica.
- *
- * El polígono es una lista de vértices [lng, lat]. Para que el hash sea
- * estable:
- *   · cada coordenada se fija a 6 decimales como string (igual que el
- *     contrato, que guarda lat/lng × 1e6 — 6 decimales es su precisión).
- *   · NO se reordenan los vértices: el orden es parte de la figura.
- *     El cliente confirmó ESE polígono, con ESE orden. Reordenar sería
- *     cambiar lo que firmó. (La doble aceptación lo fija; esta duda ya
- *     se resolvió en el brief.)
- *
- * Acepta las formas que puede traer un GeoJSON Polygon:
- *   { type:'Polygon', coordinates: [ [ [lng,lat], ... ] ] }
- */
-function _poligonoCanonico(poligono) {
-  if (!poligono) return null;
-
-  let anillos = null;
-  if (poligono.type === 'Polygon' && Array.isArray(poligono.coordinates)) {
-    anillos = poligono.coordinates;
-  } else if (Array.isArray(poligono) && Array.isArray(poligono[0])) {
-    // Ya vino como array de anillos.
-    anillos = poligono;
-  } else {
-    return null;
+function _ordenar(v) {
+  if (Array.isArray(v)) {
+    return v.map(_ordenar);
   }
-
-  // Cada punto → [lng6, lat6] como strings de 6 decimales.
-  return anillos.map(anillo =>
-    anillo.map(punto => {
-      const lng = Number(punto[0]).toFixed(6);
-      const lat = Number(punto[1]).toFixed(6);
-      return [lng, lat];
-    })
-  );
+  if (v && typeof v === 'object') {
+    const salida = {};
+    for (const clave of Object.keys(v).sort()) {
+      salida[clave] = _ordenar(v[clave]);
+    }
+    return salida;
+  }
+  return v; // primitivo (string, number, boolean, null)
 }
 
-/**
- * Arma el paquete de evidencia a partir de los datos del certificado.
- *
- * Recibe UN objeto con todo lo que el certificado afirma. Devuelve:
- *   · paquete  → el objeto canónico (lo que se le da al titular)
- *   · texto    → el string canónico exacto (lo que se hashea)
- *   · huella   → keccak256(texto) — lo que va a la cadena (bytes32)
- *   · formato  → la versión del formato del paquete
- *
- * NO valida contra Supabase ni la cadena: es una función pura. El que
- * llama es responsable de pasarle datos reales y confirmados.
- *
- * @param {Object} datos
- * @param {Object} datos.titular       { nombre, empresa, clienteId, email }
- * @param {Object} datos.activo        { nombre, tipo, superficieHa }
- * @param {Object} datos.poligono      GeoJSON Polygon confirmado
- * @param {Array}  datos.mediciones    [{ indice, valor, fecha, calidadPct, interpretacion }]
- * @param {Object} datos.regla         { version, hash }
- * @param {Number} datos.trimestre     trimestre on-chain (ej: 20263)
- */
-function armarPaquete(datos) {
-  if (!datos || typeof datos !== 'object') {
-    throw new Error('EPIMELEIA: armarPaquete requiere un objeto con los datos del certificado');
-  }
+// ─── Helpers de normalización ───────────────────────────────────
 
-  const t = datos.titular || {};
-  const a = datos.activo   || {};
-  const r = datos.regla    || {};
+// Redondea a 6 decimales (~0,1 m) y evita el -0. Devuelve un Number.
+function _red6(n) {
+  const x = Math.round(Number(n) * 1e6) / 1e6;
+  return x === 0 ? 0 : x;
+}
 
-  // Las mediciones se normalizan campo por campo. El orden de la lista
-  // se conserva (es el orden en que se muestran en el certificado), pero
-  // cada medición se reduce a sus campos que AFIRMAN algo:
-  //   qué índice, qué valor midió, de qué fecha, con qué calidad, y
-  //   cómo se tradujo (la interpretación — que ES el servicio).
-  const mediciones = (datos.mediciones || []).map(m => ({
+// Normaliza el anillo del polígono: [[lng,lat],...] con 6 decimales,
+// cerrado (primer punto == último). Acepta Feature, Geometry o string.
+function _normalizarPoligono(poligono) {
+  let g = poligono;
+  if (typeof g === 'string') { try { g = JSON.parse(g); } catch { return null; } }
+  if (g && g.type === 'Feature') g = g.geometry;
+  let ring = null;
+  if (g && g.type === 'Polygon' && Array.isArray(g.coordinates)) ring = g.coordinates[0];
+  else if (g && Array.isArray(g.coordinates) && Array.isArray(g.coordinates[0]) && Array.isArray(g.coordinates[0][0])) ring = g.coordinates[0];
+  else if (Array.isArray(g) && Array.isArray(g[0])) ring = g;
+  if (!ring || ring.length < 3) return null;
+
+  let r = ring.map(c => [_red6(c[0]), _red6(c[1])]);
+  const a = r[0], z = r[r.length - 1];
+  if (a[0] !== z[0] || a[1] !== z[1]) r = r.concat([[a[0], a[1]]]);
+  return { type: 'Polygon', coordinates: [r] };
+}
+
+// Huella del titular: keccak256 del email normalizado. Nunca el email.
+function _titularHash(email) {
+  if (!email || typeof email !== 'string') return null;
+  return ethers.keccak256(ethers.toUtf8Bytes(email.toLowerCase().trim()));
+}
+
+// Normaliza el veredicto de deforestación a una forma estable.
+function _normalizarDeforestacion(def) {
+  if (!def || typeof def.huboDeforestacion !== 'boolean') return null;
+  const detalle = Array.isArray(def.detallePorAnio)
+    ? def.detallePorAnio
+        .filter(d => d && d.anio != null)
+        .map(d => ({ anio: Number(d.anio), hectareas: _red6(d.hectareas) }))
+        .sort((a, b) => a.anio - b.anio)
+    : [];
+  return {
+    hubo:            def.huboDeforestacion,
+    totalHectareas:  def.totalHectareasPerdidas != null ? _red6(def.totalHectareasPerdidas) : null,
+    detallePorAnio:  detalle,
+    periodo:         def.periodoAnalizado || null,
+    fuente:          def.fuente || null,
+    resolucion:      def.resolucion || null,
+  };
+}
+
+// Normaliza las mediciones (NDVI, humedad…) a lo esencial y estable.
+function _normalizarMediciones(mediciones) {
+  if (!Array.isArray(mediciones)) return [];
+  return mediciones.map(m => ({
     indice:         m.indice ?? null,
-    valor:          _num(m.valor),                    // string 3 decimales o null
+    clave:          m.clave ?? null,
+    etiqueta:       m.etiqueta ?? null,
+    valor:          m.valor != null ? _red6(m.valor) : null,
+    calidadPct:     m.calidadPct != null ? Number(m.calidadPct) : null,
+    interpretacion: m.interpretacion ?? null,
     fecha:          m.fecha ?? null,
-    calidadPct:     m.calidadPct ?? null,
-    interpretacion: m.interpretacion ?? null,         // la traducción sellada
   }));
-
-  // El paquete. Las claves de primer nivel se ordenan solas al
-  // serializar con canonico(); acá se listan por claridad de lectura.
-  const paquete = {
-    formato: FORMATO_PAQUETE,
-
-    titular: {
-      nombre:    t.nombre    ?? null,
-      empresa:   t.empresa   ?? null,
-      clienteId: t.clienteId ?? null,
-      email:     t.email ? String(t.email).toLowerCase().trim() : null,
-    },
-
-    activo: {
-      nombre:       a.nombre ?? null,
-      tipo:         a.tipo   ?? null,
-      superficieHa: _num(a.superficieHa, 2),          // hectáreas, 2 decimales
-    },
-
-    poligono: _poligonoCanonico(datos.poligono),
-
-    mediciones,
-
-    regla: {
-      version: r.version ?? null,
-      hash:    r.hash    ?? null,
-    },
-
-    trimestre: datos.trimestre ?? null,
-  };
-
-  const texto  = canonico(paquete);
-  const huella = ethers.keccak256(ethers.toUtf8Bytes(texto));
-
-  return { paquete, texto, huella, formato: FORMATO_PAQUETE };
 }
 
-// ═══════════════════════════════════════════════════════════════
-//  PRUEBA  ·  node paquete-evidencia.js
-// ═══════════════════════════════════════════════════════════════
+// ─── Construcción del paquete de inscripción ────────────────────
+/**
+ * Arma el paquete que se va a sellar y publicar. Recibe lo que ya
+ * tienen la medición (satellite) y el activo (supabase), y devuelve
+ * un objeto limpio, normalizado y sin datos personales.
+ */
+function construirPaquete(datos) {
+  const {
+    activoIdOnchain, nombreActivo, tipoTexto,
+    poligono, medicion, deforestacion,
+    titularEmail, trimestre,
+  } = datos;
 
-function _prueba() {
-  const L = (t = '') => console.log(t);
+  return {
+    version:        PAQUETE_VERSION,
+    activoIdOnchain: activoIdOnchain != null ? Number(activoIdOnchain) : null,
+    nombreActivo:   nombreActivo || null,
+    tipo:           tipoTexto || null,
+    trimestre:      trimestre != null ? Number(trimestre) : null,
 
-  // Un activo de ejemplo, con los números REALES del certificado del
-  // 10/7 (Campo Pergamino): NDVI 0.347, NDMI -0.07, calidad 47%.
-  const base = {
-    titular: {
-      nombre:    'Juan Pérez',
-      empresa:   'Agropecuaria del Norte S.A.',
-      clienteId: '3f8a1c2e-0000-0000-0000-000000000000',
-      email:     'Juan@Ejemplo.com',
-    },
-    activo: {
-      nombre:       'Campo Pergamino',
-      tipo:         'FORESTAL',
-      superficieHa: 409,
-    },
-    poligono: {
-      type: 'Polygon',
-      coordinates: [[
-        [-60.60, -33.85], [-60.58, -33.85], [-60.58, -33.87],
-        [-60.60, -33.87], [-60.60, -33.85],
-      ]],
-    },
-    mediciones: [
-      { indice: 'NDVI', valor: 0.347, fecha: '2026-07-08', calidadPct: 47, interpretacion: 'vegetación moderada' },
-      { indice: 'NDMI', valor: -0.07, fecha: '2026-07-08', calidadPct: 47, interpretacion: 'humedad baja' },
-    ],
-    regla: {
-      version: 'v1',
-      hash:    '0x196ec7110533897c2c0fd3d7cd089ab93a801e79c655018bc4a9c3109e5095cf',
-    },
-    trimestre: 20263,
+    poligono:       _normalizarPoligono(poligono),
+
+    satelite:       medicion?.satelite || null,
+    fuente:         medicion?.fuente || null,
+    fechaPasada:    medicion?.fechaPasada || null,
+    calidadPct:     medicion?.calidadPct != null ? Number(medicion.calidadPct) : null,
+    nubosidadPct:   medicion?.nubosidadPct != null ? Number(medicion.nubosidadPct) : null,
+    reglaLectura:   medicion?.reglaLectura || null,
+    hashRegla:      medicion?.hashRegla || null,
+    mediciones:     _normalizarMediciones(medicion?.mediciones),
+
+    deforestacion:  _normalizarDeforestacion(deforestacion),
+
+    titularHash:    _titularHash(titularEmail),
   };
-
-  L('');
-  L('═'.repeat(64));
-  L('  EPIMELEIA · PAQUETE DE EVIDENCIA — prueba');
-  L('═'.repeat(64));
-
-  const r1 = armarPaquete(base);
-
-  L('');
-  L('  Formato: ' + r1.formato);
-  L('');
-  L('  TEXTO CANÓNICO (esto es lo que se hashea, y lo que puede');
-  L('  recalcular un tercero):');
-  L('');
-  // Se muestra el texto partido para que se lea; el hash es del texto entero.
-  L('  ' + r1.texto.replace(/(.{1,60})/g, '$1\n  ').trim());
-  L('');
-  L('  HUELLA (esto es lo único que va a la cadena):');
-  L('  ' + r1.huella);
-  L('');
-
-  // ── Comprobaciones ────────────────────────────────────────────
-  L('─'.repeat(64));
-  L('  COMPROBACIONES');
-  L('─'.repeat(64));
-
-  let ok = 0, fallo = 0;
-  const chequear = (nombre, condicion) => {
-    if (condicion) { L(`  ✓ ${nombre}`); ok++; }
-    else           { L(`  ✗ ${nombre}`); fallo++; }
-  };
-
-  // 1. Determinista: la misma data da la misma huella.
-  const r2 = armarPaquete(base);
-  chequear('La misma data da la MISMA huella (determinista)', r1.huella === r2.huella);
-
-  // 2. El orden de las claves de entrada NO importa (gracias a canonico).
-  const desordenado = {
-    trimestre: base.trimestre,
-    regla: base.regla,
-    mediciones: base.mediciones,
-    poligono: base.poligono,
-    activo: base.activo,
-    titular: base.titular,
-  };
-  const r3 = armarPaquete(desordenado);
-  chequear('El ORDEN de los campos de entrada NO cambia la huella', r1.huella === r3.huella);
-
-  // 3. Cambiar un decimal del NDVI cambia la huella.
-  const ndviCambiado = JSON.parse(JSON.stringify(base));
-  ndviCambiado.mediciones[0].valor = 0.348;   // 0.347 → 0.348
-  const r4 = armarPaquete(ndviCambiado);
-  chequear('Cambiar el NDVI (0.347 → 0.348) CAMBIA la huella', r1.huella !== r4.huella);
-
-  // 4. Cambiar el titular cambia la huella.
-  const titularCambiado = JSON.parse(JSON.stringify(base));
-  titularCambiado.titular.nombre = 'Otro Nombre';
-  const r5 = armarPaquete(titularCambiado);
-  chequear('Cambiar el TITULAR cambia la huella', r1.huella !== r5.huella);
-
-  // 5. Cambiar la interpretación (el servicio) cambia la huella.
-  const interpCambiada = JSON.parse(JSON.stringify(base));
-  interpCambiada.mediciones[0].interpretacion = 'vegetación escasa o estresada';
-  const r6 = armarPaquete(interpCambiada);
-  chequear('Cambiar la TRADUCCIÓN (el servicio) cambia la huella', r1.huella !== r6.huella);
-
-  // 6. Cambiar un vértice del polígono cambia la huella.
-  const poliCambiado = JSON.parse(JSON.stringify(base));
-  poliCambiado.poligono.coordinates[0][0][0] = -60.61;  // mover un vértice
-  const r7 = armarPaquete(poliCambiado);
-  chequear('Mover un VÉRTICE del polígono cambia la huella', r1.huella !== r7.huella);
-
-  // 7. El email se normaliza (mayúsculas/espacios no cambian la huella).
-  const emailRaro = JSON.parse(JSON.stringify(base));
-  emailRaro.titular.email = '  JUAN@ejemplo.COM  ';
-  const r8 = armarPaquete(emailRaro);
-  chequear('El email se normaliza (mayúsculas/espacios dan la MISMA huella)', r1.huella === r8.huella);
-
-  // 8. La regla entra al hash: cambiar su versión cambia la huella.
-  const reglaCambiada = JSON.parse(JSON.stringify(base));
-  reglaCambiada.regla.version = 'v2';
-  const r9 = armarPaquete(reglaCambiada);
-  chequear('Cambiar la VERSIÓN de la regla cambia la huella', r1.huella !== r9.huella);
-
-  L('');
-  if (fallo === 0) {
-    L(`  ✓ ${ok}/${ok} — el paquete es determinista y sensible a cada campo.`);
-    L('    Lo que afirma el certificado está adentro del hash.');
-  } else {
-    L(`  ⛔ ${fallo} comprobación(es) fallaron. NO usar hasta revisar.`);
-  }
-  L('');
-  L('  Nada de esto tocó la cadena, Supabase ni el satélite.');
-  L('');
 }
 
-if (require.main === module) {
-  _prueba();
+// ─── Sellado ────────────────────────────────────────────────────
+/**
+ * Dado un paquete ya construido, devuelve la cadena canónica y su hash.
+ *   { canonical, hash }
+ * `canonical` es lo que se publica; `hash` es lo que va a Polygon.
+ */
+function sellarPaquete(paquete) {
+  const canonical = canonicalizar(paquete);
+  const hash = ethers.keccak256(ethers.toUtf8Bytes(canonical));
+  return { canonical, hash };
+}
+
+/**
+ * Atajo: construye Y sella en un paso. Devuelve { paquete, canonical, hash }.
+ */
+function construirYSellar(datos) {
+  const paquete = construirPaquete(datos);
+  const { canonical, hash } = sellarPaquete(paquete);
+  return { paquete, canonical, hash };
 }
 
 module.exports = {
-  armarPaquete,
-  FORMATO_PAQUETE,
+  PAQUETE_VERSION,
+  canonicalizar,
+  construirPaquete,
+  sellarPaquete,
+  construirYSellar,
 };
