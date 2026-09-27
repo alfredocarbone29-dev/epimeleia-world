@@ -172,7 +172,7 @@ async function sellarEvidencia(onchainId, medicion) {
     activoId: onchainId, trimestre: periodo.trimestre, hashEvidencia,
     satelite: medicion.satelite, nubosidadPct: nub, urlDescarga: '',
   });
-  return { txHash: recibo.hash, bloque: Number(recibo.blockNumber), hashEvidencia };
+  return { txHash: recibo.hash, bloque: Number(recibo.blockNumber), hashEvidencia, trimestre: periodo.trimestre };
 }
 
 // ── El trabajo completo: leer activo → medir → (alta) → sellar ──
@@ -239,6 +239,11 @@ async function procesarSello(filaId, ejecutar) {
         txHash:               sello.txHash,
         bloque:               sello.bloque,
         deforestacion:        activo.deforestacionHistorica || null,
+        // AJUSTE 42: el polígono del activo, para que el mail incruste la
+        // foto satelital con el contorno certificado. reports.js lo acepta
+        // como objeto o como string JSON; si falta o no hay token Mapbox,
+        // el mail sale igual, sin imagen.
+        geometria:            activo.geometria || null,
       });
       emailEnviado = true;
       L('email del certificado enviado a ' + emailDestino);

@@ -6,6 +6,35 @@
  * Alertas de saldo bajo y notificaciones webhook — Ajuste 5.
  * Aviso QUINCENAL de evidencia de ventana (días 2 y 16) — nuevo.
  * Veredicto de deforestación histórica (EUDR) en el aviso quincenal — nuevo.
+ *
+ * ════════════════════════════════════════════════════════════════
+ * AJUSTE 42 (26/9/2026) — IMAGEN SATELITAL DEL ACTIVO EN EL MAIL
+ * ════════════════════════════════════════════════════════════════
+ * El mail quincenal ahora puede incrustar una imagen satelital del
+ * activo, con el contorno certificado dibujado encima. Es la prueba
+ * VISUAL: de un vistazo se ve QUÉ campo se certificó, junto con los
+ * números (NDVI, humedad, deforestación) que ya viajan como texto.
+ *
+ * Cómo, exactamente:
+ *   · La imagen se pide a la API de imágenes estáticas de Mapbox
+ *     (foto satelital + polígono como overlay). Ver _imagenMapaStatic().
+ *   · Se incrusta como adjunto EN LÍNEA (CID) — no como URL remota —
+ *     así el cliente de correo la muestra siempre, sin bloquearla.
+ *   · Requiere un token de Mapbox usable del lado del servidor, en el
+ *     .env del VPS como MAPBOX_TOKEN (el token del navegador, restringido
+ *     al dominio, NO sirve desde el servidor).
+ *
+ * Espíritu honesto (igual que todo lo demás): si falta el token, falta
+ * el polígono, o la imagen no se puede traer (timeout, polígono muy
+ * complejo), el mail SALE IGUAL, sin imagen. Nunca un ícono roto, nunca
+ * un placeholder inventado. La imagen es un plus, no una condición.
+ *
+ * Para que la imagen aparezca, quien llama a enviarEvidenciaQuincenal
+ * (servidor-sello.js en el atajo founder, scheduler.js en el cron) debe
+ * pasar el polígono del activo en el campo `geometria` (o geoJSON /
+ * poligono / coordinates). Sin eso, no hay imagen: el mail es idéntico
+ * al de antes.
+ * ════════════════════════════════════════════════════════════════
  */
 
 const axios    = require('axios');
@@ -258,6 +287,12 @@ function _generarHTMLReporte({ activoId, owner, año, q, datosBilling, certs, hu
 // GFW/Hansen), el mail suma una sección con el veredicto: hubo / no hubo
 // deforestación en el período analizado, y cuántas hectáreas. Mismo espíritu
 // honesto: si no hay dato de chequeo, la sección no aparece (no se inventa).
+//
+// AJUSTE 42 — IMAGEN SATELITAL DEL ACTIVO (ver cabecera del archivo)
+// Cuando quien llama pasa la geometría del activo, el mail incrusta una
+// foto satelital con el contorno certificado. Prueba visual del campo,
+// junto a los números. Si no hay geometría o token, el mail sale sin
+// imagen — nunca roto.
 
 /**
  * Envía el aviso quincenal de una ventana satelital.
@@ -282,6 +317,10 @@ function _generarHTMLReporte({ activoId, owner, año, q, datosBilling, certs, hu
  * @param {Object} [p.deforestacion]         - contenido de la columna deforestacion_historica
  *                                             { huboDeforestacion, totalHectareasPerdidas,
  *                                               detallePorAnio, periodoAnalizado, fuente, resolucion }
+ * @param {Object} [p.geometria]             - AJUSTE 42: polígono del activo (GeoJSON Feature,
+ *                                             Geometry Polygon, o anillo [[lng,lat],...]). Si se pasa
+ *                                             y hay token Mapbox, el mail incrusta la foto satelital
+ *                                             con el contorno. Alias aceptados: geoJSON, poligono, coordinates.
  */
 async function enviarEvidenciaQuincenal(p) {
   const {
@@ -292,6 +331,9 @@ async function enviarEvidenciaQuincenal(p) {
     esClimatica,
     deforestacion,
   } = p;
+
+  // AJUSTE 42: geometría del activo (varios nombres posibles según quién llame).
+  const geometria = p.geometria || p.geoJSON || p.poligono || p.coordinates || null;
 
   const q       = trimestre % 10;
   const anio    = Math.floor(trimestre / 10);
@@ -307,16 +349,21 @@ async function enviarEvidenciaQuincenal(p) {
     asunto = `[EPIMELEIA] Reporte quincenal · ${nombreActivo}`;
   }
 
+  // AJUSTE 42: intentar traer la foto satelital del activo. Devuelve null
+  // si no hay token, no hay polígono, o algo falla — y el mail sale sin ella.
+  const imagenMapa = await _imagenMapaStatic(geometria);
+
   const html = _generarHTMLQuincenal({
     activoId, nombreActivo, q, anio, quincenaDelTrimestre,
     sellado, parcial,
     calidadPct, satelite, fechaPasada, hashEvidencia, txHash, bloque,
     esClimatica,
     deforestacion,
+    tieneImagenMapa: !!imagenMapa,   // ← AJUSTE 42
   });
 
-  log('EMAIL', `Enviando aviso quincenal`, { activoId, trimestre, caso, emailDestino });
-  await _enviarEmail({ para: emailDestino, asunto, html });
+  log('EMAIL', `Enviando aviso quincenal`, { activoId, trimestre, caso, emailDestino, conImagen: !!imagenMapa });
+  await _enviarEmail({ para: emailDestino, asunto, html, adjuntos: imagenMapa ? [imagenMapa] : [] });
   log('EMAIL', `Aviso quincenal enviado`, { activoId, caso, emailDestino });
 }
 
@@ -326,6 +373,107 @@ function _fechaCorta(v) {
   const d = (v instanceof Date) ? v : new Date(v);
   if (isNaN(d.getTime())) return String(v);
   return d.toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+// ════════════════════════════════════════════════════════════════
+//  AJUSTE 42 · IMAGEN SATELITAL DEL ACTIVO (Mapbox Static Images API)
+//  ──────────────────────────────────────────────────────────────
+//  Pide a Mapbox una foto satelital del área con el polígono dibujado
+//  encima, la trae como PNG, y la devuelve en base64 lista para
+//  incrustar (CID) en el mail. Todo con degradación honesta: cualquier
+//  falla → null → el mail sale sin imagen, nunca roto.
+// ════════════════════════════════════════════════════════════════
+
+// Id de contenido con que la imagen se referencia en el HTML (src="cid:...").
+const MAPA_CID = 'mapa_activo';
+
+// Token de Mapbox usable del lado del servidor. OJO: el token del navegador
+// (protocolo.html) suele estar restringido al dominio epimeleia.world y NO
+// funciona desde el VPS. Cargar uno server-side en el .env como MAPBOX_TOKEN.
+function _tokenMapbox() {
+  return (config.mapbox && config.mapbox.token) ||
+         process.env.MAPBOX_TOKEN ||
+         process.env.MAPBOX_STATIC_TOKEN ||
+         '';
+}
+
+// Extrae el anillo [[lng,lat],...] de las distintas formas en que puede
+// venir la geometría (Feature, Geometry Polygon/MultiPolygon, o anillo crudo).
+function _anilloDeGeometria(geometria) {
+  if (!geometria) return null;
+  let g = geometria;
+  // Puede venir como string JSON (así la guarda Supabase / la maneja el sello).
+  if (typeof g === 'string') {
+    try { g = JSON.parse(g); } catch (e) { return null; }
+  }
+  if (g && g.type === 'Feature') g = g.geometry;
+  if (g && g.type === 'Polygon' && Array.isArray(g.coordinates)) return g.coordinates[0];
+  if (g && g.type === 'MultiPolygon' && Array.isArray(g.coordinates)) return g.coordinates[0][0];
+  // ¿Es un objeto { coordinates: [ring] } sin type?
+  if (g && Array.isArray(g.coordinates) && Array.isArray(g.coordinates[0]) && Array.isArray(g.coordinates[0][0])) return g.coordinates[0];
+  // ¿Es ya un anillo crudo [[lng,lat],...]?
+  if (Array.isArray(g) && Array.isArray(g[0])) return g;
+  return null;
+}
+
+/**
+ * Construye la imagen satelital estática del polígono y la devuelve como
+ * { base64, contentId, filename, type } lista para incrustar. Devuelve null
+ * si falta el token, falta/está mal el polígono, la URL queda muy larga, o
+ * Mapbox no responde. En todos esos casos el mail sale sin imagen.
+ */
+async function _imagenMapaStatic(geometria) {
+  try {
+    const token = _tokenMapbox();
+    if (!token) { log('EMAIL', 'Sin token Mapbox server-side — el mail sale sin imagen del mapa'); return null; }
+
+    let ring = _anilloDeGeometria(geometria);
+    if (!ring || ring.length < 3) return null;
+
+    // Redondear a 5 decimales (~1 m) para acortar la URL, y cerrar el anillo.
+    ring = ring.map(c => [ +Number(c[0]).toFixed(5), +Number(c[1]).toFixed(5) ]);
+    const a = ring[0], z = ring[ring.length - 1];
+    if (a[0] !== z[0] || a[1] !== z[1]) ring = ring.concat([[a[0], a[1]]]);
+
+    // Overlay GeoJSON con estilo simplestyle: contorno verde, sin relleno,
+    // para que se vea el terreno adentro del polígono.
+    const overlay = {
+      type: 'Feature',
+      properties: { 'stroke': '#4ade80', 'stroke-width': 3, 'stroke-opacity': 1, 'fill-opacity': 0 },
+      geometry: { type: 'Polygon', coordinates: [ring] },
+    };
+
+    const geojsonParam = encodeURIComponent(JSON.stringify(overlay));
+    // 'auto' encuadra el overlay solo; @2x = alta resolución para pantallas nítidas.
+    const url = 'https://api.mapbox.com/styles/v1/mapbox/satellite-streets-v12/static/geojson('
+              + geojsonParam + ')/auto/600x360@2x?padding=40&access_token=' + token;
+
+    // La Static API rechaza URLs muy largas: si el polígono es enorme, se omite.
+    if (url.length > 8000) { log('EMAIL', 'Polígono demasiado complejo para la imagen — mail sin mapa'); return null; }
+
+    const resp = await axios.get(url, { responseType: 'arraybuffer', timeout: 15000 });
+    const base64 = Buffer.from(resp.data, 'binary').toString('base64');
+    return { base64, contentId: MAPA_CID, filename: 'mapa-activo.png', type: 'image/png' };
+  } catch (err) {
+    log('ERROR', `No se pudo generar la imagen del mapa: ${err.message}`);
+    return null;
+  }
+}
+
+/**
+ * Sección con la imagen satelital incrustada. Vacía si no hay imagen.
+ * La imagen se referencia por CID (viaja como adjunto en línea del mail).
+ */
+function _seccionImagenMapa(tiene) {
+  if (!tiene) return '';
+  return `
+  <tr>
+    <td style="padding:0 40px 24px 40px;">
+      <div style="font-family:monospace;font-size:9px;letter-spacing:2px;color:#8a9e8a;margin-bottom:8px;">VISTA SATELITAL · CONTORNO CERTIFICADO</div>
+      <img src="cid:${MAPA_CID}" width="520" alt="Vista satelital del activo con el contorno certificado" style="display:block;width:100%;max-width:520px;height:auto;border:1px solid #e0d8c8;border-radius:2px;" />
+      <div style="font-family:monospace;font-size:10px;color:#8a9e8a;margin-top:6px;line-height:1.6;">Imagen satelital del área exacta que se certificó. El contorno marca el polígono sellado.</div>
+    </td>
+  </tr>`;
 }
 
 /**
@@ -395,7 +543,7 @@ function _seccionDeforestacion(deforestacion) {
 function _generarHTMLQuincenal({
   activoId, nombreActivo, q, anio, quincenaDelTrimestre,
   sellado, parcial, calidadPct, satelite, fechaPasada, hashEvidencia, txHash, bloque,
-  esClimatica, deforestacion,
+  esClimatica, deforestacion, tieneImagenMapa,
 }) {
   const contratoCert = config.contratos?.cert || '';
   const urlTx        = txHash ? `https://polygonscan.com/tx/${txHash}` : '';
@@ -447,6 +595,9 @@ function _generarHTMLQuincenal({
       </table>
     </td>
   </tr>` : '';
+
+  // Sección con la imagen satelital (vacía si no hay imagen). AJUSTE 42.
+  const seccionImagen = _seccionImagenMapa(tieneImagenMapa);
 
   // Sección de deforestación EUDR (vacía si no hay dato de chequeo).
   const seccionDeforestacion = _seccionDeforestacion(deforestacion);
@@ -539,6 +690,7 @@ function _generarHTMLQuincenal({
     </td>
   </tr>
 
+  ${seccionImagen}
   ${filaTecnica}
   ${seccionDeforestacion}
   ${bloquePrueba}
@@ -629,27 +781,50 @@ async function notificarAdmin(evento, datos) {
 
 // ─── Email via SendGrid ────────────────────────────────────────
 
-async function _enviarEmail({ para, asunto, html }) {
+/**
+ * Envía un email por SendGrid.
+ *
+ * AJUSTE 42: acepta `adjuntos`, una lista de imágenes en línea (CID) con la
+ * forma { base64, contentId, filename, type }. Se mandan como attachments con
+ * disposition 'inline', de modo que el HTML pueda referenciarlas por
+ * src="cid:<contentId>". Sin adjuntos, el comportamiento es idéntico al de antes.
+ */
+async function _enviarEmail({ para, asunto, html, adjuntos }) {
   if (!config.notificaciones.sendgridKey) {
     log('EMAIL', `MOCK (SendGrid no configurado): ${asunto} → ${para}`);
     return;
   }
 
+  const payload = {
+    personalizations: [{ to: [{ email: para }] }],
+    from:    { email: config.notificaciones.sendgridFrom, name: 'EPIMELEIA Protocol' },
+    subject: asunto,
+    content: [{ type: 'text/html', value: html }],
+  };
+
+  // AJUSTE 42: adjuntos en línea (imágenes incrustadas por CID).
+  if (Array.isArray(adjuntos) && adjuntos.length) {
+    payload.attachments = adjuntos
+      .filter(a => a && a.base64 && a.contentId)
+      .map(a => ({
+        content:     a.base64,
+        type:        a.type || 'image/png',
+        filename:    a.filename || (a.contentId + '.png'),
+        disposition: 'inline',
+        content_id:  a.contentId,
+      }));
+  }
+
   try {
     await axios.post(
       'https://api.sendgrid.com/v3/mail/send',
-      {
-        personalizations: [{ to: [{ email: para }] }],
-        from:    { email: config.notificaciones.sendgridFrom, name: 'EPIMELEIA Protocol' },
-        subject: asunto,
-        content: [{ type: 'text/html', value: html }],
-      },
+      payload,
       {
         headers: {
           'Authorization': `Bearer ${config.notificaciones.sendgridKey}`,
           'Content-Type':  'application/json',
         },
-        timeout: 10000,
+        timeout: 15000,
       }
     );
     log('EMAIL', `Email enviado: ${asunto} → ${para}`);
