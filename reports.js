@@ -359,6 +359,7 @@ async function enviarEvidenciaQuincenal(p) {
     calidadPct, satelite, fechaPasada, hashEvidencia, txHash, bloque,
     esClimatica,
     deforestacion,
+    geometria,                       // ← AJUSTE 43 (coordenadas en el mail)
     tieneImagenMapa: !!imagenMapa,   // ← AJUSTE 42
   });
 
@@ -477,6 +478,79 @@ function _seccionImagenMapa(tiene) {
 }
 
 /**
+ * AJUSTE 43 · UBICACIÓN CERTIFICADA — el centro del predio y el polígono
+ * completo (todas las esquinas, latitud/longitud), para que un tercero pueda
+ * verificar y reproducir el chequeo sobre el MISMO polígono. Es el dato que la
+ * EUDR exige como corazón de la evidencia: la geolocalización exacta del lote.
+ *
+ * · Etiqueta cada número como latitud / longitud (nunca ambiguo).
+ * · 6 decimales (~0,1 m) — la precisión que espera la EUDR.
+ * · Aclara el formato (grados decimales, WGS84 / EPSG:4326), el de TRACES.
+ * · Si el polígono tiene muchas esquinas, muestra el centro + las primeras y
+ *   avisa el total, para no reventar el mail.
+ * Vacía si no hay polígono válido (mismo espíritu honesto: no se inventa).
+ */
+function _seccionUbicacion(geometria) {
+  const ring = _anilloDeGeometria(geometria);
+  if (!ring || ring.length < 3) return '';
+
+  // Anillo abierto (sin el punto de cierre duplicado).
+  let pts = ring.slice();
+  const a = pts[0], z = pts[pts.length - 1];
+  if (a && z && a[0] === z[0] && a[1] === z[1]) pts = pts.slice(0, -1);
+  if (pts.length < 3) return '';
+
+  // Centro = promedio de las esquinas.
+  let sumLon = 0, sumLat = 0;
+  for (const c of pts) { sumLon += Number(c[0]); sumLat += Number(c[1]); }
+  const cLat = (sumLat / pts.length).toFixed(6);
+  const cLon = (sumLon / pts.length).toFixed(6);
+
+  // Si son muchas esquinas, listamos un tope y avisamos el total.
+  const TOPE  = 12;
+  const total = pts.length;
+  const filas = pts.slice(0, TOPE).map((c, i) => {
+    const lat = Number(c[1]).toFixed(6);
+    const lon = Number(c[0]).toFixed(6);
+    return `<tr>
+      <td style="padding:3px 10px;font-family:monospace;font-size:11px;color:#8a9e8a;width:28px;">${i + 1}</td>
+      <td style="padding:3px 10px;font-family:monospace;font-size:11px;color:#0f1a0f;">${lat}, ${lon}</td>
+    </tr>`;
+  }).join('');
+
+  const resto = total > TOPE
+    ? `<div style="font-family:monospace;font-size:10px;color:#8a9e8a;margin-top:8px;">… y ${total - TOPE} vértice(s) más · ${total} en total.</div>`
+    : '';
+
+  return `
+  <tr>
+    <td style="padding:0 40px 24px 40px;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="background:#f6f4ee;border:1px solid #e0d8c8;border-radius:2px;">
+        <tr>
+          <td style="padding:20px 24px;">
+            <div style="font-family:monospace;font-size:9px;letter-spacing:2px;color:#8a9e8a;">UBICACIÓN CERTIFICADA · GEOLOCALIZACIÓN EUDR</div>
+
+            <div style="font-family:monospace;font-size:11px;color:#8a9e8a;margin-top:12px;">Centro del predio</div>
+            <div style="font-family:monospace;font-size:13px;color:#0f1a0f;margin-top:2px;">Lat ${cLat} · Lon ${cLon}</div>
+
+            <div style="font-family:monospace;font-size:11px;color:#8a9e8a;margin-top:14px;margin-bottom:4px;">Polígono · ${total} vértice(s) &nbsp;(latitud, longitud)</div>
+            <table width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #e0d8c8;">
+              ${filas}
+            </table>
+            ${resto}
+
+            <div style="font-family:monospace;font-size:10px;color:#8a9e8a;margin-top:14px;line-height:1.6;">
+              Coordenadas en grados decimales (WGS84 · EPSG:4326), el formato del portal TRACES de la UE.<br>
+              Son las coordenadas exactas que se sellaron: cualquiera puede reproducir el chequeo sobre este mismo polígono.
+            </div>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>`;
+}
+
+/**
  * Sección de deforestación EUDR para el mail quincenal.
  * Devuelve '' si no hay dato de chequeo (mismo espíritu honesto: no se inventa).
  * Verde sobrio si NO hubo deforestación; ámbar de atención si SÍ hubo.
@@ -543,7 +617,7 @@ function _seccionDeforestacion(deforestacion) {
 function _generarHTMLQuincenal({
   activoId, nombreActivo, q, anio, quincenaDelTrimestre,
   sellado, parcial, calidadPct, satelite, fechaPasada, hashEvidencia, txHash, bloque,
-  esClimatica, deforestacion, tieneImagenMapa,
+  esClimatica, deforestacion, tieneImagenMapa, geometria,
 }) {
   const contratoCert = config.contratos?.cert || '';
   const urlTx        = txHash ? `https://polygonscan.com/tx/${txHash}` : '';
@@ -598,6 +672,9 @@ function _generarHTMLQuincenal({
 
   // Sección con la imagen satelital (vacía si no hay imagen). AJUSTE 42.
   const seccionImagen = _seccionImagenMapa(tieneImagenMapa);
+
+  // Sección de ubicación certificada: centro + polígono completo. AJUSTE 43.
+  const seccionUbicacion = _seccionUbicacion(geometria);
 
   // Sección de deforestación EUDR (vacía si no hay dato de chequeo).
   const seccionDeforestacion = _seccionDeforestacion(deforestacion);
@@ -691,6 +768,7 @@ function _generarHTMLQuincenal({
   </tr>
 
   ${seccionImagen}
+  ${seccionUbicacion}
   ${filaTecnica}
   ${seccionDeforestacion}
   ${bloquePrueba}
