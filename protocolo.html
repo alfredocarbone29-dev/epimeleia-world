@@ -564,6 +564,30 @@
         <div style="font-family:monospace; font-size:8px; color:#667; text-align:center; margin-top:8px;">SIMULACRO no gasta gas &middot; el sellado real escribe en Polygon</div>
       </div>
     </div>
+
+    <!-- ── Estación 3-bis · CASO CONVERSADO (EUDR / Instituciones) ──
+         Se muestra en vez de est-pagar cuando ES_CONVERSADO. No hay precio
+         ni PayPal: el pago se arregla entre partes. El activo ya quedó
+         registrado, y el founder puede sellarlo con el atajo de acá. -->
+    <div id="est-coordinar" style="display:none; padding:4px;">
+      <div class="k" style="font-size:9px; letter-spacing:0.2em; color:var(--cyan); text-transform:uppercase; text-align:center;">Caso a medida</div>
+      <h3 style="font-size:17px; color:var(--text); margin:10px 0 14px; font-weight:700; text-align:center;">El protocolo se adapta a cada necesidad</h3>
+      <div style="border:1px solid var(--line); border-radius:9px; padding:16px; background:rgba(0,240,255,0.03); margin-bottom:14px; font-size:12px; line-height:1.7; color:var(--cyan-dim);">
+        Contanos qu&eacute; necesit&aacute;s &mdash;deforestaci&oacute;n, o deforestaci&oacute;n y seguimiento, u otra cosa&mdash; y armamos tu caso y el mejor modo de pago (transferencia, anticipado o d&eacute;bito).
+      </div>
+      <a href="mailto:info@epimeleia.world?subject=Consulta%20EUDR%20-%20mi%20caso" class="action primary" style="display:block; text-align:center; text-decoration:none; margin-bottom:8px; padding:14px;">ESCRIBINOS A INFO@EPIMELEIA.WORLD &rarr;</a>
+      <div style="font-size:9.5px; color:var(--muted); text-align:center; line-height:1.6;">Tambi&eacute;n pod&eacute;s escribir a alfredocarbone29@gmail.com</div>
+
+      <!-- ATAJO FOUNDER (espejo del de est-pagar, para sellar en modo conversado) -->
+      <div id="founderAtajo2" style="display:none; margin-top:18px; padding-top:16px; border-top:1px solid rgba(255,255,255,0.12);">
+        <div style="font-family:monospace; font-size:9px; letter-spacing:0.2em; color:#E5C870; text-transform:uppercase; text-align:center; margin-bottom:10px;">PANEL FOUNDER &middot; SIN PASAR POR EL PAGO</div>
+        <button id="founderCertBtn2" type="button" style="width:100%; font-size:13px; font-weight:700; padding:13px; background:#E5C870; color:#111; border:none; cursor:pointer; border-radius:4px;">
+          CERTIFICAR DIRECTO (FOUNDER) &rarr;
+        </button>
+        <div id="founderCertOut2" style="display:none; font-family:monospace; font-size:11px; line-height:1.7; color:#9fb0c9; background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.1); padding:14px; margin-top:12px; white-space:pre-wrap; word-break:break-word;"></div>
+        <div style="font-family:monospace; font-size:8px; color:#667; text-align:center; margin-top:8px;">SIMULACRO no gasta gas &middot; el sellado real escribe en Polygon</div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -636,6 +660,15 @@
 <script>
 (function () {
   'use strict';
+
+  // ══ AGREGADO · ORIGEN DE LA VISITA (EUDR / Instituciones = conversado) ══
+  // Si el cliente entró desde eudr.html o instituciones.html, el link trae
+  // ?origen=eudr (o =instituciones). En ese caso, el final del recorrido NO
+  // muestra el PayPal de suscripción (que es de Plataforma), sino el bloque
+  // "Caso a medida · coordinemos". Sin origen (Plataforma o demo directa),
+  // todo sigue EXACTAMENTE igual que siempre.
+  var ORIGEN = (new URLSearchParams(window.location.search).get('origen') || '').toLowerCase();
+  var ES_CONVERSADO = (ORIGEN === 'eudr' || ORIGEN === 'instituciones');
 
   // Token restringido a epimeleia.world
   mapboxgl.accessToken = 'pk.eyJ1IjoiZXBpbWVsZWlhIiwiYSI6ImNtcjN3Z3JlYTA1eGYzNG9qMDFraGFsMWoifQ.-6NTOmDqo8fC8M677eD7sQ';
@@ -1239,6 +1272,19 @@
   var datosPago = null;
 
   function mostrarPrecio(activoId, superficieHa) {
+    // ══ AGREGADO · si el cliente viene de EUDR/Instituciones, NO se le
+    //    muestra el precio+PayPal (eso es de Plataforma). Se le muestra el
+    //    bloque "Caso a medida". El activo YA quedó registrado igual, así
+    //    que el founder puede sellarlo con su atajo (que aparece también
+    //    dentro de est-coordinar). Guardamos datosPago por si el founder
+    //    lo necesita, pero no se llama a la API de precio ni a PayPal.
+    if (ES_CONVERSADO) {
+      var paisC = (CLIENTE.pais || '').toUpperCase() === 'AR' ? 'AR' : 'INT';
+      datosPago = { activoId: activoId, superficieHa: superficieHa, pais: paisC };
+      el('est-coordinar').style.display = 'block';
+      return;
+    }
+
     el('est-pagar').style.display = 'block';
     el('precioCargando').style.display = 'block';
     el('precioCaja').style.display = 'none';
@@ -1439,11 +1485,16 @@
   async function vigilar() {
     var pagar = document.getElementById('est-pagar');
     var atajo = document.getElementById('founderAtajo');
-    if (!pagar || !atajo) return;
+    // AGREGADO: el bloque conversado (EUDR/Instituciones) y su atajo espejo.
+    var coord = document.getElementById('est-coordinar');
+    var atajo2 = document.getElementById('founderAtajo2');
 
-    // ¿La estación de pago está visible?
-    var visible = pagar.style.display === 'block' || (pagar.offsetParent !== null);
-    if (!visible) { atajo.style.display = 'none'; return; }
+    var pagarVisible = pagar && (pagar.style.display === 'block' || pagar.offsetParent !== null);
+    var coordVisible = coord && (coord.style.display === 'block' || coord.offsetParent !== null);
+
+    if (!pagarVisible && atajo) atajo.style.display = 'none';
+    if (!coordVisible && atajo2) atajo2.style.display = 'none';
+    if (!pagarVisible && !coordVisible) return;
 
     // ¿Sos el founder?
     var supa = initSupa();
@@ -1452,7 +1503,8 @@
       var res = await supa.auth.getUser();
       var user = res && res.data ? res.data.user : null;
       if (user && (user.email || '').toLowerCase().trim() === FOUNDER_EMAIL) {
-        atajo.style.display = 'block';
+        if (pagarVisible && atajo)  atajo.style.display = 'block';
+        if (coordVisible && atajo2) atajo2.style.display = 'block';
       }
     } catch (e) {}
   }
@@ -1461,9 +1513,11 @@
   // El botón: primero simulacro, después real.
   document.addEventListener('click', async function (ev) {
     var btn = ev.target;
-    if (!btn || btn.id !== 'founderCertBtn') return;
+    // AGREGADO: acepta el botón de est-pagar (founderCertBtn) y el espejo de
+    // est-coordinar (founderCertBtn2). Cada uno escribe en su propio OUT.
+    if (!btn || (btn.id !== 'founderCertBtn' && btn.id !== 'founderCertBtn2')) return;
 
-    var out = document.getElementById('founderCertOut');
+    var out = document.getElementById(btn.id === 'founderCertBtn2' ? 'founderCertOut2' : 'founderCertOut');
     out.style.display = 'block';
 
     var supa = initSupa();
