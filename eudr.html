@@ -160,9 +160,16 @@ section { position:relative; }
 .contacto-in { max-width:760px; margin:0 auto; padding:clamp(48px,7vw,88px) clamp(24px,5vw,64px); text-align:center; }
 .contacto-lead { font-family:'Playfair Display',serif; font-style:italic; font-size:clamp(24px,3.8vw,42px); color:var(--white); line-height:1.25; margin-bottom:18px; }
 .contacto-lead span { font-style:normal; color:var(--emerald); }
-.contacto-sub { font-size:clamp(17px,1.8vw,21px); color:rgba(232,228,218,0.7); max-width:520px; margin:0 auto 36px; line-height:1.65; }
+.contacto-sub { font-size:clamp(17px,1.8vw,21px); color:rgba(232,228,218,0.7); max-width:560px; margin:0 auto 36px; line-height:1.65; }
 .contacto-mail { display:inline-flex; align-items:center; gap:12px; font-family:'JetBrains Mono',monospace; font-size:clamp(13px,1.6vw,16px); letter-spacing:1px; color:var(--void); background:var(--gold2); border:none; padding:20px 40px; cursor:pointer; transition:background .2s, transform .15s; text-decoration:none; }
 .contacto-mail:hover { background:var(--gold); transform:translateY(-1px); }
+/* canales de contacto (mail + whatsapp lado a lado) */
+.contacto-canales { display:flex; flex-wrap:wrap; gap:12px; justify-content:center; }
+.contacto-wa { display:inline-flex; align-items:center; gap:12px; font-family:'JetBrains Mono',monospace; font-size:clamp(13px,1.6vw,16px); letter-spacing:1px; color:var(--white); background:transparent; border:1px solid var(--emerald); padding:20px 40px; cursor:pointer; transition:background .2s, color .2s, transform .15s; text-decoration:none; }
+.contacto-wa:hover { background:var(--emerald); color:var(--void); transform:translateY(-1px); }
+.contacto-alt { font-size:15px; color:rgba(232,228,218,0.6); margin-top:18px; }
+.contacto-alt a { color:var(--muted); text-decoration:underline; }
+.contacto-alt a:hover { color:var(--text); }
 .contacto-fine { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:1px; color:var(--dim); line-height:2; margin-top:40px; padding-top:30px; border-top:1px solid var(--line); }
 .contacto-fine a { color:var(--muted); text-decoration:none; }
 .contacto-fine a:hover { color:var(--text); }
@@ -364,31 +371,39 @@ section { position:relative; }
 
 <div class="divider"></div>
 
-<!-- MONITOREO · DOS MESES GRATIS (sutil) -->
-<section class="sec">
-  <div class="mon">
-    <div class="mon-k">Y ADEMÁS · SIN CARGO</div>
-    <div class="mon-t">El mismo satélite también puede <span>mirar hacia adelante</span></div>
-    <p class="mon-d">Con tu chequeo EUDR, activamos <strong>dos meses de monitoreo continuo</strong> de tu territorio, sin costo. Observamos su estado ambiental de forma sostenida y te avisamos si algo cambia. Para que veas cómo es tener el satélite de tu lado, no solo para el pasado — también para lo que viene.</p>
-  </div>
-</section>
-
-<!-- PUERTA / ADHERIRSE -->
-<section class="door">
-  <div class="door-eyebrow">EMPEZÁ TU CHEQUEO EUDR</div>
-  <div class="door-lead">Tu prueba de no-deforestación, lista antes del deadline</div>
-  <p class="door-sub">Creá tu cuenta y coordinamos tu chequeo. El precio se conversa según tu territorio — sin sorpresas, sin letra chica.</p>
-  <div class="door-note">CREÁS TU CUENTA · COORDINAMOS TU CHEQUEO · RECIBÍS LA PRUEBA SELLADA</div>
-</section>
-
-<!-- CONTACTO (fundamental) -->
+<!-- CONTACTO + OPCIONES DE CERTIFICACIÓN (fundamental) -->
 <section class="contacto">
   <div class="contacto-in">
-    <div class="contacto-lead">Es fundamental: <span>no dudes en comunicarte</span></div>
-    <p class="contacto-sub">Estamos para resolver tu problema. Del otro lado hay gente de verdad que te responde — no una máquina.</p>
-    <a class="contacto-mail" href="mailto:info@epimeleia.world">info@epimeleia.world</a>
 
-    <p class="legal-note">No cuestionamos el ordenamiento jurídico de los países en los que actuamos: lo respetamos. Solo buscamos darte herramientas anticipatorias para tus decisiones. Ante cualquier duda, escribinos a <a href="mailto:info@epimeleia.world">info@epimeleia.world</a> y te respondemos personalmente.</p>
+    <!-- ── Las dos formas de certificar ── -->
+    <div class="eyebrow" style="margin-bottom:16px;">ELEGÍS VOS · SEGÚN TU NECESIDAD</div>
+    <h2 class="head-title" style="margin-bottom:clamp(28px,4vw,40px);">Dos formas de certificar tu territorio</h2>
+
+    <div class="rol" style="margin-bottom:clamp(30px,4vw,44px);">
+      <div class="rol-cell them">
+        <div class="rol-k" style="color:var(--emerald);">OPCIÓN A · HACIA ATRÁS</div>
+        <div class="rol-t">El chequeo histórico</div>
+        <div class="rol-d">La verdad de tu territorio <strong>año por año, de 2020 a hoy</strong>: si hubo deforestación y cuándo, sellada en blockchain. La foto del pasado, verificable por tu comprador o el auditor. Es el respaldo de tu DDS.</div>
+      </div>
+      <div class="rol-cell us">
+        <div class="rol-k">OPCIÓN B · HACIA ATRÁS + ADELANTE</div>
+        <div class="rol-t">El chequeo, y la guardia que sigue</div>
+        <div class="rol-d">Todo lo de la Opción A, <strong>y además el seguimiento continuo</strong> de tu territorio: el satélite lo sigue observando y te avisa si algo cambia, con informes sellados en el tiempo. Del pasado probado a la vigilancia hacia adelante.</div>
+      </div>
+    </div>
+    <p class="rol-foot" style="margin-bottom:clamp(44px,6vw,68px);">¿No sabés cuál te conviene? <span>Escribinos y lo definimos juntos.</span></p>
+
+    <!-- ── Los canales de contacto ── -->
+    <div class="contacto-lead">Es fundamental: <span>no dudes en comunicarte</span></div>
+    <p class="contacto-sub">Estamos para resolver tu problema. Del otro lado hay gente de verdad que te responde — no una máquina. Contanos qué necesitás y armamos tu caso, con el mejor modo de pago (transferencia, anticipado o débito).</p>
+
+    <div class="contacto-canales">
+      <a class="contacto-mail" href="mailto:info@epimeleia.world?subject=Consulta%20certificaci%C3%B3n%20EUDR">✉ info@epimeleia.world</a>
+      <a class="contacto-wa" href="https://wa.me/5491158004028?text=Hola%2C%20consulto%20por%20la%20certificaci%C3%B3n%20EUDR%20de%20mi%20territorio." target="_blank" rel="noopener">✆ WhatsApp · +54 11 5800-4028</a>
+    </div>
+    <p class="contacto-alt">También podés escribir a <a href="mailto:alfredocarbone29@gmail.com">alfredocarbone29@gmail.com</a></p>
+
+    <p class="legal-note">No cuestionamos el ordenamiento jurídico de los países en los que actuamos: lo respetamos. Solo buscamos darte herramientas anticipatorias para tus decisiones. Ante cualquier duda, escribinos y te respondemos personalmente.</p>
 
     <div class="contacto-fine">
       EPIMELEIA · Notario Digital Ambiental · Polygon Mainnet<br>
