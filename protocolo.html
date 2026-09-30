@@ -196,6 +196,40 @@
   #deslindeModal .firmar { background:var(--cyan); color:#04121a; border-color:var(--cyan); }
   #deslindeModal .firmar:disabled { opacity:0.4; cursor:not-allowed; }
 
+  /* ── Modal "Caso a medida" · Estación 3-bis (EUDR/Instituciones) ──
+     AGREGADO: el bloque conversado ya no vive dentro del panel; es un
+     modal con velo que aparece centrado al firmar el deslinde, con X
+     para cerrar. El id est-coordinar se conserva DENTRO (el script
+     founder lo vigila por offsetParent; el modal controla su visibilidad). */
+  #coordinarModal { display:none; position:fixed; inset:0; z-index:52; background:rgba(4,7,11,0.85); backdrop-filter:blur(4px); align-items:center; justify-content:center; padding:20px; }
+  #coordinarModal.show { display:flex; }
+  #coordinarModal .box { position:relative; background:var(--panel,#0c1219); border:1px solid var(--cyan); border-radius:12px; max-width:560px; width:100%; max-height:88vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,0.5); }
+  #coordinarModal .modal-x { position:absolute; top:12px; right:14px; background:none; border:none; color:var(--muted); font-size:18px; cursor:pointer; font-family:var(--mono); z-index:2; transition:color .2s; line-height:1; padding:4px; }
+  #coordinarModal .modal-x:hover { color:var(--text); }
+  #coordinarModal .head { padding:26px 24px 10px; text-align:center; }
+  #coordinarModal .head .k { font-size:9px; letter-spacing:0.2em; color:var(--cyan); text-transform:uppercase; }
+  #coordinarModal .head h3 { font-size:19px; color:var(--text); margin:8px 0 0; font-weight:700; }
+  #coordinarModal .head p { font-size:11px; color:var(--muted); margin:8px 0 0; line-height:1.6; }
+  #coordinarModal .cuerpo { padding:10px 24px 24px; }
+  /* opciones A/B */
+  .opt-card { border:1px solid var(--line); border-radius:9px; padding:15px 16px; margin-bottom:10px; background:rgba(0,240,255,0.03); }
+  .opt-card.b { border-color:rgba(0,240,255,0.4); background:rgba(0,240,255,0.06); }
+  .opt-k { font-family:var(--mono); font-size:8px; letter-spacing:0.15em; color:var(--cyan); text-transform:uppercase; margin-bottom:7px; }
+  .opt-t { font-size:14px; color:var(--text); font-weight:700; margin-bottom:6px; }
+  .opt-d { font-size:11.5px; color:var(--cyan-dim); line-height:1.6; }
+  .opt-d strong { color:var(--text); }
+  .opt-ayuda { text-align:center; font-size:11px; color:var(--muted); font-style:italic; margin:14px 0 20px; }
+  .opt-ayuda b { color:var(--cyan-dim); font-style:normal; }
+  /* contactos */
+  .coord-sub { font-size:11.5px; color:var(--cyan-dim); line-height:1.7; text-align:center; margin-bottom:16px; }
+  .coord-canales { display:flex; flex-direction:column; gap:9px; }
+  .coord-mail { display:block; text-align:center; text-decoration:none; padding:13px; border-radius:7px; background:var(--cyan); color:#04121a; font-family:var(--mono); font-size:12px; font-weight:700; letter-spacing:0.03em; transition:background .2s; }
+  .coord-mail:hover { background:#5df6ff; }
+  .coord-wa { display:block; text-align:center; text-decoration:none; padding:13px; border-radius:7px; background:transparent; border:1px solid var(--lock); color:var(--lock); font-family:var(--mono); font-size:12px; font-weight:700; letter-spacing:0.03em; transition:background .2s, color .2s; }
+  .coord-wa:hover { background:var(--lock); color:#04121a; }
+  .coord-alt { text-align:center; font-size:9.5px; color:var(--muted); line-height:1.6; margin-top:12px; }
+  .coord-alt a { color:var(--cyan-dim); text-decoration:underline; }
+
   /* toast */
   #toast { position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%) translateY(16px); background: rgba(8,12,18,0.96); border: 1px solid var(--cyan); border-radius: 8px; padding: 12px 20px; font-size: 12px; color: var(--text); opacity: 0; visibility: hidden; transition: all .3s; z-index: 10; max-width: 90vw; }
   #toast.show { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
@@ -306,13 +340,6 @@
 
   /* ════════════════════════════════════════════════════════════════
      MÓVIL · el panel se vuelve una "hoja de abajo" (bottom sheet)
-     ────────────────────────────────────────────────────────────────
-     En la computadora NO cambia nada: todo esto vive dentro de la
-     regla de pantalla angosta. En el celular, el panel deja de tapar
-     el mapa: se ancla abajo, con una manija para subirlo/bajarlo.
-     Cuando la persona toca "Dibujar contorno", la hoja se baja sola y
-     deja el mapa entero para tocar; abajo queda una barra con la
-     superficie en vivo y los botones Deshacer / Confirmar.
      ════════════════════════════════════════════════════════════════ */
 
   /* La manija: oculta en computadora, se muestra solo en celular. */
@@ -363,9 +390,6 @@
     /* La marca queda con un poco de aire bajo la manija. */
     #panel .brand { margin-top: 4px; }
 
-    /* Cuando la hoja está baja, se desplaza hacia abajo dejando solo la
-       manija asomando. El desplazamiento exacto lo calcula el JS según
-       la altura real de la manija (transform inline). */
     #app.collapsed #panel { box-shadow: 0 -8px 30px rgba(0,0,0,0.5); }
 
     /* EPI no debe tapar la hoja de abajo en celular */
@@ -436,15 +460,6 @@
 
       <div class="warn" id="warnBig">El área marcada es muy grande. ¿Seguro que es esto? Podés seguir igual, o borrar y ajustar.</div>
 
-      <!-- ══════════════════════════════════════════════════════════
-           AGREGADO (AJUSTE 42) · CARGA MANUAL DE COORDENADAS
-           Segunda vía, además del dibujo. El cliente puede pegar su
-           polígono (GeoJSON o lista de coordenadas) o subir un archivo
-           .geojson/.kml. Al usarlas, el polígono se DIBUJA en el mapa
-           y se hace zoom hacia él: el cliente ve dónde cayó su terreno
-           antes de confirmar (red de seguridad visual). Todo desemboca
-           en pintarConfirmado(), el mismo embudo que el dibujo.
-           ══════════════════════════════════════════════════════════ -->
       <div id="coordManual">
         <div class="cm-sep"><span>o cargá tus coordenadas exactas</span></div>
         <p class="cm-nota">Dibujar y cargar coordenadas certifican con el <b>mismo rigor</b>. El dibujo es una aproximación visual; las coordenadas definen el terreno con precisión y la exactitud del dato queda de tu lado. Para EUDR, recomendamos cargar coordenadas.</p>
@@ -565,29 +580,6 @@
       </div>
     </div>
 
-    <!-- ── Estación 3-bis · CASO CONVERSADO (EUDR / Instituciones) ──
-         Se muestra en vez de est-pagar cuando ES_CONVERSADO. No hay precio
-         ni PayPal: el pago se arregla entre partes. El activo ya quedó
-         registrado, y el founder puede sellarlo con el atajo de acá. -->
-    <div id="est-coordinar" style="display:none; padding:4px;">
-      <div class="k" style="font-size:9px; letter-spacing:0.2em; color:var(--cyan); text-transform:uppercase; text-align:center;">Caso a medida</div>
-      <h3 style="font-size:17px; color:var(--text); margin:10px 0 14px; font-weight:700; text-align:center;">El protocolo se adapta a cada necesidad</h3>
-      <div style="border:1px solid var(--line); border-radius:9px; padding:16px; background:rgba(0,240,255,0.03); margin-bottom:14px; font-size:12px; line-height:1.7; color:var(--cyan-dim);">
-        Contanos qu&eacute; necesit&aacute;s &mdash;deforestaci&oacute;n, o deforestaci&oacute;n y seguimiento, u otra cosa&mdash; y armamos tu caso y el mejor modo de pago (transferencia, anticipado o d&eacute;bito).
-      </div>
-      <a href="mailto:info@epimeleia.world?subject=Consulta%20EUDR%20-%20mi%20caso" class="action primary" style="display:block; text-align:center; text-decoration:none; margin-bottom:8px; padding:14px;">ESCRIBINOS A INFO@EPIMELEIA.WORLD &rarr;</a>
-      <div style="font-size:9.5px; color:var(--muted); text-align:center; line-height:1.6;">Tambi&eacute;n pod&eacute;s escribir a alfredocarbone29@gmail.com</div>
-
-      <!-- ATAJO FOUNDER (espejo del de est-pagar, para sellar en modo conversado) -->
-      <div id="founderAtajo2" style="display:none; margin-top:18px; padding-top:16px; border-top:1px solid rgba(255,255,255,0.12);">
-        <div style="font-family:monospace; font-size:9px; letter-spacing:0.2em; color:#E5C870; text-transform:uppercase; text-align:center; margin-bottom:10px;">PANEL FOUNDER &middot; SIN PASAR POR EL PAGO</div>
-        <button id="founderCertBtn2" type="button" style="width:100%; font-size:13px; font-weight:700; padding:13px; background:#E5C870; color:#111; border:none; cursor:pointer; border-radius:4px;">
-          CERTIFICAR DIRECTO (FOUNDER) &rarr;
-        </button>
-        <div id="founderCertOut2" style="display:none; font-family:monospace; font-size:11px; line-height:1.7; color:#9fb0c9; background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.1); padding:14px; margin-top:12px; white-space:pre-wrap; word-break:break-word;"></div>
-        <div style="font-family:monospace; font-size:8px; color:#667; text-align:center; margin-top:8px;">SIMULACRO no gasta gas &middot; el sellado real escribe en Polygon</div>
-      </div>
-    </div>
   </div>
 </div>
 
@@ -615,10 +607,56 @@
   </div>
 </div>
 
-<!-- ── AGREGADO (AJUSTE 41): cartel de "necesitás una cuenta" ──
-     Aparece en vez de registrar de verdad, cuando quien firma es un
-     invitado. No se pierde nada: el contorno, el nombre y el tipo ya
-     quedaron guardados y se restauran solos al volver logueado. ── -->
+<!-- ── Modal "Caso a medida" · Estación 3-bis (EUDR / Instituciones) ──
+     AGREGADO: el bloque conversado, movido acá desde el panel. Aparece con
+     velo al firmar el deslinde. El id est-coordinar se conserva DENTRO para
+     que el script founder lo siga vigilando por offsetParent. -->
+<div id="coordinarModal">
+  <div class="box">
+    <button class="modal-x" id="coordinarCerrar" type="button" aria-label="Cerrar">✕</button>
+    <div class="head">
+      <div class="k">Caso a medida</div>
+      <h3>El protocolo se adapta a tu necesidad</h3>
+      <p>Este menú lo armás vos, según lo que necesites.</p>
+    </div>
+    <div class="cuerpo">
+      <div id="est-coordinar">
+        <!-- ── Las dos formas de certificar ── -->
+        <div class="opt-card a">
+          <div class="opt-k">Opción A · Hacia atrás</div>
+          <div class="opt-t">El chequeo histórico</div>
+          <div class="opt-d">La verdad de tu territorio <strong>año por año, de 2020 a hoy</strong>: si hubo deforestación y cuándo, sellada en blockchain. La foto del pasado, verificable por tu comprador o el auditor.</div>
+        </div>
+        <div class="opt-card b">
+          <div class="opt-k">Opción B · Hacia atrás + adelante</div>
+          <div class="opt-t">El chequeo, y la guardia que sigue</div>
+          <div class="opt-d">Todo lo de la Opción A, <strong>y además el seguimiento continuo</strong>: el satélite sigue observando tu territorio y te avisa si algo cambia, con informes sellados en el tiempo.</div>
+        </div>
+        <p class="opt-ayuda">¿No sabés cuál te conviene? <b>Escribinos y lo definimos juntos.</b></p>
+
+        <!-- ── Contacto ── -->
+        <p class="coord-sub">Contanos qué necesitás y armamos tu caso, con el mejor modo de pago (transferencia, anticipado o débito).</p>
+        <div class="coord-canales">
+          <a class="coord-mail" href="mailto:info@epimeleia.world?subject=Consulta%20certificaci%C3%B3n%20EUDR%20-%20mi%20caso">✉ info@epimeleia.world</a>
+          <a class="coord-wa" href="https://wa.me/5491158004028?text=Hola%2C%20consulto%20por%20la%20certificaci%C3%B3n%20EUDR%20de%20mi%20territorio." target="_blank" rel="noopener">✆ WhatsApp · +54 11 5800-4028</a>
+        </div>
+        <p class="coord-alt">También podés escribir a <a href="mailto:alfredocarbone29@gmail.com">alfredocarbone29@gmail.com</a></p>
+
+        <!-- ATAJO FOUNDER (espejo del de est-pagar, para sellar en modo conversado) -->
+        <div id="founderAtajo2" style="display:none; margin-top:18px; padding-top:16px; border-top:1px solid rgba(255,255,255,0.12);">
+          <div style="font-family:monospace; font-size:9px; letter-spacing:0.2em; color:#E5C870; text-transform:uppercase; text-align:center; margin-bottom:10px;">PANEL FOUNDER &middot; SIN PASAR POR EL PAGO</div>
+          <button id="founderCertBtn2" type="button" style="width:100%; font-size:13px; font-weight:700; padding:13px; background:#E5C870; color:#111; border:none; cursor:pointer; border-radius:4px;">
+            CERTIFICAR DIRECTO (FOUNDER) &rarr;
+          </button>
+          <div id="founderCertOut2" style="display:none; font-family:monospace; font-size:11px; line-height:1.7; color:#9fb0c9; background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.1); padding:14px; margin-top:12px; white-space:pre-wrap; word-break:break-word;"></div>
+          <div style="font-family:monospace; font-size:8px; color:#667; text-align:center; margin-top:8px;">SIMULACRO no gasta gas &middot; el sellado real escribe en Polygon</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── AGREGADO (AJUSTE 41): cartel de "necesitás una cuenta" ── -->
 <div id="registroModal">
   <div class="box">
     <div class="k">CASI LISTO</div>
@@ -628,7 +666,7 @@
       <a class="action primary" id="registroIrBtn" href="cuenta.html">Crear cuenta gratis →</a>
       <button class="action" id="registroVolverBtn" type="button">Seguir mirando</button>
     </div>
-    <div class="fine">No se te va a cobrar nada por crear la cuenta. El primer mes de certificación también es gratis.</div>
+    <div class="fine">No se te va a cobrar nada por crear la cuenta.</div>
   </div>
 </div>
 
@@ -661,16 +699,9 @@
 (function () {
   'use strict';
 
-  // ══ AGREGADO · ORIGEN DE LA VISITA (EUDR / Instituciones = conversado) ══
-  // Si el cliente entró desde eudr.html o instituciones.html, el link trae
-  // ?origen=eudr (o =instituciones). En ese caso, el final del recorrido NO
-  // muestra el PayPal de suscripción (que es de Plataforma), sino el bloque
-  // "Caso a medida · coordinemos". Sin origen (Plataforma o demo directa),
-  // todo sigue EXACTAMENTE igual que siempre.
   var ORIGEN = (new URLSearchParams(window.location.search).get('origen') || '').toLowerCase();
   var ES_CONVERSADO = (ORIGEN === 'eudr' || ORIGEN === 'instituciones');
 
-  // Token restringido a epimeleia.world
   mapboxgl.accessToken = 'pk.eyJ1IjoiZXBpbWVsZWlhIiwiYSI6ImNtcjN3Z3JlYTA1eGYzNG9qMDFraGFsMWoifQ.-6NTOmDqo8fC8M677eD7sQ';
 
   var map = new mapboxgl.Map({
@@ -687,9 +718,8 @@
     showUserLocation: true
   }), 'top-right');
 
-  // --- Estado del dibujo ---
   var drawing = false, points = [], confirmed = false, BIG_HA = 50000;
-  var geojsonConfirmado = null;   // AGREGADO: guarda el polígono confirmado para registrarlo
+  var geojsonConfirmado = null;
 
   var el = function (id) { return document.getElementById(id); };
   var drawBtn = el('drawBtn'), undoBtn = el('undoBtn'), clearBtn = el('clearBtn'), confirmBtn = el('confirmBtn'), editBtn = el('editBtn');
@@ -698,7 +728,6 @@
   var areaValueLocked = el('areaValueLocked'), vtxSubLocked = el('vtxSubLocked'), coordsOut = el('coordsOut');
   var drawingView = el('drawing'), confirmedView = el('confirmed');
 
-  // ── HOJA DE ABAJO (celular) ──────────────────────────────────────
   var appEl = el('app'), panelEl = el('panel'), sheetHandle = el('sheetHandle');
   function esMovil() { return window.matchMedia('(max-width: 720px)').matches; }
   function ubicarHoja() {
@@ -774,8 +803,6 @@
     map.addLayer({ id: 'draw-line', type: 'line', source: 'draw', filter: ['in', '$type', 'Polygon', 'LineString'], paint: { 'line-color': '#00f0ff', 'line-width': 2 } });
     map.addLayer({ id: 'draw-verts', type: 'circle', source: 'draw', filter: ['==', '$type', 'Point'], paint: { 'circle-radius': 5, 'circle-color': '#05070a', 'circle-stroke-color': '#00f0ff', 'circle-stroke-width': 2 } });
 
-    // AGREGADO (AJUSTE 41): si hay un borrador pendiente Y ya hay identidad
-    // real, se restaura acá — recién cuando el mapa tiene sus capas listas.
     intentarRestaurarBorrador();
   });
 
@@ -812,8 +839,6 @@
   }
   clearBtn.addEventListener('click', resetAll);
 
-  // Dibuja el polígono confirmado en el mapa a partir de un GeoJSON dado
-  // (se usa tanto al confirmar a mano como al restaurar un borrador).
   function pintarConfirmado(geojson) {
     points = geojson.geometry.coordinates[0].slice(0, -1).map(function (c) {
       return { lng: c[0], lat: c[1] };
@@ -859,27 +884,9 @@
     coordsOut.textContent = ''; resetAll();
   });
 
-  // ═══════════════════════════════════════════════════════════
-  //  AGREGADO (AJUSTE 42) · CARGA MANUAL DE COORDENADAS
-  //  ───────────────────────────────────────────────────────────
-  //  El cliente puede dar el polígono exacto sin dibujarlo: pegando
-  //  GeoJSON o una lista de coordenadas, o subiendo un .geojson/.kml.
-  //  Todo termina en pintarConfirmado() — el MISMO embudo que el
-  //  dibujo — así que el flujo firmar→registrar→sellar no cambia.
-  //
-  //  RED DE SEGURIDAD: pintarConfirmado() dibuja el polígono y hace
-  //  zoom hacia él. Si las coordenadas están mal/al revés, el contorno
-  //  aparece en el lugar equivocado y el cliente lo ve antes de firmar.
-  //
-  //  RESPONSABILIDAD: al cargar coordenadas propias, la exactitud del
-  //  dato queda del lado del cliente (es lo que declara como su campo).
-  // ═══════════════════════════════════════════════════════════
-
   function cmError(msg) { var m = el('cmMsg'); m.className = 'cm-msg err'; m.textContent = msg; }
   function cmOk(msg)    { var m = el('cmMsg'); m.className = 'cm-msg ok';  m.textContent = msg; }
 
-  // Valida un anillo [[lng,lat],...] y devuelve los puntos {lng,lat}
-  // (sin el punto de cierre). Lanza Error con mensaje claro si algo falla.
   function validarAnillo(ring) {
     if (!Array.isArray(ring) || ring.length < 3) {
       throw new Error('Se necesitan al menos 3 coordenadas.');
@@ -897,7 +904,6 @@
     return pts;
   }
 
-  // GeoJSON → anillo [lng,lat]. Acepta FeatureCollection, Feature o Geometry.
   function ringDeGeoJSON(obj) {
     var g = obj;
     if (g.type === 'FeatureCollection' && Array.isArray(g.features)) {
@@ -915,7 +921,6 @@
     throw new Error('La geometría no es un polígono (es ' + g.type + ').');
   }
 
-  // Lista de texto "latitud, longitud" (una por línea) → anillo [lng,lat].
   function ringDeLista(texto) {
     var ring = [];
     texto.split(/\r?\n/).forEach(function (linea) {
@@ -924,13 +929,12 @@
       var partes = linea.split(/[,;\s]+/).filter(Boolean);
       if (partes.length < 2) return;
       var lat = Number(partes[0]), lng = Number(partes[1]);
-      ring.push([lng, lat]);   // se ingresa lat,lon → se guarda [lng,lat]
+      ring.push([lng, lat]);
     });
     if (ring.length < 3) throw new Error('Poné al menos 3 coordenadas, una por línea, con el formato: latitud, longitud.');
     return ring;
   }
 
-  // KML → anillo. Toma el primer <coordinates> (lon,lat,alt por espacios).
   function ringDeKML(texto) {
     var m = texto.match(/<coordinates>([\s\S]*?)<\/coordinates>/i);
     if (!m) throw new Error('El archivo KML no tiene coordenadas reconocibles.');
@@ -939,13 +943,12 @@
       var p = tupla.split(',');
       if (p.length < 2) return;
       var lng = Number(p[0]), lat = Number(p[1]);
-      ring.push([lng, lat]);   // KML viene en lon,lat
+      ring.push([lng, lat]);
     });
     if (ring.length < 3) throw new Error('El KML no tiene un polígono con suficientes puntos.');
     return ring;
   }
 
-  // Detecta el formato del texto y devuelve el anillo [lng,lat].
   function parsearCoordenadas(texto, esKml) {
     texto = (texto || '').trim();
     if (!texto) throw new Error('Pegá tus coordenadas o subí un archivo.');
@@ -954,7 +957,7 @@
       var obj;
       try { obj = JSON.parse(texto); } catch (e) { throw new Error('El GeoJSON tiene un error de formato (JSON inválido).'); }
       if (Array.isArray(obj)) {
-        if (obj.length && Array.isArray(obj[0])) return obj;   // ya es [[lng,lat],...]
+        if (obj.length && Array.isArray(obj[0])) return obj;
         throw new Error('No se reconoce ese formato de coordenadas.');
       }
       return ringDeGeoJSON(obj);
@@ -962,23 +965,19 @@
     return ringDeLista(texto);
   }
 
-  // Cierra el anillo, valida, arma el GeoJSON y lo manda al mismo embudo
-  // que el dibujo (pintarConfirmado). Muestra el resultado en el mapa.
   function usarCoordenadas(texto, esKml) {
     var ringLL, pts;
     try {
       var ring = parsearCoordenadas(texto, esKml);
-      // cerrar el anillo si no viene cerrado
       var a = ring[0], b = ring[ring.length - 1];
       if (!a || !b || a[0] !== b[0] || a[1] !== b[1]) ring = ring.concat([[ring[0][0], ring[0][1]]]);
-      pts = validarAnillo(ring);           // valida rangos; pts = [{lng,lat}...] con cierre
+      pts = validarAnillo(ring);
     } catch (e) {
       cmError(e.message || 'No se pudieron leer las coordenadas.');
       return;
     }
 
-    // superficie, calculada igual que en el camino del dibujo
-    var puntosAbiertos = pts.slice(0, -1);   // sin el punto de cierre
+    var puntosAbiertos = pts.slice(0, -1);
     var m2 = geodesicArea(puntosAbiertos);
 
     var ringCoords = pts.map(function (p) { return [p.lng, p.lat]; });
@@ -1017,7 +1016,6 @@
     reader.onload = function () { usarCoordenadas(String(reader.result || ''), esKml); };
     reader.onerror = function () { cmError('No se pudo leer el archivo.'); };
     reader.readAsText(file);
-    // permite volver a elegir el mismo archivo si hace falta
     ev.target.value = '';
   });
 
@@ -1052,28 +1050,6 @@
     toastT = setTimeout(function () { t.className = ''; }, 3400);
   }
 
-  // ═══════════════════════════════════════════════════════════
-  //  AGREGADO (AJUSTE 41) — MODO INVITADO
-  // ═══════════════════════════════════════════════════════════
-  //
-  // Antes: sin cliente_id, la página se bloqueaba entera y redirigía a
-  // cuenta.html antes de dejar tocar nada (ver historial más abajo, se
-  // mantiene documentado por qué se hizo así).
-  //
-  // Ahora: se deja entrar como invitado. Dibujar (Estación 1) y leer/firmar
-  // el deslinde (Estación 2) funcionan igual para todos — es información y
-  // un gesto, no escribe nada en la base todavía.
-  //
-  // El corte real está en el REGISTRO: "Firmar y registrar" es lo que
-  // escribe el activo en Supabase, y eso requiere una identidad real (es
-  // lo que evita volver a ensuciar la base con activos huérfanos, el
-  // problema que ya se había resuelto antes). Si sos invitado en ese
-  // momento, el contorno + nombre + tipo se guardan en este navegador
-  // (sessionStorage) y se te pide una cuenta. Al volver logueado, el
-  // sistema te muestra el mismo contorno para que lo vuelvas a confirmar
-  // vos mismo — nada queda automático ni se da por sentado que sigue
-  // siendo lo que querés (la gente desconfía de lo nuevo, con razón).
-
   var CLIENTE = { nombre: 'invitado', email: null, pais: null, empresa: null, cliente_id: null };
   var MODO_INVITADO = true;
   var CLAVE_BORRADOR = 'epi_borrador_pendiente';
@@ -1088,8 +1064,6 @@
 
     el('whoName').textContent = MODO_INVITADO ? 'invitado' : (CLIENTE.nombre || 'cliente');
     el('whoInvitado').style.display = MODO_INVITADO ? 'inline-block' : 'none';
-    // Como invitado, "salir" no tiene mucho sentido — lo convertimos en
-    // el atajo directo para crear cuenta, sin perder lo que ya dibujó.
     el('logoutLink').textContent = MODO_INVITADO ? 'crear cuenta' : 'salir';
   }
   cargarCliente();
@@ -1100,9 +1074,6 @@
     window.location.href = 'cuenta.html';
   });
 
-  // Guarda el borrador (contorno + nombre + tipo) para retomarlo después
-  // de crear la cuenta. No incluye la aceptación del deslinde: eso se
-  // vuelve a pedir con identidad real (ver arriba, por qué).
   function guardarBorrador() {
     if (!geojsonConfirmado) return;
     try {
@@ -1114,11 +1085,8 @@
     } catch (e) {}
   }
 
-  // Al cargar la página con identidad real, si hay un borrador pendiente,
-  // se restaura el contorno en el mapa — pero SIN avanzar solo: la persona
-  // tiene que volver a tocar "Confirmar y continuar" ella misma.
   function intentarRestaurarBorrador() {
-    if (MODO_INVITADO) return;   // solo tiene sentido con identidad real
+    if (MODO_INVITADO) return;
     var raw;
     try { raw = sessionStorage.getItem(CLAVE_BORRADOR); } catch (e) { return; }
     if (!raw) return;
@@ -1142,15 +1110,9 @@
   el('registroVolverBtn').addEventListener('click', function () {
     el('registroModal').classList.remove('show');
   });
-  // El link "Crear cuenta gratis →" ya apunta a cuenta.html por HTML;
-  // antes de irse, nos aseguramos de que el borrador quedó guardado.
   el('registroIrBtn').addEventListener('click', function () {
     guardarBorrador();
   });
-
-  // ═══════════════════════════════════════════════════════════
-  //  ESTACIÓN 2 · EL DESLINDE
-  // ═══════════════════════════════════════════════════════════
 
   var DESLINDE_TEXTO =
 'EPIMELEIA — Protocolo de Notaría Ambiental — Términos de Aceptación (v3.0.0)\n\n' +
@@ -1186,8 +1148,6 @@
       cliente_empresa: CLIENTE.empresa
     };
 
-    // El deslinde se puede LEER sin cuenta — es información, no un
-    // compromiso. Lo que cambia según MODO_INVITADO es qué pasa al firmar.
     el('deslindeTexto').textContent = DESLINDE_TEXTO;
     el('deslindeCheck').checked = false;
     el('deslindeFirmar').disabled = true;
@@ -1203,13 +1163,15 @@
     activoPendiente = null;
   });
 
-  // "Firmar y registrar": acá está el corte real.
+  // AGREGADO: la X del modal "Caso a medida" — cierra y vuelve al mapa.
+  el('coordinarCerrar').addEventListener('click', function () {
+    el('coordinarModal').classList.remove('show');
+  });
+
   el('deslindeFirmar').addEventListener('click', function () {
     if (!activoPendiente) { el('deslindeModal').classList.remove('show'); return; }
     if (!el('deslindeCheck').checked) return;
 
-    // ── Invitado: no se escribe nada en la base. Se guarda el borrador
-    //    (ya con nombre/tipo confirmados) y se pide una cuenta. ──
     if (MODO_INVITADO) {
       el('deslindeModal').classList.remove('show');
       activoPendiente = null;
@@ -1217,7 +1179,6 @@
       return;
     }
 
-    // ── Con identidad real: exactamente el comportamiento de siempre. ──
     var fbtn = el('deslindeFirmar');
     fbtn.disabled = true; fbtn.textContent = 'Registrando…';
 
@@ -1238,14 +1199,12 @@
         confirmedView.style.display = 'none';
         el('est-firmar').style.display = 'block';
 
-        // Ya no hace falta el borrador — el activo quedó registrado real.
         try { sessionStorage.removeItem(CLAVE_BORRADOR); } catch (e) {}
 
         var idActivo = (data.activo && data.activo.id) || data.activoId || null;
         var haActivo = activoPendiente ? activoPendiente.area_ha : null;
         activoPendiente = null;
 
-        // Guardar el id del activo para el atajo founder (script aislado lo lee de acá).
         try { if (idActivo) sessionStorage.setItem('epi_ultimo_activo', idActivo); } catch (e) {}
 
         if (idActivo && haActivo) {
@@ -1262,26 +1221,16 @@
     });
   });
 
-  // ═══════════════════════════════════════════════════════════
-  //  ESTACIÓN 3 · EL PRECIO Y EL PAGO
-  // ═══════════════════════════════════════════════════════════
-  // Este bloque solo se alcanza con identidad real (el modo invitado se
-  // desvía antes, en "Firmar y registrar"), así que sigue exactamente
-  // igual que siempre — nada nuevo que aprender acá.
-
   var datosPago = null;
 
   function mostrarPrecio(activoId, superficieHa) {
-    // ══ AGREGADO · si el cliente viene de EUDR/Instituciones, NO se le
-    //    muestra el precio+PayPal (eso es de Plataforma). Se le muestra el
-    //    bloque "Caso a medida". El activo YA quedó registrado igual, así
-    //    que el founder puede sellarlo con su atajo (que aparece también
-    //    dentro de est-coordinar). Guardamos datosPago por si el founder
-    //    lo necesita, pero no se llama a la API de precio ni a PayPal.
+    // Si el cliente viene de EUDR/Instituciones, se abre el modal "Caso a
+    // medida" (con velo) en vez del precio+PayPal. El activo YA quedó
+    // registrado; el founder puede sellarlo con el atajo dentro del modal.
     if (ES_CONVERSADO) {
       var paisC = (CLIENTE.pais || '').toUpperCase() === 'AR' ? 'AR' : 'INT';
       datosPago = { activoId: activoId, superficieHa: superficieHa, pais: paisC };
-      el('est-coordinar').style.display = 'block';
+      el('coordinarModal').classList.add('show');
       return;
     }
 
@@ -1372,10 +1321,6 @@
     }
   })();
 
-  // ═══════════════════════════════════════════════════════════
-  //  AGREGADO (AJUSTE 41) — EPI, portado de plataforma.html
-  //  Misma lógica exacta, mismo /api/chat. Funciona igual acá que allá.
-  // ═══════════════════════════════════════════════════════════
   var epiHistorial = [];
   var epiPensando = false;
   var epiCerrada = false;
@@ -1467,10 +1412,6 @@
     return _supa;
   }
 
-  // Saca el activoId de la Estación 3. El sistema lo guarda en un data-attr
-  // o lo tenemos que leer del estado. Como fallback robusto, lo buscamos en
-  // la variable global datosPago si el script principal la expuso; si no,
-  // lo tomamos del sessionStorage del último activo registrado.
   function getActivoId() {
     try { if (window.datosPago && window.datosPago.activoId) return window.datosPago.activoId; } catch (e) {}
     try {
@@ -1480,12 +1421,9 @@
     return null;
   }
 
-  // Vigila la Estación 3: cuando el bloque de pago se hace visible, si sos
-  // el founder, muestra el atajo. Se revisa cada segundo (barato y seguro).
   async function vigilar() {
     var pagar = document.getElementById('est-pagar');
     var atajo = document.getElementById('founderAtajo');
-    // AGREGADO: el bloque conversado (EUDR/Instituciones) y su atajo espejo.
     var coord = document.getElementById('est-coordinar');
     var atajo2 = document.getElementById('founderAtajo2');
 
@@ -1496,7 +1434,6 @@
     if (!coordVisible && atajo2) atajo2.style.display = 'none';
     if (!pagarVisible && !coordVisible) return;
 
-    // ¿Sos el founder?
     var supa = initSupa();
     if (!supa) return;
     try {
@@ -1510,11 +1447,8 @@
   }
   setInterval(vigilar, 1000);
 
-  // El botón: primero simulacro, después real.
   document.addEventListener('click', async function (ev) {
     var btn = ev.target;
-    // AGREGADO: acepta el botón de est-pagar (founderCertBtn) y el espejo de
-    // est-coordinar (founderCertBtn2). Cada uno escribe en su propio OUT.
     if (!btn || (btn.id !== 'founderCertBtn' && btn.id !== 'founderCertBtn2')) return;
 
     var out = document.getElementById(btn.id === 'founderCertBtn2' ? 'founderCertOut2' : 'founderCertOut');
