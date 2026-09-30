@@ -192,7 +192,6 @@ section { position:relative; }
 /* ─── LA PRUEBA (certificado real + registro on-chain) ─── */
 .prueba { max-width:1080px; margin:0 auto; padding:clamp(52px,8vw,96px) clamp(24px,5vw,64px); }
 .prueba .head-title em { color:var(--gold2); }
-/* certificado — documento parchment real */
 .cert-wrap { max-width:720px; margin:0 auto; }
 .cert-shell { position:relative; }
 .cert-shell::before { content:''; position:absolute; inset:0; transform:translate(10px,12px); background:var(--card); border:1px solid var(--line); z-index:0; }
@@ -222,7 +221,6 @@ section { position:relative; }
 .cert-meta div:last-child { border-right:none; }
 .cert-meta-k { font-family:'JetBrains Mono',monospace; font-size:7px; letter-spacing:1.5px; color:var(--cert-muted); margin-bottom:5px; }
 .cert-meta-v { font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--cert-ink); }
-/* sello on-chain (dark) */
 .cert-seal { background:var(--cert-seal); margin-top:22px; padding:clamp(20px,3vw,28px); display:grid; grid-template-columns:auto 1fr; gap:20px; align-items:center; }
 .cert-seal-stamp { width:90px; height:90px; border:1px solid rgba(184,150,63,0.4); border-radius:50%; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; flex-shrink:0; }
 .cert-seal-stamp .epi { font-family:'JetBrains Mono',monospace; font-size:14px; letter-spacing:2px; color:var(--gold2); }
@@ -236,8 +234,6 @@ section { position:relative; }
 .cert-seal-btn:hover { background:var(--gold); }
 .cert-foot { display:flex; flex-wrap:wrap; justify-content:space-between; gap:10px; margin-top:20px; padding-top:14px; border-top:1px solid var(--cert-line); font-family:'JetBrains Mono',monospace; font-size:8px; letter-spacing:1px; color:var(--cert-muted); }
 .cert-caption { text-align:center; font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:2px; color:var(--dim); margin-top:22px; }
-
-/* dos evidencias reales lado a lado (avisos quincenales) */
 .evid-pair { display:grid; grid-template-columns:1fr 1fr; gap:18px; max-width:940px; margin:0 auto; }
 .evid { background:var(--cert-bg); color:var(--cert-ink); border:1px solid rgba(27,44,27,0.18); padding:clamp(22px,3vw,30px); box-shadow:0 24px 56px rgba(0,0,0,0.5); display:flex; flex-direction:column; }
 .evid-brand { font-family:'Playfair Display',serif; font-size:18px; letter-spacing:5px; color:var(--cert-ink); }
@@ -262,8 +258,6 @@ section { position:relative; }
 .evid-seal-btn { display:inline-block; margin-top:12px; font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:1px; color:var(--cert-seal); background:var(--gold2); text-decoration:none; padding:11px 16px; transition:background .2s; }
 .evid-seal-btn:hover { background:var(--gold); }
 @media(max-width:720px){ .evid-pair { grid-template-columns:1fr; } }
-
-/* registro on-chain (ledger) */
 .ledger-head { text-align:center; margin:clamp(52px,7vw,80px) auto clamp(28px,4vw,40px); }
 .ledger-head .eyebrow { margin-bottom:14px; }
 .ledger-head h3 { font-family:'Playfair Display',serif; font-size:clamp(20px,2.6vw,28px); color:var(--white); line-height:1.25; max-width:680px; margin:0 auto; }
@@ -306,18 +300,6 @@ section { position:relative; }
 .recurso.comodin .recurso-name { color:var(--gold2); }
 .recurso.comodin .recurso-ico { color:var(--gold); }
 
-/* ─── EUDR (pasada única · reemplaza al precio de suscripción) ─── */
-.tr-title em { font-style:italic; color:var(--emerald); }
-.tr-deal { display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--line); border:1px solid var(--line); max-width:880px; margin:0 auto; }
-.tr-cell { background:var(--deep); padding:clamp(24px,3vw,32px) clamp(18px,2vw,26px); text-align:left; }
-.tr-cell-k { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:2px; color:var(--emerald); margin-bottom:12px; }
-.tr-cell-t { font-family:'Playfair Display',serif; font-size:clamp(18px,2vw,22px); color:var(--white); margin-bottom:8px; }
-.tr-cell-d { font-size:14.5px; color:rgba(232,228,218,0.6); line-height:1.55; }
-.tr-fine { text-align:center; max-width:680px; margin:clamp(34px,5vw,46px) auto 0; font-size:clamp(15px,1.5vw,17px); color:rgba(232,228,218,0.66); line-height:1.7; }
-.tr-fine strong { color:var(--white); font-weight:600; }
-.tr-fine a { color:var(--emerald); text-decoration:none; border-bottom:1px solid rgba(95,173,95,0.35); }
-.tr-fine a:hover { border-color:var(--emerald); }
-
 /* ─── PUERTA / ADHERIRSE ─── */
 .door { text-align:center; padding:clamp(56px,9vw,104px) clamp(24px,5vw,64px); border-top:1px solid var(--line); }
 .door-eyebrow { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:3px; color:var(--teal); margin-bottom:20px; }
@@ -334,6 +316,13 @@ section { position:relative; }
 .footer-sub { font-size:clamp(17px,1.8vw,21px); color:rgba(232,228,218,0.66); max-width:520px; margin:0 auto 40px; line-height:1.6; }
 .footer-mail { display:inline-flex; align-items:center; gap:12px; font-family:'JetBrains Mono',monospace; font-size:clamp(13px,1.6vw,16px); letter-spacing:1px; color:var(--void); background:var(--gold2); border:none; padding:20px 40px; cursor:pointer; transition:background .2s, transform .15s; }
 .footer-mail:hover { background:var(--gold); transform:translateY(-1px); }
+/* canales de contacto (mail + whatsapp) */
+.footer-canales { display:flex; flex-wrap:wrap; gap:12px; justify-content:center; align-items:center; }
+.footer-wa { display:inline-flex; align-items:center; gap:12px; font-family:'JetBrains Mono',monospace; font-size:clamp(13px,1.6vw,16px); letter-spacing:1px; color:var(--white); background:transparent; border:1px solid var(--emerald); padding:20px 40px; cursor:pointer; text-decoration:none; transition:background .2s, color .2s, transform .15s; }
+.footer-wa:hover { background:var(--emerald); color:var(--void); transform:translateY(-1px); }
+.footer-alt { font-size:14px; color:rgba(232,228,218,0.55); margin-top:16px; }
+.footer-alt a { color:var(--muted); text-decoration:underline; }
+.footer-alt a:hover { color:var(--text); }
 .footer-secondary { display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin-top:34px; }
 .footer-btn { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:2px; color:var(--muted); background:transparent; border:1px solid var(--line2); padding:12px 18px; cursor:pointer; transition:border-color .2s, color .2s; }
 .footer-btn:hover { border-color:var(--teal); color:var(--text); }
@@ -382,7 +371,7 @@ section { position:relative; }
 .epi-send:hover { background:var(--gold2); }
 .epi-hint { font-family:'JetBrains Mono',monospace; font-size:7px; letter-spacing:1px; color:var(--dim); text-align:center; margin-top:9px; }
 
-/* ─── ADHERIRSE FLOTANTE (acompaña como EPI, del lado izquierdo) ─── */
+/* ─── ADHERIRSE FLOTANTE ─── */
 .adh-float { position:fixed; left:clamp(16px,3vw,32px); bottom:clamp(16px,3vw,32px); z-index:400; display:inline-flex; align-items:center; gap:9px; font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:2px; color:var(--void); background:var(--gold2); border:none; padding:15px 22px; cursor:pointer; box-shadow:0 8px 30px rgba(0,0,0,0.5); transition:background .2s, transform .2s; }
 .adh-float:hover { background:var(--gold); transform:translateY(-2px); }
 .adh-float svg { width:14px; height:14px; }
@@ -416,18 +405,13 @@ section { position:relative; }
 
 @media(max-width:820px){ .cert-grid { grid-template-columns:repeat(2,1fr); } .cert-seal { grid-template-columns:1fr; text-align:center; } .cert-seal-stamp { margin:0 auto; } .cert-seal-line { text-align:left; } }
 @media(max-width:780px){ .qj-grid { grid-template-columns:1fr; } }
-@media(max-width:760px){ .steps { grid-template-columns:1fr; } .cc-steps { grid-template-columns:repeat(2,1fr); } .tr-deal { grid-template-columns:1fr; } .topnav { display:none; } .cert-meta { grid-template-columns:repeat(2,1fr); } .cert-meta div:nth-child(2){ border-right:none; } .ledger-row { grid-template-columns:1fr auto; gap:8px 12px; } .ledger-id { display:none; } .ledger-date { grid-column:1; text-align:left; } }
+@media(max-width:760px){ .steps { grid-template-columns:1fr; } .cc-steps { grid-template-columns:repeat(2,1fr); } .topnav { display:none; } .cert-meta { grid-template-columns:repeat(2,1fr); } .cert-meta div:nth-child(2){ border-right:none; } .ledger-row { grid-template-columns:1fr auto; gap:8px 12px; } .ledger-id { display:none; } .ledger-date { grid-column:1; text-align:left; } }
 @media(max-width:720px){ .opa-grid { grid-template-columns:1fr; } }
 @media(max-width:600px){ .pasada-line { display:none; } .pasadas { gap:14px; } .cert-metrics { grid-template-columns:1fr; } }
 @media(max-width:440px){ .cc-steps { grid-template-columns:1fr; } .cert-grid { grid-template-columns:1fr; } }
 @media(prefers-reduced-motion: reduce){ *, *::before, *::after { animation:none !important; transition:none !important; } html { scroll-behavior:auto; } }
 
-/* ══════════════════════════════════════════════════════════════════
-   BOTÓN FLOTANTE · PROBAR EL MAPA EN MODO INVITADO  (AGREGADO)
-   Abajo a la IZQUIERDA, APILADO ENCIMA del .adh-float existente
-   (por eso su 'bottom' es mayor). No se tocó el .adh-float.
-   Lleva a protocolo.html. EPI sigue a la derecha, sin cambios.
-   ══════════════════════════════════════════════════════════════════ */
+/* BOTÓN FLOTANTE · PROBAR EL MAPA EN MODO INVITADO */
 .mapa-float { position:fixed; left:clamp(16px,3vw,32px); bottom:clamp(78px,calc(3vw + 62px),96px); z-index:400; display:flex; align-items:center; gap:12px; max-width:min(78vw,310px); background:var(--gold2); color:var(--void); text-decoration:none; padding:13px 18px; box-shadow:0 8px 30px rgba(0,0,0,0.55); transition:background .2s, transform .2s; animation:mapaFloatIn .5s ease both; }
 .mapa-float:hover { background:var(--gold); transform:translateY(-2px); }
 @keyframes mapaFloatIn { from{opacity:0; transform:translateY(14px);} to{opacity:1; transform:translateY(0);} }
@@ -509,11 +493,9 @@ section { position:relative; }
     <p class="head-sub">Así se ve lo que recibe un cliente. Los mismos números que midió el satélite, la misma huella que quedó grabada. Verificable por cualquiera, sin pedirnos permiso.</p>
   </div>
 
-  <!-- DOS EVIDENCIAS REALES (avisos quincenales de hoy · Polygon Mainnet) -->
   <div class="cert-wrap" style="max-width:940px;">
     <div class="evid-pair">
 
-      <!-- 1) SELLADA · perito moreno (datos reales del 2/8/2026) -->
       <article class="evid">
         <div class="evid-brand">EPIMELEIA</div>
         <div class="evid-brand-sub">NOTARIO DIGITAL AMBIENTAL · POLYGON MAINNET</div>
@@ -540,7 +522,6 @@ section { position:relative; }
         </div>
       </article>
 
-      <!-- 2) NO VISTO · quiulacocha (SATELLITE_LOSS real del 2/8/2026) -->
       <article class="evid">
         <div class="evid-brand">EPIMELEIA</div>
         <div class="evid-brand-sub">NOTARIO DIGITAL AMBIENTAL · POLYGON MAINNET</div>
@@ -565,7 +546,6 @@ section { position:relative; }
     <p class="cert-caption">DOS AVISOS REALES DEL PROTOCOLO · NO ES UN EJEMPLO INVENTADO</p>
   </div>
 
-  <!-- REGISTRO ON-CHAIN: activos reales registrados en mainnet -->
   <div class="ledger-head">
     <div class="eyebrow" style="color:var(--gold2);">EL REGISTRO PÚBLICO</div>
     <h3>Estos activos ya están escritos en Polygon. Tocá cualquiera y lo verificás vos.</h3>
@@ -608,27 +588,10 @@ section { position:relative; }
   <div class="recursos-grid" id="recGrid"></div>
 </section>
 
-<div class="divider"></div>
-
-<!-- ══════════ CUMPLIMIENTO EUDR · PASADA ÚNICA (reemplaza la suscripción) ══════════ -->
-<section class="sec" id="eudr">
-  <div class="head">
-    <div class="eyebrow" style="color:var(--emerald);">CUMPLIMIENTO EUDR</div>
-    <h2 class="head-title tr-title">Una <em>prueba única</em>, sellada, de si tu territorio está limpio para Europa</h2>
-    <p class="head-sub">Desde diciembre de 2026, vender a la Unión Europea exige probar que tu campo no se deforestó desde 2020. Te lo confirmamos en minutos, con evidencia satelital sellada en blockchain e imposible de alterar.</p>
-  </div>
-  <div class="tr-deal">
-    <div class="tr-cell"><div class="tr-cell-k">LA FUENTE</div><div class="tr-cell-t">La misma que gobiernos y ONG</div><div class="tr-cell-d">Usamos la misma lógica de datos que gobiernos y organizaciones de todo el mundo. No inventamos nada: la registramos y la sellamos.</div></div>
-    <div class="tr-cell"><div class="tr-cell-k">EL ANÁLISIS</div><div class="tr-cell-t">Año por año, desde 2020</div><div class="tr-cell-d">Te decimos con exactitud si hubo deforestación en tu territorio —y en qué año— desde 2020 hasta hoy.</div></div>
-    <div class="tr-cell"><div class="tr-cell-k">EL RESPALDO</div><div class="tr-cell-t">La evidencia de tu DDS</div><div class="tr-cell-d">La prueba de no-deforestación sobre la que se apoya tu Declaración de Diligencia Debida, sellada en blockchain y verificable por tu comprador o el auditor.</div></div>
-  </div>
-  <p class="tr-fine">Dibujá tu campo sobre el satélite y explorá cuando quieras — la prueba definitiva se sella al certificar. Ante cualquier duda, escribinos a <a href="mailto:info@epimeleia.world">info@epimeleia.world</a> y te respondemos personalmente.</p>
-</section>
-
 <!-- PUERTA / ADHERIRSE -->
 <section class="door">
   <div class="door-eyebrow">CUANDO QUIERAS EMPEZAR</div>
-  <p class="door-lead">Elegís tu primer activo, y el satélite empieza a observarlo.</p>
+  <p class="door-lead">Elegís tu primer activo, y coordinamos cómo ponerlo bajo observación.</p>
   <button class="door-btn" onclick="adherir()">ADHERIRSE AL PROTOCOLO →</button>
   <div class="door-note">PROBALO PRIMERO EN EL MAPA · SIN REGISTRARTE</div>
 </section>
@@ -638,8 +601,12 @@ section { position:relative; }
   <div class="footer-in">
     <div class="footer-eyebrow">DEL OTRO LADO HAY ALGUIEN</div>
     <p class="footer-lead">¿Preferís hablar con una persona?</p>
-    <p class="footer-sub">No estás solo frente a una pantalla. Escribinos y te responde un humano de verdad — sin formularios, sin vueltas.</p>
-    <button class="footer-mail" onclick="copiarEmail(this)">✉ info@epimeleia.world</button>
+    <p class="footer-sub">No estás solo frente a una pantalla. Contanos qué necesitás y armamos tu caso — te responde un humano de verdad, sin formularios, sin vueltas.</p>
+    <div class="footer-canales">
+      <button class="footer-mail" onclick="copiarEmail(this)">✉ info@epimeleia.world</button>
+      <a class="footer-wa" href="https://wa.me/5491158004028?text=Hola%2C%20consulto%20por%20EPIMELEIA." target="_blank" rel="noopener">✆ WhatsApp · +54 11 5800-4028</a>
+    </div>
+    <p class="footer-alt">También podés escribir a <a href="mailto:alfredocarbone29@gmail.com">alfredocarbone29@gmail.com</a></p>
     <div class="footer-secondary">
       <button class="footer-btn" onclick="abrir('terminos')">TÉRMINOS DE USO</button>
       <button class="footer-btn" onclick="abrir('privacidad')">PRIVACIDAD</button>
@@ -657,8 +624,8 @@ section { position:relative; }
   ADHERIRSE AL PROTOCOLO
 </button>
 
-<!-- BOTÓN FLOTANTE · PROBAR EL MAPA EN MODO INVITADO (AGREGADO) -->
-<a class="mapa-float" href="protocolo.html" aria-label="Dibujá y certificá tu recurso en el mapa, sin registrarte">
+<!-- BOTÓN FLOTANTE · PROBAR EL MAPA EN MODO INVITADO -->
+<a class="mapa-float" href="protocolo.html?origen=plataforma" aria-label="Dibujá y certificá tu recurso en el mapa, sin registrarte">
   <span class="mapa-float-ico">
     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path d="M12 21.5s7-5.7 7-11.5a7 7 0 1 0-14 0c0 5.8 7 11.5 7 11.5z" fill="currentColor" opacity="0.22"/>
@@ -714,9 +681,7 @@ section { position:relative; }
 
 
 <script>
-/* ─── ACTIVOS REALES ON-CHAIN (datos verificables · Polygon Mainnet) ───
-   Cada TX es una llamada real a registrarActivo() desde la wallet del protocolo.
-   activoId, nombre y timestamp salen del evento ActivoRegistrado emitido on-chain. */
+/* ─── ACTIVOS REALES ON-CHAIN (datos verificables · Polygon Mainnet) ─── */
 const ONCHAIN = [
   { id:8, nombre:'quiulacocha',       ts:1785504995, tx:'0x64063d6e0713d74025e6a8ef97ca6e7c73b60c6a57ae50da0c85f65206135fff' },
   { id:7, nombre:'mesa de los reyes', ts:1785504990, tx:'0xa27ff1128f075003fc293ff569acce7fdcc49a80240e17285fc0034b3b53b33d' },
@@ -836,9 +801,9 @@ function abrirFaqs(){
 }
 function toggleFaq(i){ document.querySelectorAll('.faq-item')[i].classList.toggle('open'); }
 
-/* ─── ADHERIRSE (puerta a la próxima etapa) ─── */
+/* ─── ADHERIRSE (puerta al flujo conversado · sin pago automático) ─── */
 function adherir(){
-  window.location.href = 'cuenta.html';
+  window.location.href = 'cuenta.html?origen=plataforma';
 }
 
 function cerrar(id){ document.getElementById(id).classList.remove('active'); document.body.style.overflow=''; }
@@ -851,7 +816,6 @@ function copiarEmail(el){
 }
 
 /* ─── EPI (conectado a /api/chat · solo conversa) ─── */
-/* Memoria SOLO de la charla abierta: vive mientras la página está abierta. */
 let epiHistorial = [];
 let epiPensando = false;
 let epiCerrada = false;
@@ -921,7 +885,6 @@ async function epiEnviar(){
 document.getElementById('epiText').addEventListener('keydown', e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); epiEnviar(); } });
 document.getElementById('epiText').addEventListener('input', function(){ this.style.height='auto'; this.style.height=Math.min(this.scrollHeight,110)+'px'; });
 
-/* ─── EPI acompaña el scroll (sutil) ─── */
 let lastY = window.scrollY;
 window.addEventListener('scroll', ()=>{
   const b = document.getElementById('epiBubble');

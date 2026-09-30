@@ -700,7 +700,13 @@
   'use strict';
 
   var ORIGEN = (new URLSearchParams(window.location.search).get('origen') || '').toLowerCase();
-  var ES_CONVERSADO = (ORIGEN === 'eudr' || ORIGEN === 'instituciones');
+  // TODO EL FLUJO ES CONVERSADO. El modelo viejo de suscripción por tiers con
+  // PayPal automático ya no existe: se cambió por "el pago se conversa y el link
+  // se manda después". Por eso ES_CONVERSADO es siempre true — nadie ve precio
+  // ni PayPal, todos caen en el modal "Caso a medida". El código de precio y
+  // PayPal (mostrarPrecio/est-pagar, calcular-precio, crear-suscripcion) queda
+  // en el archivo pero INERTE: no se llama desde ningún lado.
+  var ES_CONVERSADO = true;
 
   mapboxgl.accessToken = 'pk.eyJ1IjoiZXBpbWVsZWlhIiwiYSI6ImNtcjN3Z3JlYTA1eGYzNG9qMDFraGFsMWoifQ.-6NTOmDqo8fC8M677eD7sQ';
 
