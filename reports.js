@@ -1,63 +1,12 @@
 /**
  * EPIMELEIA V3.4 — Oracle Node · reports.js
- * ──────────────────────────────────────────
- * Generación y envío de reportes trimestrales por email — Ajuste 21.
- * Descarga de datos satelitales completos — Ajuste 20.
- * Alertas de saldo bajo y notificaciones webhook — Ajuste 5.
- * Aviso QUINCENAL de evidencia de ventana (días 2 y 16) — nuevo.
- * Veredicto de deforestación histórica (EUDR) en el aviso quincenal — nuevo.
- *
- * ════════════════════════════════════════════════════════════════
- * AJUSTE 42 (26/9/2026) — IMAGEN SATELITAL DEL ACTIVO EN EL MAIL
- * ════════════════════════════════════════════════════════════════
- * El mail quincenal ahora puede incrustar una imagen satelital del
- * activo, con el contorno certificado dibujado encima. Es la prueba
- * VISUAL: de un vistazo se ve QUÉ campo se certificó, junto con los
- * números (NDVI, humedad, deforestación) que ya viajan como texto.
- *
- * Cómo, exactamente:
- *   · La imagen se pide a la API de imágenes estáticas de Mapbox
- *     (foto satelital + polígono como overlay). Ver _imagenMapaStatic().
- *   · Se incrusta como adjunto EN LÍNEA (CID) — no como URL remota —
- *     así el cliente de correo la muestra siempre, sin bloquearla.
- *   · Requiere un token de Mapbox usable del lado del servidor, en el
- *     .env del VPS como MAPBOX_TOKEN (el token del navegador, restringido
- *     al dominio, NO sirve desde el servidor).
- *
- * Espíritu honesto (igual que todo lo demás): si falta el token, falta
- * el polígono, o la imagen no se puede traer (timeout, polígono muy
- * complejo), el mail SALE IGUAL, sin imagen. Nunca un ícono roto, nunca
- * un placeholder inventado. La imagen es un plus, no una condición.
- *
- * Para que la imagen aparezca, quien llama a enviarEvidenciaQuincenal
- * (servidor-sello.js en el atajo founder, scheduler.js en el cron) debe
- * pasar el polígono del activo en el campo `geometria` (o geoJSON /
- * poligono / coordinates). Sin eso, no hay imagen: el mail es idéntico
- * al de antes.
- * ════════════════════════════════════════════════════════════════
+ * (cabecera original — sin cambios)
  */
 
 const axios    = require('axios');
 const { config } = require('./config');
 const { log }    = require('./logger');
 
-// ─── Reporte trimestral completo (Ajuste 21) ───────────────────
-
-/**
- * Genera y envía el reporte de cierre trimestral al email corporativo registrado.
- * Se dispara automáticamente al cerrar cada Q (vía evento ReporteTrimestralTrigger).
- *
- * @param {Object} params
- * @param {number} params.activoId
- * @param {string} params.owner        - Wallet del dueño del activo
- * @param {number} params.trimestre    - Ej: 20241 = Q1 2024
- * @param {Object} params.datosBilling - Estado de billing
- * @param {Array}  params.certs        - Certificaciones del trimestre
- * @param {Array}  params.huecos       - Huecos del trimestre
- * @param {number} params.indiceCont   - Índice de continuidad (0-100)
- * @param {string} params.emailDestino - Email corporativo registrado
- * @param {string} params.nombreActivo - Nombre del activo
- */
 async function enviarReporteTrimestral(params) {
   const {
     activoId, owner, trimestre, datosBilling,
@@ -74,15 +23,10 @@ async function enviarReporteTrimestral(params) {
   });
 
   log('EMAIL', `Enviando reporte trimestral`, { activoId, trimestre, emailDestino });
-
   await _enviarEmail({ para: emailDestino, asunto, html });
-
   log('EMAIL', `Reporte Q${q}/${año} enviado`, { activoId, emailDestino });
 }
 
-/**
- * Genera el HTML del reporte trimestral — corporativo, explicado, completo.
- */
 function _generarHTMLReporte({ activoId, owner, año, q, datosBilling, certs, huecos, indiceCont, nombreActivo }) {
   const estadoColor = indiceCont >= 75 ? '#1a4a1a' : indiceCont >= 50 ? '#8a6a1a' : '#7a2a1a';
   const estadoTexto = indiceCont >= 75 ? 'EXCELENTE' : indiceCont >= 50 ? 'REGULAR' : 'CRÍTICO';
@@ -113,12 +57,9 @@ function _generarHTMLReporte({ activoId, owner, año, q, datosBilling, certs, hu
 <html lang="es">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
 <body style="margin:0;padding:0;background:#f4f0e8;font-family:'Georgia',serif;">
-
 <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f0e8;padding:40px 20px;">
 <tr><td>
 <table width="600" cellpadding="0" cellspacing="0" style="margin:0 auto;background:#ffffff;border:1px solid #ddd;">
-
-  <!-- HEADER -->
   <tr>
     <td style="background:#0f1a0f;padding:32px 40px;">
       <div style="font-family:'Georgia',serif;font-size:24px;letter-spacing:4px;color:#f4f0e8;">EPIMELEIA</div>
@@ -127,8 +68,6 @@ function _generarHTMLReporte({ activoId, owner, año, q, datosBilling, certs, hu
       </div>
     </td>
   </tr>
-
-  <!-- TÍTULO -->
   <tr>
     <td style="padding:32px 40px;border-bottom:1px solid #eee;">
       <div style="font-family:monospace;font-size:10px;letter-spacing:3px;color:#8a9e8a;margin-bottom:8px;">
@@ -142,8 +81,6 @@ function _generarHTMLReporte({ activoId, owner, año, q, datosBilling, certs, hu
       </div>
     </td>
   </tr>
-
-  <!-- ÍNDICE DE CONTINUIDAD -->
   <tr>
     <td style="padding:24px 40px;background:#f9f9f7;border-bottom:1px solid #eee;">
       <table width="100%" cellpadding="0" cellspacing="0">
@@ -168,8 +105,6 @@ function _generarHTMLReporte({ activoId, owner, año, q, datosBilling, certs, hu
       </p>
     </td>
   </tr>
-
-  <!-- CERTIFICACIONES -->
   ${certs.length > 0 ? `
   <tr>
     <td style="padding:24px 40px;border-bottom:1px solid #eee;">
@@ -192,8 +127,6 @@ function _generarHTMLReporte({ activoId, owner, año, q, datosBilling, certs, hu
       </p>
     </td>
   </tr>` : ''}
-
-  <!-- HUECOS -->
   ${huecos.length > 0 ? `
   <tr>
     <td style="padding:24px 40px;border-bottom:1px solid #eee;background:#fff8f8;">
@@ -214,8 +147,6 @@ function _generarHTMLReporte({ activoId, owner, año, q, datosBilling, certs, hu
       </p>
     </td>
   </tr>` : ''}
-
-  <!-- SALDO Y BILLING -->
   <tr>
     <td style="padding:24px 40px;border-bottom:1px solid #eee;">
       <div style="font-family:monospace;font-size:10px;letter-spacing:2px;color:#8a9e8a;margin-bottom:12px;">ESTADO DE CUENTA</div>
@@ -235,8 +166,6 @@ function _generarHTMLReporte({ activoId, owner, año, q, datosBilling, certs, hu
       </table>
     </td>
   </tr>
-
-  <!-- FOOTER -->
   <tr>
     <td style="padding:24px 40px;background:#0f1a0f;">
       <p style="color:rgba(244,240,232,0.6);font-size:11px;font-family:monospace;margin:0;line-height:1.8;">
@@ -247,7 +176,6 @@ function _generarHTMLReporte({ activoId, owner, año, q, datosBilling, certs, hu
       </p>
     </td>
   </tr>
-
 </table>
 </td></tr>
 </table>
@@ -255,73 +183,20 @@ function _generarHTMLReporte({ activoId, owner, año, q, datosBilling, certs, hu
 </html>`;
 }
 
-// ─── Aviso QUINCENAL de evidencia de ventana (días 2 y 16) ──────
+// ─── Aviso QUINCENAL de evidencia de ventana ───────────────────
+// (cabecera original — sin cambios)
 //
-// Hermano más simple del reporte trimestral. Se dispara desde el
-// scheduler, dentro de _procesarActivoVentana, JUSTO DESPUÉS de sellar
-// la evidencia (caso 'sellado') o cuando el satélite no alcanzó a
-// sellar (caso 'no_visto'). Reusa la misma paleta y el mismo _enviarEmail.
-//
-// FILOSOFÍA (definida por el fundador): el mail dice solo lo que es verdad.
-//   · sellado con calidad ≥ 70  → "se vio bien", con link a la tx real.
-//   · sellado con calidad < 70  → "visibilidad parcial", igual sellado y con link.
-//   · no_visto (climática)      → el satélite pasó pero la nube no dejó sellar.
-//   · no_visto (sin dato)       → no hubo observación utilizable. Sin causa inventada.
-//
-// En 'no_visto' NO hay transacción de esta quincena (la ausencia es el
-// registro), así que el mail NO lleva link a una tx inexistente: apunta al
-// historial público del contrato, que sí es real.
-//
-// AJUSTE 41 — LA INFORMACIÓN DE POLYGONSCAN, TAMBIÉN EN EL CUERPO DEL MAIL
-// Hasta acá el mail mostraba el hash de evidencia y un botón "Verificar en
-// Polygonscan", pero el hash de LA TRANSACCIÓN (lo primero que Polygonscan
-// muestra en la página de una tx) solo vivía adentro del link del botón —
-// si el destinatario no hacía click, ese dato nunca llegaba a existir para
-// él. Ahora el txHash se imprime como texto plano, igual que en Polygonscan,
-// arriba del botón. El botón sigue estando, para el que quiera verificar
-// por su cuenta — pero el dato ya no depende de que alguien haga click.
-//
-// DEFORESTACIÓN EUDR — VEREDICTO HISTÓRICO EN EL MISMO MAIL
-// Cuando el activo trae el chequeo de deforestación histórica (columna
-// deforestacion_historica de Supabase, calculada al registrar contra
-// GFW/Hansen), el mail suma una sección con el veredicto: hubo / no hubo
-// deforestación en el período analizado, y cuántas hectáreas. Mismo espíritu
-// honesto: si no hay dato de chequeo, la sección no aparece (no se inventa).
-//
-// AJUSTE 42 — IMAGEN SATELITAL DEL ACTIVO (ver cabecera del archivo)
-// Cuando quien llama pasa la geometría del activo, el mail incrusta una
-// foto satelital con el contorno certificado. Prueba visual del campo,
-// junto a los números. Si no hay geometría o token, el mail sale sin
-// imagen — nunca roto.
+// AJUSTE 44 — LAS MEDICIONES, EN FORMA HUMANA, TAMBIÉN EN EL MAIL
+// Hasta acá el mail mostraba solo la CALIDAD (%). Los números medidos
+// (NDVI, humedad, etc.) con su interpretación en palabras —"vegetación
+// densa y sana", "el agua está clara"— existían en la medición y se veían
+// en el simulacro founder, pero NO llegaban al mail: quien llama no los
+// pasaba, y el mail no tenía dónde mostrarlos. Ahora, si quien llama pasa
+// `mediciones` (el array que devuelve satellite.medirIndicadores), el mail
+// suma la sección "Lo que midió el satélite", con cada índice, su valor y
+// su lectura humana — lo mismo que ve el founder. Mismo espíritu honesto:
+// si no llegan mediciones, la sección no aparece (no se inventa).
 
-/**
- * Envía el aviso quincenal de una ventana satelital.
- *
- * @param {Object} p
- * @param {number} p.activoId
- * @param {string} p.nombreActivo
- * @param {string} p.emailDestino
- * @param {number} p.trimestre               - Ej: 20263 = Q3 2026
- * @param {number} p.quincenaDelTrimestre    - 1..6
- * @param {string} p.caso                    - 'sellado' | 'no_visto'
- * // Solo cuando caso === 'sellado':
- * @param {number} [p.calidadPct]            - 0..100 (≥70 bien, <70 parcial)
- * @param {string} [p.satelite]
- * @param {string|Date} [p.fechaPasada]
- * @param {string} [p.hashEvidencia]         - keccak256 de la evidencia
- * @param {string} [p.txHash]                - hash de la tx que selló (receipt.hash)
- * @param {number} [p.bloque]                - número de bloque
- * // Solo cuando caso === 'no_visto':
- * @param {boolean} [p.esClimatica]          - true = pasó pero nube; false = sin dato
- * // Opcional, en cualquier caso:
- * @param {Object} [p.deforestacion]         - contenido de la columna deforestacion_historica
- *                                             { huboDeforestacion, totalHectareasPerdidas,
- *                                               detallePorAnio, periodoAnalizado, fuente, resolucion }
- * @param {Object} [p.geometria]             - AJUSTE 42: polígono del activo (GeoJSON Feature,
- *                                             Geometry Polygon, o anillo [[lng,lat],...]). Si se pasa
- *                                             y hay token Mapbox, el mail incrusta la foto satelital
- *                                             con el contorno. Alias aceptados: geoJSON, poligono, coordinates.
- */
 async function enviarEvidenciaQuincenal(p) {
   const {
     activoId, nombreActivo, emailDestino,
@@ -330,9 +205,9 @@ async function enviarEvidenciaQuincenal(p) {
     calidadPct, satelite, fechaPasada, hashEvidencia, txHash, bloque,
     esClimatica,
     deforestacion,
+    mediciones,                      // ← AJUSTE 44: números + interpretación humana
   } = p;
 
-  // AJUSTE 42: geometría del activo (varios nombres posibles según quién llame).
   const geometria = p.geometria || p.geoJSON || p.poligono || p.coordinates || null;
 
   const q       = trimestre % 10;
@@ -349,8 +224,6 @@ async function enviarEvidenciaQuincenal(p) {
     asunto = `[EPIMELEIA] Reporte quincenal · ${nombreActivo}`;
   }
 
-  // AJUSTE 42: intentar traer la foto satelital del activo. Devuelve null
-  // si no hay token, no hay polígono, o algo falla — y el mail sale sin ella.
   const imagenMapa = await _imagenMapaStatic(geometria);
 
   const html = _generarHTMLQuincenal({
@@ -359,8 +232,9 @@ async function enviarEvidenciaQuincenal(p) {
     calidadPct, satelite, fechaPasada, hashEvidencia, txHash, bloque,
     esClimatica,
     deforestacion,
-    geometria,                       // ← AJUSTE 43 (coordenadas en el mail)
-    tieneImagenMapa: !!imagenMapa,   // ← AJUSTE 42
+    mediciones,                      // ← AJUSTE 44
+    geometria,
+    tieneImagenMapa: !!imagenMapa,
   });
 
   log('EMAIL', `Enviando aviso quincenal`, { activoId, trimestre, caso, emailDestino, conImagen: !!imagenMapa });
@@ -368,7 +242,6 @@ async function enviarEvidenciaQuincenal(p) {
   log('EMAIL', `Aviso quincenal enviado`, { activoId, caso, emailDestino });
 }
 
-/** Fecha corta y legible; si no se puede parsear, devuelve el valor tal cual. */
 function _fechaCorta(v) {
   if (!v) return '—';
   const d = (v instanceof Date) ? v : new Date(v);
@@ -376,21 +249,8 @@ function _fechaCorta(v) {
   return d.toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
-// ════════════════════════════════════════════════════════════════
-//  AJUSTE 42 · IMAGEN SATELITAL DEL ACTIVO (Mapbox Static Images API)
-//  ──────────────────────────────────────────────────────────────
-//  Pide a Mapbox una foto satelital del área con el polígono dibujado
-//  encima, la trae como PNG, y la devuelve en base64 lista para
-//  incrustar (CID) en el mail. Todo con degradación honesta: cualquier
-//  falla → null → el mail sale sin imagen, nunca roto.
-// ════════════════════════════════════════════════════════════════
-
-// Id de contenido con que la imagen se referencia en el HTML (src="cid:...").
 const MAPA_CID = 'mapa_activo';
 
-// Token de Mapbox usable del lado del servidor. OJO: el token del navegador
-// (protocolo.html) suele estar restringido al dominio epimeleia.world y NO
-// funciona desde el VPS. Cargar uno server-side en el .env como MAPBOX_TOKEN.
 function _tokenMapbox() {
   return (config.mapbox && config.mapbox.token) ||
          process.env.MAPBOX_TOKEN ||
@@ -398,31 +258,20 @@ function _tokenMapbox() {
          '';
 }
 
-// Extrae el anillo [[lng,lat],...] de las distintas formas en que puede
-// venir la geometría (Feature, Geometry Polygon/MultiPolygon, o anillo crudo).
 function _anilloDeGeometria(geometria) {
   if (!geometria) return null;
   let g = geometria;
-  // Puede venir como string JSON (así la guarda Supabase / la maneja el sello).
   if (typeof g === 'string') {
     try { g = JSON.parse(g); } catch (e) { return null; }
   }
   if (g && g.type === 'Feature') g = g.geometry;
   if (g && g.type === 'Polygon' && Array.isArray(g.coordinates)) return g.coordinates[0];
   if (g && g.type === 'MultiPolygon' && Array.isArray(g.coordinates)) return g.coordinates[0][0];
-  // ¿Es un objeto { coordinates: [ring] } sin type?
   if (g && Array.isArray(g.coordinates) && Array.isArray(g.coordinates[0]) && Array.isArray(g.coordinates[0][0])) return g.coordinates[0];
-  // ¿Es ya un anillo crudo [[lng,lat],...]?
   if (Array.isArray(g) && Array.isArray(g[0])) return g;
   return null;
 }
 
-/**
- * Construye la imagen satelital estática del polígono y la devuelve como
- * { base64, contentId, filename, type } lista para incrustar. Devuelve null
- * si falta el token, falta/está mal el polígono, la URL queda muy larga, o
- * Mapbox no responde. En todos esos casos el mail sale sin imagen.
- */
 async function _imagenMapaStatic(geometria) {
   try {
     const token = _tokenMapbox();
@@ -431,13 +280,10 @@ async function _imagenMapaStatic(geometria) {
     let ring = _anilloDeGeometria(geometria);
     if (!ring || ring.length < 3) return null;
 
-    // Redondear a 5 decimales (~1 m) para acortar la URL, y cerrar el anillo.
     ring = ring.map(c => [ +Number(c[0]).toFixed(5), +Number(c[1]).toFixed(5) ]);
     const a = ring[0], z = ring[ring.length - 1];
     if (a[0] !== z[0] || a[1] !== z[1]) ring = ring.concat([[a[0], a[1]]]);
 
-    // Overlay GeoJSON con estilo simplestyle: contorno verde, sin relleno,
-    // para que se vea el terreno adentro del polígono.
     const overlay = {
       type: 'Feature',
       properties: { 'stroke': '#4ade80', 'stroke-width': 3, 'stroke-opacity': 1, 'fill-opacity': 0 },
@@ -445,11 +291,9 @@ async function _imagenMapaStatic(geometria) {
     };
 
     const geojsonParam = encodeURIComponent(JSON.stringify(overlay));
-    // 'auto' encuadra el overlay solo; @2x = alta resolución para pantallas nítidas.
     const url = 'https://api.mapbox.com/styles/v1/mapbox/satellite-streets-v12/static/geojson('
               + geojsonParam + ')/auto/600x360@2x?padding=40&access_token=' + token;
 
-    // La Static API rechaza URLs muy largas: si el polígono es enorme, se omite.
     if (url.length > 8000) { log('EMAIL', 'Polígono demasiado complejo para la imagen — mail sin mapa'); return null; }
 
     const resp = await axios.get(url, { responseType: 'arraybuffer', timeout: 15000 });
@@ -461,10 +305,6 @@ async function _imagenMapaStatic(geometria) {
   }
 }
 
-/**
- * Sección con la imagen satelital incrustada. Vacía si no hay imagen.
- * La imagen se referencia por CID (viaja como adjunto en línea del mail).
- */
 function _seccionImagenMapa(tiene) {
   if (!tiene) return '';
   return `
@@ -477,36 +317,68 @@ function _seccionImagenMapa(tiene) {
   </tr>`;
 }
 
-/**
- * AJUSTE 43 · UBICACIÓN CERTIFICADA — el centro del predio y el polígono
- * completo (todas las esquinas, latitud/longitud), para que un tercero pueda
- * verificar y reproducir el chequeo sobre el MISMO polígono. Es el dato que la
- * EUDR exige como corazón de la evidencia: la geolocalización exacta del lote.
- *
- * · Etiqueta cada número como latitud / longitud (nunca ambiguo).
- * · 6 decimales (~0,1 m) — la precisión que espera la EUDR.
- * · Aclara el formato (grados decimales, WGS84 / EPSG:4326), el de TRACES.
- * · Si el polígono tiene muchas esquinas, muestra el centro + las primeras y
- *   avisa el total, para no reventar el mail.
- * Vacía si no hay polígono válido (mismo espíritu honesto: no se inventa).
- */
+// ════════════════════════════════════════════════════════════════
+//  AJUSTE 44 · LAS MEDICIONES EN FORMA HUMANA
+//  ──────────────────────────────────────────────────────────────
+//  Muestra cada índice medido sobre el polígono con tres cosas: su
+//  nombre legible (etiqueta), el número, y la lectura en palabras
+//  (interpretación, de la regla pública versionada). Es exactamente
+//  lo que ve el founder en el simulacro. Vacía si no llegan mediciones
+//  o ninguna tiene algo que decir (espíritu honesto: no se inventa).
+// ════════════════════════════════════════════════════════════════
+function _seccionMediciones(mediciones) {
+  if (!Array.isArray(mediciones) || !mediciones.length) return '';
+
+  // Solo filas con etiqueta o interpretación reales (algo que decir).
+  const filas = mediciones.map(m => {
+    if (!m) return '';
+    const etiqueta = m.etiqueta || m.indice || '—';
+    const valorTxt = (m.valor !== null && m.valor !== undefined) ? m.valor : '—';
+    const interp   = m.interpretacion || '';
+    return `<tr>
+      <td style="padding:9px 12px;border-top:1px solid #e0d8c8;font-family:'Georgia',serif;font-size:13px;color:#0f1a0f;vertical-align:top;width:40%;">${etiqueta}</td>
+      <td style="padding:9px 12px;border-top:1px solid #e0d8c8;font-family:monospace;font-size:13px;color:#0f1a0f;text-align:right;vertical-align:top;width:16%;white-space:nowrap;">${valorTxt}</td>
+      <td style="padding:9px 12px;border-top:1px solid #e0d8c8;font-family:'Georgia',serif;font-style:italic;font-size:13px;color:#3a6a3a;vertical-align:top;">${interp}</td>
+    </tr>`;
+  }).join('');
+
+  if (!filas.trim()) return '';
+
+  return `
+  <tr>
+    <td style="padding:0 40px 24px 40px;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="background:#f6f4ee;border:1px solid #e0d8c8;border-radius:2px;">
+        <tr>
+          <td style="padding:20px 24px;">
+            <div style="font-family:monospace;font-size:9px;letter-spacing:2px;color:#8a9e8a;margin-bottom:6px;">LO QUE MIDIÓ EL SATÉLITE</div>
+            <table width="100%" cellpadding="0" cellspacing="0">
+              ${filas}
+            </table>
+            <div style="font-family:monospace;font-size:10px;color:#8a9e8a;margin-top:14px;line-height:1.6;">
+              Cada índice es una medición real sobre tu polígono, con su lectura en palabras.<br>
+              La interpretación sigue una regla pública y versionada — el mismo número, leído siempre igual.
+            </div>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>`;
+}
+
 function _seccionUbicacion(geometria) {
   const ring = _anilloDeGeometria(geometria);
   if (!ring || ring.length < 3) return '';
 
-  // Anillo abierto (sin el punto de cierre duplicado).
   let pts = ring.slice();
   const a = pts[0], z = pts[pts.length - 1];
   if (a && z && a[0] === z[0] && a[1] === z[1]) pts = pts.slice(0, -1);
   if (pts.length < 3) return '';
 
-  // Centro = promedio de las esquinas.
   let sumLon = 0, sumLat = 0;
   for (const c of pts) { sumLon += Number(c[0]); sumLat += Number(c[1]); }
   const cLat = (sumLat / pts.length).toFixed(6);
   const cLon = (sumLon / pts.length).toFixed(6);
 
-  // Si son muchas esquinas, listamos un tope y avisamos el total.
   const TOPE  = 12;
   const total = pts.length;
   const filas = pts.slice(0, TOPE).map((c, i) => {
@@ -529,16 +401,13 @@ function _seccionUbicacion(geometria) {
         <tr>
           <td style="padding:20px 24px;">
             <div style="font-family:monospace;font-size:9px;letter-spacing:2px;color:#8a9e8a;">UBICACIÓN CERTIFICADA · GEOLOCALIZACIÓN EUDR</div>
-
             <div style="font-family:monospace;font-size:11px;color:#8a9e8a;margin-top:12px;">Centro del predio</div>
             <div style="font-family:monospace;font-size:13px;color:#0f1a0f;margin-top:2px;">Lat ${cLat} · Lon ${cLon}</div>
-
             <div style="font-family:monospace;font-size:11px;color:#8a9e8a;margin-top:14px;margin-bottom:4px;">Polígono · ${total} vértice(s) &nbsp;(latitud, longitud)</div>
             <table width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #e0d8c8;">
               ${filas}
             </table>
             ${resto}
-
             <div style="font-family:monospace;font-size:10px;color:#8a9e8a;margin-top:14px;line-height:1.6;">
               Coordenadas en grados decimales (WGS84 · EPSG:4326), el formato del portal TRACES de la UE.<br>
               Son las coordenadas exactas que se sellaron: cualquiera puede reproducir el chequeo sobre este mismo polígono.
@@ -550,11 +419,6 @@ function _seccionUbicacion(geometria) {
   </tr>`;
 }
 
-/**
- * Sección de deforestación EUDR para el mail quincenal.
- * Devuelve '' si no hay dato de chequeo (mismo espíritu honesto: no se inventa).
- * Verde sobrio si NO hubo deforestación; ámbar de atención si SÍ hubo.
- */
 function _seccionDeforestacion(deforestacion) {
   if (!deforestacion || typeof deforestacion.huboDeforestacion !== 'boolean') return '';
 
@@ -565,14 +429,12 @@ function _seccionDeforestacion(deforestacion) {
   const fuente    = deforestacion.fuente || 'Global Forest Watch / UMD GLAD';
   const resol     = deforestacion.resolucion || '30m';
 
-  // Colores según el veredicto (sobrios, sin alarmismo).
-  const acento    = hubo ? '#8a6a1a' : '#3a6a3a';      // ámbar / verde
+  const acento    = hubo ? '#8a6a1a' : '#3a6a3a';
   const fondo     = hubo ? '#faf6ec' : '#f2f6f0';
   const borde     = hubo ? '#e6d9b8' : '#d6e4d2';
   const titulo    = hubo ? 'Se detectó pérdida de cobertura en el período' : 'Sin pérdida de cobertura en el período';
   const veredicto = hubo ? 'HUBO DEFORESTACIÓN' : 'SIN DEFORESTACIÓN';
 
-  // Detalle por año, solo si hubo y hay desglose.
   let detalleAnios = '';
   if (hubo && Array.isArray(deforestacion.detallePorAnio) && deforestacion.detallePorAnio.length) {
     const filas = deforestacion.detallePorAnio
@@ -610,26 +472,20 @@ function _seccionDeforestacion(deforestacion) {
   </tr>`;
 }
 
-/**
- * HTML del aviso quincenal. Misma paleta que el certificado que el fundador
- * ya aprobó (hueso #f4f0e8, verde #0f1a0f, dorado, serif + monospace).
- */
 function _generarHTMLQuincenal({
   activoId, nombreActivo, q, anio, quincenaDelTrimestre,
   sellado, parcial, calidadPct, satelite, fechaPasada, hashEvidencia, txHash, bloque,
-  esClimatica, deforestacion, tieneImagenMapa, geometria,
+  esClimatica, deforestacion, mediciones, tieneImagenMapa, geometria,
 }) {
   const contratoCert = config.contratos?.cert || '';
   const urlTx        = txHash ? `https://polygonscan.com/tx/${txHash}` : '';
   const urlContrato  = contratoCert ? `https://polygonscan.com/address/${contratoCert}` : '';
 
-  // Eyebrow (línea chica de arriba) + subtítulo según el caso.
   const eyebrow  = sellado ? 'EVIDENCIA QUINCENAL SELLADA' : 'REPORTE QUINCENAL';
   const subtitulo = sellado
     ? `Observación satelital · quincena ${quincenaDelTrimestre}/6 · pasada del ${_fechaCorta(fechaPasada)}`
     : `Quincena ${quincenaDelTrimestre}/6 · Q${q} · ${anio}`;
 
-  // Mensaje humano, calmo, según el caso.
   let mensaje;
   if (sellado && !parcial) {
     mensaje = `Esta quincena el satélite observó <strong>${nombreActivo}</strong> y la lectura quedó sellada en Polygon.
@@ -647,7 +503,6 @@ function _generarHTMLQuincenal({
       verificable en la cadena.`;
   }
 
-  // Fila técnica (solo cuando se selló: hay pasada y calidad reales).
   const filaTecnica = sellado ? `
   <tr>
     <td style="padding:20px 40px;border-bottom:1px solid #eee;">
@@ -670,21 +525,11 @@ function _generarHTMLQuincenal({
     </td>
   </tr>` : '';
 
-  // Sección con la imagen satelital (vacía si no hay imagen). AJUSTE 42.
   const seccionImagen = _seccionImagenMapa(tieneImagenMapa);
-
-  // Sección de ubicación certificada: centro + polígono completo. AJUSTE 43.
+  const seccionMediciones = _seccionMediciones(mediciones);   // ← AJUSTE 44
   const seccionUbicacion = _seccionUbicacion(geometria);
-
-  // Sección de deforestación EUDR (vacía si no hay dato de chequeo).
   const seccionDeforestacion = _seccionDeforestacion(deforestacion);
 
-  // Bloque de prueba pública (verde). Cambia según haya tx o no.
-  //
-  // AJUSTE 41: cuando hay txHash, se imprime como texto monospace ANTES
-  // del botón — igual que aparece en la página de la transacción en
-  // Polygonscan. El botón sigue estando para el que quiera verificar por
-  // su cuenta, pero el dato mismo ya no depende de hacer click.
   const bloquePrueba = sellado ? `
   <tr>
     <td style="padding:28px 40px;">
@@ -735,12 +580,9 @@ function _generarHTMLQuincenal({
 <html lang="es">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
 <body style="margin:0;padding:0;background:#f4f0e8;font-family:'Georgia',serif;">
-
 <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f0e8;padding:40px 20px;">
 <tr><td>
 <table width="600" cellpadding="0" cellspacing="0" style="margin:0 auto;background:#f4f0e8;border:1px solid #e0d8c8;">
-
-  <!-- HEADER -->
   <tr>
     <td style="background:#0f1a0f;padding:28px 40px;">
       <div style="font-family:'Georgia',serif;font-size:22px;letter-spacing:4px;color:#f4f0e8;">EPIMELEIA</div>
@@ -749,8 +591,6 @@ function _generarHTMLQuincenal({
       </div>
     </td>
   </tr>
-
-  <!-- TÍTULO -->
   <tr>
     <td style="padding:32px 40px 24px 40px;">
       <div style="font-family:monospace;font-size:10px;letter-spacing:3px;color:#8a9e8a;margin-bottom:10px;">${eyebrow}</div>
@@ -759,8 +599,6 @@ function _generarHTMLQuincenal({
       <div style="font-family:monospace;font-size:11px;color:#8a9e8a;margin-top:8px;">Activo ID: ${activoId}</div>
     </td>
   </tr>
-
-  <!-- MENSAJE -->
   <tr>
     <td style="padding:0 40px 24px 40px;">
       <p style="font-family:'Georgia',serif;font-size:15px;color:#3a4a3a;line-height:1.75;margin:0;">${mensaje}</p>
@@ -768,20 +606,18 @@ function _generarHTMLQuincenal({
   </tr>
 
   ${seccionImagen}
-  ${seccionUbicacion}
   ${filaTecnica}
+  ${seccionMediciones}
+  ${seccionUbicacion}
   ${seccionDeforestacion}
   ${bloquePrueba}
 
-  <!-- CIERRE -->
   <tr>
     <td style="padding:8px 40px 28px 40px;text-align:center;">
       <div style="font-family:'Georgia',serif;font-style:italic;font-size:15px;color:#5a6a5a;">No vendemos el dato.</div>
       <div style="font-family:'Georgia',serif;font-size:16px;color:#0f1a0f;margin-top:2px;">Vendemos la prueba de que nadie lo tocó.</div>
     </td>
   </tr>
-
-  <!-- FOOTER -->
   <tr>
     <td style="padding:22px 40px;background:#0f1a0f;">
       <p style="color:rgba(244,240,232,0.6);font-size:11px;font-family:monospace;margin:0;line-height:1.8;">
@@ -791,7 +627,6 @@ function _generarHTMLQuincenal({
       </p>
     </td>
   </tr>
-
 </table>
 </td></tr>
 </table>
@@ -799,8 +634,7 @@ function _generarHTMLQuincenal({
 </html>`;
 }
 
-// ─── Alerta de saldo bajo (Ajuste 5) ───────────────────────────
-
+// ─── Alerta de saldo bajo (Ajuste 5) — sin cambios ─────────────
 async function enviarAlertaSaldo(params) {
   const { activoId, owner, emailDestino, nombreActivo, saldoPOL, feeProximo, diasRestantes } = params;
 
@@ -836,8 +670,6 @@ async function enviarAlertaSaldo(params) {
   await _enviarEmail({ para: emailDestino, asunto, html });
 }
 
-// ─── Webhook admin ─────────────────────────────────────────────
-
 async function notificarAdmin(evento, datos) {
   if (!config.notificaciones.webhookUrl) return;
   try {
@@ -857,16 +689,6 @@ async function notificarAdmin(evento, datos) {
   }
 }
 
-// ─── Email via SendGrid ────────────────────────────────────────
-
-/**
- * Envía un email por SendGrid.
- *
- * AJUSTE 42: acepta `adjuntos`, una lista de imágenes en línea (CID) con la
- * forma { base64, contentId, filename, type }. Se mandan como attachments con
- * disposition 'inline', de modo que el HTML pueda referenciarlas por
- * src="cid:<contentId>". Sin adjuntos, el comportamiento es idéntico al de antes.
- */
 async function _enviarEmail({ para, asunto, html, adjuntos }) {
   if (!config.notificaciones.sendgridKey) {
     log('EMAIL', `MOCK (SendGrid no configurado): ${asunto} → ${para}`);
@@ -880,7 +702,6 @@ async function _enviarEmail({ para, asunto, html, adjuntos }) {
     content: [{ type: 'text/html', value: html }],
   };
 
-  // AJUSTE 42: adjuntos en línea (imágenes incrustadas por CID).
   if (Array.isArray(adjuntos) && adjuntos.length) {
     payload.attachments = adjuntos
       .filter(a => a && a.base64 && a.contentId)

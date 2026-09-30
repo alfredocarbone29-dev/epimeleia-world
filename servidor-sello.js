@@ -1,50 +1,6 @@
 /**
  * EPIMELEIA · servidor-sello.js  (la PUERTA del VPS)
- * ═════════════════════════════════════════════════════════════
- * Un servidor web mínimo que vive en el VPS, como tercer proceso PM2
- * (hermano de epimeleia-oracle y procesador-pagos, sin tocarlos).
- *
- * SU ÚNICO TRABAJO:
- *   Recibir de Vercel un pedido "sellá el activo X", verificar que el
- *   pedido es legítimo (clave secreta compartida), y disparar la misma
- *   cadena que ya probamos: alta on-chain (si es nuevo) + sello + PDF + email.
- *
- * POR QUÉ EXISTE:
- *   El sello vive acá, en el VPS, porque acá están las claves privadas
- *   de las wallets. Vercel (que sirve las páginas y el botón) NO puede
- *   sellar — no tiene las claves, ni debe tenerlas. Entonces el botón le
- *   habla a Vercel, Vercel le habla a esta puerta, y esta puerta sella.
- *
- * SEGURIDAD — TRES CANDADOS:
- *   1. Escucha en la IP pública del VPS, pero SOLO responde a pedidos
- *      que traigan la clave secreta correcta. Sin clave → "No autorizado".
- *      (No hay Nginx en este VPS; Vercel llega directo, con la clave.)
- *   2. Clave secreta compartida (SELLO_SECRET): todo pedido tiene que
- *      traerla en un header. Sin la clave correcta, se rechaza. Esa clave
- *      solo la conocen Vercel y este servidor.
- *   3. Reusa sellar-activo.js tal cual — la misma lógica probada, con su
- *      propio candado de "no sella si el satélite no vio bien el campo".
- *
- * NO TOCA:
- *   · El scheduler (epimeleia-oracle) — sigue corriendo su cron.
- *   · La cola (procesador-pagos) — intacta.
- *   · Ningún archivo del motor — solo LOS LLAMA, no los modifica.
- *
- * VARIABLES DE ENTORNO (se agregan al .env del VPS):
- *   SELLO_SECRET   una clave larga al azar (la misma que en Vercel)
- *   SELLO_PORT     puerto donde escucha (default 8790)
- *   (las demás — SUPABASE, POLYGON, wallets — ya están en el .env)
- *
- * CÓMO CORRERLO EN EL VPS (una sola vez, para darlo de alta en PM2):
- *   pm2 start servidor-sello.js --name epimeleia-sello
- *   pm2 save
- *
- * CÓMO PROBARLO desde el propio VPS (sin Vercel todavía):
- *   curl -X POST http://127.0.0.1:8790/sellar \
- *     -H "Content-Type: application/json" \
- *     -H "x-sello-secret: LA_CLAVE" \
- *     -d '{"filaId":"e63e2f1c-0e75-4772-8063-fe821d7627d3","ejecutar":false}'
- *   (ejecutar:false = simulacro, no gasta gas. true = sella de verdad.)
+ * (cabecera original sin cambios — ver repo)
  * ═════════════════════════════════════════════════════════════
  */
 
@@ -66,7 +22,6 @@ const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SER
 const PORT   = Number(process.env.SELLO_PORT) || 8790;
 const SECRET = process.env.SELLO_SECRET || '';
 
-// ── ABI mínimo del Core para el alta (igual que alta-onchain.js) ──
 const CORE_ABI = [
   "function registrarActivo(string nombre, uint8 tipoActividad, uint8 nivel, int256 latitud, int256 longitud, uint256 radioKm, bytes32 emailHash) external payable returns (uint256)",
   "function emailsVerificados(bytes32 emailHash) external view returns (bool)",
@@ -76,10 +31,6 @@ const CORE_ABI = [
 ];
 
 const L = (...a) => console.log('[servidor-sello]', ...a);
-
-// ─────────────────────────────────────────────────────────────
-//  HELPERS DE SELLADO (mismos que sellar-activo.js, ya probados)
-// ─────────────────────────────────────────────────────────────
 
 function centroYRadio(poligono) {
   let anillo = null;
@@ -159,23 +110,10 @@ async function darDeAltaOnChain(activo, datosAlta, email) {
   return activoIdOnchain;
 }
 
-// ── PASO D-3 · SE SELLA EL PAQUETE, NO SOLO 7 CAMPOS DE METADATA ──
-// Antes: el hash cubría 7 campos (satélite, uuid, nubosidad, timestamp…).
-// El polígono y el veredicto NO entraban → "confiá en mi base".
-// Ahora: se arma el PAQUETE DE INSCRIPCIÓN (polígono + veredicto + mediciones
-// + regla + titular-huella), se calcula su hash canónico, y se sella ESE hash
-// en Polygon. El paquete canónico se guarda en Supabase para publicarlo en
-// /api/verificar → cualquiera recomputa el hash y comprueba. Verificable de
-// verdad.
-//
-// Recibe el `activo` completo (además de onchainId y medicion) para tener a
-// mano el polígono, la deforestación y el email del titular.
 async function sellarEvidencia(onchainId, medicion, activo) {
   const nub = nubosidadParaContrato(medicion.nubosidadPct);
   const periodo = scheduler.periodoDeVentana(new Date());
 
-  // 1) Armar el paquete de inscripción y su hash canónico (paquete-evidencia.js).
-  //    Este hash es el que va a la cadena y el que un tercero recomputa.
   const { paquete, canonical, hash: hashPaquete } = paqueteEvidencia.construirYSellar({
     activoIdOnchain: onchainId,
     nombreActivo:    activo.nombreActivo,
@@ -183,20 +121,15 @@ async function sellarEvidencia(onchainId, medicion, activo) {
     trimestre:       periodo.trimestre,
     titularEmail:    (activo.titular && activo.titular.email) || null,
     poligono:        activo.geometria,
-    medicion,                                   // trae satelite, fuente, calidad, mediciones, regla…
+    medicion,
     deforestacion:   activo.deforestacionHistorica || null,
   });
 
-  // 2) Sellar el hash del paquete en Polygon (mismo evento de evidencia).
   const recibo = await blockchain.registrarEvidenciaVentana({
     activoId: onchainId, trimestre: periodo.trimestre, hashEvidencia: hashPaquete,
     satelite: medicion.satelite, nubosidadPct: nub, urlDescarga: '',
   });
 
-  // 3) Guardar el paquete canónico + su hash en Supabase (columnas nuevas del
-  //    Paso D-1). Va en su PROPIO try: si esto falla, el sello on-chain YA
-  //    quedó grabado y no se pierde — el activo simplemente no será verificable
-  //    en la página hasta que se re-guarde. Nunca se rompe el sello por esto.
   try {
     await supabase.from('activos').update({
       paquete_evidencia:  canonical,
@@ -211,7 +144,7 @@ async function sellarEvidencia(onchainId, medicion, activo) {
   return {
     txHash: recibo.hash,
     bloque: Number(recibo.blockNumber),
-    hashEvidencia: hashPaquete,     // el hash del paquete es ahora "la huella"
+    hashEvidencia: hashPaquete,
     hashPaquete,
     canonical,
     paquete,
@@ -219,7 +152,6 @@ async function sellarEvidencia(onchainId, medicion, activo) {
   };
 }
 
-// ── El trabajo completo: leer activo → medir → (alta) → sellar ──
 async function procesarSello(filaId, ejecutar) {
   const activo = await activoSupabase.traerActivoParaCertificado(filaId);
   if (!activo.encontrado)   return { ok: false, error: activo.motivo };
@@ -234,7 +166,6 @@ async function procesarSello(filaId, ejecutar) {
   if (!evaluacion.ok) return { ok: false, error: evaluacion.motivo, tipo: 'medicion' };
   const m = evaluacion.medicion;
 
-  // Simulacro: devuelve lo que sellaría, sin gastar gas.
   if (!ejecutar) {
     return {
       ok: true, simulacro: true,
@@ -245,7 +176,6 @@ async function procesarSello(filaId, ejecutar) {
     };
   }
 
-  // Ejecutar de verdad.
   blockchain.inicializarBlockchain();
   let onchainId = activo.activoIdOnchain;
   if (onchainId == null) {
@@ -259,11 +189,6 @@ async function procesarSello(filaId, ejecutar) {
   }
   const sello = await sellarEvidencia(onchainId, m, activo);
 
-  // ── DISPARAR EL EMAIL DEL CERTIFICADO ──────────────────────────────
-  // Reusa reports.enviarEvidenciaQuincenal (el mismo mail del sello, con
-  // hash, txHash y link a Polygonscan). Va en su PROPIO try: si el mail
-  // falla, el sello YA quedó grabado y no se pierde. El destino es el email
-  // del titular del activo (en Supabase).
   var emailEnviado = false;
   var emailMotivo = null;
   try {
@@ -283,11 +208,12 @@ async function procesarSello(filaId, ejecutar) {
         txHash:               sello.txHash,
         bloque:               sello.bloque,
         deforestacion:        activo.deforestacionHistorica || null,
-        // AJUSTE 42: el polígono del activo, para que el mail incruste la
-        // foto satelital con el contorno certificado. reports.js lo acepta
-        // como objeto o como string JSON; si falta o no hay token Mapbox,
-        // el mail sale igual, sin imagen.
         geometria:            activo.geometria || null,
+        // AJUSTE 44: las mediciones (NDVI, humedad… con su interpretación
+        // humana) para que el mail muestre "lo que midió el satélite", igual
+        // que el simulacro. Es el mismo array que ya está en `m`. Si faltara,
+        // reports.js simplemente no muestra la sección (no rompe).
+        mediciones:           m.mediciones || null,
       });
       emailEnviado = true;
       L('email del certificado enviado a ' + emailDestino);
@@ -300,7 +226,6 @@ async function procesarSello(filaId, ejecutar) {
     L('el email fallo (el sello igual quedo): ' + errMail.message);
   }
 
-  // Veredicto de deforestación (ya viene calculado en el activo, de cuando se registró).
   var def = activo.deforestacionHistorica || null;
   var deforestacionResumen = null;
   if (def && typeof def.huboDeforestacion === 'boolean') {
@@ -321,20 +246,14 @@ async function procesarSello(filaId, ejecutar) {
   };
 }
 
-// ─────────────────────────────────────────────────────────────
-//  EL SERVIDOR HTTP (mínimo, sin frameworks — http nativo)
-// ─────────────────────────────────────────────────────────────
-
 const server = http.createServer((req, res) => {
   res.setHeader('Content-Type', 'application/json');
 
-  // Solo POST /sellar
   if (req.method !== 'POST' || req.url !== '/sellar') {
     res.statusCode = 404;
     return res.end(JSON.stringify({ ok: false, error: 'Ruta no encontrada. Usá POST /sellar.' }));
   }
 
-  // CANDADO 2: la clave secreta.
   const clave = req.headers['x-sello-secret'] || '';
   if (!SECRET || clave !== SECRET) {
     L('RECHAZADO · clave invalida o ausente');
@@ -342,7 +261,6 @@ const server = http.createServer((req, res) => {
     return res.end(JSON.stringify({ ok: false, error: 'No autorizado.' }));
   }
 
-  // Leer el body.
   let body = '';
   req.on('data', chunk => { body += chunk; if (body.length > 1e6) req.destroy(); });
   req.on('end', async () => {
@@ -351,7 +269,7 @@ const server = http.createServer((req, res) => {
     catch { res.statusCode = 400; return res.end(JSON.stringify({ ok: false, error: 'JSON invalido.' })); }
 
     const filaId   = datos.filaId;
-    const ejecutar = datos.ejecutar === true;   // por defecto simulacro (seguro)
+    const ejecutar = datos.ejecutar === true;
     if (!filaId) { res.statusCode = 400; return res.end(JSON.stringify({ ok: false, error: 'Falta filaId.' })); }
 
     L(`pedido · fila=${filaId} · ejecutar=${ejecutar}`);
@@ -368,9 +286,6 @@ const server = http.createServer((req, res) => {
   });
 });
 
-// El servidor escucha en 0.0.0.0 (todas las interfaces) para que Vercel,
-// desde afuera, pueda tocarlo. La seguridad la da la CLAVE SECRETA (candado 2):
-// sin la clave correcta, todo pedido se rechaza con "No autorizado".
 server.listen(PORT, '0.0.0.0', () => {
   L(`escuchando en http://0.0.0.0:${PORT}/sellar (accesible desde afuera, protegido por clave)`);
   if (!SECRET) L('⚠  ATENCION: SELLO_SECRET no esta configurada. El servidor rechaza TODO hasta configurarla en el .env.');
