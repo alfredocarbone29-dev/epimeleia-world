@@ -131,7 +131,16 @@ section { position:relative; }
 .puerta.dibuja .puerta-k, .puerta.dibuja .puerta-arrow, .puerta.dibuja .puerta-ico { color:var(--gold2); }
 .puerta.dibuja .puerta-ico svg { stroke:var(--gold2); }
 
-@media(max-width:680px){ .puertas-grid { grid-template-columns:1fr; } .puerta { min-height:0; } }
+/* puerta Verificar — naturaleza distinta (comprobar, no contratar).
+   Va centrada abajo, en su propia fila, con un tono neutro para no
+   competir con las cuatro puertas de contratación. */
+.puertas-verificar { display:flex; justify-content:center; margin-top:14px; }
+.puerta.verificar { max-width:calc(50% - 7px); background:linear-gradient(150deg, rgba(126,140,126,0.08), var(--card) 60%); border-color:var(--line2); }
+.puerta.verificar:hover { border-color:var(--muted); }
+.puerta.verificar .puerta-k, .puerta.verificar .puerta-arrow, .puerta.verificar .puerta-ico { color:var(--muted); }
+.puerta.verificar .puerta-ico svg { stroke:var(--muted); }
+
+@media(max-width:680px){ .puertas-grid { grid-template-columns:1fr; } .puerta { min-height:0; } .puerta.verificar { max-width:100%; } }
 
 /* ─── SECCIÓN genérica ─── */
 .sec { max-width:1080px; margin:0 auto; padding:clamp(52px,8vw,96px) clamp(24px,5vw,64px); }
@@ -352,6 +361,28 @@ section { position:relative; }
       </a>
 
     </div>
+
+    <!-- VERIFICAR (centrada abajo · naturaleza distinta: comprobar, no contratar) -->
+    <div class="puertas-verificar">
+      <a class="puerta verificar" href="verificar.html">
+        <div class="puerta-top">
+          <span class="puerta-k">PRUEBA PÚBLICA</span>
+          <span class="puerta-ico">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="11" cy="11" r="7" stroke-width="1.5"/>
+              <path d="M21 21l-4.3-4.3" stroke-width="1.6"/>
+              <path d="M8.3 11l1.8 1.8 3.6-3.6" stroke-width="1.5"/>
+            </svg>
+          </span>
+        </div>
+        <div>
+          <div class="puerta-name">EPIMELEIA VERIFICAR</div>
+          <div class="puerta-sub">Chequeá de forma inapelable cualquier activo que sellamos. La huella se recalcula en tu navegador.</div>
+        </div>
+        <span class="puerta-arrow">VERIFICAR →</span>
+      </a>
+    </div>
+
   </div>
 </section>
 
