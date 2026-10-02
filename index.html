@@ -12,8 +12,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>EPIMELEIA — Prueba satelital del estado real de tu campo, agua o bosque</title>
-
-<!-- Postal de compartir (Open Graph + Twitter) -->
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="EPIMELEIA">
 <meta property="og:title" content="EPIMELEIA">
@@ -35,7 +33,6 @@
   --text:#E8E4DA; --muted:#7E8C7E; --dim:#445844;
   --green:#4A8A4A; --emerald:#5FAD5F; --teal:#3A8A7A; --gold:#C8A84B; --gold2:#E5C870; --white:#F4F0E8;
   --amber:#C89A4A; --azure:#8FB0DA;
-  /* certificado (parchment, fiel al documento real) */
   --cert-bg:#F4F0E8; --cert-ink:#1B2C1B; --cert-green:#2D4A2D; --cert-gold:#B8963F;
   --cert-muted:#6B7A6B; --cert-line:rgba(27,44,27,0.14); --cert-seal:#0F1F0F;
 }
@@ -55,8 +52,6 @@ body::after {
 }
 section { position:relative; }
 .divider { height:1px; background:var(--line); max-width:1180px; margin:0 auto; }
-
-/* ─── TOPBAR ─── */
 .topbar {
   position:sticky; top:0; z-index:100;
   display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:16px;
@@ -76,8 +71,6 @@ section { position:relative; }
 .topnav .nav-prueba:hover { border-color:var(--emerald); }
 .topnav .nav-gratis { color:var(--gold2); border-color:rgba(200,168,75,0.25); }
 .topnav .nav-gratis:hover { border-color:var(--gold); }
-
-/* ─── HERO ─── */
 .hero { max-width:1080px; margin:0 auto; padding:clamp(64px,12vw,140px) clamp(24px,5vw,64px) clamp(48px,8vw,88px); text-align:center; }
 .hero-mark { font-family:'Playfair Display',serif; font-weight:400; font-size:clamp(46px,11vw,120px); letter-spacing:clamp(6px,2vw,22px); color:var(--white); line-height:1; }
 .hero-welcome { font-family:'JetBrains Mono',monospace; font-size:clamp(9px,1.2vw,12px); letter-spacing:6px; color:var(--teal); margin-top:22px; }
@@ -86,7 +79,7 @@ section { position:relative; }
 .hero-lead em { font-style:italic; color:var(--emerald); }
 .hero-plain { font-size:clamp(17px,1.7vw,20px); color:rgba(232,228,218,0.7); max-width:660px; margin:32px auto 0; line-height:1.7; }
 
-/* ─── CUATRO PUERTAS (rectángulos grandes) ─── */
+/* ─── PUERTAS (grilla 2×3 · seis botones) ─── */
 .puertas { max-width:1000px; margin:clamp(44px,7vw,72px) auto 0; }
 .puertas-lead { font-family:'JetBrains Mono',monospace; font-size:clamp(10px,1.3vw,12px); letter-spacing:4px; color:var(--teal); margin-bottom:clamp(26px,4vw,38px); }
 .puertas-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; text-align:left; }
@@ -107,42 +100,33 @@ section { position:relative; }
 .puerta-name { font-family:'Playfair Display',serif; font-size:clamp(24px,3.4vw,38px); color:var(--white); line-height:1.08; margin-top:18px; }
 .puerta-sub { font-size:clamp(14.5px,1.5vw,17px); color:rgba(232,228,218,0.62); line-height:1.5; margin-top:12px; }
 .puerta-arrow { font-family:'JetBrains Mono',monospace; font-size:clamp(10px,1.2vw,12px); letter-spacing:1.5px; margin-top:22px; display:inline-flex; align-items:center; gap:8px; }
-
-/* puerta EUDR — la estrella (verde esmeralda, resaltada) */
 .puerta.eudr { background:linear-gradient(150deg, rgba(95,173,95,0.10), var(--card) 60%); border-color:rgba(95,173,95,0.4); }
 .puerta.eudr:hover { border-color:var(--emerald); }
 .puerta.eudr .puerta-k, .puerta.eudr .puerta-arrow, .puerta.eudr .puerta-ico { color:var(--emerald); }
 .puerta.eudr .puerta-ico svg { stroke:var(--emerald); }
-
-/* puerta Plataforma */
 .puerta.plataforma:hover { border-color:var(--teal); }
 .puerta.plataforma .puerta-k, .puerta.plataforma .puerta-arrow, .puerta.plataforma .puerta-ico { color:var(--teal); }
 .puerta.plataforma .puerta-ico svg { stroke:var(--teal); }
-
-/* puerta Instituciones (tono azul corporativo) */
 .puerta.instituciones { background:linear-gradient(150deg, rgba(143,176,218,0.08), var(--card) 60%); }
 .puerta.instituciones:hover { border-color:var(--azure); }
 .puerta.instituciones .puerta-k, .puerta.instituciones .puerta-arrow, .puerta.instituciones .puerta-ico { color:var(--azure); }
 .puerta.instituciones .puerta-ico svg { stroke:var(--azure); }
-
-/* puerta Dibujá y certificá (dorada, acción directa) */
 .puerta.dibuja { background:linear-gradient(150deg, rgba(200,168,75,0.10), var(--card) 60%); border-color:rgba(200,168,75,0.35); }
 .puerta.dibuja:hover { border-color:var(--gold); }
 .puerta.dibuja .puerta-k, .puerta.dibuja .puerta-arrow, .puerta.dibuja .puerta-ico { color:var(--gold2); }
 .puerta.dibuja .puerta-ico svg { stroke:var(--gold2); }
-
-/* puerta Verificar — naturaleza distinta (comprobar, no contratar).
-   Va centrada abajo, en su propia fila, con un tono neutro para no
-   competir con las cuatro puertas de contratación. */
-.puertas-verificar { display:flex; justify-content:center; margin-top:14px; }
-.puerta.verificar { max-width:calc(50% - 7px); background:linear-gradient(150deg, rgba(126,140,126,0.08), var(--card) 60%); border-color:var(--line2); }
+/* Verificar — comprobar (tono neutro) */
+.puerta.verificar { background:linear-gradient(150deg, rgba(126,140,126,0.08), var(--card) 60%); border-color:var(--line2); }
 .puerta.verificar:hover { border-color:var(--muted); }
 .puerta.verificar .puerta-k, .puerta.verificar .puerta-arrow, .puerta.verificar .puerta-ico { color:var(--muted); }
 .puerta.verificar .puerta-ico svg { stroke:var(--muted); }
+/* Contacto — hablar / contratar (verde cálido) */
+.puerta.contacto { background:linear-gradient(150deg, rgba(95,173,95,0.08), var(--card) 60%); border-color:rgba(95,173,95,0.3); text-align:left; }
+.puerta.contacto:hover { border-color:var(--emerald); }
+.puerta.contacto .puerta-k, .puerta.contacto .puerta-arrow, .puerta.contacto .puerta-ico { color:var(--emerald); }
+.puerta.contacto .puerta-ico svg { stroke:var(--emerald); }
+@media(max-width:680px){ .puertas-grid { grid-template-columns:1fr; } .puerta { min-height:0; } }
 
-@media(max-width:680px){ .puertas-grid { grid-template-columns:1fr; } .puerta { min-height:0; } .puerta.verificar { max-width:100%; } }
-
-/* ─── SECCIÓN genérica ─── */
 .sec { max-width:1080px; margin:0 auto; padding:clamp(52px,8vw,96px) clamp(24px,5vw,64px); }
 .sec-narrow { max-width:1000px; }
 .eyebrow { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:3px; color:var(--teal); }
@@ -151,19 +135,13 @@ section { position:relative; }
 .head-title { font-family:'Playfair Display',serif; font-weight:400; font-size:clamp(24px,3.6vw,42px); color:var(--white); line-height:1.2; max-width:820px; margin:0 auto; }
 .head-title em { font-style:italic; color:var(--emerald); }
 .head-sub { font-size:clamp(16px,1.7vw,19px); color:rgba(232,228,218,0.62); max-width:620px; margin:22px auto 0; line-height:1.7; }
-
-/* ─── CÓMO FUNCIONA (pasos) ─── */
 .steps { display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--line); border:1px solid var(--line); max-width:980px; margin:0 auto; }
 .step { background:var(--deep); padding:clamp(26px,3.2vw,38px) clamp(20px,2.2vw,30px); text-align:left; }
 .step-k { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:2px; color:var(--teal); margin-bottom:14px; }
 .step-t { font-family:'Playfair Display',serif; font-size:clamp(19px,2.1vw,24px); color:var(--white); margin-bottom:10px; }
 .step-d { font-size:15.5px; color:rgba(232,228,218,0.62); line-height:1.6; }
-
-/* ─── LA PRUEBA (certificado real + registro on-chain) ─── */
 .prueba { max-width:1080px; margin:0 auto; padding:clamp(52px,8vw,96px) clamp(24px,5vw,64px); }
 .prueba .head-title em { color:var(--gold2); }
-
-/* registro on-chain (ledger) */
 .ledger-head { text-align:center; margin:clamp(52px,7vw,80px) auto clamp(28px,4vw,40px); }
 .ledger-head .eyebrow { margin-bottom:14px; }
 .ledger-head h3 { font-family:'Playfair Display',serif; font-size:clamp(20px,2.6vw,28px); color:var(--white); line-height:1.25; max-width:680px; margin:0 auto; }
@@ -181,8 +159,6 @@ section { position:relative; }
 .ledger-cap a:hover { color:var(--text); }
 .prueba-close { max-width:680px; margin:clamp(40px,6vw,58px) auto 0; text-align:center; padding-top:clamp(32px,4vw,44px); border-top:1px solid var(--line); font-family:'Playfair Display',serif; font-style:italic; font-size:clamp(18px,2.3vw,27px); color:var(--white); line-height:1.35; }
 .prueba-close span { font-style:normal; color:var(--gold2); }
-
-/* ─── FOOTER / CONTACTO ─── */
 .footer { border-top:1px solid var(--line); background:var(--void); }
 .footer-in { max-width:820px; margin:0 auto; padding:clamp(52px,8vw,96px) clamp(24px,5vw,64px); text-align:center; }
 .footer-eyebrow { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:4px; color:var(--teal); margin-bottom:24px; }
@@ -196,8 +172,6 @@ section { position:relative; }
 .footer-fine { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:1px; color:var(--dim); line-height:2; margin-top:44px; padding-top:32px; border-top:1px solid var(--line); }
 .footer-fine a { color:var(--muted); text-decoration:none; }
 .footer-fine a:hover { color:var(--text); }
-
-/* ─── MODAL genérico ─── */
 .overlay { position:fixed; inset:0; z-index:500; background:rgba(2,5,2,0.86); backdrop-filter:blur(6px); display:none; align-items:flex-start; justify-content:center; padding:clamp(20px,5vw,60px) 20px; overflow-y:auto; }
 .overlay.active { display:flex; }
 .modal { position:relative; background:var(--panel); border:1px solid var(--line2); max-width:640px; width:100%; padding:clamp(30px,5vw,52px); }
@@ -217,7 +191,25 @@ section { position:relative; }
 .faq-item.open .faq-a { max-height:400px; padding:0 0 18px; }
 .faq-item.open .faq-ico { transform:rotate(45deg); }
 
-/* ─── EPI BURBUJA ─── */
+/* ─── MODAL CONTACTO · opciones + canales (sin precio) ─── */
+.opt-list { display:flex; flex-direction:column; gap:10px; margin:4px 0 8px; }
+.opt { display:flex; gap:14px; background:var(--card); border:1px solid var(--line2); padding:16px 18px; align-items:flex-start; }
+.opt.combo { background:linear-gradient(150deg, rgba(95,173,95,0.1), var(--card) 60%); border-color:rgba(95,173,95,0.3); }
+.opt-k { flex-shrink:0; font-family:'JetBrains Mono',monospace; font-size:16px; color:var(--dim); width:24px; line-height:1.3; }
+.opt.combo .opt-k { color:var(--emerald); }
+.opt-name { font-family:'Playfair Display',serif; font-size:18px; color:var(--white); line-height:1.15; }
+.opt.combo .opt-name { color:var(--emerald); }
+.opt-desc { font-size:13.5px; color:rgba(232,228,218,0.6); line-height:1.5; margin-top:5px; }
+.mc-canales { display:flex; flex-direction:column; gap:10px; margin-top:10px; }
+.mc-btn { display:inline-flex; align-items:center; justify-content:center; gap:10px; font-family:'JetBrains Mono',monospace; font-size:13px; letter-spacing:1px; padding:15px 20px; text-decoration:none; cursor:pointer; border:none; transition:background .2s, color .2s, transform .15s; }
+.mc-btn.mail { background:var(--gold2); color:var(--void); }
+.mc-btn.mail:hover { background:var(--gold); transform:translateY(-1px); }
+.mc-btn.wa { background:transparent; border:1px solid var(--emerald); color:var(--white); }
+.mc-btn.wa:hover { background:var(--emerald); color:var(--void); transform:translateY(-1px); }
+.mc-alt { text-align:center; font-size:13px; color:rgba(232,228,218,0.55); margin-top:14px; }
+.mc-alt a { color:var(--muted); text-decoration:underline; }
+.mc-alt a:hover { color:var(--text); }
+
 .epi-bubble { position:fixed; right:clamp(16px,3vw,32px); bottom:clamp(16px,3vw,32px); z-index:400; width:60px; height:60px; border-radius:50%; background:radial-gradient(circle at 35% 30%, var(--panel), var(--surface)); border:1px solid rgba(95,173,95,0.35); cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 6px 26px rgba(0,0,0,0.5); transition:transform .25s ease, box-shadow .3s ease, opacity .3s ease; animation:epiPulse 3.4s ease-in-out infinite; }
 .epi-bubble:hover { transform:scale(1.08); }
 @keyframes epiPulse { 0%,100%{box-shadow:0 6px 26px rgba(0,0,0,0.5), 0 0 0 0 rgba(95,173,95,0.28);} 50%{box-shadow:0 6px 26px rgba(0,0,0,0.5), 0 0 0 10px rgba(95,173,95,0);} }
@@ -257,7 +249,6 @@ section { position:relative; }
 .epi-send { width:44px; height:44px; flex-shrink:0; background:var(--white); border:none; color:var(--void); font-size:16px; cursor:pointer; transition:background .2s; }
 .epi-send:hover { background:var(--gold2); }
 .epi-hint { font-family:'JetBrains Mono',monospace; font-size:7px; letter-spacing:1px; color:var(--dim); text-align:center; margin-top:9px; }
-
 @media(max-width:760px){ .steps { grid-template-columns:1fr; } .topnav { display:none; } .ledger-row { grid-template-columns:1fr auto; gap:8px 12px; } .ledger-id { display:none; } .ledger-date { grid-column:1; text-align:left; } }
 @media(prefers-reduced-motion: reduce){ *, *::before, *::after { animation:none !important; transition:none !important; } html { scroll-behavior:auto; } }
 </style>
@@ -284,7 +275,7 @@ section { position:relative; }
 
   <p class="hero-plain">Somos una plataforma tecnológica. Un vínculo directo entre vos y un satélite: elegís qué observar, sellamos su estado ambiental con una prueba inalterable y verificable por terceros, y te informamos qué está pasando con tu bien. Sin software que instalar, sin procesos largos, nada oculto.</p>
 
-  <!-- CUATRO PUERTAS -->
+  <!-- SEIS PUERTAS (grilla 2×3) -->
   <div class="puertas">
     <div class="puertas-lead">ELEGÍ POR DÓNDE ENTRAR</div>
     <div class="puertas-grid">
@@ -360,10 +351,7 @@ section { position:relative; }
         <span class="puerta-arrow">ABRIR EL MAPA →</span>
       </a>
 
-    </div>
-
-    <!-- VERIFICAR (centrada abajo · naturaleza distinta: comprobar, no contratar) -->
-    <div class="puertas-verificar">
+      <!-- VERIFICAR -->
       <a class="puerta verificar" href="verificar.html">
         <div class="puerta-top">
           <span class="puerta-k">PRUEBA PÚBLICA</span>
@@ -381,8 +369,26 @@ section { position:relative; }
         </div>
         <span class="puerta-arrow">VERIFICAR →</span>
       </a>
-    </div>
 
+      <!-- CONTACTO (abre modal con opciones + canales) -->
+      <button class="puerta contacto" onclick="abrirContacto()" type="button">
+        <div class="puerta-top">
+          <span class="puerta-k">CONTACTO · CONTRATAR</span>
+          <span class="puerta-ico">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M4 5h16a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z" stroke-width="1.5"/>
+              <path d="M3.5 6.5l8.5 6 8.5-6" stroke-width="1.5"/>
+            </svg>
+          </span>
+        </div>
+        <div>
+          <div class="puerta-name">EPIMELEIA CONTACTO</div>
+          <div class="puerta-sub">Las tres formas de contratar y cómo escribirnos. El precio se conversa, sin vueltas.</div>
+        </div>
+        <span class="puerta-arrow">VER OPCIONES →</span>
+      </button>
+
+    </div>
   </div>
 </section>
 
@@ -478,7 +484,6 @@ section { position:relative; }
 </div>
 
 <script>
-/* ─── ACTIVOS REALES ON-CHAIN (datos verificables · Polygon Mainnet) ─── */
 const ONCHAIN = [
   { id:8, nombre:'quiulacocha',       ts:1785504995, tx:'0x64063d6e0713d74025e6a8ef97ca6e7c73b60c6a57ae50da0c85f65206135fff' },
   { id:7, nombre:'mesa de los reyes', ts:1785504990, tx:'0xa27ff1128f075003fc293ff569acce7fdcc49a80240e17285fc0034b3b53b33d' },
@@ -506,6 +511,38 @@ const ONCHAIN = [
     el.appendChild(row);
   });
 })();
+
+/* ─── MODAL CONTACTO · tres opciones + canales (sin precio) ─── */
+const CONTACTO_HTML = `
+<p style="margin-bottom:6px;">Entraste por donde creíste tener tu tema — pero podés elegir cualquiera de las tres. <strong>El precio se arma a tu caso y se conversa</strong>, no hay pago automático.</p>
+<div class="opt-list">
+  <div class="opt">
+    <div class="opt-k">01</div>
+    <div><div class="opt-name">Solo deforestación · EUDR</div><div class="opt-desc">El chequeo histórico de tu territorio, sellado en blockchain. El respaldo de tu Declaración de Diligencia Debida. Una prueba inapelable hacia atrás.</div></div>
+  </div>
+  <div class="opt">
+    <div class="opt-k">02</div>
+    <div><div class="opt-name">Seguimiento continuo</div><div class="opt-desc">El satélite observa tu activo cada quincena, hacia adelante, y sella cada lectura. Recibís avisos de lo que pasa. Un guardián que no duerme.</div></div>
+  </div>
+  <div class="opt combo">
+    <div class="opt-k">03</div>
+    <div><div class="opt-name">Combo · EUDR + seguimiento</div><div class="opt-desc">Las dos cosas: la prueba histórica para la EUDR y el seguimiento continuo hacia adelante. La cobertura completa, del pasado al futuro.</div></div>
+  </div>
+</div>
+<h4>PARA AVANZAR, ESCRIBINOS</h4>
+<div class="mc-canales">
+  <a class="mc-btn mail" href="mailto:info@epimeleia.world?subject=Consulta%20EPIMELEIA">✉ info@epimeleia.world</a>
+  <a class="mc-btn wa" href="https://wa.me/5491158004028?text=Hola%2C%20quiero%20consultar%20por%20EPIMELEIA." target="_blank" rel="noopener">✆ WhatsApp · +54 11 5800-4028</a>
+</div>
+<p class="mc-alt">También podés escribir a <a href="mailto:alfredocarbone29@gmail.com">alfredocarbone29@gmail.com</a></p>
+`;
+function abrirContacto(){
+  document.getElementById('mEyebrow').textContent = 'CONTACTO · CONTRATACIÓN';
+  document.getElementById('mTitle').innerHTML = 'Elegí una opción y escribinos';
+  document.getElementById('mBody').innerHTML = CONTACTO_HTML;
+  document.getElementById('ovModal').classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
 
 /* ─── MODALES INFO ─── */
 const INFO = {
@@ -627,7 +664,6 @@ async function epiEnviar(){
 document.getElementById('epiText').addEventListener('keydown', e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); epiEnviar(); } });
 document.getElementById('epiText').addEventListener('input', function(){ this.style.height='auto'; this.style.height=Math.min(this.scrollHeight,110)+'px'; });
 
-/* ─── EPI acompaña el scroll (sutil) ─── */
 let lastY = window.scrollY;
 window.addEventListener('scroll', ()=>{
   const b = document.getElementById('epiBubble');
