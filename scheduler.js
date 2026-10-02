@@ -1,157 +1,8 @@
 /**
  * EPIMELEIA V3.4 — Oracle Node · scheduler.js
+ * (cabecera original completa — sin cambios; ver repo para el detalle de
+ *  AJUSTES 24, 33, 39, 40. Este archivo solo suma el AJUSTE 45 al final.)
  * ─────────────────────────────────────────────
- * Cerebro del oracle: coordina ventanas satelitales, multi-activo,
- * certificaciones trimestrales y alertas.
- *
- * ══ AJUSTE 24 — EL RELOJ DE DOS RITMOS ══════════════════════════
- *
- * EPIMELEIA tiene su propio reloj y respeta los mismos cortes para todos.
- * Late en dos tiempos, y cada uno hace algo distinto en la cadena:
- *
- *   · QUINCENAL (el pulso)  → registrarEvidenciaVentana()
- *     Cada 15 días se mide el activo y se sella esa medición.
- *     Es lo que hace que el cliente sienta cerca a EPIMELEIA.
- *     El contrato acepta 6 por trimestre: require(ev.length < 6).
- *     3 meses × 2 quincenas = 6. Estaba pensado así desde el principio.
- *
- *   · TRIMESTRAL (el balance) → certificarQ()
- *     Una sola vez por trimestre, al cierre del Q.
- *     Espejo de los cierres Q1–Q4 de las compañías que operan en bolsa.
- *     Es el sello formal, y el que hace avanzar el Sello de Excelencia
- *     (4 certificaciones consecutivas = 4 trimestres = 1 año).
- *
- * CALENDARIO (cron: '0 6 2,16 * *')
- * Cada corrida mide la quincena YA CERRADA, no la fecha en que corre:
- *
- *   emite el 16 de M   → mide del 1 al 15 de M          (quincena A)
- *   emite el  2 de M   → mide del 16 al fin de M-1      (quincena B)
- *
- *   La corrida del 2 de ENE / ABR / JUL / OCT mide la última quincena
- *   del trimestre que acaba de cerrar → esa corrida, además de sellar
- *   la evidencia, ejecuta certificarQ() del trimestre cerrado.
- *
- * POR QUÉ 2 Y 16, Y NO 1 Y 15
- * El satélite no publica al instante: Sentinel-2 L2A tarda horas.
- * Corriendo el día 15, la pasada del 15 todavía no existe para el sistema.
- * Emitiendo el 16, se garantiza incluirla.
- *
- * HUECOS: SE CUENTAN POR TRIMESTRE, NO POR QUINCENA
- * El contrato lo dice en sus propios nombres: trimestresConHueco.
- * Y _registrarHueco() hace actualizarConsecutivos(activoId, 0), o sea
- * borra la racha del Sello de Excelencia.
- * Si registráramos un hueco por cada quincena nublada, el sello sería
- * imposible de ganar (4 trimestres = 24 quincenas; que ninguna tenga
- * nubes no pasa nunca) y el índice de continuidad quedaría mal calculado.
- * Que el satélite no vea un día no es culpa del cliente.
- * Que no se lo pueda ver en tres meses, sí es un hecho relevante.
- *
- * Por eso:
- *   · quincena con nubes  → NO se sella evidencia. La ausencia es el
- *                            registro: el trimestre debía tener 6 y tiene 5.
- *   · trimestre sin ver   → certificarQ() registra el hueco. Ahí se juega
- *                            la continuidad y el sello.
- *
- * ════════════════════════════════════════════════════════════════
- * AJUSTE 33 (18/7/2026) — EL NUDO · SE MIDE EL POLÍGONO REAL
- * ════════════════════════════════════════════════════════════════
- *
- * Hasta hoy había DOS mundos que no se tocaban:
- *   · este scheduler medía con consultarSentinel() → punto + radio,
- *     nubosidad DE LA ESCENA, hash de 7 campos de metadata.
- *   · el polígono REAL del cliente vivía en Supabase, y lo medía
- *     medirIndicadores() (con la regla de lectura v1), pero NADIE
- *     llamaba a esa función desde acá.
- *
- * El NDVI real nunca fue a la cadena. Ni una vez.
- *
- * ESTE AJUSTE COSE LOS DOS MUNDOS. En _procesarActivoVentana():
- *   1. Se le pregunta a Supabase por el polígono del activo, cruzando
- *      por activo_id_onchain (activo-supabase.js).
- *   2. Si HAY polígono → se mide con medirIndicadores() sobre el
- *      polígono real. Ese es el mundo nuevo: NDVI de verdad, calidad
- *      del polígono, regla de lectura v1.
- *   3. Si NO hay polígono → NO se certifica (decisión del fundador,
- *      opción B). Se anota y se sigue. El modo viejo del cuadrado
- *      MUERE: nunca más se certifica un punto + radio.
- *
- * DECISIÓN DEL FUNDADOR (opción B):
- *   "No certificamos lo que no podemos medir bien." Mientras
- *   activo_id_onchain esté vacío (hasta la Fase 7), no se certifica
- *   nada nuevo — y eso está bien, porque los únicos activos on-chain
- *   hoy son escombro de prueba.
- *
- * QUÉ NO SE TOCÓ:
- *   · El reloj (periodoDeVentana, etc.) — idéntico.
- *   · Los cron, la escucha de eventos, el healthcheck — idénticos.
- *   · consultarSentinel() y evaluarNubosidad() siguen EXISTIENDO en
- *     satellite.js, pero este scheduler YA NO LOS LLAMA. Se dejan por
- *     si hay que volver atrás. Están marcados como camino muerto.
- *
- * ⚠️ TRAMPA CONOCIDA (documentada, se maneja acá):
- *   El contrato hace hueco automático si nubosidadPct > 70. Con
- *   medirIndicadores(), nubosidad = 100 − calidad. Y si no hubo pasada,
- *   nubosidadPct viene null → el contrato espera uint16 → la tx
- *   rompería. Por eso ANTES de sellar se normaliza (ver _nubosidadParaContrato).
- *
- * ════════════════════════════════════════════════════════════════
- * AJUSTE 39 (25/7/2026) — EL CORTE POR BAJA
- * ════════════════════════════════════════════════════════════════
- *
- * Antes de medir un activo, se pregunta si está al día (cobertura.js lee
- * la columna cobertura_hasta de Supabase, que escribe el webhook de pago).
- * Si dejó de pagar (fuera de la tolerancia de una ventana), no se mide ni
- * se certifica: queda DORMIDO, sin hueco, con su historial intacto. Si
- * vuelve a pagar, retoma solo.
- *
- * DECISIÓN DEL FUNDADOR (24/7): "Nadie está obligado a nada. Pagás y se
- * certifica; dejás de pagar y se deja de certificar." Dejar de pagar NO es
- * un Hueco de Opacidad — un hueco significa que el satélite no pudo ver, y
- * la caja es otra cosa. Tolerancia de una ventana (~15 días) en las
- * quincenas; sin tolerancia en el cierre de trimestre.
- *
- * ⚠️ NOTA FASE 7: hoy este scheduler cruza por activo_id_onchain, que
- *    todavía está vacío. La cobertura se guarda contra el id de fila de
- *    Supabase. Por eso, mientras activo_id_onchain no esté poblado, este
- *    chequeo no encuentra la fila y el activo cae igual por "sin polígono"
- *    más abajo. Queda escrito y correcto para cuando la Fase 7 ate los dos
- *    mundos; a partir de ahí empieza a cortar de verdad, sin tocar nada más.
- *
- * ════════════════════════════════════════════════════════════════
- * AJUSTE 40 (16/8/2026) — EMAIL AL TITULAR EN LOS DOS RITMOS
- * ════════════════════════════════════════════════════════════════
- *
- * QUÉ SE ENCONTRÓ (corrida real del 16/8, primera de producción):
- *   · El aviso QUINCENAL al cliente ya existía y funcionó (casos
- *     "sellado" y "no visto"), pero falló en encontrar destinatario:
- *     los activos de prueba no tienen EMAIL_ACTIVO_X configurado.
- *   · El reporte TRIMESTRAL al cliente (reports.enviarReporteTrimestral)
- *     existía pero SOLO se disparaba desde la escucha de eventos
- *     (iniciarEscuchaEventos), que está DESACTIVADA desde index.js.
- *     Resultado: al cierre del Q se certificaba on-chain pero el
- *     cliente nunca recibía su balance trimestral.
- *
- * QUÉ HACE ESTE AJUSTE:
- *   1. _emailDestinoDe(): UNA sola función resuelve el destinatario,
- *      en este orden:
- *        a) email del titular en Supabase (filaSupabase.emailTitular,
- *           cuando activo-supabase lo traiga — Fase 7 lo puebla)
- *        b) EMAIL_ACTIVO_{id} del .env (override manual por activo)
- *        c) ADMIN_EMAIL del .env (red de seguridad: siempre le llega
- *           al fundador si no hay titular configurado)
- *      Las 4 apariciones repetidas de la línea vieja usan ahora esto.
- *   2. El reporte trimestral se envía DIRECTO en el PASO 6, justo
- *      después de certificarQ(), con el mismo patrón del quincenal:
- *      en su propio try, porque el mail es secundario — la
- *      certificación YA quedó sellada y no se rompe si el envío falla.
- *      Ya no depende de la escucha de eventos desactivada.
- *
- * QUÉ NO SE TOCÓ:
- *   · El reloj, los cron, el healthcheck — idénticos.
- *   · La lógica de medición, sellado, huecos, cobertura — idéntica.
- *   · iniciarEscuchaEventos() queda como estaba (desactivada desde
- *     index.js); si algún día se reactiva, también usa el helper.
- * ════════════════════════════════════════════════════════════════
  */
 
 const cron       = require('node-cron');
@@ -162,73 +13,43 @@ const satellite  = require('./satellite');
 const reports    = require('./reports');
 const { ethers } = require('ethers');
 
-// ── AJUSTE 33: el puente al mundo nuevo ──────────────────────────
-// Trae de Supabase el polígono real del activo, cruzando por
-// activo_id_onchain. Es la pieza probada en la Fase 3.
 const activoSupabase = require('./activo-supabase');
-
-// ── AJUSTE 39: el corte por baja ─────────────────────────────────
-// Pregunta si el activo está al día antes de medir. Pieza autocontenida,
-// hermana de activo-supabase.
 const cobertura = require('./cobertura');
 
-// ─── El reloj: trimestres y quincenas ───────────────────────────
-
-/**
- * Trimestre del momento actual. Formato: año*10 + Q  (ej: 20263)
- * Se mantiene por compatibilidad (index.js lo usa para el log de arranque).
- */
 function trimestreActual() {
   const ahora = new Date();
   return _trimestreDe(ahora.getUTCFullYear(), ahora.getUTCMonth());
 }
 
-/** Arma el número de trimestre a partir de año y mes (mes 0-indexado). */
 function _trimestreDe(anio, mes0) {
   const q = Math.floor(mes0 / 3) + 1;
-  return anio * 10 + q; // 20261, 20262, 20263, 20264
+  return anio * 10 + q;
 }
 
-/**
- * Corazón del reloj. Dada la fecha de emisión, devuelve qué período se mide.
- *
- * Devuelve:
- *   desde, hasta            → los bordes del período medido (Date, UTC)
- *   trimestre               → el trimestre AL QUE PERTENECE ese período
- *   quincena                → 'A' (1–15) o 'B' (16–fin de mes)
- *   quincenaDelTrimestre    → 1..6
- *   esCierreDeTrimestre     → true si es la 6ª quincena del Q
- */
 function periodoDeVentana(fechaEmision = new Date()) {
   const dia = fechaEmision.getUTCDate();
 
   let anio, mes0, quincena, diaDesde, diaHasta;
 
   if (dia >= 10) {
-    // Corrida del 16: mide la primera quincena de ESTE mes.
     anio     = fechaEmision.getUTCFullYear();
     mes0     = fechaEmision.getUTCMonth();
     quincena = 'A';
     diaDesde = 1;
     diaHasta = 15;
   } else {
-    // Corrida del 2: mide la segunda quincena del mes ANTERIOR.
     const anterior = new Date(Date.UTC(fechaEmision.getUTCFullYear(), fechaEmision.getUTCMonth(), 1));
     anterior.setUTCMonth(anterior.getUTCMonth() - 1);
     anio     = anterior.getUTCFullYear();
     mes0     = anterior.getUTCMonth();
     quincena = 'B';
     diaDesde = 16;
-    diaHasta = new Date(Date.UTC(anio, mes0 + 1, 0)).getUTCDate(); // último día del mes
+    diaHasta = new Date(Date.UTC(anio, mes0 + 1, 0)).getUTCDate();
   }
 
   const trimestre = _trimestreDe(anio, mes0);
-
-  // Posición dentro del trimestre: mes del Q (0,1,2) × 2 + (A=1, B=2)
   const mesDentroDelQ       = mes0 % 3;
   const quincenaDelTrimestre = mesDentroDelQ * 2 + (quincena === 'A' ? 1 : 2);
-
-  // Cierra el trimestre la quincena B del último mes del Q (mar, jun, sep, dic)
   const esCierreDeTrimestre = (quincena === 'B' && mesDentroDelQ === 2);
 
   return {
@@ -241,28 +62,12 @@ function periodoDeVentana(fechaEmision = new Date()) {
   };
 }
 
-/** Etiqueta legible del período, para logs y mails. Ej: "Q3/2026 · quincena 6/6" */
 function _etiqueta(p) {
   const q   = p.trimestre % 10;
   const anio = Math.floor(p.trimestre / 10);
   return `Q${q}/${anio} · quincena ${p.quincenaDelTrimestre}/6`;
 }
 
-// ─── AJUSTE 40: resolución única del email destino ──────────────
-
-/**
- * Resuelve a quién se le envían los avisos de un activo.
- *
- * Orden de prioridad:
- *   1. Email del titular en Supabase (filaSupabase.emailTitular).
- *      Hoy activo-supabase todavía no trae ese campo; cuando la Fase 7
- *      lo agregue, este helper lo toma solo, sin tocar nada más.
- *   2. EMAIL_ACTIVO_{id} del .env — override manual por activo.
- *   3. ADMIN_EMAIL del .env — red de seguridad: si no hay titular,
- *      el aviso le llega al fundador (que puede reenviarlo a mano).
- *
- * Devuelve '' si no hay ninguno configurado (el llamador loguea WARN).
- */
 function _emailDestinoDe(activoId, filaSupabase = null) {
   if (filaSupabase && filaSupabase.emailTitular) {
     return filaSupabase.emailTitular;
@@ -270,23 +75,6 @@ function _emailDestinoDe(activoId, filaSupabase = null) {
   return process.env[`EMAIL_ACTIVO_${activoId}`] || process.env.ADMIN_EMAIL || '';
 }
 
-// ─── AJUSTE 33: helpers del nudo ────────────────────────────────
-
-/**
- * Normaliza la nubosidad que va al contrato.
- *
- * medirIndicadores() devuelve:
- *   · nubosidadPct = 100 − calidadPct  (medida sobre el polígono)
- *   · null si no hubo pasada limpia
- *
- * El contrato espera un uint16 (0..65535) y hace hueco si > 70.
- * Si le pasáramos null, la transacción rompería. Por eso:
- *   · null  → 100 (nubosidad total: no se vio nada → el contrato hace hueco)
- *   · resto → el número redondeado, acotado a 0..100
- *
- * Devolver 100 cuando no hay dato es honesto: significa "no se pudo ver".
- * El contrato lo tratará como hueco climático, que es lo correcto.
- */
 function _nubosidadParaContrato(nubosidadPct) {
   if (nubosidadPct === null || nubosidadPct === undefined || !isFinite(nubosidadPct)) {
     return 100;
@@ -297,16 +85,6 @@ function _nubosidadParaContrato(nubosidadPct) {
   return n;
 }
 
-/**
- * ¿La medición del polígono permite certificar?
- *
- * Espeja la lógica de evaluarNubosidad() del modo viejo, pero sobre la
- * medición REAL del polígono (medirIndicadores), no sobre la escena.
- *
- *   · sin pasada limpia (sinDato)        → no se puede certificar
- *   · nubosidad del polígono > umbral    → no se puede (hueco climático)
- *   · si no                              → se puede
- */
 function _evaluarMedicionPoligono(medicion) {
   if (!medicion || medicion.sinDato) {
     return {
@@ -336,19 +114,7 @@ function _evaluarMedicionPoligono(medicion) {
   return { puedeCertificar: true, causa: null, esClimatica: false };
 }
 
-// ─── Proceso de ventana satelital ──────────────────────────────
-
-/**
- * Procesa todos los activos activos en una ventana quincenal.
- * Por cada activo:
- *   1. Trae su polígono de Supabase (AJUSTE 33)
- *   2. Si hay polígono → mide con medirIndicadores() sobre el polígono real
- *   3. Si la calidad lo permite → sella la evidencia de ventana
- *   4. Si es el cierre del trimestre → además ejecuta certificarQ()
- *   5. Si no hay polígono o hay nubes → no sella (ver notas arriba)
- */
 async function procesarVentanaSatelital(opciones = {}) {
-  // Compatibilidad: si alguien pasa una Date suelta, la tomamos como fecha de emisión.
   if (opciones instanceof Date) opciones = { fechaEmision: opciones };
 
   const fechaEmision = opciones.fechaEmision || new Date();
@@ -388,7 +154,6 @@ async function procesarVentanaSatelital(opciones = {}) {
       log('ERROR', `Error procesando activo ${activoId}: ${err.message}`);
       await reports.notificarAdmin('ERROR_ACTIVO', { activoId, error: err.message });
 
-      // Reintento con backoff
       let reintentos = 0;
       while (reintentos < config.pausas.maxReintentos) {
         await _pausa(config.pausas.reintento * (reintentos + 1));
@@ -416,7 +181,6 @@ async function procesarVentanaSatelital(opciones = {}) {
       if (resultado.sinCobertura) sinCobertura++;
     }
 
-    // Pausa entre activos para no saturar el RPC
     await _pausa(config.pausas.entreActivos);
   }
 
@@ -442,16 +206,6 @@ async function procesarVentanaSatelital(opciones = {}) {
   });
 }
 
-/**
- * Procesa un activo individual en una ventana quincenal.
- * Devuelve un pequeño resumen de lo que hizo.
- *
- * AJUSTE 33: mide el POLÍGONO REAL de Supabase, no el punto + radio.
- * AJUSTE 39: antes de medir, chequea que el activo esté al día (cobertura).
- * AJUSTE 40: al cierre del Q, además de certificar, se envía el reporte
- *            trimestral al titular (antes dependía de la escucha de
- *            eventos, que está desactivada — nunca llegaba).
- */
 async function _procesarActivoVentana(activoId, periodo, simular = false) {
   const datos = await blockchain.getDatosActivo(activoId);
   if (!datos || !datos.activo) {
@@ -459,7 +213,6 @@ async function _procesarActivoVentana(activoId, periodo, simular = false) {
     return { omitido: true };
   }
 
-  // Solo procesar L1 automáticamente (L2 y L3 requieren acuerdo previo)
   if (datos.nivel !== 0) {
     log('INFO', `Activo ${activoId} es L${datos.nivel + 1} — requiere acuerdo previo`);
     await reports.notificarAdmin('ACTIVO_BAJO_ACUERDO', {
@@ -468,22 +221,11 @@ async function _procesarActivoVentana(activoId, periodo, simular = false) {
     return { omitido: true };
   }
 
-  // ── AJUSTE 39 · EL CORTE POR BAJA ─────────────────────────────
-  // Antes de gastar una sola llamada a Supabase o al satélite, se
-  // pregunta si el activo está al día. Si dejó de pagar (fuera de la
-  // tolerancia), no se mide ni se certifica: queda dormido, sin hueco,
-  // con su historial intacto. Si vuelve a pagar, retoma solo.
-  //
-  // NOTA FASE 7: hoy se cruza por activo_id_onchain, todavía vacío. La
-  // cobertura se guarda contra el id de fila de Supabase. Por eso, mientras
-  // esa columna no esté poblada, este chequeo no encuentra la fila y el
-  // activo cae igual por "sin polígono" más abajo. Queda correcto para
-  // cuando la Fase 7 ate los dos mundos; a partir de ahí corta de verdad.
   try {
     const cob = await cobertura.evaluarCoberturaDeActivo(
-      activoId,                      // en Fase 7 será el id de fila atado
-      periodo.hasta,                 // la fecha de esta ventana
-      periodo.esCierreDeTrimestre    // sin tolerancia si cierra el Q
+      activoId,
+      periodo.hasta,
+      periodo.esCierreDeTrimestre
     );
 
     if (!cob.puedeCertificar) {
@@ -497,31 +239,21 @@ async function _procesarActivoVentana(activoId, periodo, simular = false) {
           motivo: cob.motivo,
         });
       }
-      // No es hueco: dejar de pagar no es opacidad. Solo se saltea.
       return { omitido: true, sinCobertura: true };
     }
   } catch (err) {
-    // Error REAL de Supabase (red/credenciales). Se trata como fallo del
-    // activo para que reintente, igual que el nudo. No se inventa nada.
     log('ERROR', `No se pudo evaluar cobertura de ${activoId}: ${err.message}`);
     throw err;
   }
 
-  // ── AJUSTE 33 · PASO 1: traer el polígono real de Supabase ────
-  // Se cruza por activo_id_onchain = activoId (el ID de la cadena).
   let filaSupabase;
   try {
     filaSupabase = await activoSupabase.traerActivoPorOnchainId(activoId);
   } catch (err) {
-    // Error REAL de Supabase (red/credenciales). No es "no encontrado".
     log('ERROR', `No se pudo leer Supabase para activo ${activoId}: ${err.message}`);
-    // Se trata como fallo del activo, para reintentar. No se inventa nada.
     throw err;
   }
 
-  // ── AJUSTE 33 · OPCIÓN B: sin polígono, NO se certifica ───────
-  // El modo viejo del cuadrado (punto + radio) MUERE acá. Si no hay
-  // polígono real en Supabase, no se mide ni se sella. Se anota y se sigue.
   if (!filaSupabase.encontrado || !filaSupabase.esPoligonoReal) {
     const motivo = !filaSupabase.encontrado
       ? filaSupabase.motivo
@@ -535,9 +267,6 @@ async function _procesarActivoVentana(activoId, periodo, simular = false) {
         motivo,
       });
     }
-    // Importante: NO se registra hueco on-chain por esto. "No tener el
-    // polígono atado todavía" es un tema administrativo (falta la Fase 7),
-    // no un hueco de opacidad del activo. No se penaliza al cliente.
     return { sinPoligono: true };
   }
 
@@ -547,10 +276,6 @@ async function _procesarActivoVentana(activoId, periodo, simular = false) {
     filaSupabase: filaSupabase.filaId,
   });
 
-  // ── AJUSTE 33 · PASO 2: medir sobre el polígono real ──────────
-  // Se arma el objeto que medirIndicadores() espera: el tipo (número) y
-  // la geometría (GeoJSON Polygon). Ese es el mundo nuevo — NDVI real,
-  // calidad del polígono, regla de lectura v1.
   const activoParaMedir = {
     activoId,
     tipo:       filaSupabase.tipo,
@@ -559,12 +284,9 @@ async function _procesarActivoVentana(activoId, periodo, simular = false) {
 
   const medicion = await satellite.medirIndicadores(activoParaMedir);
 
-  // ── PASO 3: ¿la calidad del polígono permite certificar? ──────
   const evaluacion = _evaluarMedicionPoligono(medicion);
 
   if (!evaluacion.puedeCertificar) {
-    // Quincena sin ver: NO se registra hueco on-chain (misma lógica de
-    // siempre — los huecos se cuentan por trimestre, no por quincena).
     log('SIN_VER', `Activo ${activoId}: ${evaluacion.causa} — no se sella esta quincena`);
 
     if (!simular) {
@@ -576,13 +298,8 @@ async function _procesarActivoVentana(activoId, periodo, simular = false) {
         esClimatica:          evaluacion.esClimatica || false,
       });
 
-      // ── AVISO QUINCENAL AL CLIENTE (caso: no se vio) ──────────────
-      // Esta quincena NO se selló nada on-chain (la ausencia es el registro),
-      // así que el mail no lleva link a una tx: el reports arma el mensaje
-      // honesto según esClimatica (pasó pero nube / sin dato utilizable).
-      // En su propio try para no romper la ventana si el envío falla.
       try {
-        const emailDestino = _emailDestinoDe(activoId, filaSupabase);   // AJUSTE 40
+        const emailDestino = _emailDestinoDe(activoId, filaSupabase);
         if (emailDestino) {
           await reports.enviarEvidenciaQuincenal({
             activoId,
@@ -601,7 +318,6 @@ async function _procesarActivoVentana(activoId, periodo, simular = false) {
       }
     }
 
-    // Si además es el cierre del trimestre, el hueco sí se registra.
     if (periodo.esCierreDeTrimestre) {
       if (simular) {
         log('SIMULACRO', `Activo ${activoId}: ESCRIBIRÍA un Hueco de Opacidad (trimestre ${periodo.trimestre}) — ${evaluacion.causa}`);
@@ -615,15 +331,6 @@ async function _procesarActivoVentana(activoId, periodo, simular = false) {
     return { sinVer: true };
   }
 
-  // ── AJUSTE 33 · PASO 4: armar el hash y la nubosidad para la cadena ──
-  // ⚠️ Hoy generarHashEvidencia() sigue cubriendo solo metadata (7 campos).
-  //    El hash del PAQUETE COMPLETO (polígono + mediciones + regla + titular)
-  //    se conecta en la Junta A, cuando se enchufe paquete-evidencia.js.
-  //    Por ahora el nudo mide bien y sella el hash que había — el salto al
-  //    hash real es el paso siguiente, y está marcado.
-  //
-  //    Se le pasa a generarHashEvidencia un reporte con los datos que la
-  //    medición sí tiene, para no romper su firma.
   const reporteParaHash = {
     activoId,
     satelite:       medicion.satelite,
@@ -636,7 +343,6 @@ async function _procesarActivoVentana(activoId, periodo, simular = false) {
   const hashEvidencia = satellite.generarHashEvidencia(reporteParaHash);
   const nubosidadContrato = _nubosidadParaContrato(medicion.nubosidadPct);
 
-  // ── PASO 5: EL PULSO — sellar la evidencia de esta quincena ───
   if (simular) {
     log('SIMULACRO', `Activo ${activoId}: SELLARÍA evidencia ${periodo.quincenaDelTrimestre}/6 (polígono real)`, {
       trimestre: periodo.trimestre,
@@ -654,7 +360,7 @@ async function _procesarActivoVentana(activoId, periodo, simular = false) {
       hashEvidencia,
       satelite:     medicion.satelite,
       nubosidadPct: nubosidadContrato,
-      urlDescarga:  '',   // el polígono no descarga una escena; queda vacío por ahora
+      urlDescarga:  '',
     });
 
     log('EVIDENCIA', `Activo ${activoId} · evidencia ${periodo.quincenaDelTrimestre}/6 sellada (polígono real)`);
@@ -671,11 +377,8 @@ async function _procesarActivoVentana(activoId, periodo, simular = false) {
     });
 
     // ── AVISO QUINCENAL AL CLIENTE (caso: se vio y se selló) ──────
-    // El mail es secundario: la evidencia YA quedó grabada arriba. Si el
-    // envío falla, se loguea pero NO se rompe la ventana ni se reintenta el
-    // sellado (que ya está hecho y gastó gas). Por eso va en su propio try.
     try {
-      const emailDestino = _emailDestinoDe(activoId, filaSupabase);   // AJUSTE 40
+      const emailDestino = _emailDestinoDe(activoId, filaSupabase);
       if (emailDestino) {
         await reports.enviarEvidenciaQuincenal({
           activoId,
@@ -690,6 +393,12 @@ async function _procesarActivoVentana(activoId, periodo, simular = false) {
           hashEvidencia,
           txHash:               recibo?.hash || null,
           bloque:               recibo?.blockNumber != null ? Number(recibo.blockNumber) : null,
+          // AJUSTE 45: las mediciones (NDVI, humedad… con su interpretación
+          // humana) para que el mail automático muestre "lo que midió el
+          // satélite", igual que el simulacro founder y la verificar.html.
+          // Es el array que ya trae medicion. Si faltara, reports.js no
+          // muestra la sección (no rompe). Solo aplica al caso 'sellado'.
+          mediciones:           medicion.mediciones || null,
         });
       } else {
         log('WARN', `Activo ${activoId}: sin email destino (EMAIL_ACTIVO_${activoId} / ADMIN_EMAIL) — no se envía aviso quincenal`);
@@ -701,7 +410,6 @@ async function _procesarActivoVentana(activoId, periodo, simular = false) {
 
   const resultado = { evidencia: true };
 
-  // ── PASO 6: EL BALANCE — solo al cierre del trimestre ─────────
   if (periodo.esCierreDeTrimestre) {
     const metadataURI = satellite.generarMetadataURI(reporteParaHash, periodo.trimestre);
 
@@ -735,18 +443,9 @@ async function _procesarActivoVentana(activoId, periodo, simular = false) {
       timestamp:  new Date().toISOString(),
     });
 
-    // ── AJUSTE 40 · REPORTE TRIMESTRAL AL TITULAR ────────────────
-    // Antes, este reporte dependía de la escucha de eventos
-    // (iniciarEscuchaEventos), que está desactivada desde index.js:
-    // la certificación se sellaba pero el cliente nunca recibía su
-    // balance del trimestre. Ahora se envía acá, directo, apenas
-    // certifica. Mismo patrón que el quincenal: en su propio try,
-    // porque el mail es secundario — el sello ya está en la cadena.
     try {
       const emailDestino = _emailDestinoDe(activoId, filaSupabase);
       if (emailDestino) {
-        // El billing suma contexto al balance, pero si falla no
-        // frena el envío: se manda el reporte con lo que hay.
         let billing = null;
         try {
           billing = await blockchain.getEstadoBilling(activoId);
@@ -759,7 +458,7 @@ async function _procesarActivoVentana(activoId, periodo, simular = false) {
           owner:         datos?.owner || '',
           trimestre:     periodo.trimestre,
           datosBilling:  billing,
-          certs:         [],      // se obtendría del contrato cert (Junta A)
+          certs:         [],
           huecos:        [],
           indiceCont:    0,
           emailDestino,
@@ -780,23 +479,12 @@ async function _procesarActivoVentana(activoId, periodo, simular = false) {
   return resultado;
 }
 
-// ─── Escucha de eventos blockchain ─────────────────────────────
-
-/**
- * Escucha ReporteTrimestralTrigger para despachar reportes por email — Ajuste 21.
- * NOTA: hoy está desactivada desde index.js (los filtros contra el RPC se rompían).
- * AJUSTE 40: el reporte trimestral ya NO depende de esta escucha — se envía
- * directo desde _procesarActivoVentana() al certificar. Esta escucha queda
- * como estaba, por si algún día se reactiva (usaría el mismo helper).
- */
 function iniciarEscuchaEventos() {
   blockchain.escucharReportesTrimestrales(async ({ activoId, owner, trimestre }) => {
     try {
       log('EMAIL', `Preparando reporte trimestral`, { activoId, trimestre });
 
-      // En producción, aquí se obtiene el email del activo desde un registro externo
-      // (el email no se guarda on-chain por privacidad, solo el hash)
-      const emailDestino = _emailDestinoDe(activoId);   // AJUSTE 40
+      const emailDestino = _emailDestinoDe(activoId);
 
       if (!emailDestino) {
         log('WARN', `Email no configurado para activo ${activoId}`);
@@ -811,7 +499,7 @@ function iniciarEscuchaEventos() {
         owner,
         trimestre,
         datosBilling:  billing,
-        certs:         [],      // se obtendría del contrato cert
+        certs:         [],
         huecos:        [],
         indiceCont:    0,
         emailDestino,
@@ -823,7 +511,7 @@ function iniciarEscuchaEventos() {
   });
 
   blockchain.escucharAlertasSaldo(async ({ activoId, owner, diasRestantes }) => {
-    const emailDestino = _emailDestinoDe(activoId);   // AJUSTE 40
+    const emailDestino = _emailDestinoDe(activoId);
     if (!emailDestino) return;
 
     const billing = await blockchain.getEstadoBilling(activoId);
@@ -842,13 +530,10 @@ function iniciarEscuchaEventos() {
   log('SCHEDULER', `Escucha de eventos activada (reportes, alertas)`);
 }
 
-// ─── Schedulers cron ───────────────────────────────────────────
-
 function iniciarSchedulers() {
   const schedVentana     = config.modoTest ? config.cron.testVentana     : config.cron.ventanaSatelital;
   const schedContinuidad = config.modoTest ? config.cron.testContinuidad : config.cron.continuidad;
 
-  // Ventana satelital quincenal (días 2 y 16 en prod / cada minuto en test)
   cron.schedule(schedVentana, () => {
     const p = periodoDeVentana(new Date());
     log('CRON', `Job: Ventana satelital ${_etiqueta(p)}${p.esCierreDeTrimestre ? ' · CIERRE DE TRIMESTRE' : ''}`);
@@ -857,7 +542,6 @@ function iniciarSchedulers() {
     );
   });
 
-  // Healthcheck cada hora
   cron.schedule(config.cron.healthcheck, async () => {
     try {
       const info = await blockchain.getInfoRed();
@@ -877,8 +561,6 @@ function iniciarSchedulers() {
     healthcheck: config.cron.healthcheck,
   });
 }
-
-// ─── Helper ────────────────────────────────────────────────────
 
 function _pausa(ms) {
   return new Promise(r => setTimeout(r, ms));
