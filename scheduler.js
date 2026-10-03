@@ -1,7 +1,8 @@
 /**
  * EPIMELEIA V3.4 — Oracle Node · scheduler.js
- * (cabecera original completa — sin cambios; ver repo para el detalle de
- *  AJUSTES 24, 33, 39, 40. Este archivo solo suma el AJUSTE 45 al final.)
+ * (cabecera original — sin cambios; ver repo. AJUSTES 24,33,39,40,45.)
+ * AJUSTE 46 (3/10/2026): respeta modo_certificacion — los activos "atras"
+ * (solo EUDR histórico) no entran al seguimiento quincenal.
  * ─────────────────────────────────────────────
  */
 
@@ -270,10 +271,23 @@ async function _procesarActivoVentana(activoId, periodo, simular = false) {
     return { sinPoligono: true };
   }
 
+  // ── AJUSTE 46 · MODO DE CERTIFICACIÓN ─────────────────────────
+  // El seguimiento quincenal (hacia adelante) solo corre para activos
+  // "adelante" o "ambos". Los "atras" (solo EUDR histórico) NO se siguen:
+  // su chequeo es una foto puntual del pasado, no un monitoreo continuo.
+  // Si el modo viniera vacío, activo-supabase ya lo normaliza a 'atras',
+  // así ningún activo arranca seguimiento sin que se haya elegido.
+  const modo = filaSupabase.modoCertificacion || 'atras';
+  if (modo === 'atras') {
+    log('INFO', `Activo ${activoId}: modo "atras" (solo histórico EUDR) — no entra al seguimiento quincenal`);
+    return { omitido: true };
+  }
+
   log('VENTANA', `Activo ${activoId} · ${_etiqueta(periodo)} · POLÍGONO REAL`, {
     tipo: config.indicadoresPorTipo[filaSupabase.tipo]?.nombre || 'OTRO',
     nombre: filaSupabase.nombreActivo,
     filaSupabase: filaSupabase.filaId,
+    modo,
   });
 
   const activoParaMedir = {
@@ -393,11 +407,6 @@ async function _procesarActivoVentana(activoId, periodo, simular = false) {
           hashEvidencia,
           txHash:               recibo?.hash || null,
           bloque:               recibo?.blockNumber != null ? Number(recibo.blockNumber) : null,
-          // AJUSTE 45: las mediciones (NDVI, humedad… con su interpretación
-          // humana) para que el mail automático muestre "lo que midió el
-          // satélite", igual que el simulacro founder y la verificar.html.
-          // Es el array que ya trae medicion. Si faltara, reports.js no
-          // muestra la sección (no rompe). Solo aplica al caso 'sellado'.
           mediciones:           medicion.mediciones || null,
         });
       } else {

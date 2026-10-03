@@ -1,64 +1,14 @@
 /**
  * EPIMELEIA · activo-supabase.js
- * ═════════════════════════════════════════════════════════════
- * LA PRIMERA PIEZA DEL NUDO (Fase 3) — la parte aislada y segura.
+ * (cabecera original — sin cambios; ver repo para el detalle)
  *
- * Trae de Supabase todo lo que scheduler.js necesita para medir el
- * activo REAL (el polígono que dibujó el cliente), en vez del punto +
- * radio del modelo viejo.
- *
- * Es una pieza AUTOCONTENIDA: no toca scheduler.js, no toca la cadena,
- * no llama al satélite, no escribe nada. Solo LEE de Supabase. Si el
- * servicio se corta a la mitad, queda un archivo terminado y probado,
- * no un scheduler roto.
- *
- * ─────────────────────────────────────────────────────────────
- * EL PROBLEMA QUE RESUELVE
- * ─────────────────────────────────────────────────────────────
- *
- * Hay dos mundos que no se tocan:
- *   · scheduler.js recorre la lista de la CADENA y tiene un activoId
- *     on-chain. Mide con punto + radio.
- *   · el polígono real vive en SUPABASE.
- *   · scheduler.js no tiene ni un require de Supabase.
- *
- * Esta función es el puente: dado el activoId on-chain, trae la fila
- * de Supabase con el polígono y los datos del titular.
- *
- * ─────────────────────────────────────────────────────────────
- * POR QUÉ BUSCA POR activo_id_onchain (el camino simple Y correcto)
- * ─────────────────────────────────────────────────────────────
- *
- * Un cliente puede tener VARIOS activos (decisión del fundador: cada
- * activo es un pago propio). Por eso NO se puede buscar "el activo del
- * cliente X" — no diría CUÁL de sus activos.
- *
- * activo_id_onchain apunta a UN activo específico. Es una fila, un
- * activo, sin ambigüedad. Es el único puente que ata la fila de
- * Supabase con el activo de la cadena, uno a uno.
- *
- * HOY esa columna está VACÍA (nadie la llena todavía; la llenará el
- * alta on-chain en la Fase 7). Por eso esta función, si no encuentra
- * el activo, LO DICE CLARO y no inventa. No devuelve "el activo de
- * algún cliente" para tapar el hueco — eso sería la misma mentira que
- * el viejo `return 50`.
- *
- * Resultado: la función queda TERMINADA y CORRECTA hoy, y empieza a
- * funcionar sola en cuanto la Fase 7 llene activo_id_onchain. No hay
- * que volver a tocarla.
- *
- * ─────────────────────────────────────────────────────────────
- * VARIABLES DE ENTORNO (ya están en el .env del VPS)
- * ─────────────────────────────────────────────────────────────
- *   SUPABASE_URL
- *   SUPABASE_SERVICE_KEY
- * (las mismas que usa procesador-pagos.js — no se agregan nuevas)
- *
- * ─────────────────────────────────────────────────────────────
- * CÓMO PROBARLO
- * ─────────────────────────────────────────────────────────────
- *   node activo-supabase.js               → lista los activos que hay
- *   node activo-supabase.js 7             → trae el activo on-chain #7
+ * AJUSTE 46 (3/10/2026) — MODO DE CERTIFICACIÓN
+ * Se suma la columna `modo_certificacion` (atras / adelante / ambos) a lo
+ * que se lee de Supabase, y se devuelve como `modoCertificacion`. El
+ * scheduler la usa para decidir si un activo entra al seguimiento quincenal:
+ * los "atras" (solo EUDR histórico) no se siguen hacia adelante. Si la
+ * columna viniera vacía, se asume 'atras' (lo único que funciona hoy), así
+ * ningún activo arranca seguimiento sin querer.
  * ═════════════════════════════════════════════════════════════
  */
 
@@ -130,6 +80,7 @@ async function traerActivoPorOnchainId(activoIdOnchain) {
       'activo_id_onchain',
       'estado',
       'deforestacion_historica',
+      'modo_certificacion',
     ].join(', '))
     .eq('activo_id_onchain', activoIdOnchain)
     .maybeSingle();
@@ -164,6 +115,7 @@ async function traerActivoPorOnchainId(activoIdOnchain) {
     superficieKm2:  data.superficie_km2 ?? null,
     estado:         data.estado ?? null,
     deforestacionHistorica: data.deforestacion_historica ?? null,
+    modoCertificacion: data.modo_certificacion ?? 'atras',   // AJUSTE 46
   };
 }
 
@@ -186,6 +138,7 @@ async function traerActivoParaCertificado(filaId) {
       'activo_id_onchain',
       'estado',
       'deforestacion_historica',
+      'modo_certificacion',
     ].join(', '))
     .eq('id', filaId)
     .maybeSingle();
@@ -245,13 +198,14 @@ async function traerActivoParaCertificado(filaId) {
     titular,
     titularMotivo,
     deforestacionHistorica: data.deforestacion_historica ?? null,
+    modoCertificacion: data.modo_certificacion ?? 'atras',   // AJUSTE 46
   };
 }
 
 async function listarActivos() {
   const { data, error } = await supabase
     .from(TABLA)
-    .select('id, nombre_activo, tipo, activo_id_onchain, poligono_confirmado, superficie_ha, estado, cliente_id')
+    .select('id, nombre_activo, tipo, activo_id_onchain, poligono_confirmado, superficie_ha, estado, cliente_id, modo_certificacion')
     .order('id', { ascending: true });
 
   if (error) throw new Error(`Supabase falló listando activos: ${error.message}`);
@@ -289,15 +243,16 @@ async function _prueba() {
   if (lista.length === 0) {
     L('  (no hay activos todavía)');
   } else {
-    L('  fila │ nombre                    │ tipo       │ onchain │ polígono │ estado');
-    L('  ─────┼───────────────────────────┼────────────┼─────────┼──────────┼────────');
+    L('  fila │ nombre                    │ tipo       │ onchain │ polígono │ modo     │ estado');
+    L('  ─────┼───────────────────────────┼────────────┼─────────┼──────────┼──────────┼────────');
     for (const a of lista) {
       const nombre = String(a.nombre_activo || '—').slice(0, 25).padEnd(25);
       const tipo   = String(a.tipo || '—').slice(0, 10).padEnd(10);
       const onchain = a.activo_id_onchain != null ? String(a.activo_id_onchain).padStart(7) : '  vacío';
       const poli   = a.poligono_confirmado ? '   sí   ' : '   no   ';
+      const modo   = String(a.modo_certificacion || 'atras').slice(0, 8).padEnd(8);
       const estado = String(a.estado || '—');
-      L(`  ${String(a.id).padStart(4)} │ ${nombre} │ ${tipo} │ ${onchain} │ ${poli} │ ${estado}`);
+      L(`  ${String(a.id).padStart(4)} │ ${nombre} │ ${tipo} │ ${onchain} │ ${poli} │ ${modo} │ ${estado}`);
     }
   }
 
@@ -331,6 +286,7 @@ async function _prueba() {
         L(`    superficie:     ${r.superficieHa} ha`);
         L(`    polígono real:  ${r.esPoligonoReal ? 'SÍ' : 'NO (sin polígono válido)'}`);
         L(`    confirmado:     ${r.poligonoConfirmado ? 'sí' : 'no'}`);
+        L(`    modo cert.:     ${r.modoCertificacion}`);
         L(`    estado:         ${r.estado}`);
         if (r.esPoligonoReal) {
           const n = r.geometria.coordinates?.[0]?.length ?? 0;
