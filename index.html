@@ -216,6 +216,10 @@ section { position:relative; }
 .mc-alt { text-align:center; font-size:13px; color:rgba(232,228,218,0.55); margin-top:14px; }
 .mc-alt a { color:var(--muted); text-decoration:underline; }
 .mc-alt a:hover { color:var(--text); }
+/* aviso de por qué no se publican precios (dentro del modal de contacto) */
+.mc-precio { margin:16px 0 4px; padding:14px 16px; border:1px solid var(--line); border-left:2px solid var(--teal); background:rgba(95,173,95,0.035); }
+.mc-precio .t { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:2px; color:var(--teal); margin-bottom:8px; }
+.mc-precio p { font-size:13.5px; color:rgba(232,228,218,0.68); line-height:1.65; margin:0; }
 
 .epi-bubble { position:fixed; right:clamp(16px,3vw,32px); bottom:clamp(16px,3vw,32px); z-index:400; width:60px; height:60px; border-radius:50%; background:radial-gradient(circle at 35% 30%, var(--panel), var(--surface)); border:1px solid rgba(95,173,95,0.35); cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 6px 26px rgba(0,0,0,0.5); transition:transform .25s ease, box-shadow .3s ease, opacity .3s ease; animation:epiPulse 3.4s ease-in-out infinite; }
 .epi-bubble:hover { transform:scale(1.08); }
@@ -387,7 +391,7 @@ section { position:relative; }
       <!-- CONTACTO (abre modal con opciones + canales) -->
       <button class="puerta contacto" onclick="abrirContacto()" type="button">
         <div class="puerta-top">
-          <span class="puerta-k">CONTACTO · CONTRATAR</span>
+          <span class="puerta-k">CONTACTO · CONTRATAR · PRECIOS</span>
           <span class="puerta-ico">
             <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M4 5h16a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z" stroke-width="1.5"/>
@@ -543,6 +547,10 @@ const CONTACTO_HTML = `
     <div><div class="opt-name">Cobertura completa · EUDR + seguimiento</div><div class="opt-desc">Las dos cosas: la prueba histórica para la EUDR y el seguimiento continuo hacia adelante. La cobertura completa, del pasado al futuro.</div></div>
   </div>
 </div>
+<div class="mc-precio">
+  <div class="t">POR QUÉ NO PUBLICAMOS PRECIOS</div>
+  <p>Los precios están estandarizados, pero varían según el tipo de cliente y la forma de contratación. Publicarlos como una góndola sería engorroso y confuso. A eso se suma el principio de confidencialidad con el que trabajamos: lo acordado con cada cliente es reservado. Por eso el precio se informa previo acuerdo entre las partes.</p>
+</div>
 <h4>PARA AVANZAR, ESCRIBINOS</h4>
 <div class="mc-canales">
   <a class="mc-btn mail" href="mailto:info@epimeleia.world?subject=Consulta%20EPIMELEIA">✉ info@epimeleia.world</a>
@@ -550,7 +558,7 @@ const CONTACTO_HTML = `
 </div>
 `;
 function abrirContacto(){
-  document.getElementById('mEyebrow').textContent = 'CONTACTO · CONTRATACIÓN';
+  document.getElementById('mEyebrow').textContent = 'CONTACTO · CONTRATACIÓN · PRECIOS';
   document.getElementById('mTitle').innerHTML = 'Elegí una opción y escribinos';
   document.getElementById('mBody').innerHTML = CONTACTO_HTML;
   document.getElementById('ovModal').classList.add('active');
