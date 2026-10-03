@@ -222,31 +222,6 @@ async function _procesarActivoVentana(activoId, periodo, simular = false) {
     return { omitido: true };
   }
 
-  try {
-    const cob = await cobertura.evaluarCoberturaDeActivo(
-      activoId,
-      periodo.hasta,
-      periodo.esCierreDeTrimestre
-    );
-
-    if (!cob.puedeCertificar) {
-      log('SIN_COBERTURA', `Activo ${activoId}: ${cob.motivo}`);
-      if (!simular) {
-        await reports.notificarAdmin('ACTIVO_SIN_COBERTURA', {
-          activoId,
-          trimestre: periodo.trimestre,
-          estado: cob.estado,
-          coberturaHasta: cob.coberturaHasta || null,
-          motivo: cob.motivo,
-        });
-      }
-      return { omitido: true, sinCobertura: true };
-    }
-  } catch (err) {
-    log('ERROR', `No se pudo evaluar cobertura de ${activoId}: ${err.message}`);
-    throw err;
-  }
-
   let filaSupabase;
   try {
     filaSupabase = await activoSupabase.traerActivoPorOnchainId(activoId);
@@ -281,6 +256,39 @@ async function _procesarActivoVentana(activoId, periodo, simular = false) {
   if (modo === 'atras') {
     log('INFO', `Activo ${activoId}: modo "atras" (solo histórico EUDR) — no entra al seguimiento quincenal`);
     return { omitido: true };
+  }
+
+  // ── COBERTURA · corte por baja (AJUSTE 46 · se evalúa con el filaId) ──
+  // cobertura.js busca por el id de FILA (filaId), no por activo_id_onchain
+  // — así lo escribe el webhook de pago. Antes el scheduler le pasaba
+  // activoId (el id on-chain) y cobertura buscaba la fila equivocada. Por
+  // eso ahora se evalúa acá, DESPUÉS de traer la fila: ya tenemos
+  // filaSupabase.filaId, el id real. Y solo llega hasta acá un activo con
+  // polígono real y en modo de seguimiento (adelante/ambos) — evaluarle la
+  // cobertura recién ahora es lo correcto: a un "atras" ni se le mira.
+  try {
+    const cob = await cobertura.evaluarCoberturaDeActivo(
+      filaSupabase.filaId,
+      periodo.hasta,
+      periodo.esCierreDeTrimestre
+    );
+
+    if (!cob.puedeCertificar) {
+      log('SIN_COBERTURA', `Activo ${activoId} (fila ${filaSupabase.filaId}): ${cob.motivo}`);
+      if (!simular) {
+        await reports.notificarAdmin('ACTIVO_SIN_COBERTURA', {
+          activoId,
+          trimestre: periodo.trimestre,
+          estado: cob.estado,
+          coberturaHasta: cob.coberturaHasta || null,
+          motivo: cob.motivo,
+        });
+      }
+      return { omitido: true, sinCobertura: true };
+    }
+  } catch (err) {
+    log('ERROR', `No se pudo evaluar cobertura de ${activoId} (fila ${filaSupabase.filaId}): ${err.message}`);
+    throw err;
   }
 
   log('VENTANA', `Activo ${activoId} · ${_etiqueta(periodo)} · POLÍGONO REAL`, {
