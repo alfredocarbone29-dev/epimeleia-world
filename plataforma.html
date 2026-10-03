@@ -300,6 +300,20 @@ section { position:relative; }
 .recurso.comodin .recurso-name { color:var(--gold2); }
 .recurso.comodin .recurso-ico { color:var(--gold); }
 
+/* ─── OPCIONES (las tres formas · idénticas en todo el sitio) ─── */
+/* Mismo componente y mismo texto que el index, eudr e instituciones.
+   El satélite no discrimina: la oferta es la misma en toda página; lo
+   único que cambia es a quién le hablamos alrededor. No reescribir el
+   texto de las opciones acá: debe coincidir palabra por palabra. */
+.opt-list { display:flex; flex-direction:column; gap:10px; margin:0 auto; max-width:720px; text-align:left; }
+.opt { display:flex; gap:14px; background:var(--card); border:1px solid var(--line2); padding:16px 18px; align-items:flex-start; }
+.opt.combo { background:linear-gradient(150deg, rgba(95,173,95,0.1), var(--card) 60%); border-color:rgba(95,173,95,0.3); }
+.opt-k { flex-shrink:0; font-family:'JetBrains Mono',monospace; font-size:16px; color:var(--dim); width:24px; line-height:1.3; }
+.opt.combo .opt-k { color:var(--emerald); }
+.opt-name { font-family:'Playfair Display',serif; font-size:18px; color:var(--white); line-height:1.15; }
+.opt.combo .opt-name { color:var(--emerald); }
+.opt-desc { font-size:13.5px; color:rgba(232,228,218,0.6); line-height:1.5; margin-top:5px; }
+
 /* ─── PUERTA / ADHERIRSE ─── */
 .door { text-align:center; padding:clamp(56px,9vw,104px) clamp(24px,5vw,64px); border-top:1px solid var(--line); }
 .door-eyebrow { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:3px; color:var(--teal); margin-bottom:20px; }
@@ -586,6 +600,32 @@ section { position:relative; }
     <p class="recursos-sub">Tocá cualquiera para ver cómo funciona</p>
   </div>
   <div class="recursos-grid" id="recGrid"></div>
+</section>
+
+<div class="divider"></div>
+
+<!-- LAS TRES FORMAS DE CERTIFICAR · IDÉNTICAS EN TODO EL SITIO ──
+     Mismo trío y mismo texto que el index, eudr e instituciones. Si cambia
+     una palabra acá, cambia en todas. La oferta es la misma para todos; lo
+     único propio de esta página es a quién le habla. -->
+<section class="sec sec-narrow" style="text-align:center;">
+  <div class="eyebrow" style="margin-bottom:16px;">ELEGÍS VOS · SEGÚN TU NECESIDAD</div>
+  <h2 class="head-title" style="margin-bottom:clamp(28px,4vw,40px);">Tres formas de certificar tu recurso</h2>
+  <div class="opt-list">
+    <div class="opt">
+      <div class="opt-k">01</div>
+      <div><div class="opt-name">Solo deforestación · EUDR</div><div class="opt-desc">El chequeo histórico de tu territorio, sellado en blockchain. El respaldo de tu Declaración de Diligencia Debida. Una prueba inapelable hacia atrás.</div></div>
+    </div>
+    <div class="opt">
+      <div class="opt-k">02</div>
+      <div><div class="opt-name">Seguimiento continuo</div><div class="opt-desc">El satélite observa tu activo cada quincena, hacia adelante, y sella cada lectura. Recibís avisos de lo que pasa. Un guardián que no duerme.</div></div>
+    </div>
+    <div class="opt combo">
+      <div class="opt-k">03</div>
+      <div><div class="opt-name">Cobertura completa · EUDR + seguimiento</div><div class="opt-desc">Las dos cosas: la prueba histórica para la EUDR y el seguimiento continuo hacia adelante. La cobertura completa, del pasado al futuro.</div></div>
+    </div>
+  </div>
+  <p class="qj-close" style="margin-top:clamp(28px,4vw,40px);border-top:none;padding-top:0;">¿No sabés cuál te conviene? <strong>Escribinos y lo definimos juntos.</strong></p>
 </section>
 
 <!-- PUERTA / ADHERIRSE -->

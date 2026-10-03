@@ -178,6 +178,21 @@ section { position:relative; }
 .legal-note { max-width:720px; margin:clamp(30px,4vw,42px) auto 0; padding-top:clamp(24px,3vw,32px); border-top:1px solid var(--line); font-size:clamp(13px,1.4vw,15px); color:rgba(232,228,218,0.55); line-height:1.7; text-align:center; }
 .legal-note a { color:var(--emerald); text-decoration:none; }
 
+/* ─── OPCIONES (las tres formas · idénticas en todo el sitio) ─── */
+/* Mismo componente y mismo texto que el modal de Contacto del index.
+   El satélite no discrimina: la oferta es la misma en toda página; lo
+   único que cambia es a quién le hablamos alrededor. No reescribir el
+   texto de las opciones acá: debe coincidir palabra por palabra con el
+   index, plataforma e instituciones. */
+.opt-list { display:flex; flex-direction:column; gap:10px; margin:0 auto; max-width:720px; text-align:left; }
+.opt { display:flex; gap:14px; background:var(--card); border:1px solid var(--line2); padding:16px 18px; align-items:flex-start; }
+.opt.combo { background:linear-gradient(150deg, rgba(95,173,95,0.1), var(--card) 60%); border-color:rgba(95,173,95,0.3); }
+.opt-k { flex-shrink:0; font-family:'JetBrains Mono',monospace; font-size:16px; color:var(--dim); width:24px; line-height:1.3; }
+.opt.combo .opt-k { color:var(--emerald); }
+.opt-name { font-family:'Playfair Display',serif; font-size:18px; color:var(--white); line-height:1.15; }
+.opt.combo .opt-name { color:var(--emerald); }
+.opt-desc { font-size:13.5px; color:rgba(232,228,218,0.6); line-height:1.5; margin-top:5px; }
+
 
 /* ─── STACK DE BOTONES FLOTANTES FIJOS (izquierda) · acompañan todo el recorrido ─── */
 .float-stack { position:fixed; left:clamp(16px,3vw,32px); bottom:clamp(16px,3vw,32px); z-index:400; display:flex; flex-direction:column; gap:10px; align-items:flex-start; }
@@ -375,20 +390,26 @@ section { position:relative; }
 <section class="contacto">
   <div class="contacto-in">
 
-    <!-- ── Las dos formas de certificar ── -->
+    <!-- ── Las tres formas de certificar · IDÉNTICAS EN TODO EL SITIO ──
+         Mismo trío y mismo texto que el index, plataforma e instituciones.
+         Si cambia una palabra acá, cambia en las cuatro. La oferta es la
+         misma para todos; lo único propio de esta página es a quién le
+         habla (exportadores / operadores expuestos a la EUDR). -->
     <div class="eyebrow" style="margin-bottom:16px;">ELEGÍS VOS · SEGÚN TU NECESIDAD</div>
-    <h2 class="head-title" style="margin-bottom:clamp(28px,4vw,40px);">Dos formas de certificar tu territorio</h2>
+    <h2 class="head-title" style="margin-bottom:clamp(28px,4vw,40px);">Tres formas de certificar tu territorio</h2>
 
-    <div class="rol" style="margin-bottom:clamp(30px,4vw,44px);">
-      <div class="rol-cell them">
-        <div class="rol-k" style="color:var(--emerald);">OPCIÓN A · HACIA ATRÁS</div>
-        <div class="rol-t">El chequeo histórico</div>
-        <div class="rol-d">La verdad de tu territorio <strong>año por año, de 2020 a hoy</strong>: si hubo deforestación y cuándo, sellada en blockchain. La foto del pasado, verificable por tu comprador o el auditor. Es el respaldo de tu DDS.</div>
+    <div class="opt-list" style="margin-bottom:clamp(30px,4vw,44px);">
+      <div class="opt">
+        <div class="opt-k">01</div>
+        <div><div class="opt-name">Solo deforestación · EUDR</div><div class="opt-desc">El chequeo histórico de tu territorio, sellado en blockchain. El respaldo de tu Declaración de Diligencia Debida. Una prueba inapelable hacia atrás.</div></div>
       </div>
-      <div class="rol-cell us">
-        <div class="rol-k">OPCIÓN B · HACIA ATRÁS + ADELANTE</div>
-        <div class="rol-t">El chequeo, y la guardia que sigue</div>
-        <div class="rol-d">Todo lo de la Opción A, <strong>y además el seguimiento continuo</strong> de tu territorio: el satélite lo sigue observando y te avisa si algo cambia, con informes sellados en el tiempo. Del pasado probado a la vigilancia hacia adelante.</div>
+      <div class="opt">
+        <div class="opt-k">02</div>
+        <div><div class="opt-name">Seguimiento continuo</div><div class="opt-desc">El satélite observa tu activo cada quincena, hacia adelante, y sella cada lectura. Recibís avisos de lo que pasa. Un guardián que no duerme.</div></div>
+      </div>
+      <div class="opt combo">
+        <div class="opt-k">03</div>
+        <div><div class="opt-name">Cobertura completa · EUDR + seguimiento</div><div class="opt-desc">Las dos cosas: la prueba histórica para la EUDR y el seguimiento continuo hacia adelante. La cobertura completa, del pasado al futuro.</div></div>
       </div>
     </div>
     <p class="rol-foot" style="margin-bottom:clamp(44px,6vw,68px);">¿No sabés cuál te conviene? <span>Escribinos y lo definimos juntos.</span></p>

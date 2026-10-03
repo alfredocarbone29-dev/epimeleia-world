@@ -176,6 +176,19 @@ main,.topbar,footer{position:relative; z-index:1;}
 .frame-cell p{font-size:15.5px; color:var(--steel); line-height:1.62;}
 .frame-cell p b{color:var(--bone); font-weight:500;}
 
+/* ── OPCIONES (las tres formas · idénticas en todo el sitio) ──
+   Mismo trío y mismo TEXTO que el index, eudr y plataforma. El contenido
+   de las opciones no cambia entre páginas; sí su piel, adaptada acá a la
+   paleta institucional (azure / bone / steel). No reescribir el texto. */
+.opt-list{display:flex; flex-direction:column; gap:10px; max-width:720px; margin:0 auto; text-align:left;}
+.opt{display:flex; gap:16px; background:var(--ink2); border:1px solid var(--line2); padding:18px 20px; align-items:flex-start;}
+.opt.combo{background:var(--card); border-color:rgba(143,176,218,0.38);}
+.opt-k{flex-shrink:0; font-family:'IBM Plex Mono',monospace; font-size:15px; letter-spacing:1px; color:var(--azure-dim); width:26px; line-height:1.4;}
+.opt.combo .opt-k{color:var(--azure);}
+.opt-name{font-family:'IBM Plex Sans',sans-serif; font-weight:600; font-size:17px; color:var(--bone); line-height:1.25;}
+.opt.combo .opt-name{color:var(--azure);}
+.opt-desc{font-size:14px; color:var(--steel); line-height:1.55; margin-top:6px;}
+
 /* ── PUERTA / CIERRE ── */
 .door{text-align:center; padding:clamp(64px,9vw,120px) 0; border-top:1px solid var(--line);}
 .door-kicker{font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:3px; color:var(--azure); margin-bottom:22px;}
@@ -449,6 +462,34 @@ a:focus-visible, .topbar-cta:focus-visible, .door-cta:focus-visible{outline:2px 
       <div class="frame-cell no">
         <div class="frame-k">LO QUE NO SOMOS</div>
         <p><b>No somos un verificador acreditado.</b> La acreditación la pone tu SPO; la prueba inmutable la ponemos nosotros. No competimos con tu verificador — le damos el dato del que hoy carece.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="rule"></div>
+
+<!-- LAS TRES FORMAS DE CERTIFICAR · IDÉNTICAS EN TODO EL SITIO ──
+     Mismo trío y mismo texto que el index, eudr y plataforma. Si cambia una
+     palabra acá, cambia en todas. La oferta es la misma para todos; lo único
+     propio de esta página es a quién le habla (framing institucional). -->
+<section class="sec">
+  <div class="wrap">
+    <div class="kicker" style="text-align:center;">LA MISMA OFERTA · A ESCALA DE CARTERA</div>
+    <h2 class="sec-h2 center">Tres formas de certificar. Las mismas para todos.</h2>
+    <p class="sec-intro center" style="margin-bottom:clamp(36px,5vw,52px);">La oferta es idéntica en toda la plataforma. Para una institución, estas tres se aplican sobre la cartera — el alcance y el volumen se dimensionan con vos.</p>
+    <div class="opt-list">
+      <div class="opt">
+        <div class="opt-k">01</div>
+        <div><div class="opt-name">Solo deforestación · EUDR</div><div class="opt-desc">El chequeo histórico de tu territorio, sellado en blockchain. El respaldo de tu Declaración de Diligencia Debida. Una prueba inapelable hacia atrás.</div></div>
+      </div>
+      <div class="opt">
+        <div class="opt-k">02</div>
+        <div><div class="opt-name">Seguimiento continuo</div><div class="opt-desc">El satélite observa tu activo cada quincena, hacia adelante, y sella cada lectura. Recibís avisos de lo que pasa. Un guardián que no duerme.</div></div>
+      </div>
+      <div class="opt combo">
+        <div class="opt-k">03</div>
+        <div><div class="opt-name">Cobertura completa · EUDR + seguimiento</div><div class="opt-desc">Las dos cosas: la prueba histórica para la EUDR y el seguimiento continuo hacia adelante. La cobertura completa, del pasado al futuro.</div></div>
       </div>
     </div>
   </div>
