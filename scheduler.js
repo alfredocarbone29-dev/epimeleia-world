@@ -258,17 +258,18 @@ async function _procesarActivoVentana(activoId, periodo, simular = false) {
     return { omitido: true };
   }
 
-  // ── COBERTURA · corte por baja (AJUSTE 46 · se evalúa con el filaId) ──
-  // cobertura.js busca por el id de FILA (filaId), no por activo_id_onchain
-  // — así lo escribe el webhook de pago. Antes el scheduler le pasaba
-  // activoId (el id on-chain) y cobertura buscaba la fila equivocada. Por
-  // eso ahora se evalúa acá, DESPUÉS de traer la fila: ya tenemos
-  // filaSupabase.filaId, el id real. Y solo llega hasta acá un activo con
-  // polígono real y en modo de seguimiento (adelante/ambos) — evaluarle la
-  // cobertura recién ahora es lo correcto: a un "atras" ni se le mira.
+  // ── COBERTURA · corte por baja (AJUSTE 46 · corregido 3/10/2026) ──
+  // OJO: cobertura.js busca la fila por activo_id_onchain (columna ENTERA),
+  // NO por el id de fila (UUID). Por eso se le pasa activoId (el id on-chain),
+  // no filaSupabase.filaId. Pasarle el UUID rompe en Postgres con
+  // "invalid input syntax for type integer". (El parámetro de cobertura.js se
+  // llama 'filaId' por historia, pero internamente filtra activo_id_onchain.)
+  // Se evalúa acá, después de traer la fila y chequear modo, por orden lógico:
+  // solo llega un activo con polígono real y en seguimiento (adelante/ambos)
+  // — a un "atras" ni se le mira la cobertura.
   try {
     const cob = await cobertura.evaluarCoberturaDeActivo(
-      filaSupabase.filaId,
+      activoId,
       periodo.hasta,
       periodo.esCierreDeTrimestre
     );
