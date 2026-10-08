@@ -191,6 +191,8 @@ a.sello:hover{border-color:var(--emerald);color:var(--emerald);text-decoration:n
 const SUPABASE_URL = 'https://rfpiirxsdhfnvstwjjbh.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_Ym3gRRPfLZPGm4srzFDdTw_dcWvqxZ2';
 const API_PANEL = '/api/panel';
+/* Desde este ID on-chain existe el paquete público que verificar.html recalcula. */
+const VERIFICABLE_DESDE = 18;
 
 /* Vista de un solo cliente: panel.html?cliente=Cooperativa%20Demo */
 const CLIENTE_FIJO = (new URLSearchParams(location.search).get('cliente') || '').trim();
@@ -224,6 +226,9 @@ function chipCobertura(v) {
 function celdaSello(p) {
   if (!p.sellada_onchain || p.activo_id_onchain === null || p.activo_id_onchain === undefined) {
     return '<span class="sello">NO SELLADA</span>';
+  }
+  if (Number(p.activo_id_onchain) < VERIFICABLE_DESDE) {
+    return `<span class="sello" title="Sellada en Polygon antes de que existiera el paquete verificable">SELLADA #${esc(p.activo_id_onchain)}</span>`;
   }
   const id = encodeURIComponent(p.activo_id_onchain);
   return `<a class="sello" href="/verificar.html?id=${id}" target="_blank" rel="noopener">VERIFICAR #${esc(p.activo_id_onchain)} →</a>`;
