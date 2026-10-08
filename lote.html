@@ -207,7 +207,7 @@ h1{font-family:'Playfair Display',serif;font-weight:400;font-size:clamp(26px,4vw
 
     var data;
     try {
-      var r = await fetch('/api/lote-publico?codigo=' + encodeURIComponent(codigo));
+      var r = await fetch('/api/panel?lote=' + encodeURIComponent(codigo));
       data = await r.json();
     } catch (e) {
       return mostrarEstado('mal', '✕', 'No se pudo consultar', 'Revisá tu conexión y probá de nuevo.');
