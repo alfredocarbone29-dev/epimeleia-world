@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>EPIMELEIA · Panel de cartera</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --bg: #f4f6f3;
+    --card: #ffffff;
+    --ink: #17221b;
+    --muted: #5f6d64;
+    --line: #dde3dd;
+    --brand: #1f6b45;
+    --ok: #1f7a4a;      --ok-bg: #e3f3e9;
+    --bad: #b3261e;     --bad-bg: #fbe6e4;
+    --warn: #8a6100;    --warn-bg: #fdf1d6;
+    --none: #5f6d64;    --none-bg: #eceeec;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f1511; --card: #172019; --ink: #e6ece7; --muted: #9aa89f;
+      --line: #2a352d; --brand: #5fbf8a;
+      --ok: #7fd6a3; --ok-bg: #173a26;
+      --bad: #ff8a80; --bad-bg: #3d1a17;
+      --warn: #f0c46a; --warn-bg: #3a2e12;
+      --none: #a6b0a9; --none-bg: #252d27;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  header {
+    padding: 20px 16px 12px; max-width: 1100px; margin: 0 auto;
+    display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 16px;
+  }
+  header h1 { margin: 0; font-size: 20px; letter-spacing: .02em; }
+  header h1 span { color: var(--brand); }
+  header .meta { color: var(--muted); font-size: 13px; }
+  main { max-width: 1100px; margin: 0 auto; padding: 0 16px 40px; }
+  .estado {
+    background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+    padding: 18px; margin: 12px 0; color: var(--muted);
+  }
+  .estado.error { color: var(--bad); border-color: var(--bad); }
+  .estado a { color: var(--brand); }
+
+  .kpis {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px; margin: 8px 0 22px;
+  }
+  .kpi {
+    background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+    padding: 12px 14px;
+  }
+  .kpi .n { font-size: 24px; font-weight: 650; font-variant-numeric: tabular-nums; }
+  .kpi .l { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+  .kpi.ok .n { color: var(--ok); }
+  .kpi.bad .n { color: var(--bad); }
+
+  h2 { font-size: 15px; margin: 22px 0 10px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+
+  .tabla-wrap { background: var(--card); border: 1px solid var(--line); border-radius: 10px; overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+  th, td { padding: 9px 12px; text-align: left; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  th { font-size: 12px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+  td.num, th.num { text-align: right; }
+  tr:last-child td { border-bottom: 0; }
+  tbody tr.clic { cursor: pointer; }
+  tbody tr.clic:hover { background: color-mix(in srgb, var(--brand) 7%, transparent); }
+  tbody tr.activo { background: color-mix(in srgb, var(--brand) 12%, transparent); }
+
+  .barra { display: flex; height: 8px; border-radius: 4px; overflow: hidden; min-width: 90px; background: var(--none-bg); }
+  .barra i { display: block; height: 100%; }
+  .barra .b-ok { background: var(--ok); }
+  .barra .b-bad { background: var(--bad); }
+
+  .filtros { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+  .filtros select, .filtros input {
+    font: inherit; padding: 7px 10px; border-radius: 8px; border: 1px solid var(--line);
+    background: var(--card); color: var(--ink); min-width: 0;
+  }
+  .filtros input { flex: 1 1 180px; }
+  .chip {
+    display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 12.5px; font-weight: 600;
+  }
+  .chip.limpia { color: var(--ok); background: var(--ok-bg); }
+  .chip.hubo { color: var(--bad); background: var(--bad-bg); }
+  .chip.sin { color: var(--none); background: var(--none-bg); }
+  .chip.vigente { color: var(--ok); background: var(--ok-bg); }
+  .chip.vencida { color: var(--warn); background: var(--warn-bg); }
+  .sello { font-size: 13px; color: var(--muted); }
+  .sello.si { color: var(--ok); font-weight: 600; }
+  .contador { color: var(--muted); font-size: 13px; margin: 8px 2px 0; }
+
+  /* En el celular, las parcelas pasan a tarjetas */
+  @media (max-width: 680px) {
+    #tabla-parcelas thead { display: none; }
+    #tabla-parcelas, #tabla-parcelas tbody, #tabla-parcelas tr, #tabla-parcelas td { display: block; width: 100%; }
+    #tabla-parcelas tr { padding: 10px 12px; border-bottom: 1px solid var(--line); }
+    #tabla-parcelas td { border: 0; padding: 2px 0; white-space: normal; text-align: left; }
+    #tabla-parcelas td[data-l]::before { content: attr(data-l) ": "; color: var(--muted); font-size: 12.5px; }
+    #tabla-parcelas td.nombre { font-weight: 650; font-size: 15.5px; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1><span>EPIMELEIA</span> · Panel de cartera</h1>
+  <div class="meta" id="meta">Solo founder</div>
+</header>
+
+<main>
+  <div class="estado" id="estado">Verificando tu sesión…</div>
+
+  <section id="contenido" hidden>
+    <div class="kpis" id="kpis"></div>
+
+    <h2>Clientes</h2>
+    <div class="tabla-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Cliente</th>
+            <th class="num">Parcelas</th>
+            <th class="num">Hectáreas</th>
+            <th class="num">Limpias</th>
+            <th class="num">Con deforestación</th>
+            <th class="num">Sin chequeo</th>
+            <th>Estado</th>
+            <th class="num">Cobertura vigente</th>
+            <th>Último sello</th>
+          </tr>
+        </thead>
+        <tbody id="tbody-clientes"></tbody>
+      </table>
+    </div>
+
+    <h2>Parcelas</h2>
+    <div class="filtros">
+      <select id="f-cliente" aria-label="Filtrar por cliente"><option value="">Todos los clientes</option></select>
+      <select id="f-veredicto" aria-label="Filtrar por veredicto">
+        <option value="">Todos los veredictos</option>
+        <option value="limpia">Limpia</option>
+        <option value="hubo deforestacion">Hubo deforestación</option>
+        <option value="sin chequeo">Sin chequeo</option>
+      </select>
+      <input id="f-texto" type="search" placeholder="Buscar parcela…" aria-label="Buscar parcela">
+    </div>
+    <div class="tabla-wrap">
+      <table id="tabla-parcelas">
+        <thead>
+          <tr>
+            <th>Parcela</th>
+            <th>Cliente</th>
+            <th class="num">Hectáreas</th>
+            <th>Veredicto</th>
+            <th class="num">Ha perdidas</th>
+            <th>Cobertura</th>
+            <th>Sellada on-chain</th>
+            <th>Alta</th>
+          </tr>
+        </thead>
+        <tbody id="tbody-parcelas"></tbody>
+      </table>
+    </div>
+    <div class="contador" id="contador"></div>
+  </section>
+</main>
+
+<script>
+/* Mismos valores que usa cuenta.html (la clave publishable es pública por diseño). */
+const SUPABASE_URL = 'https://rfpiirxsdhfnvstwjjbh.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_Ym3gRRPfLZPGm4srzFDdTw_dcWvqxZ2';
+const API_PANEL = '/api/panel';
+
+const $ = (id) => document.getElementById(id);
+const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const nf = new Intl.NumberFormat('es-AR', { maximumFractionDigits: 1 });
+const nf2 = new Intl.NumberFormat('es-AR', { maximumFractionDigits: 2 });
+const num = (v, f = nf) => (v === null || v === undefined || v === '' ? '—' : f.format(Number(v)));
+const fecha = (v) => (v ? new Date(v).toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' }) : '—');
+
+let PARCELAS = [];
+
+function mostrarEstado(html, esError) {
+  const el = $('estado');
+  el.innerHTML = html;
+  el.className = 'estado' + (esError ? ' error' : '');
+  el.hidden = false;
+}
+
+function chipVeredicto(v) {
+  if (v === 'limpia') return '<span class="chip limpia">Limpia</span>';
+  if (v === 'hubo deforestacion') return '<span class="chip hubo">Hubo deforestación</span>';
+  return '<span class="chip sin">Sin chequeo</span>';
+}
+function chipCobertura(v) {
+  if (v === 'vigente') return '<span class="chip vigente">Vigente</span>';
+  if (v === 'vencida') return '<span class="chip vencida">Vencida</span>';
+  return '<span class="chip sin">Sin cobertura</span>';
+}
+
+function renderKpis(clientes) {
+  const t = clientes.reduce((a, c) => {
+    a.parcelas += Number(c.parcelas) || 0;
+    a.ha += Number(c.ha_total) || 0;
+    a.limpias += Number(c.limpias) || 0;
+    a.bad += Number(c.con_deforestacion) || 0;
+    a.sin += Number(c.sin_chequeo) || 0;
+    a.vig += Number(c.cobertura_vigente) || 0;
+    return a;
+  }, { parcelas: 0, ha: 0, limpias: 0, bad: 0, sin: 0, vig: 0 });
+  $('kpis').innerHTML = [
+    ['Clientes', clientes.length, ''],
+    ['Parcelas', t.parcelas, ''],
+    ['Hectáreas', nf.format(t.ha), ''],
+    ['Limpias', t.limpias, 'ok'],
+    ['Con deforestación', t.bad, 'bad'],
+    ['Sin chequeo', t.sin, ''],
+    ['Cobertura vigente', t.vig, ''],
+  ].map(([l, n, cls]) => `<div class="kpi ${cls}"><div class="n">${esc(n)}</div><div class="l">${esc(l)}</div></div>`).join('');
+}
+
+function renderClientes(clientes) {
+  $('tbody-clientes').innerHTML = clientes.map((c) => {
+    const total = Number(c.parcelas) || 0;
+    const pOk = total ? (Number(c.limpias) / total) * 100 : 0;
+    const pBad = total ? (Number(c.con_deforestacion) / total) * 100 : 0;
+    return `<tr class="clic" data-cliente="${esc(c.cliente)}" title="Ver parcelas de ${esc(c.cliente)}">
+      <td><strong>${esc(c.cliente)}</strong></td>
+      <td class="num">${num(c.parcelas)}</td>
+      <td class="num">${num(c.ha_total)}</td>
+      <td class="num">${num(c.limpias)}</td>
+      <td class="num">${num(c.con_deforestacion)}</td>
+      <td class="num">${num(c.sin_chequeo)}</td>
+      <td><div class="barra" aria-hidden="true"><i class="b-ok" style="width:${pOk}%"></i><i class="b-bad" style="width:${pBad}%"></i></div></td>
+      <td class="num">${num(c.cobertura_vigente)}</td>
+      <td>${fecha(c.ultimo_sello)}</td>
+    </tr>`;
+  }).join('');
+
+  const sel = $('f-cliente');
+  sel.innerHTML = '<option value="">Todos los clientes</option>' +
+    clientes.map((c) => `<option value="${esc(c.cliente)}">${esc(c.cliente)} (${num(c.parcelas)})</option>`).join('');
+
+  $('tbody-clientes').querySelectorAll('tr.clic').forEach((tr) => {
+    tr.addEventListener('click', () => {
+      const actual = $('f-cliente').value;
+      $('f-cliente').value = actual === tr.dataset.cliente ? '' : tr.dataset.cliente;
+      renderParcelas();
+      $('f-cliente').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  });
+}
+
+function renderParcelas() {
+  const fc = $('f-cliente').value;
+  const fv = $('f-veredicto').value;
+  const ft = $('f-texto').value.trim().toLowerCase();
+  document.querySelectorAll('#tbody-clientes tr').forEach((tr) => tr.classList.toggle('activo', tr.dataset.cliente === fc));
+
+  const lista = PARCELAS.filter((p) =>
+    (!fc || p.cliente === fc) &&
+    (!fv || p.veredicto === fv) &&
+    (!ft || String(p.nombre_activo || '').toLowerCase().includes(ft))
+  );
+
+  $('tbody-parcelas').innerHTML = lista.map((p) => `<tr>
+    <td class="nombre">${esc(p.nombre_activo || '(sin nombre)')}</td>
+    <td data-l="Cliente">${esc(p.cliente)}</td>
+    <td class="num" data-l="Hectáreas">${num(p.superficie_ha)}</td>
+    <td data-l="Veredicto">${chipVeredicto(p.veredicto)}</td>
+    <td class="num" data-l="Ha perdidas">${p.veredicto === 'sin chequeo' ? '—' : num(p.ha_perdidas, nf2)}</td>
+    <td data-l="Cobertura">${chipCobertura(p.cobertura)}</td>
+    <td data-l="Sellada on-chain"><span class="sello ${p.sellada_onchain ? 'si' : ''}">${p.sellada_onchain ? 'Sí · #' + esc(p.activo_id_onchain) : 'No'}</span></td>
+    <td data-l="Alta">${fecha(p.fecha_alta)}</td>
+  </tr>`).join('');
+
+  $('contador').textContent = `${lista.length} de ${PARCELAS.length} parcelas`;
+}
+
+async function iniciar() {
+  if (!window.supabase || !window.supabase.createClient) {
+    return mostrarEstado('No se pudo cargar la librería de Supabase. Revisá tu conexión y recargá.', true);
+  }
+  const supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  let session;
+  try {
+    ({ data: { session } } = await supa.auth.getSession());
+  } catch (_) { session = null; }
+  if (!session || !session.access_token) {
+    return mostrarEstado('No hay una sesión abierta. <a href="/cuenta.html">Iniciá sesión en tu cuenta</a> con el email de founder y volvé a esta página.', true);
+  }
+
+  let r, data;
+  try {
+    r = await fetch(API_PANEL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: session.access_token }),
+    });
+    data = await r.json();
+  } catch (_) {
+    return mostrarEstado('No se pudo contactar al servidor. Probá de nuevo en un momento.', true);
+  }
+  if (!r.ok || !data.ok) {
+    return mostrarEstado(esc((data && data.error) || 'Error al cargar el panel.'), true);
+  }
+
+  PARCELAS = data.parcelas || [];
+  renderKpis(data.clientes || []);
+  renderClientes(data.clientes || []);
+  renderParcelas();
+  $('meta').textContent = 'Solo founder · actualizado ' + new Date(data.generado).toLocaleString('es-AR');
+  $('estado').hidden = true;
+  $('contenido').hidden = false;
+}
+
+['f-cliente', 'f-veredicto'].forEach((id) => $(id).addEventListener('change', renderParcelas));
+$('f-texto').addEventListener('input', renderParcelas);
+iniciar();
+</script>
+</body>
+</html>
