@@ -2,145 +2,149 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
-<title>EPIMELEIA · Panel de cartera</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<title>EPIMELEIA · Cartera</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Crimson+Pro:wght@0,300;0,400;0,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg: #f4f6f3;
-    --card: #ffffff;
-    --ink: #17221b;
-    --muted: #5f6d64;
-    --line: #dde3dd;
-    --brand: #1f6b45;
-    --ok: #1f7a4a;      --ok-bg: #e3f3e9;
-    --bad: #b3261e;     --bad-bg: #fbe6e4;
-    --warn: #8a6100;    --warn-bg: #fdf1d6;
-    --none: #5f6d64;    --none-bg: #eceeec;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #0f1511; --card: #172019; --ink: #e6ece7; --muted: #9aa89f;
-      --line: #2a352d; --brand: #5fbf8a;
-      --ok: #7fd6a3; --ok-bg: #173a26;
-      --bad: #ff8a80; --bad-bg: #3d1a17;
-      --warn: #f0c46a; --warn-bg: #3a2e12;
-      --none: #a6b0a9; --none-bg: #252d27;
-    }
-  }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0; background: var(--bg); color: var(--ink);
-    font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  }
-  header {
-    padding: 20px 16px 12px; max-width: 1100px; margin: 0 auto;
-    display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 16px;
-  }
-  header h1 { margin: 0; font-size: 20px; letter-spacing: .02em; }
-  header h1 span { color: var(--brand); }
-  header .meta { color: var(--muted); font-size: 13px; }
-  main { max-width: 1100px; margin: 0 auto; padding: 0 16px 40px; }
-  .estado {
-    background: var(--card); border: 1px solid var(--line); border-radius: 10px;
-    padding: 18px; margin: 12px 0; color: var(--muted);
-  }
-  .estado.error { color: var(--bad); border-color: var(--bad); }
-  .estado a { color: var(--brand); }
+:root{
+  --void:#040904; --deep:#080E08; --surface:#0C130C; --panel:#101810; --card:#141C14;
+  --line:rgba(255,255,255,0.06); --line2:rgba(255,255,255,0.1);
+  --text:#E8E4DA; --muted:#7E8C7E; --dim:#445844;
+  --green:#4A8A4A; --emerald:#5FAD5F; --teal:#3A8A7A; --gold2:#E5C870; --white:#F4F0E8;
+  --amber:#C89A4A; --red:#C8564A;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+body{
+  background:
+    radial-gradient(ellipse 70% 50% at 15% 8%, rgba(58,138,122,0.07) 0%, transparent 55%),
+    radial-gradient(ellipse 55% 45% at 88% 92%, rgba(74,138,74,0.05) 0%, transparent 55%),
+    var(--deep);
+  color:var(--text);font-family:'Crimson Pro',Georgia,serif;font-size:18px;line-height:1.7;
+  min-height:100vh;-webkit-font-smoothing:antialiased;
+}
+a{color:var(--emerald);text-decoration:none;}
+a:hover{text-decoration:underline;}
 
-  .kpis {
-    display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 10px; margin: 8px 0 22px;
-  }
-  .kpi {
-    background: var(--card); border: 1px solid var(--line); border-radius: 10px;
-    padding: 12px 14px;
-  }
-  .kpi .n { font-size: 24px; font-weight: 650; font-variant-numeric: tabular-nums; }
-  .kpi .l { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
-  .kpi.ok .n { color: var(--ok); }
-  .kpi.bad .n { color: var(--bad); }
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:18px clamp(20px,5vw,48px);border-bottom:1px solid var(--line);background:rgba(4,9,4,0.86);}
+.brand{font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:5px;color:var(--white);}
+.brand span{color:var(--emerald);}
+.topbar .volver{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--muted);}
 
-  h2 { font-size: 15px; margin: 22px 0 10px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+main{max-width:1120px;margin:0 auto;padding:clamp(30px,6vw,64px) clamp(20px,5vw,48px);}
+.eyebrow{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:3px;color:var(--emerald);margin-bottom:12px;text-transform:uppercase;}
+h1{font-family:'Playfair Display',serif;font-weight:400;font-size:clamp(26px,4vw,40px);color:var(--white);line-height:1.2;margin-bottom:10px;}
+.sub{color:var(--muted);font-size:clamp(15px,1.7vw,18px);line-height:1.6;margin-bottom:10px;max-width:680px;}
+.meta{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;color:var(--dim);margin-bottom:28px;}
 
-  .tabla-wrap { background: var(--card); border: 1px solid var(--line); border-radius: 10px; overflow-x: auto; }
-  table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
-  th, td { padding: 9px 12px; text-align: left; border-bottom: 1px solid var(--line); white-space: nowrap; }
-  th { font-size: 12px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
-  td.num, th.num { text-align: right; }
-  tr:last-child td { border-bottom: 0; }
-  tbody tr.clic { cursor: pointer; }
-  tbody tr.clic:hover { background: color-mix(in srgb, var(--brand) 7%, transparent); }
-  tbody tr.activo { background: color-mix(in srgb, var(--brand) 12%, transparent); }
+.estado{border:1px solid var(--line2);border-radius:4px;padding:clamp(20px,3vw,28px);margin-bottom:28px;background:var(--surface);color:rgba(232,228,218,0.75);font-size:16px;}
+.estado.error{border-color:rgba(200,86,74,0.5);background:linear-gradient(150deg,rgba(200,86,74,0.1),var(--surface) 70%);color:var(--text);}
 
-  .barra { display: flex; height: 8px; border-radius: 4px; overflow: hidden; min-width: 90px; background: var(--none-bg); }
-  .barra i { display: block; height: 100%; }
-  .barra .b-ok { background: var(--ok); }
-  .barra .b-bad { background: var(--bad); }
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:36px;}
+.kpi{border:1px solid var(--line);border-radius:4px;padding:18px 20px;background:var(--surface);}
+.kpi .n{font-family:'Playfair Display',serif;font-size:clamp(26px,3vw,34px);color:var(--white);line-height:1.1;font-variant-numeric:lining-nums tabular-nums;}
+.kpi .l{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--muted);margin-top:8px;text-transform:uppercase;}
+.kpi.ok{border-color:rgba(95,173,95,0.3);background:linear-gradient(150deg,rgba(95,173,95,0.08),var(--surface) 70%);}
+.kpi.ok .n{color:var(--emerald);}
+.kpi.bad{border-color:rgba(200,154,74,0.3);background:linear-gradient(150deg,rgba(200,154,74,0.08),var(--surface) 70%);}
+.kpi.bad .n{color:var(--amber);}
 
-  .filtros { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
-  .filtros select, .filtros input {
-    font: inherit; padding: 7px 10px; border-radius: 8px; border: 1px solid var(--line);
-    background: var(--card); color: var(--ink); min-width: 0;
-  }
-  .filtros input { flex: 1 1 180px; }
-  .chip {
-    display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 12.5px; font-weight: 600;
-  }
-  .chip.limpia { color: var(--ok); background: var(--ok-bg); }
-  .chip.hubo { color: var(--bad); background: var(--bad-bg); }
-  .chip.sin { color: var(--none); background: var(--none-bg); }
-  .chip.vigente { color: var(--ok); background: var(--ok-bg); }
-  .chip.vencida { color: var(--warn); background: var(--warn-bg); }
-  .sello { font-size: 13px; color: var(--muted); }
-  .sello.si { color: var(--ok); font-weight: 600; }
-  .contador { color: var(--muted); font-size: 13px; margin: 8px 2px 0; }
+.card-k{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--emerald);margin:34px 0 14px;text-transform:uppercase;}
 
-  /* En el celular, las parcelas pasan a tarjetas */
-  @media (max-width: 680px) {
-    #tabla-parcelas thead { display: none; }
-    #tabla-parcelas, #tabla-parcelas tbody, #tabla-parcelas tr, #tabla-parcelas td { display: block; width: 100%; }
-    #tabla-parcelas tr { padding: 10px 12px; border-bottom: 1px solid var(--line); }
-    #tabla-parcelas td { border: 0; padding: 2px 0; white-space: normal; text-align: left; }
-    #tabla-parcelas td[data-l]::before { content: attr(data-l) ": "; color: var(--muted); font-size: 12.5px; }
-    #tabla-parcelas td.nombre { font-weight: 650; font-size: 15.5px; }
-  }
+.caja{border:1px solid var(--line);border-radius:4px;overflow-x:auto;background:var(--surface);}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;}
+th,td{padding:13px 16px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap;}
+th{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:400;letter-spacing:2px;color:var(--muted);text-transform:uppercase;}
+td{font-size:16px;color:var(--text);}
+td.num,th.num{text-align:right;}
+td.num{font-family:'JetBrains Mono',monospace;font-size:13px;}
+tr:last-child td{border-bottom:none;}
+tbody tr.clic{cursor:pointer;transition:background .2s;}
+tbody tr.clic:hover,tbody tr.activo{background:var(--panel);}
+tbody tr.activo td:first-child{box-shadow:inset 2px 0 0 var(--emerald);}
+td.nombre,td strong{font-family:'Playfair Display',serif;font-weight:400;color:var(--white);text-transform:capitalize;}
+
+.barra{display:flex;height:5px;border-radius:3px;overflow:hidden;min-width:100px;background:rgba(126,140,126,0.18);}
+.barra i{display:block;height:100%;}
+.b-ok{background:var(--emerald);}
+.b-bad{background:var(--amber);}
+
+.filtros{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;}
+.filtros select,.filtros input{background:var(--panel);border:1px solid var(--line2);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:13px;padding:11px 13px;border-radius:3px;outline:none;min-width:0;}
+.filtros select:focus,.filtros input:focus{border-color:var(--emerald);}
+.filtros input{flex:1 1 200px;}
+.filtros input::placeholder{color:var(--dim);}
+
+.chip{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;padding:4px 9px;border-radius:3px;border:1px solid;}
+.chip.limpia,.chip.vigente{color:var(--emerald);border-color:rgba(95,173,95,0.35);background:rgba(95,173,95,0.08);}
+.chip.hubo{color:var(--amber);border-color:rgba(200,154,74,0.4);background:rgba(200,154,74,0.08);}
+.chip.vencida{color:var(--gold2);border-color:rgba(229,200,112,0.35);background:rgba(229,200,112,0.06);}
+.chip.sin{color:var(--muted);border-color:var(--line2);background:transparent;}
+.sello{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1px;color:var(--dim);}
+a.sello{color:var(--text);border:1px solid var(--line2);padding:7px 11px;border-radius:3px;display:inline-block;transition:border-color .2s,color .2s;}
+a.sello:hover{border-color:var(--emerald);color:var(--emerald);text-decoration:none;}
+.abrir{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;color:var(--teal);}
+.abrir:hover{color:var(--emerald);}
+.contador{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;color:var(--dim);margin:12px 2px 0;}
+
+.pie{margin-top:40px;border:1px solid var(--line);border-radius:4px;padding:clamp(20px,3vw,28px);background:var(--surface);font-size:16px;color:rgba(232,228,218,0.7);line-height:1.7;}
+.pie strong{color:var(--white);font-weight:600;}
+.foot{margin-top:40px;padding-top:24px;border-top:1px solid var(--line);font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;color:var(--dim);line-height:2;text-align:center;}
+
+@media(max-width:700px){
+  #tabla-parcelas thead{display:none;}
+  #tabla-parcelas,#tabla-parcelas tbody,#tabla-parcelas tr,#tabla-parcelas td{display:block;width:100%;}
+  #tabla-parcelas tr{padding:16px;border-bottom:1px solid var(--line);}
+  #tabla-parcelas td{border:none;padding:4px 0;white-space:normal;text-align:left;font-size:15px;}
+  #tabla-parcelas td[data-l]::before{content:attr(data-l);display:inline-block;min-width:110px;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);}
+  #tabla-parcelas td.nombre{font-size:20px;margin-bottom:6px;}
+}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-<header>
-  <h1><span>EPIMELEIA</span> · Panel de cartera</h1>
-  <div class="meta" id="meta">Solo founder</div>
-</header>
+
+<div class="topbar">
+  <span class="brand">EPIMELEIA<span> · CARTERA</span></span>
+  <a class="volver" href="index.html">← INICIO</a>
+</div>
 
 <main>
+  <div class="eyebrow" id="kicker">Panel de cartera · solo founder</div>
+  <h1 id="titulo">Toda tu cartera, en un solo lugar</h1>
+  <p class="sub" id="bajada">Cada parcela con su veredicto satelital y su sello en Polygon.</p>
+  <div class="meta" id="meta"></div>
+
   <div class="estado" id="estado">Verificando tu sesión…</div>
 
   <section id="contenido" hidden>
     <div class="kpis" id="kpis"></div>
 
-    <h2>Clientes</h2>
-    <div class="tabla-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Cliente</th>
-            <th class="num">Parcelas</th>
-            <th class="num">Hectáreas</th>
-            <th class="num">Limpias</th>
-            <th class="num">Con deforestación</th>
-            <th class="num">Sin chequeo</th>
-            <th>Estado</th>
-            <th class="num">Cobertura vigente</th>
-            <th>Último sello</th>
-          </tr>
-        </thead>
-        <tbody id="tbody-clientes"></tbody>
-      </table>
+    <div id="bloque-clientes">
+      <div class="card-k">Clientes</div>
+      <div class="caja">
+        <table>
+          <thead>
+            <tr>
+              <th>Cliente</th>
+              <th class="num">Parcelas</th>
+              <th class="num">Hectáreas</th>
+              <th class="num">Limpias</th>
+              <th class="num">Deforest.</th>
+              <th class="num">Sin chequeo</th>
+              <th>Estado</th>
+              <th class="num">Cobertura</th>
+              <th>Último sello</th>
+              <th>Vista cliente</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-clientes"></tbody>
+        </table>
+      </div>
     </div>
 
-    <h2>Parcelas</h2>
+    <div class="card-k">Parcelas</div>
     <div class="filtros">
       <select id="f-cliente" aria-label="Filtrar por cliente"><option value="">Todos los clientes</option></select>
       <select id="f-veredicto" aria-label="Filtrar por veredicto">
@@ -151,17 +155,17 @@
       </select>
       <input id="f-texto" type="search" placeholder="Buscar parcela…" aria-label="Buscar parcela">
     </div>
-    <div class="tabla-wrap">
+    <div class="caja">
       <table id="tabla-parcelas">
         <thead>
           <tr>
             <th>Parcela</th>
-            <th>Cliente</th>
+            <th class="col-cliente">Cliente</th>
             <th class="num">Hectáreas</th>
             <th>Veredicto</th>
             <th class="num">Ha perdidas</th>
             <th>Cobertura</th>
-            <th>Sellada on-chain</th>
+            <th>Prueba on-chain</th>
             <th>Alta</th>
           </tr>
         </thead>
@@ -169,14 +173,27 @@
       </table>
     </div>
     <div class="contador" id="contador"></div>
+
+    <p class="pie" id="pie" hidden>
+      Cada parcela sellada tiene su <strong>prueba pública</strong>: tocá su número y cualquiera puede
+      recalcular la huella en su navegador y compararla con la que quedó grabada en Polygon.
+      No hace falta confiar en nosotros.
+    </p>
   </section>
+
+  <div class="foot">
+    EPIMELEIA · Notario Digital Ambiental · Polygon Mainnet<br>
+    No vendemos el dato. Vendemos la prueba de que nadie lo tocó.
+  </div>
 </main>
 
 <script>
-/* Mismos valores que usa cuenta.html (la clave publishable es pública por diseño). */
 const SUPABASE_URL = 'https://rfpiirxsdhfnvstwjjbh.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_Ym3gRRPfLZPGm4srzFDdTw_dcWvqxZ2';
 const API_PANEL = '/api/panel';
+
+/* Vista de un solo cliente: panel.html?cliente=Cooperativa%20Demo */
+const CLIENTE_FIJO = (new URLSearchParams(location.search).get('cliente') || '').trim();
 
 const $ = (id) => document.getElementById(id);
 const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -204,6 +221,13 @@ function chipCobertura(v) {
   if (v === 'vencida') return '<span class="chip vencida">Vencida</span>';
   return '<span class="chip sin">Sin cobertura</span>';
 }
+function celdaSello(p) {
+  if (!p.sellada_onchain || p.activo_id_onchain === null || p.activo_id_onchain === undefined) {
+    return '<span class="sello">NO SELLADA</span>';
+  }
+  const id = encodeURIComponent(p.activo_id_onchain);
+  return `<a class="sello" href="/verificar.html?id=${id}" target="_blank" rel="noopener">VERIFICAR #${esc(p.activo_id_onchain)} →</a>`;
+}
 
 function renderKpis(clientes) {
   const t = clientes.reduce((a, c) => {
@@ -215,15 +239,18 @@ function renderKpis(clientes) {
     a.vig += Number(c.cobertura_vigente) || 0;
     return a;
   }, { parcelas: 0, ha: 0, limpias: 0, bad: 0, sin: 0, vig: 0 });
-  $('kpis').innerHTML = [
-    ['Clientes', clientes.length, ''],
+  const filas = [];
+  if (!CLIENTE_FIJO) filas.push(['Clientes', clientes.length, '']);
+  filas.push(
     ['Parcelas', t.parcelas, ''],
     ['Hectáreas', nf.format(t.ha), ''],
     ['Limpias', t.limpias, 'ok'],
     ['Con deforestación', t.bad, 'bad'],
     ['Sin chequeo', t.sin, ''],
-    ['Cobertura vigente', t.vig, ''],
-  ].map(([l, n, cls]) => `<div class="kpi ${cls}"><div class="n">${esc(n)}</div><div class="l">${esc(l)}</div></div>`).join('');
+    ['Cobertura vigente', t.vig, '']
+  );
+  $('kpis').innerHTML = filas.map(([l, n, cls]) =>
+    `<div class="kpi ${cls}"><div class="n">${esc(n)}</div><div class="l">${esc(l)}</div></div>`).join('');
 }
 
 function renderClientes(clientes) {
@@ -231,7 +258,8 @@ function renderClientes(clientes) {
     const total = Number(c.parcelas) || 0;
     const pOk = total ? (Number(c.limpias) / total) * 100 : 0;
     const pBad = total ? (Number(c.con_deforestacion) / total) * 100 : 0;
-    return `<tr class="clic" data-cliente="${esc(c.cliente)}" title="Ver parcelas de ${esc(c.cliente)}">
+    const link = '?cliente=' + encodeURIComponent(c.cliente);
+    return `<tr class="clic" data-cliente="${esc(c.cliente)}">
       <td><strong>${esc(c.cliente)}</strong></td>
       <td class="num">${num(c.parcelas)}</td>
       <td class="num">${num(c.ha_total)}</td>
@@ -241,15 +269,16 @@ function renderClientes(clientes) {
       <td><div class="barra" aria-hidden="true"><i class="b-ok" style="width:${pOk}%"></i><i class="b-bad" style="width:${pBad}%"></i></div></td>
       <td class="num">${num(c.cobertura_vigente)}</td>
       <td>${fecha(c.ultimo_sello)}</td>
+      <td><a class="abrir" href="${esc(link)}" target="_blank" rel="noopener">ABRIR →</a></td>
     </tr>`;
   }).join('');
 
-  const sel = $('f-cliente');
-  sel.innerHTML = '<option value="">Todos los clientes</option>' +
+  $('f-cliente').innerHTML = '<option value="">Todos los clientes</option>' +
     clientes.map((c) => `<option value="${esc(c.cliente)}">${esc(c.cliente)} (${num(c.parcelas)})</option>`).join('');
 
   $('tbody-clientes').querySelectorAll('tr.clic').forEach((tr) => {
-    tr.addEventListener('click', () => {
+    tr.addEventListener('click', (e) => {
+      if (e.target.closest('a')) return;
       const actual = $('f-cliente').value;
       $('f-cliente').value = actual === tr.dataset.cliente ? '' : tr.dataset.cliente;
       renderParcelas();
@@ -259,7 +288,7 @@ function renderClientes(clientes) {
 }
 
 function renderParcelas() {
-  const fc = $('f-cliente').value;
+  const fc = CLIENTE_FIJO || $('f-cliente').value;
   const fv = $('f-veredicto').value;
   const ft = $('f-texto').value.trim().toLowerCase();
   document.querySelectorAll('#tbody-clientes tr').forEach((tr) => tr.classList.toggle('activo', tr.dataset.cliente === fc));
@@ -269,19 +298,31 @@ function renderParcelas() {
     (!fv || p.veredicto === fv) &&
     (!ft || String(p.nombre_activo || '').toLowerCase().includes(ft))
   );
+  const total = fc ? PARCELAS.filter((p) => p.cliente === fc).length : PARCELAS.length;
 
   $('tbody-parcelas').innerHTML = lista.map((p) => `<tr>
     <td class="nombre">${esc(p.nombre_activo || '(sin nombre)')}</td>
-    <td data-l="Cliente">${esc(p.cliente)}</td>
+    ${CLIENTE_FIJO ? '' : `<td data-l="Cliente">${esc(p.cliente)}</td>`}
     <td class="num" data-l="Hectáreas">${num(p.superficie_ha)}</td>
     <td data-l="Veredicto">${chipVeredicto(p.veredicto)}</td>
     <td class="num" data-l="Ha perdidas">${p.veredicto === 'sin chequeo' ? '—' : num(p.ha_perdidas, nf2)}</td>
     <td data-l="Cobertura">${chipCobertura(p.cobertura)}</td>
-    <td data-l="Sellada on-chain"><span class="sello ${p.sellada_onchain ? 'si' : ''}">${p.sellada_onchain ? 'Sí · #' + esc(p.activo_id_onchain) : 'No'}</span></td>
+    <td data-l="Prueba">${celdaSello(p)}</td>
     <td data-l="Alta">${fecha(p.fecha_alta)}</td>
   </tr>`).join('');
 
-  $('contador').textContent = `${lista.length} de ${PARCELAS.length} parcelas`;
+  $('contador').textContent = `${lista.length} de ${total} parcelas`;
+}
+
+function modoCliente(nombre) {
+  document.title = `EPIMELEIA · ${nombre}`;
+  $('kicker').textContent = 'Cartera verificada';
+  $('titulo').textContent = nombre;
+  $('bajada').textContent = 'El estado de cada parcela, leído por satélite y sellado en Polygon. Cada prueba es pública y verificable por cualquiera.';
+  $('bloque-clientes').hidden = true;
+  $('f-cliente').hidden = true;
+  document.querySelectorAll('.col-cliente').forEach((el) => el.remove());
+  $('pie').hidden = false;
 }
 
 async function iniciar() {
@@ -291,9 +332,7 @@ async function iniciar() {
   const supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   let session;
-  try {
-    ({ data: { session } } = await supa.auth.getSession());
-  } catch (_) { session = null; }
+  try { ({ data: { session } } = await supa.auth.getSession()); } catch (_) { session = null; }
   if (!session || !session.access_token) {
     return mostrarEstado('No hay una sesión abierta. <a href="/cuenta.html">Iniciá sesión en tu cuenta</a> con el email de founder y volvé a esta página.', true);
   }
@@ -313,11 +352,23 @@ async function iniciar() {
     return mostrarEstado(esc((data && data.error) || 'Error al cargar el panel.'), true);
   }
 
+  let clientes = data.clientes || [];
   PARCELAS = data.parcelas || [];
-  renderKpis(data.clientes || []);
-  renderClientes(data.clientes || []);
+
+  if (CLIENTE_FIJO) {
+    clientes = clientes.filter((c) => c.cliente === CLIENTE_FIJO);
+    if (!clientes.length) {
+      return mostrarEstado(`No encontré un cliente llamado “${esc(CLIENTE_FIJO)}”.`, true);
+    }
+    PARCELAS = PARCELAS.filter((p) => p.cliente === CLIENTE_FIJO);
+    modoCliente(CLIENTE_FIJO);
+  } else {
+    renderClientes(clientes);
+  }
+
+  renderKpis(clientes);
   renderParcelas();
-  $('meta').textContent = 'Solo founder · actualizado ' + new Date(data.generado).toLocaleString('es-AR');
+  $('meta').textContent = 'Actualizado ' + new Date(data.generado).toLocaleString('es-AR');
   $('estado').hidden = true;
   $('contenido').hidden = false;
 }
