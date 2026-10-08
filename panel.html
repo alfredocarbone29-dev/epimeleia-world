@@ -92,6 +92,34 @@ a.sello:hover{border-color:var(--emerald);color:var(--emerald);text-decoration:n
 .pie strong{color:var(--white);font-weight:600;}
 .foot{margin-top:40px;padding-top:24px;border-top:1px solid var(--line);font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;color:var(--dim);line-height:2;text-align:center;}
 
+/* ─── Armar lote ─── */
+.lote-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;padding:18px;}
+.campo label{display:block;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:6px;}
+.campo input{width:100%;background:var(--panel);border:1px solid var(--line2);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:13px;padding:11px 12px;border-radius:3px;outline:none;}
+.campo input:focus,.ton:focus{border-color:var(--emerald);}
+.ton{width:110px;background:var(--panel);border:1px solid var(--line2);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:13px;padding:8px 10px;border-radius:3px;outline:none;text-align:right;}
+.ton:disabled{opacity:.35;}
+input[type=checkbox].sel{width:16px;height:16px;accent-color:var(--emerald);cursor:pointer;}
+input[type=checkbox].sel:disabled{cursor:not-allowed;opacity:.35;}
+tr.no-eleg td{opacity:.5;}
+.acciones{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:14px 0 6px;}
+.btn{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1.5px;padding:12px 20px;border-radius:3px;cursor:pointer;border:1px solid var(--line2);background:transparent;color:var(--text);transition:border-color .2s,background .2s,color .2s;}
+.btn:hover:not(:disabled){border-color:var(--emerald);color:var(--emerald);}
+.btn.primario{background:var(--emerald);border-color:var(--emerald);color:var(--void);}
+.btn.primario:hover:not(:disabled){background:var(--green);color:var(--void);}
+.btn:disabled{opacity:.35;cursor:not-allowed;}
+.ayuda{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;color:var(--dim);}
+.res{border:1px solid var(--line2);border-radius:4px;padding:18px 20px;margin-top:14px;background:var(--surface);}
+.res.ok{border-color:rgba(95,173,95,0.5);background:linear-gradient(150deg,rgba(95,173,95,0.08),var(--surface) 70%);}
+.res.mal{border-color:rgba(200,154,74,0.5);background:linear-gradient(150deg,rgba(200,154,74,0.08),var(--surface) 70%);}
+.res-t{font-family:'Playfair Display',serif;font-size:22px;color:var(--white);margin-bottom:6px;}
+.res.ok .res-t{color:var(--emerald);} .res.mal .res-t{color:var(--amber);}
+.res-d{font-size:15px;color:rgba(232,228,218,0.75);}
+.res-l{margin-top:10px;font-size:15px;}
+.res-l div{padding:6px 0;border-top:1px solid var(--line);}
+.res-l .x{color:var(--amber);} .res-l .v{color:var(--emerald);}
+.res-l small{display:block;color:var(--muted);font-size:14px;padding-left:18px;}
+
 @media(max-width:700px){
   #tabla-parcelas thead{display:none;}
   #tabla-parcelas,#tabla-parcelas tbody,#tabla-parcelas tr,#tabla-parcelas td{display:block;width:100%;}
@@ -174,6 +202,42 @@ a.sello:hover{border-color:var(--emerald);color:var(--emerald);text-decoration:n
     </div>
     <div class="contador" id="contador"></div>
 
+    <div id="bloque-lotes" hidden>
+      <div class="card-k">Armar un lote · certificado de embarque</div>
+      <div class="caja">
+        <div class="lote-grid">
+          <div class="campo"><label for="l-codigo">Código del lote</label><input id="l-codigo" placeholder="LOTE-2026-001" autocomplete="off"></div>
+          <div class="campo"><label for="l-cultivo">Cultivo</label><input id="l-cultivo" list="l-cultivos" placeholder="soja" autocomplete="off">
+            <datalist id="l-cultivos"><option value="soja"><option value="cafe"><option value="cacao"><option value="maiz"><option value="trigo"><option value="carne"><option value="madera"><option value="caucho"><option value="palma"></datalist></div>
+          <div class="campo"><label for="l-anio">Año de cosecha</label><input id="l-anio" type="number" min="2000" max="2100"></div>
+          <div class="campo"><label for="l-fecha">Fecha del embarque</label><input id="l-fecha" type="date"></div>
+          <div class="campo"><label for="l-receptor">Receptor (email o ID del comprador)</label><input id="l-receptor" placeholder="compras@importador.eu" autocomplete="off"></div>
+        </div>
+      </div>
+
+      <div class="card-k">Parcelas del lote</div>
+      <div class="caja">
+        <table id="tabla-lote">
+          <thead><tr><th></th><th>Parcela</th><th class="num">Hectáreas</th><th>Veredicto</th><th>Prueba</th><th class="num">Toneladas</th></tr></thead>
+          <tbody id="tbody-lote"></tbody>
+        </table>
+      </div>
+      <div class="acciones">
+        <button class="btn" id="btn-simular" type="button">SIMULAR LOTE</button>
+        <button class="btn primario" id="btn-sellar" type="button" disabled>SELLAR LOTE EN POLYGON</button>
+        <span class="ayuda" id="lote-ayuda">Primero simulá. Solo se puede sellar un lote APTO, con los mismos datos que simulaste.</span>
+      </div>
+      <div id="lote-resultado"></div>
+
+      <div class="card-k">Lotes de este cliente</div>
+      <div class="caja">
+        <table>
+          <thead><tr><th>Código</th><th>Cultivo</th><th class="num">Año</th><th class="num">Toneladas</th><th>Estado</th><th>Certificado</th></tr></thead>
+          <tbody id="tbody-lotes"><tr><td colspan="6" class="ayuda">Sin lotes todavía.</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
     <p class="pie" id="pie" hidden>
       Cada parcela sellada tiene su <strong>prueba pública</strong>: tocá su número y cualquiera puede
       recalcular la huella en su navegador y compararla con la que quedó grabada en Polygon.
@@ -205,6 +269,10 @@ const num = (v, f = nf) => (v === null || v === undefined || v === '' ? '—' : 
 const fecha = (v) => (v ? new Date(v).toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' }) : '—');
 
 let PARCELAS = [];
+let TOKEN = '';
+let CLIENTE_ID = null;
+let FIRMA_APTA = null;
+const API_LOTE = '/api/lote';
 
 function mostrarEstado(html, esError) {
   const el = $('estado');
@@ -328,6 +396,188 @@ function modoCliente(nombre) {
   $('f-cliente').hidden = true;
   document.querySelectorAll('.col-cliente').forEach((el) => el.remove());
   $('pie').hidden = false;
+  $('bloque-lotes').hidden = false;
+}
+
+/* ─── Armar lote ──────────────────────────────────────────── */
+function esElegible(p) {
+  return p.sellada_onchain && p.activo_id_onchain != null && Number(p.activo_id_onchain) >= VERIFICABLE_DESDE;
+}
+
+function renderArmadorLote() {
+  const selladas = PARCELAS.filter((p) => p.sellada_onchain && p.activo_id_onchain != null)
+    .sort((a, b) => Number(b.activo_id_onchain) - Number(a.activo_id_onchain));
+  $('tbody-lote').innerHTML = selladas.length ? selladas.map((p) => {
+    const ok = esElegible(p);
+    const id = esc(p.activo_id_onchain);
+    return `<tr class="${ok ? '' : 'no-eleg'}" ${ok ? '' : 'title="Sellada antes del paquete verificable: no puede entrar a un lote"'}>
+      <td><input type="checkbox" class="sel" data-id="${id}" ${ok ? '' : 'disabled'} aria-label="Incluir parcela #${id}"></td>
+      <td class="nombre">${esc(p.nombre_activo || '(sin nombre)')} <span class="ayuda">#${id}</span></td>
+      <td class="num">${num(p.superficie_ha)}</td>
+      <td>${chipVeredicto(p.veredicto)}</td>
+      <td>${celdaSello(p)}</td>
+      <td class="num"><input class="ton" type="number" min="0" step="0.001" data-id="${id}" placeholder="t" disabled aria-label="Toneladas de #${id}"></td>
+    </tr>`;
+  }).join('') : '<tr><td colspan="6" class="ayuda">Este cliente no tiene parcelas selladas.</td></tr>';
+
+  $('tbody-lote').querySelectorAll('input.sel').forEach((cb) => cb.addEventListener('change', () => {
+    const t = $('tbody-lote').querySelector(`input.ton[data-id="${cb.dataset.id}"]`);
+    t.disabled = !cb.checked;
+    if (cb.checked) t.focus();
+    invalidarSimulacion();
+  }));
+  $('tbody-lote').querySelectorAll('input.ton').forEach((t) => t.addEventListener('input', invalidarSimulacion));
+}
+
+function datosLote() {
+  const parcelas = [];
+  $('tbody-lote').querySelectorAll('input.sel:checked').forEach((cb) => {
+    const t = $('tbody-lote').querySelector(`input.ton[data-id="${cb.dataset.id}"]`);
+    parcelas.push({ activoIdOnchain: Number(cb.dataset.id), toneladas: Number(t.value) });
+  });
+  return {
+    codigo: $('l-codigo').value.trim(),
+    cultivo: $('l-cultivo').value.trim().toLowerCase(),
+    anio: Number($('l-anio').value),
+    fecha: $('l-fecha').value,
+    receptor: $('l-receptor').value.trim(),
+    parcelas,
+  };
+}
+
+function invalidarSimulacion() {
+  FIRMA_APTA = null;
+  $('btn-sellar').disabled = true;
+}
+
+function renderResultado(r, titulo) {
+  const apto = r.veredicto === 'APTO';
+  const filas = (r.parcelas || []).map((p) => {
+    const nombre = esc(p.nombreActivo || 'Parcela') + ' #' + esc(p.activoIdOnchain) + ' · ' + esc(num(p.toneladas, nf2)) + ' t';
+    if (p.ok) {
+      const extra = p.yaAtribuida ? ' (ya atribuida a este lote, se reutiliza)' : (p.saldoDisponible != null ? ` · saldo disponible ${esc(num(p.saldoDisponible, nf2))} t` : '');
+      return `<div><span class="v">✓</span> ${nombre}<small>Sin deforestación según su prueba sellada${extra}</small></div>`;
+    }
+    return `<div><span class="x">✕</span> ${nombre}${p.motivos.map((m) => `<small>${esc(m)}</small>`).join('')}</div>`;
+  }).join('');
+  const generales = (r.motivosGenerales || []).map((m) => `<div><span class="x">✕</span> ${esc(m)}</div>`).join('');
+  $('lote-resultado').innerHTML = `<div class="res ${apto ? 'ok' : 'mal'}">
+    <div class="res-t">${esc(titulo || (apto ? 'Lote APTO' : 'Lote NO APTO'))}</div>
+    <div class="res-d">${apto
+      ? `Todas las parcelas pasan las dos pruebas: satélite y saldo. Total ${esc(num(r.toneladasTotal, nf2))} t.`
+      : 'Una o más parcelas no pasan. Así no se puede sellar: no se descuenta ni se sella nada.'}</div>
+    <div class="res-l">${generales}${filas}</div>
+  </div>`;
+}
+
+function mensajeLote(texto, ok) {
+  $('lote-resultado').innerHTML = `<div class="res ${ok ? 'ok' : 'mal'}"><div class="res-d">${texto}</div></div>`;
+}
+
+async function llamarLote(cuerpo) {
+  const r = await fetch(API_LOTE, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token: TOKEN, ...cuerpo }),
+  });
+  return r.json();
+}
+
+async function simularLote() {
+  const d = datosLote();
+  if (!d.parcelas.length) return mensajeLote('Elegí al menos una parcela y cargá sus toneladas.', false);
+  $('btn-simular').disabled = true;
+  mensajeLote('Simulando… (no gasta gas ni descuenta nada)', true);
+  try {
+    const r = await llamarLote({ accion: 'simular', ...d });
+    if (r && Array.isArray(r.parcelas)) {
+      renderResultado(r);
+      if (r.ok && r.veredicto === 'APTO') { FIRMA_APTA = JSON.stringify(d); $('btn-sellar').disabled = false; }
+    } else {
+      mensajeLote(esc((r && r.error) || 'No se pudo simular.'), false);
+    }
+  } catch (_) {
+    mensajeLote('No se pudo contactar al servidor.', false);
+  } finally {
+    $('btn-simular').disabled = false;
+  }
+}
+
+async function sellarLote() {
+  const d = datosLote();
+  if (!FIRMA_APTA || JSON.stringify(d) !== FIRMA_APTA) { invalidarSimulacion(); return mensajeLote('Los datos cambiaron desde la simulación. Simulá de nuevo.', false); }
+  const total = d.parcelas.reduce((s, p) => s + p.toneladas, 0);
+  if (!confirm(`Vas a sellar el lote ${d.codigo} en Polygon y descontar ${total} t del saldo de ${d.parcelas.length} parcela(s).\n\nEsto es real y no se puede deshacer. ¿Seguir?`)) return;
+  $('btn-sellar').disabled = true; $('btn-simular').disabled = true;
+  mensajeLote('Sellando en Polygon… una transacción por parcela y una para el lote. Puede tardar un par de minutos.', true);
+  try {
+    const r = await llamarLote({ accion: 'sellar', ...d });
+    if (!r || !r.ok) {
+      if (r && Array.isArray(r.parcelas)) renderResultado(r, r.error); else mensajeLote(esc((r && r.error) || 'No se pudo sellar.'), false);
+      $('btn-simular').disabled = false;
+      return;
+    }
+    await esperarSellado(d.codigo);
+  } catch (_) {
+    mensajeLote('Se perdió la conexión. El sellado puede seguir en el servidor: mirá la lista de lotes en un momento.', false);
+  } finally {
+    $('btn-simular').disabled = false;
+    invalidarSimulacion();
+    cargarLotes();
+  }
+}
+
+async function esperarSellado(codigo) {
+  const limite = Date.now() + 6 * 60 * 1000;
+  while (Date.now() < limite) {
+    await new Promise((ok) => setTimeout(ok, 4000));
+    let r;
+    try { r = await llamarLote({ accion: 'estado', codigo }); } catch (_) { continue; }
+    const l = r && r.lote;
+    if (!l) continue;
+    if (l.estado === 'SELLADO') {
+      const url = '/lote.html?codigo=' + encodeURIComponent(codigo);
+      return mensajeLote(`<strong>Lote ${esc(codigo)} sellado.</strong> ${esc(num(l.toneladas, nf2))} t · bloque ${esc(l.bloque)}.<br><a href="${url}" target="_blank" rel="noopener">Abrir el certificado público →</a>`, true);
+    }
+    if (l.estado === 'ERROR') {
+      return mensajeLote(`El sellado se cortó: ${esc(l.error)}<br>Podés reintentar con el <strong>mismo código</strong>: lo ya atribuido se reutiliza y no se descuenta dos veces.`, false);
+    }
+  }
+  mensajeLote('Sigue procesando. Revisá la lista de lotes en unos minutos.', true);
+}
+
+function chipEstadoLote(e) {
+  if (e === 'SELLADO') return '<span class="chip limpia">Sellado</span>';
+  if (e === 'ERROR') return '<span class="chip hubo">Error</span>';
+  return '<span class="chip sin">En proceso</span>';
+}
+
+async function cargarLotes() {
+  if (!CLIENTE_ID) return;
+  try {
+    const r = await llamarLote({ accion: 'listar', clienteId: CLIENTE_ID });
+    const lotes = (r && r.lotes) || [];
+    $('tbody-lotes').innerHTML = lotes.length ? lotes.map((l) => `<tr>
+      <td><strong>${esc(l.codigo)}</strong></td>
+      <td>${esc(l.cultivo)}</td>
+      <td class="num">${esc(l.anio)}</td>
+      <td class="num">${num(l.toneladas, nf2)}</td>
+      <td>${chipEstadoLote(l.estado)}</td>
+      <td>${l.estado === 'SELLADO' ? `<a class="sello" href="/lote.html?codigo=${encodeURIComponent(l.codigo)}" target="_blank" rel="noopener">VER CERTIFICADO →</a>` : (l.error ? `<span class="ayuda">${esc(l.error)}</span>` : '—')}</td>
+    </tr>`).join('') : '<tr><td colspan="6" class="ayuda">Sin lotes todavía.</td></tr>';
+  } catch (_) { /* la lista es secundaria */ }
+}
+
+function iniciarLotes() {
+  const hoy = new Date();
+  $('l-anio').value = hoy.getFullYear();
+  $('l-fecha').value = hoy.toISOString().slice(0, 10);
+  ['l-codigo', 'l-cultivo', 'l-anio', 'l-fecha', 'l-receptor'].forEach((id) => $(id).addEventListener('input', invalidarSimulacion));
+  $('btn-simular').addEventListener('click', simularLote);
+  $('btn-sellar').addEventListener('click', sellarLote);
+  CLIENTE_ID = (PARCELAS.find((p) => p.cliente_id) || {}).cliente_id || null;
+  renderArmadorLote();
+  cargarLotes();
 }
 
 async function iniciar() {
@@ -342,6 +592,7 @@ async function iniciar() {
     return mostrarEstado('No hay una sesión abierta. <a href="/cuenta.html">Iniciá sesión en tu cuenta</a> con el email de founder y volvé a esta página.', true);
   }
 
+  TOKEN = session.access_token;
   let r, data;
   try {
     r = await fetch(API_PANEL, {
@@ -367,6 +618,7 @@ async function iniciar() {
     }
     PARCELAS = PARCELAS.filter((p) => p.cliente === CLIENTE_FIJO);
     modoCliente(CLIENTE_FIJO);
+    iniciarLotes();
   } else {
     renderClientes(clientes);
   }

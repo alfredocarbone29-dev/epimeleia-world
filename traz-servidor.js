@@ -5,9 +5,16 @@
  * proceso PM2, que NO toca a los otros. Su trabajo es juntar las piezas:
  * traer la referencia pública, juzgar, sellar el hash en Polygon y guardar.
  *
- * DOS RUTAS:
+ * TRES RUTAS:
  *   POST /declarar  → crea la cuenta de saldo de un origen para un año.
  *   POST /atribuir  → descuenta toneladas de una declaración existente.
+ *   POST /lote      → certificado de lote (ver traz-lote.js): evalúa cada
+ *                     parcela (satélite + saldo), y si TODAS pasan, atribuye
+ *                     y sella el lote. El sellado corre en segundo plano.
+ *
+ * AJUSTE (8/10/2026): /declarar rechaza una segunda declaración ACEPTADA
+ *   del mismo origen, cultivo y año. Antes se podía declarar dos veces y
+ *   duplicar la capacidad de una misma tierra.
  *
  * ═══ LA DECISIÓN DE SELLADO (acá vive) ═══
  *   El hash del paquete se sella con una TRANSACCIÓN CRUDA: una tx común
@@ -62,6 +69,7 @@ const { createClient } = require('@supabase/supabase-js');
 const declaracion = require('./traz-declaracion');
 const atribucion  = require('./traz-atribucion');
 const rendimiento = require('./traz-rendimiento');
+const lote        = require('./traz-lote');
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 
@@ -141,6 +149,19 @@ async function procesarDeclaracion(datos, ejecutar, deps = {}) {
   // porque ya validamos referencia, pero se contempla por prolijidad).
   if (paquete.veredicto === declaracion.VEREDICTO.PENDIENTE) {
     return { ok: false, error: 'Declaración pendiente: sin referencia utilizable.', tipo: 'pendiente' };
+  }
+
+  // Una sola declaración ACEPTADA por origen, cultivo y año: si no, la
+  // misma tierra tendría dos cuentas de saldo y "daría" el doble.
+  if (paquete.veredicto === 'ACEPTADA' && paquete.origen) {
+    const { data: yaHay, error: eDup } = await db.from(TABLA_DECL).select('id')
+      .eq('origen_tipo', paquete.origen.tipo).eq('origen_ref', String(paquete.origen.ref))
+      .eq('cultivo', paquete.cultivo).eq('anio', paquete.anio).eq('veredicto', 'ACEPTADA');
+    if (eDup) return { ok: false, error: 'Error verificando declaraciones previas: ' + eDup.message };
+    if (yaHay && yaHay.length) {
+      return { ok: false, tipo: 'duplicada',
+        error: `Ese origen ya tiene una declaración ACEPTADA para ${paquete.cultivo} ${paquete.anio}. No se declara dos veces la misma tierra.` };
+    }
   }
 
   // Simulacro: qué haría, sin sellar ni guardar.
@@ -299,6 +320,12 @@ async function procesarAtribucion(datos, ejecutar, deps = {}) {
 const RUTAS = {
   '/declarar': procesarDeclaracion,
   '/atribuir': procesarAtribucion,
+  '/lote':     (datos, ejecutar) => lote.procesarLote(datos, ejecutar, {
+    supabase,
+    sellar: sellarHashEnPolygon,
+    atribuir: procesarAtribucion,
+    log: L,
+  }),
 };
 
 const server = http.createServer((req, res) => {
@@ -307,7 +334,7 @@ const server = http.createServer((req, res) => {
   const handler = RUTAS[req.url];
   if (req.method !== 'POST' || !handler) {
     res.statusCode = 404;
-    return res.end(JSON.stringify({ ok: false, error: 'Ruta no encontrada. Usá POST /declarar o /atribuir.' }));
+    return res.end(JSON.stringify({ ok: false, error: 'Ruta no encontrada. Usá POST /declarar, /atribuir o /lote.' }));
   }
 
   const clave = req.headers['x-traz-secret'] || '';
@@ -330,7 +357,7 @@ const server = http.createServer((req, res) => {
       const resultado = await handler(datos, ejecutar);
       res.statusCode = resultado.ok ? 200 : 422;
       res.end(JSON.stringify(resultado));
-      L(`respuesta · ${resultado.ok ? (resultado.sellado ? 'SELLADO ' + resultado.txHash : 'simulacro OK') : 'rechazado: ' + resultado.error}`);
+      L(`respuesta · ${resultado.ok ? (resultado.sellado ? 'SELLADO ' + resultado.txHash : resultado.enProceso ? 'lote en proceso' : 'simulacro OK') : 'rechazado: ' + resultado.error}`);
     } catch (err) {
       L('ERROR inesperado:', err.message);
       res.statusCode = 500;
@@ -342,7 +369,7 @@ const server = http.createServer((req, res) => {
 // Solo levanta el servidor si se ejecuta directo (no al importarlo en pruebas).
 if (require.main === module) {
   server.listen(PORT, '0.0.0.0', () => {
-    L(`escuchando en http://0.0.0.0:${PORT} (rutas /declarar y /atribuir, protegido por clave)`);
+    L(`escuchando en http://0.0.0.0:${PORT} (rutas /declarar, /atribuir y /lote, protegido por clave)`);
     if (!SECRET) L('⚠  ATENCION: TRAZ_SECRET no está configurada. El servidor rechaza TODO hasta configurarla.');
   });
 }

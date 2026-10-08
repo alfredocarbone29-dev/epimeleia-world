@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EPIMELEIA · Certificado de lote</title>
+<meta name="description" content="Certificado de lote EPIMELEIA: cada parcela de origen libre de deforestación según su prueba sellada, y el volumen dentro de lo que esa tierra puede dar. Verificable por cualquiera contra Polygon.">
+<meta name="robots" content="index, follow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Crimson+Pro:wght@0,300;0,400;0,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --void:#040904; --deep:#080E08; --surface:#0C130C; --panel:#101810; --card:#141C14;
+  --line:rgba(255,255,255,0.06); --line2:rgba(255,255,255,0.1);
+  --text:#E8E4DA; --muted:#7E8C7E; --dim:#445844;
+  --green:#4A8A4A; --emerald:#5FAD5F; --teal:#3A8A7A; --gold2:#E5C870; --white:#F4F0E8;
+  --amber:#C89A4A; --red:#C8564A;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+body{
+  background:
+    radial-gradient(ellipse 70% 50% at 15% 8%, rgba(58,138,122,0.07) 0%, transparent 55%),
+    radial-gradient(ellipse 55% 45% at 88% 92%, rgba(74,138,74,0.05) 0%, transparent 55%),
+    var(--deep);
+  color:var(--text);font-family:'Crimson Pro',Georgia,serif;font-size:18px;line-height:1.7;min-height:100vh;-webkit-font-smoothing:antialiased;
+}
+a{color:var(--emerald);text-decoration:none;}
+a:hover{text-decoration:underline;}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:18px clamp(20px,5vw,48px);border-bottom:1px solid var(--line);background:rgba(4,9,4,0.86);}
+.brand{font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:5px;color:var(--white);}
+.brand span{color:var(--emerald);}
+.volver{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--muted);}
+.wrap{max-width:880px;margin:0 auto;padding:clamp(30px,6vw,64px) clamp(20px,5vw,48px);}
+.eyebrow{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:3px;color:var(--emerald);margin-bottom:12px;text-transform:uppercase;}
+h1{font-family:'Playfair Display',serif;font-weight:400;font-size:clamp(26px,4vw,40px);color:var(--white);line-height:1.2;margin-bottom:10px;}
+.sub{color:var(--muted);font-size:clamp(15px,1.7vw,18px);line-height:1.6;margin-bottom:32px;}
+
+.buscar{display:flex;gap:8px;margin-bottom:32px;}
+.buscar input{flex:1;min-width:0;background:var(--panel);border:1px solid var(--line2);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:14px;padding:12px 14px;border-radius:3px;outline:none;}
+.buscar input:focus{border-color:var(--emerald);}
+.buscar button{background:var(--emerald);color:var(--void);border:none;font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:1px;padding:0 22px;border-radius:3px;cursor:pointer;}
+.buscar button:hover{background:var(--green);}
+
+.estado{border:1px solid var(--line2);border-radius:4px;padding:clamp(24px,4vw,36px);margin-bottom:28px;text-align:center;background:var(--surface);}
+.estado.ok{border-color:rgba(95,173,95,0.5);background:linear-gradient(150deg,rgba(95,173,95,0.1),var(--surface) 70%);}
+.estado.mal{border-color:rgba(200,86,74,0.5);background:linear-gradient(150deg,rgba(200,86,74,0.1),var(--surface) 70%);}
+.estado-ico{font-size:40px;line-height:1;margin-bottom:12px;}
+.estado-t{font-family:'Playfair Display',serif;font-size:clamp(22px,3vw,32px);color:var(--white);margin-bottom:8px;}
+.estado.ok .estado-t{color:var(--emerald);}
+.estado.mal .estado-t{color:var(--red);}
+.estado-d{font-size:15px;color:rgba(232,228,218,0.75);line-height:1.6;max-width:600px;margin:0 auto;}
+
+.hashes{margin-bottom:28px;border:1px solid var(--line);border-radius:4px;overflow:hidden;}
+.hash-row{padding:16px 20px;border-bottom:1px solid var(--line);}
+.hash-row:last-child{border-bottom:none;}
+.hash-k{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--muted);margin-bottom:6px;}
+.hash-v{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--gold2);word-break:break-all;line-height:1.5;}
+.hash-row.match .hash-v{color:var(--emerald);}
+.hash-row.nomatch .hash-v{color:var(--red);}
+
+.card{border:1px solid var(--line);border-radius:4px;padding:clamp(20px,3vw,28px);margin-bottom:20px;background:var(--surface);}
+.card-k{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--emerald);margin-bottom:14px;}
+.dato{display:flex;justify-content:space-between;gap:16px;padding:7px 0;border-bottom:1px solid var(--line);font-size:15px;}
+.dato:last-child{border-bottom:none;}
+.dato .et{color:var(--muted);}
+.dato .va{color:var(--text);font-family:'JetBrains Mono',monospace;font-size:13px;text-align:right;word-break:break-word;}
+.apto{color:var(--emerald);}
+
+.parcela{padding:14px 0;border-bottom:1px solid var(--line);}
+.parcela:last-child{border-bottom:none;}
+.parcela-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;}
+.parcela-n{font-family:'Playfair Display',serif;font-size:19px;color:var(--white);text-transform:capitalize;}
+.parcela-t{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--text);}
+.parcela-m{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1px;color:var(--muted);margin-top:6px;display:flex;gap:14px;flex-wrap:wrap;align-items:center;}
+.chip{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;padding:3px 8px;border-radius:3px;border:1px solid rgba(95,173,95,0.35);color:var(--emerald);background:rgba(95,173,95,0.08);}
+.parcela-h{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--dim);word-break:break-all;margin-top:6px;line-height:1.6;}
+
+.pasos{font-size:14.5px;color:rgba(232,228,218,0.72);line-height:1.8;}
+.pasos li{margin-bottom:6px;list-style:none;padding-left:22px;position:relative;}
+.pasos li::before{content:'→';position:absolute;left:0;color:var(--emerald);}
+.links{margin-top:6px;display:flex;flex-wrap:wrap;gap:12px;}
+.links a{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1px;border:1px solid var(--line2);padding:11px 18px;color:var(--text);border-radius:3px;}
+.links a:hover{border-color:var(--emerald);text-decoration:none;}
+.nota{font-size:14.5px;color:rgba(232,228,218,0.65);line-height:1.7;}
+.foot{margin-top:40px;padding-top:24px;border-top:1px solid var(--line);font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;color:var(--dim);line-height:2;text-align:center;}
+.oculto{display:none;}
+@media(max-width:600px){ .dato{flex-direction:column;gap:2px;} .dato .va{text-align:left;} }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="brand">EPIMELEIA<span> · LOTE</span></span>
+  <a class="volver" href="index.html">← INICIO</a>
+</div>
+
+<div class="wrap">
+  <div class="eyebrow">CERTIFICADO DE LOTE · VERIFICABLE POR CUALQUIERA</div>
+  <h1>Todo lo que viene en este embarque, comprobado</h1>
+  <p class="sub">Cada parcela de origen está libre de deforestación según su propia prueba sellada, y el volumen no supera lo que esa tierra puede dar. Esta página no te pide que nos creas: <strong>recalcula la huella del lote en tu navegador y la compara con la que está escrita en Polygon</strong>.</p>
+
+  <div class="buscar">
+    <input id="codigoInput" type="text" placeholder="Código de lote (ej: LOTE-2026-001)" autocomplete="off">
+    <button id="btnVerificar" type="button">Verificar</button>
+  </div>
+
+  <div id="estado" class="estado oculto">
+    <div class="estado-ico" id="estadoIco">⏳</div>
+    <div class="estado-t" id="estadoT">Verificando…</div>
+    <div class="estado-d" id="estadoD"></div>
+  </div>
+
+  <div id="hashes" class="hashes oculto">
+    <div class="hash-row" id="rowRecalc">
+      <div class="hash-k">HUELLA DEL LOTE RECALCULADA EN TU NAVEGADOR (AHORA)</div>
+      <div class="hash-v" id="hashRecalc">—</div>
+    </div>
+    <div class="hash-row" id="rowCadena">
+      <div class="hash-k">HUELLA ESCRITA EN LA TRANSACCIÓN DE POLYGON (LEÍDA DE LA CADENA)</div>
+      <div class="hash-v" id="hashCadena">—</div>
+    </div>
+  </div>
+
+  <div id="datos" class="oculto">
+    <div class="card">
+      <div class="card-k">LOTE</div>
+      <div class="dato"><span class="et">Código</span><span class="va" id="dCodigo">—</span></div>
+      <div class="dato"><span class="et">Cultivo</span><span class="va" id="dCultivo">—</span></div>
+      <div class="dato"><span class="et">Año de cosecha</span><span class="va" id="dAnio">—</span></div>
+      <div class="dato"><span class="et">Fecha</span><span class="va" id="dFecha">—</span></div>
+      <div class="dato"><span class="et">Volumen total</span><span class="va" id="dToneladas">—</span></div>
+      <div class="dato"><span class="et">Parcelas de origen</span><span class="va" id="dCantidad">—</span></div>
+      <div class="dato"><span class="et">Veredicto</span><span class="va apto" id="dVeredicto">—</span></div>
+      <div class="dato"><span class="et">Receptor (huella)</span><span class="va" id="dReceptor">—</span></div>
+    </div>
+
+    <div class="card">
+      <div class="card-k">PARCELAS DE ORIGEN</div>
+      <div id="listaParcelas"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-k">DÓNDE COMPROBARLO EN LA CADENA</div>
+      <div class="links">
+        <a id="lnkTx" href="#" target="_blank" rel="noopener">Ver la transacción del lote en Polygonscan →</a>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-k">CÓMO SE VERIFICA ESTO (SIN CONFIAR EN NADIE)</div>
+      <ul class="pasos">
+        <li>Bajamos el paquete del lote tal cual se selló: las parcelas, sus toneladas y la huella de cada prueba.</li>
+        <li>Tu navegador le calcula la huella keccak256 — el mismo cálculo que hizo el sistema al sellar.</li>
+        <li>Tu navegador lee la transacción directamente de Polygon y compara: si coinciden, el lote es exactamente el que se selló.</li>
+        <li>Cada parcela tiene su propia prueba satelital. Tocá su número para verificarla igual, una por una.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-k">QUÉ PRUEBA Y QUÉ NO</div>
+      <p class="nota">Prueba que cada parcela declarada para este lote está libre de deforestación según su chequeo satelital sellado, que el volumen atribuido a cada una no supera su capacidad declarada, y que esta lista no se modificó después de sellarse. La correspondencia física entre el producto embarcado y estas parcelas la declara el exportador.</p>
+    </div>
+  </div>
+
+  <div class="foot">
+    EPIMELEIA · Notario Digital Ambiental · Polygon Mainnet<br>
+    No vendemos el dato. Vendemos la prueba de que nadie lo tocó.
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.2/ethers.umd.min.js"></script>
+<script>
+(function(){
+  'use strict';
+  var $ = function(id){ return document.getElementById(id); };
+  var RPCS = ['https://polygon-rpc.com', 'https://polygon-bor-rpc.publicnode.com'];
+  var VERIFICABLE_DESDE = 18;
+
+  function esc(v){ return String(v == null ? '' : v).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+  function corto(h){ h = String(h || ''); return h.length > 20 ? h.slice(0, 10) + '…' + h.slice(-8) : h; }
+  function num(n){ return Number(n).toLocaleString('es-AR', { maximumFractionDigits: 3 }); }
+
+  function mostrarEstado(clase, ico, titulo, detalle){
+    var e = $('estado');
+    e.className = 'estado ' + clase;
+    $('estadoIco').textContent = ico;
+    $('estadoT').textContent = titulo;
+    $('estadoD').innerHTML = detalle || '';
+  }
+
+  async function leerTxDeLaCadena(txHash){
+    var ultimoError = null;
+    for (var i = 0; i < RPCS.length; i++) {
+      try {
+        var provider = new ethers.JsonRpcProvider(RPCS[i], 137, { staticNetwork: true });
+        var tx = await provider.getTransaction(txHash);
+        if (tx) return tx;
+      } catch (e) { ultimoError = e; }
+    }
+    throw ultimoError || new Error('No se encontró la transacción.');
+  }
+
+  async function verificar(codigo){
+    $('datos').classList.add('oculto');
+    $('hashes').classList.add('oculto');
+    mostrarEstado('', '⏳', 'Verificando…', 'Bajando el paquete del lote, recalculando su huella y leyendo Polygon.');
+
+    var data;
+    try {
+      var r = await fetch('/api/lote-publico?codigo=' + encodeURIComponent(codigo));
+      data = await r.json();
+    } catch (e) {
+      return mostrarEstado('mal', '✕', 'No se pudo consultar', 'Revisá tu conexión y probá de nuevo.');
+    }
+    if (!data || !data.ok) {
+      return mostrarEstado('mal', '✕', 'No encontrado', esc((data && data.error) || 'No hay un lote sellado con ese código.'));
+    }
+
+    var recalculado;
+    try { recalculado = ethers.keccak256(ethers.toUtf8Bytes(data.canonical)).toLowerCase(); }
+    catch (e) { return mostrarEstado('mal', '✕', 'Error recalculando', 'No se pudo calcular la huella en este navegador.'); }
+
+    var paquete;
+    try { paquete = JSON.parse(data.canonical); } catch (e) { paquete = null; }
+    if (paquete) pintar(paquete, data);
+
+    $('hashRecalc').textContent = recalculado;
+    $('hashes').classList.remove('oculto');
+
+    var enCadena = null, errorCadena = null;
+    try {
+      var tx = await leerTxDeLaCadena(data.txHash);
+      enCadena = String(tx.data || '').toLowerCase();
+    } catch (e) { errorCadena = e; }
+
+    if (enCadena) {
+      $('hashCadena').textContent = enCadena;
+      var coincide = enCadena === recalculado;
+      $('rowRecalc').className = 'hash-row ' + (coincide ? 'match' : 'nomatch');
+      $('rowCadena').className = 'hash-row ' + (coincide ? 'match' : 'nomatch');
+      if (coincide) {
+        mostrarEstado('ok', '✓', 'Lote verificado',
+          'La huella recalculada en tu navegador coincide con la escrita en Polygon (bloque ' + esc(data.bloque) + '). ' +
+          'Las parcelas, sus toneladas y sus pruebas son <strong>exactamente las que se sellaron</strong>. Nadie las tocó.');
+      } else {
+        mostrarEstado('mal', '✕', 'NO coincide',
+          'La huella recalculada NO coincide con la escrita en Polygon. El paquete fue alterado o hay un error. No confíes en este lote.');
+      }
+    } else {
+      $('hashCadena').textContent = 'No se pudo leer la cadena desde este navegador.';
+      mostrarEstado('', '—', 'Huella recalculada, falta la cadena',
+        'Tu navegador recalculó la huella, pero no pudo leer Polygon ahora (' + esc(errorCadena && errorCadena.message ? errorCadena.message : 'sin conexión') + '). ' +
+        'Podés compararla vos: abrí la transacción en Polygonscan y mirá el campo <em>Input Data</em>.');
+    }
+    $('lnkTx').href = data.polygonscanTx;
+    $('datos').classList.remove('oculto');
+  }
+
+  function pintar(p, data){
+    $('dCodigo').textContent = p.codigo || '—';
+    $('dCultivo').textContent = p.cultivo || '—';
+    $('dAnio').textContent = p.anio != null ? p.anio : '—';
+    $('dFecha').textContent = p.fecha || '—';
+    $('dToneladas').textContent = p.toneladasTotal != null ? num(p.toneladasTotal) + ' t' : '—';
+    var lista = Array.isArray(p.parcelas) ? p.parcelas : [];
+    $('dCantidad').textContent = lista.length;
+    $('dVeredicto').textContent = p.veredicto === 'APTO' ? 'APTO · todas las parcelas libres de deforestación' : (p.veredicto || '—');
+    $('dReceptor').textContent = corto(p.receptorHash) || '—';
+
+    $('listaParcelas').innerHTML = lista.map(function(x){
+      var id = Number(x.activoIdOnchain);
+      var verif = id >= VERIFICABLE_DESDE
+        ? '<a href="verificar.html?id=' + encodeURIComponent(id) + '" target="_blank" rel="noopener">VERIFICAR #' + esc(id) + ' →</a>'
+        : '#' + esc(id);
+      var periodo = x.deforestacion && x.deforestacion.periodo ? ' · ' + esc(x.deforestacion.periodo) : '';
+      return '<div class="parcela">' +
+        '<div class="parcela-top"><span class="parcela-n">' + esc(x.nombreActivo || ('Parcela #' + id)) + '</span>' +
+        '<span class="parcela-t">' + num(x.toneladas) + ' t</span></div>' +
+        '<div class="parcela-m"><span class="chip">SIN DEFORESTACIÓN' + periodo + '</span>' + verif + '</div>' +
+        '<div class="parcela-h">prueba satelital ' + esc(corto(x.origenPaqueteHash)) + ' · declaración ' + esc(corto(x.declaracionHash)) + ' · atribución ' + esc(corto(x.atribucionHash)) + '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  $('btnVerificar').addEventListener('click', function(){
+    var c = $('codigoInput').value.trim();
+    if (/^[A-Za-z0-9][A-Za-z0-9._-]{2,63}$/.test(c)) verificar(c);
+    else mostrarEstado('mal', '✕', 'Código inválido', 'Ingresá el código del lote tal como figura en el certificado.');
+  });
+  $('codigoInput').addEventListener('keydown', function(e){ if (e.key === 'Enter') $('btnVerificar').click(); });
+
+  var c = new URLSearchParams(location.search).get('codigo');
+  if (c) { $('codigoInput').value = c.trim(); verificar(c.trim()); }
+})();
+</script>
+</body>
+</html>
