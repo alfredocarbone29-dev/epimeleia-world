@@ -64,6 +64,9 @@ module.exports = async (req, res) => {
   try {
     const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
     const { filaId, ejecutar, token } = body;
+    // SIMPLE-2: datos del producto elegidos en el panel founder (opcionales).
+    // Se pasan tal cual; el VPS los valida antes de usarlos.
+    const { producto, meses, cultivo, pais } = body;
 
     if (!token)  return res.status(401).json({ ok: false, error: 'Falta el token de sesión. Iniciá sesión de nuevo.' });
     if (!filaId) return res.status(400).json({ ok: false, error: 'Falta el id del activo a sellar.' });
@@ -97,7 +100,7 @@ module.exports = async (req, res) => {
           'Content-Type': 'application/json',
           'x-sello-secret': SELLO_SECRET,
         },
-        body: JSON.stringify({ filaId, ejecutar: ejecutar === true }),
+        body: JSON.stringify({ filaId, ejecutar: ejecutar === true, producto, meses, cultivo, pais }),
         // el sellado real puede tardar (mide satélite + on-chain): damos margen
         signal: AbortSignal.timeout(120000),
       });
