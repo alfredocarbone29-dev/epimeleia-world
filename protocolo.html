@@ -1462,6 +1462,88 @@
   }
   setInterval(vigilar, 1000);
 
+  /* ── SIMPLE-2: las opciones del producto, dentro del panel founder ──
+     Se agregan solas encima del botón dorado (en los dos paneles). Lo que
+     elijas viaja al sellador: producto (01/02/03), meses de seguimiento,
+     cultivo y país. Si cambiás algo después del simulacro, vuelve a pedir
+     simulacro: se sella exactamente lo que probaste. */
+  var PAISES = [['ARG','Argentina'],['BOL','Bolivia'],['BRA','Brasil'],['CHL','Chile'],['COL','Colombia'],
+    ['CRI','Costa Rica'],['ECU','Ecuador'],['GTM','Guatemala'],['HND','Honduras'],['MEX','México'],
+    ['PRY','Paraguay'],['PER','Perú'],['URY','Uruguay'],['CIV','Costa de Marfil'],['ETH','Etiopía'],
+    ['GHA','Ghana'],['KEN','Kenia'],['UGA','Uganda'],['IDN','Indonesia'],['VNM','Vietnam']];
+  var ESTILO_SEL = 'width:100%; font-family:monospace; font-size:12px; padding:10px; margin-bottom:8px; background:rgba(0,0,0,0.45); color:#E8E4DA; border:1px solid rgba(255,255,255,0.18); border-radius:4px;';
+
+  function esCampo() {
+    var t = document.getElementById('actTipo');
+    return !!(t && /campo/i.test(t.value || ''));
+  }
+
+  function opcionesHTML(s) {
+    var p = '<option value="">País del campo…</option>';
+    for (var i = 0; i < PAISES.length; i++) p += '<option value="' + PAISES[i][0] + '">' + PAISES[i][1] + '</option>';
+    return '' +
+      '<select id="fProducto' + s + '" style="' + ESTILO_SEL + '">' +
+        '<option value="atras">01 · Hacia atrás — solo deforestación EUDR</option>' +
+        '<option value="adelante">02 · Hacia adelante — seguimiento quincenal</option>' +
+        '<option value="ambos">03 · Atrás + adelante — cobertura completa</option>' +
+      '</select>' +
+      '<select id="fMeses' + s + '" style="' + ESTILO_SEL + ' display:none;">' +
+        '<option value="">¿Cuántos meses de seguimiento?</option>' +
+        '<option value="3">3 meses</option><option value="6">6 meses</option>' +
+        '<option value="12">12 meses</option><option value="24">24 meses</option><option value="36">36 meses</option>' +
+      '</select>' +
+      '<div id="fCampo' + s + '" style="display:none;">' +
+        '<select id="fCultivo' + s + '" style="' + ESTILO_SEL + '">' +
+          '<option value="ninguno">Cultivo · ninguno / no EUDR</option>' +
+          '<option value="soja">Soja</option><option value="cafe">Café</option><option value="cacao">Cacao</option>' +
+          '<option value="palma">Palma</option><option value="caucho">Caucho</option>' +
+        '</select>' +
+        '<select id="fPais' + s + '" style="' + ESTILO_SEL + '">' + p + '</select>' +
+      '</div>';
+  }
+
+  function asegurarOpciones(atajo, btn, s) {
+    if (!atajo || !btn) return;
+    if (!document.getElementById('fProducto' + s)) {
+      var caja = document.createElement('div');
+      caja.innerHTML = opcionesHTML(s);
+      atajo.insertBefore(caja, btn);
+      caja.addEventListener('change', function () {
+        var prod = document.getElementById('fProducto' + s).value;
+        document.getElementById('fMeses' + s).style.display = (prod === 'atras') ? 'none' : '';
+        // cambió lo elegido → se vuelve a simular antes de sellar
+        _yaSimulo = false;
+        btn.textContent = 'CERTIFICAR DIRECTO (FOUNDER) →';
+      });
+    }
+    document.getElementById('fCampo' + s).style.display = esCampo() ? '' : 'none';
+  }
+
+  function leerOpciones(s) {
+    var prod = document.getElementById('fProducto' + s);
+    if (!prod) return { producto: 'atras', meses: null, cultivo: 'ninguno', pais: null };
+    var meses   = document.getElementById('fMeses' + s).value;
+    var cultivo = esCampo() ? document.getElementById('fCultivo' + s).value : 'ninguno';
+    var pais    = esCampo() ? document.getElementById('fPais' + s).value : '';
+    if (prod.value !== 'atras' && !meses) return { error: 'Elegí cuántos meses de seguimiento contrató el cliente.' };
+    if (cultivo !== 'ninguno' && !pais) return { error: 'Con cultivo hace falta el país del campo (para calcular la capacidad).' };
+    return { producto: prod.value, meses: prod.value === 'atras' ? null : Number(meses), cultivo: cultivo, pais: pais || null };
+  }
+
+  function resumen(o) {
+    var n = { atras: '01 · Hacia atrás', adelante: '02 · Hacia adelante', ambos: '03 · Atrás + adelante' };
+    var t = n[o.producto] || o.producto;
+    if (o.meses) t += ' · ' + o.meses + ' meses';
+    if (o.cultivo && o.cultivo !== 'ninguno') t += ' · ' + o.cultivo + ' (' + o.pais + ')';
+    return t;
+  }
+
+  setInterval(function () {
+    var a1 = document.getElementById('founderAtajo'), a2 = document.getElementById('founderAtajo2');
+    if (a1 && a1.style.display === 'block') asegurarOpciones(a1, document.getElementById('founderCertBtn'), '1');
+    if (a2 && a2.style.display === 'block') asegurarOpciones(a2, document.getElementById('founderCertBtn2'), '2');
+  }, 1000);
+
   document.addEventListener('click', async function (ev) {
     var btn = ev.target;
     if (!btn || (btn.id !== 'founderCertBtn' && btn.id !== 'founderCertBtn2')) return;
@@ -1474,8 +1556,12 @@
     if (!supa) { out.innerHTML = 'Supabase no cargo. Recarga la pagina.'; return; }
     if (!activoId) { out.innerHTML = 'No se encontro el id del activo. Registra el activo primero (Firmar).'; return; }
 
+    var sufijo = btn.id === 'founderCertBtn2' ? '2' : '1';
+    var op = leerOpciones(sufijo);
+    if (op.error) { out.textContent = 'X ' + op.error; return; }
+
     var ejecutar = _yaSimulo;
-    if (ejecutar && !confirm('Esto SELLA de verdad en Polygon y gasta gas real. Seguro?')) return;
+    if (ejecutar && !confirm('Esto SELLA de verdad en Polygon y gasta gas real.\n\n' + resumen(op) + '\n\nSeguro?')) return;
 
     var sesion = await supa.auth.getSession();
     var token = sesion && sesion.data && sesion.data.session ? sesion.data.session.access_token : null;
@@ -1488,7 +1574,8 @@
       var r = await fetch(PUENTE_SELLO, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ filaId: activoId, ejecutar: ejecutar, token: token })
+        body: JSON.stringify({ filaId: activoId, ejecutar: ejecutar, token: token,
+          producto: op.producto, meses: op.meses, cultivo: op.cultivo, pais: op.pais })
       });
       var data = await r.json();
 
@@ -1499,6 +1586,7 @@
         t += 'Activo: ' + (data.activo || '-') + ' (' + (data.tipo || '-') + ')\n';
         t += 'Calidad: ' + (data.calidad != null ? data.calidad + '%' : '-') + '\n';
         if (data.mediciones) for (var i=0;i<data.mediciones.length;i++){ var m=data.mediciones[i]; t += '  - ' + m.etiqueta + ': ' + m.valor + ' (' + m.interpretacion + ')\n'; }
+        t += '\nAl sellar se activa: ' + resumen(op) + '\n';
         t += '\nToca otra vez el boton para SELLAR DE VERDAD.';
         out.textContent = t;
         _yaSimulo = true;
@@ -1520,6 +1608,13 @@
             s += '\n';
           }
         }
+        s += '\nProducto: ' + resumen(op) + '\n';
+        if (data.capacidad && data.capacidad.declarada) {
+          s += 'CAPACIDAD DECLARADA: ' + data.capacidad.capacidadAnual + ' t/año (' + data.capacidad.ha + ' ha x ' + data.capacidad.rinde + ' t/ha de ' + data.capacidad.cultivo + ')\n';
+        } else if (data.capacidad && op.cultivo !== 'ninguno') {
+          s += 'Capacidad NO declarada: ' + (data.capacidad.motivo || '-') + '\n';
+        }
+        if (data.producto && data.producto.motivo) s += 'OJO: no se guardo el producto: ' + data.producto.motivo + '\n';
         out.textContent = s;
         var a = document.createElement('a');
         a.href = data.polygonscan; a.target = '_blank'; a.rel = 'noopener';
