@@ -89,7 +89,7 @@ h1{font-family:'Playfair Display',serif;font-weight:400;font-size:clamp(26px,4vw
   <p class="sub">Esta página no te pide que confíes en nosotros. Baja el paquete de evidencia de un activo, <strong>recalcula la huella criptográfica en tu propio navegador</strong>, y la compara con la que quedó sellada en Polygon. Si coinciden, el dato es auténtico y nadie lo tocó.</p>
 
   <div class="buscar">
-    <input id="idInput" type="text" inputmode="numeric" placeholder="Nº de activo on-chain (ej: 16)" />
+    <input id="idInput" type="text" placeholder="Nº de campo (ej: 20) o código de lote (ej: LOTE-2026-001)" />
     <button id="btnVerificar" type="button">Verificar</button>
   </div>
 
@@ -318,12 +318,16 @@ h1{font-family:'Playfair Display',serif;font-weight:400;font-size:clamp(26px,4vw
   $('btnVerificar').addEventListener('click', function(){
     var id = $('idInput').value.trim();
     if(/^\d+$/.test(id)) verificar(id);
-    else mostrarEstado('mal','✕','Número inválido','Ingresá el número de activo on-chain (ej: 16).');
+    // UNA SOLA CASILLA: si no es un número, es un código de lote → su página.
+    else if(/^[A-Za-z0-9][A-Za-z0-9._-]{2,63}$/.test(id)) window.location.href = 'lote.html?codigo=' + encodeURIComponent(id);
+    else mostrarEstado('mal','✕','Dato inválido','Ingresá el número de campo (ej: 20) o el código de lote (ej: LOTE-2026-001).');
   });
   $('idInput').addEventListener('keydown', function(e){ if(e.key==='Enter') $('btnVerificar').click(); });
 
   // Si viene ?id=NN en la URL, verificar solo al cargar.
   var params = new URLSearchParams(window.location.search);
+  var codURL = params.get('codigo') || params.get('lote');
+  if(codURL){ window.location.replace('lote.html?codigo=' + encodeURIComponent(codURL.trim())); return; }
   var idURL = params.get('id') || params.get('activo');
   if(idURL && /^\d+$/.test(idURL.trim())){
     $('idInput').value = idURL.trim();
