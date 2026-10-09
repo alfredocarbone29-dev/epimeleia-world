@@ -396,6 +396,55 @@ body::after {
           <button class="founder-btn sim" id="founderBtnSim" onclick="founderSellar(false)">PROBAR (SIMULACRO)</button>
           <button class="founder-btn real" id="founderBtnReal" onclick="founderSellar(true)">SELLAR DE VERDAD</button>
         </div>
+        <!-- SIMPLE-2: el producto que contrató el cliente, elegido al sellar -->
+        <div class="founder-tools">
+          <select class="founder-input" id="founderProducto" onchange="founderProductoCambio()" aria-label="Producto">
+            <option value="atras">PRODUCTO · Histórico (deforestación desde 2020)</option>
+            <option value="adelante">PRODUCTO · Monitoreo (cada quincena)</option>
+            <option value="ambos">PRODUCTO · Ambos</option>
+          </select>
+          <select class="founder-input" id="founderMeses" aria-label="Meses de cobertura" style="display:none;">
+            <option value="">COBERTURA · ¿cuántos meses?</option>
+            <option value="3">3 meses</option>
+            <option value="6">6 meses</option>
+            <option value="12">12 meses</option>
+            <option value="24">24 meses</option>
+            <option value="36">36 meses</option>
+          </select>
+        </div>
+        <div class="founder-tools">
+          <select class="founder-input" id="founderCultivo" aria-label="Cultivo">
+            <option value="ninguno">CULTIVO · ninguno (bosque, agua, otro)</option>
+            <option value="soja">Soja</option>
+            <option value="cafe">Café</option>
+            <option value="cacao">Cacao</option>
+            <option value="palma">Palma</option>
+            <option value="caucho">Caucho</option>
+          </select>
+          <select class="founder-input" id="founderPais" aria-label="País">
+            <option value="">PAÍS · elegí</option>
+            <option value="ARG">Argentina</option>
+            <option value="BOL">Bolivia</option>
+            <option value="BRA">Brasil</option>
+            <option value="CHL">Chile</option>
+            <option value="COL">Colombia</option>
+            <option value="CRI">Costa Rica</option>
+            <option value="ECU">Ecuador</option>
+            <option value="GTM">Guatemala</option>
+            <option value="HND">Honduras</option>
+            <option value="MEX">México</option>
+            <option value="PRY">Paraguay</option>
+            <option value="PER">Perú</option>
+            <option value="URY">Uruguay</option>
+            <option value="CIV">Costa de Marfil</option>
+            <option value="ETH">Etiopía</option>
+            <option value="GHA">Ghana</option>
+            <option value="KEN">Kenia</option>
+            <option value="UGA">Uganda</option>
+            <option value="IDN">Indonesia</option>
+            <option value="VNM">Vietnam</option>
+          </select>
+        </div>
         <div class="founder-out" id="founderOut"></div>
         <div class="founder-hint">SIMULACRO = mide y muestra, no gasta gas · SELLAR DE VERDAD = escribe en Polygon (gasta gas real)</div>
       </div>
@@ -635,6 +684,35 @@ const FOUNDER_EMAIL = 'alfredocarbone29@gmail.com';
 // La URL del puente en Vercel (el dominio bueno, con www).
 const PUENTE_SELLO = 'https://www.epimeleia.world/api/confirmar-sello';
 
+// SIMPLE-2: los meses solo se piden si el producto incluye monitoreo.
+function founderProductoCambio() {
+  const p = document.getElementById('founderProducto').value;
+  document.getElementById('founderMeses').style.display = (p === 'atras') ? 'none' : '';
+}
+
+function founderDatosProducto() {
+  const producto = document.getElementById('founderProducto').value;
+  const meses    = document.getElementById('founderMeses').value;
+  const cultivo  = document.getElementById('founderCultivo').value;
+  const pais     = document.getElementById('founderPais').value;
+  if (producto !== 'atras' && !meses) return { error: 'Elegí cuántos meses de monitoreo contrató el cliente.' };
+  if (cultivo !== 'ninguno' && !pais) return { error: 'Con cultivo hace falta el país (para calcular la capacidad).' };
+  return {
+    producto: producto,
+    meses: producto === 'atras' ? null : Number(meses),
+    cultivo: cultivo,
+    pais: pais || null,
+  };
+}
+
+function founderResumenProducto(dp) {
+  const nombres = { atras: 'Histórico', adelante: 'Monitoreo', ambos: 'Ambos' };
+  let s = nombres[dp.producto] || dp.producto;
+  if (dp.meses) s += ' · ' + dp.meses + ' meses';
+  if (dp.cultivo && dp.cultivo !== 'ninguno') s += ' · ' + dp.cultivo + ' (' + (dp.pais || '—') + ')';
+  return s;
+}
+
 async function founderSellar(ejecutar) {
   const fila = (document.getElementById('founderFila').value || '').trim();
   const out  = document.getElementById('founderOut');
@@ -645,6 +723,12 @@ async function founderSellar(ejecutar) {
 
   if (!fila) {
     out.innerHTML = '<span class="err">Pegá el id de fila del activo primero.</span>';
+    return;
+  }
+
+  const dp = founderDatosProducto();
+  if (dp.error) {
+    out.innerHTML = '<span class="err">' + dp.error + '</span>';
     return;
   }
 
@@ -669,7 +753,8 @@ async function founderSellar(ejecutar) {
     const resp = await fetch(PUENTE_SELLO, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ filaId: fila, ejecutar: ejecutar, token: session.access_token })
+      body: JSON.stringify({ filaId: fila, ejecutar: ejecutar, token: session.access_token,
+        producto: dp.producto, meses: dp.meses, cultivo: dp.cultivo, pais: dp.pais })
     });
     const data = await resp.json();
 
@@ -685,6 +770,7 @@ async function founderSellar(ejecutar) {
           txt += '  · ' + m.etiqueta + ': ' + m.valor + '  (' + m.interpretacion + ')\n';
         }
       }
+      txt += '\nAl sellar de verdad se guarda: ' + founderResumenProducto(dp) + '\n';
       txt += '\nSi los números cierran, tocá "SELLAR DE VERDAD".';
       out.innerHTML = txt;
     } else if (data.sellado) {
@@ -692,7 +778,18 @@ async function founderSellar(ejecutar) {
       txt += 'Activo: ' + (data.activo || '—') + '  ·  on-chain #' + data.onchain + '\n';
       txt += 'Huella: ' + data.huella + '\n';
       txt += 'Transacción: ' + data.txHash + '\n';
-      txt += 'Bloque: ' + data.bloque + '\n\n';
+      txt += 'Bloque: ' + data.bloque + '\n';
+      txt += 'Producto: ' + founderResumenProducto(dp) + '\n';
+      if (data.capacidad && data.capacidad.declarada) {
+        txt += '<span class="ok">✓ Capacidad declarada: ' + data.capacidad.capacidadAnual + ' t/año ('
+             + data.capacidad.ha + ' ha × ' + data.capacidad.rinde + ' t/ha de ' + data.capacidad.cultivo + ')</span>\n';
+      } else if (data.capacidad && dp.cultivo !== 'ninguno') {
+        txt += '<span class="err">Capacidad no declarada: ' + (data.capacidad.motivo || '—') + '</span>\n';
+      }
+      if (data.producto && data.producto.motivo) {
+        txt += '<span class="err">Ojo: no se guardó el producto: ' + data.producto.motivo + '</span>\n';
+      }
+      txt += '\n';
       txt += '<a class="link" href="' + data.polygonscan + '" target="_blank" rel="noopener">Ver en Polygonscan →</a>';
       out.innerHTML = txt;
     } else {

@@ -212,7 +212,64 @@ async function declararCapacidadAuto(filaId, onchainId, email) {
   }
 }
 
-async function procesarSello(filaId, ejecutar) {
+/* ─── SIMPLE-2: el producto se elige al sellar ────────────────
+ * Desde el panel founder llegan (opcionales): producto (atras/adelante/
+ * ambos), meses de cobertura (los define el cliente), cultivo y país.
+ * Se validan acá y se escriben en la fila SOLO después de un sello
+ * exitoso (si el satélite no pudo, no queda nada a medias).
+ */
+const PRODUCTOS = ['atras', 'adelante', 'ambos'];
+const CULTIVOS  = ['soja', 'cafe', 'cacao', 'palma', 'caucho'];
+
+function normalizarDatosProducto(d) {
+  d = d || {};
+  const out = {};
+  if (d.producto != null && d.producto !== '') {
+    const p = String(d.producto).toLowerCase().trim();
+    if (!PRODUCTOS.includes(p)) return { error: 'Producto inválido: ' + d.producto };
+    out.producto = p;
+    if (p !== 'atras') {
+      const m = Number(d.meses);
+      if (!Number.isInteger(m) || m < 1 || m > 60) return { error: 'Para monitoreo hay que indicar los meses de cobertura (1 a 60).' };
+      out.meses = m;
+    }
+  }
+  if (d.cultivo != null && d.cultivo !== '' && d.cultivo !== 'ninguno') {
+    const c = String(d.cultivo).toLowerCase().trim();
+    if (!CULTIVOS.includes(c)) return { error: 'Cultivo no soportado: ' + d.cultivo };
+    out.cultivo = c;
+  }
+  if (d.pais != null && d.pais !== '') {
+    const pa = String(d.pais).toUpperCase().trim();
+    if (!/^[A-Z]{3}$/.test(pa)) return { error: 'País inválido (código de 3 letras, ej. ARG).' };
+    out.pais = pa;
+  }
+  return { datos: out };
+}
+
+async function aplicarDatosProducto(filaId, dp) {
+  const cambios = {};
+  if (dp.cultivo) cambios.cultivo = dp.cultivo;
+  if (dp.pais)    cambios.pais    = dp.pais;
+  if (dp.producto) {
+    cambios.modo_certificacion = dp.producto;
+    if (dp.meses) {
+      const hasta = new Date();
+      hasta.setMonth(hasta.getMonth() + dp.meses);
+      cambios.cobertura_hasta = hasta.toISOString();
+    }
+  }
+  if (!Object.keys(cambios).length) return { aplicado: false };
+  const { error } = await supabase.from('activos').update(cambios).eq('id', filaId);
+  if (error) return { aplicado: false, motivo: error.message };
+  L('datos de producto guardados: ' + JSON.stringify(cambios));
+  return { aplicado: true, cambios };
+}
+
+async function procesarSello(filaId, ejecutar, datosProducto) {
+  const np = normalizarDatosProducto(datosProducto);
+  if (np.error) return { ok: false, error: np.error, tipo: 'datos' };
+  const dp = np.datos;
   const activo = await activoSupabase.traerActivoParaCertificado(filaId);
   if (!activo.encontrado)   return { ok: false, error: activo.motivo };
   if (!activo.esPoligonoReal) return { ok: false, error: 'El activo no tiene un poligono valido.' };
@@ -233,6 +290,7 @@ async function procesarSello(filaId, ejecutar) {
       calidad: m.calidadPct, fechaPasada: m.fechaPasada,
       mediciones: m.mediciones.map(x => ({ etiqueta: x.etiqueta, valor: x.valor, interpretacion: x.interpretacion })),
       onchain: activo.activoIdOnchain,
+      producto: dp,   // lo que se aplicaría al sellar de verdad
     };
   }
 
@@ -248,6 +306,10 @@ async function procesarSello(filaId, ejecutar) {
     if (onchainId == null) return { ok: false, error: 'El alta no devolvio id on-chain. Revisar en Polygonscan.' };
   }
   const sello = await sellarEvidencia(onchainId, m, activo);
+
+  // SIMPLE-2: producto, cobertura, cultivo y país (solo tras sello OK).
+  const productoAplicado = await aplicarDatosProducto(activo.filaId, dp);
+  if (productoAplicado.motivo) L('no se guardaron los datos de producto: ' + productoAplicado.motivo);
 
   // SIMPLE-1: la capacidad se declara sola (no frena ni rompe el sello).
   const capacidad = await declararCapacidadAuto(activo.filaId, onchainId, email);
@@ -308,6 +370,7 @@ async function procesarSello(filaId, ejecutar) {
     emailEnviado: emailEnviado, emailMotivo: emailMotivo,
     deforestacion: deforestacionResumen,
     capacidad: capacidad,
+    producto: productoAplicado,
   };
 }
 
@@ -339,7 +402,9 @@ const server = http.createServer((req, res) => {
 
     L(`pedido · fila=${filaId} · ejecutar=${ejecutar}`);
     try {
-      const resultado = await procesarSello(filaId, ejecutar);
+      const resultado = await procesarSello(filaId, ejecutar, {
+        producto: datos.producto, meses: datos.meses, cultivo: datos.cultivo, pais: datos.pais,
+      });
       res.statusCode = resultado.ok ? 200 : 422;
       res.end(JSON.stringify(resultado));
       L(`respuesta · ${resultado.ok ? (resultado.sellado ? 'SELLADO ' + resultado.txHash : 'simulacro OK') : 'rechazado: ' + resultado.error}`);
