@@ -133,12 +133,6 @@ section { position:relative; }
 .puerta.contacto .puerta-k, .puerta.contacto .puerta-arrow, .puerta.contacto .puerta-ico { color:var(--emerald); }
 .puerta.contacto .puerta-ico svg { stroke:var(--emerald); }
 /* Lotes — certificado de embarque (ámbar) */
-.puerta.lotes { background:linear-gradient(150deg, rgba(200,154,74,0.10), var(--card) 60%); border-color:rgba(200,154,74,0.35); }
-.puerta.lotes:hover { border-color:var(--amber); }
-.puerta.lotes .puerta-k, .puerta.lotes .puerta-arrow, .puerta.lotes .puerta-ico { color:var(--amber); }
-.puerta.lotes .puerta-ico svg { stroke:var(--amber); }
-/* Contacto sola, a todo el ancho, en la última fila */
-.puerta.contacto { grid-column:1 / -1; min-height:0; }
 @media(max-width:680px){ .puertas-grid { grid-template-columns:1fr; } .puerta { min-height:0; } }
 
 .sec { max-width:1080px; margin:0 auto; padding:clamp(52px,8vw,96px) clamp(24px,5vw,64px); }
@@ -294,7 +288,7 @@ section { position:relative; }
   <div class="hero-mark">EPIMELEIA</div>
   <div class="hero-welcome">BIENVENIDOS</div>
   <div class="hero-rule"></div>
-  <p class="hero-lead">Observamos tu territorio con Sentinel-2, chequeamos la deforestación con Global Forest Watch y lo sellamos en Polygon. Una prueba que <em>cualquiera recalcula — sin confiar en nadie</em>.</p>
+  <p class="hero-lead">Observamos tu territorio con Sentinel-2, chequeamos la deforestación con Global Forest Watch y lo sellamos en Polygon. Una prueba que <em>cualquiera recalcula — sin confiar en nadie</em>. Y con un solo ID seguimos cada embarque desde tu campo hasta el puerto: nunca sale más de lo que tu tierra puede dar.</p>
 
   <p class="hero-plain">Somos una plataforma tecnológica. Un vínculo directo entre vos y un satélite: elegís qué observar, sellamos su estado ambiental con una prueba inalterable y verificable por terceros, y te informamos qué está pasando con tu bien. Sin software que instalar, sin procesos largos, nada oculto.</p>
 
@@ -395,28 +389,9 @@ section { position:relative; }
         </div>
         <div>
           <div class="puerta-name">EPIMELEIA VERIFICAR</div>
-          <div class="puerta-sub">Chequeá de forma inapelable cualquier activo que sellamos. La huella se recalcula en tu navegador.</div>
+          <div class="puerta-sub">Chequeá un campo o un embarque completo con su número. La huella se recalcula en tu navegador.</div>
         </div>
         <span class="puerta-arrow">VERIFICAR →</span>
-      </a>
-
-      <!-- LOTES (certificado de embarque) -->
-      <a class="puerta lotes" href="lote.html">
-        <div class="puerta-top">
-          <span class="puerta-k">CERTIFICADO DE EMBARQUE</span>
-          <span class="puerta-ico">
-            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M3 8l9-4 9 4-9 4-9-4z" stroke-width="1.5"/>
-              <path d="M3 12l9 4 9-4" stroke-width="1.5"/>
-              <path d="M3 16l9 4 9-4" stroke-width="1.5"/>
-            </svg>
-          </span>
-        </div>
-        <div>
-          <div class="puerta-name">EPIMELEIA LOTES</div>
-          <div class="puerta-sub">Verificá un embarque completo: cada parcela de origen libre de deforestación y el volumen dentro de lo que esa tierra puede dar.</div>
-        </div>
-        <span class="puerta-arrow">VERIFICAR UN LOTE →</span>
       </a>
 
       <!-- CONTACTO (abre modal con opciones + canales) -->
