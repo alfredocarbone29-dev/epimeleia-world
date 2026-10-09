@@ -45,6 +45,47 @@ const SELLO_SECRET  = process.env.SELLO_SECRET  || '';
 const SELLO_VPS_URL = process.env.SELLO_VPS_URL || '';
 const SELLO_FOUNDER_EMAIL = (process.env.SELLO_FOUNDER_EMAIL || '').toLowerCase().trim();
 
+// SIMPLE-3: ¿el activo pertenece a quien lo pide? Se compara el email del
+// cliente dueño del activo (tabla clientes) con el de la sesión; si no hay
+// fila de cliente, se acepta que cliente_id sea el id del usuario.
+async function activoEsDe(filaId, user) {
+  try {
+    const { data: act } = await supabase.from('activos').select('cliente_id').eq('id', filaId).maybeSingle();
+    if (!act || !act.cliente_id) return false;
+    if (String(act.cliente_id) === String(user.id)) return true;
+    const { data: cli } = await supabase.from('clientes').select('email').eq('id', act.cliente_id).maybeSingle();
+    const a = ((cli && cli.email) || '').toLowerCase().trim();
+    const b = (user.email || '').toLowerCase().trim();
+    return !!a && a === b;
+  } catch (e) {
+    console.error('[confirmar-sello] no se pudo verificar el dueño:', e.message);
+    return false;
+  }
+}
+
+async function reenviarAlVPS(res, cuerpo) {
+  let respuestaVPS;
+  try {
+    const r = await fetch(SELLO_VPS_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-sello-secret': SELLO_SECRET },
+      body: JSON.stringify(cuerpo),
+      // el sellado real puede tardar (mide satélite + on-chain): damos margen
+      signal: AbortSignal.timeout(120000),
+    });
+    respuestaVPS = await r.json();
+  } catch (errVPS) {
+    console.error('[confirmar-sello] No se pudo contactar al VPS:', errVPS.message);
+    return res.status(502).json({
+      ok: false,
+      error: 'No se pudo contactar al motor de sellado. Puede estar procesando o caído. Probá en un momento.',
+    });
+  }
+  // Devolvemos tal cual lo que respondió el VPS (simulacro o sellado real).
+  console.log(`[confirmar-sello] VPS respondió · ok=${respuestaVPS?.ok}`);
+  return res.status(200).json(respuestaVPS);
+}
+
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -84,38 +125,27 @@ module.exports = async (req, res) => {
     const emailQuienPide = (userData.user.email || '').toLowerCase().trim();
 
     // Solo el FOUNDER puede sellar. Un cliente logueado NO.
-    if (emailQuienPide !== SELLO_FOUNDER_EMAIL) {
-      console.warn(`[confirmar-sello] RECHAZADO · ${emailQuienPide} no es el founder.`);
-      return res.status(403).json({ ok: false, error: 'No tenés permiso para esta acción.' });
+    // SIMPLE-3: un cliente SÍ puede pedir la VISTA PREVIA (simulacro: mide,
+    // no sella, no guarda) de un activo que sea SUYO. Nada más.
+    const esFounder = emailQuienPide === SELLO_FOUNDER_EMAIL;
+    if (!esFounder) {
+      if (ejecutar === true) {
+        console.warn(`[confirmar-sello] RECHAZADO · ${emailQuienPide} intentó sellar y no es el founder.`);
+        return res.status(403).json({ ok: false, error: 'No tenés permiso para esta acción.' });
+      }
+      const esSuyo = await activoEsDe(filaId, userData.user);
+      if (!esSuyo) {
+        console.warn(`[confirmar-sello] RECHAZADO · vista previa de un activo ajeno (${emailQuienPide}).`);
+        return res.status(403).json({ ok: false, error: 'Ese activo no está en tu cuenta.' });
+      }
+      // Vista previa del cliente: va sin datos de producto (no guarda nada).
+      return reenviarAlVPS(res, { filaId, ejecutar: false });
     }
 
     // ── CANDADO 2: le hablamos a la puerta del VPS con la clave ───
     console.log(`[confirmar-sello] Founder OK · sellando fila ${filaId} · ejecutar=${ejecutar === true}`);
 
-    let respuestaVPS;
-    try {
-      const r = await fetch(SELLO_VPS_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-sello-secret': SELLO_SECRET,
-        },
-        body: JSON.stringify({ filaId, ejecutar: ejecutar === true, producto, meses, cultivo, pais }),
-        // el sellado real puede tardar (mide satélite + on-chain): damos margen
-        signal: AbortSignal.timeout(120000),
-      });
-      respuestaVPS = await r.json();
-    } catch (errVPS) {
-      console.error('[confirmar-sello] No se pudo contactar al VPS:', errVPS.message);
-      return res.status(502).json({
-        ok: false,
-        error: 'No se pudo contactar al motor de sellado. Puede estar procesando o caído. Probá en un momento.',
-      });
-    }
-
-    // Devolvemos tal cual lo que respondió el VPS (simulacro o sellado real).
-    console.log(`[confirmar-sello] VPS respondió · ok=${respuestaVPS?.ok}`);
-    return res.status(200).json(respuestaVPS);
+    return reenviarAlVPS(res, { filaId, ejecutar: ejecutar === true, producto, meses, cultivo, pais });
 
   } catch (err) {
     console.error('[confirmar-sello] Error inesperado:', err);
