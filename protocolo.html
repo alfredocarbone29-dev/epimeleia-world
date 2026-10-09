@@ -1418,6 +1418,7 @@
 
   var _supa = null;
   var _yaSimulo = false;
+  var _esFounder = false;
 
   function initSupa() {
     if (_supa) return _supa;
@@ -1454,10 +1455,13 @@
     try {
       var res = await supa.auth.getUser();
       var user = res && res.data ? res.data.user : null;
-      if (user && (user.email || '').toLowerCase().trim() === FOUNDER_EMAIL) {
+      _esFounder = !!(user && (user.email || '').toLowerCase().trim() === FOUNDER_EMAIL);
+      if (_esFounder) {
         if (pagarVisible && atajo)  atajo.style.display = 'block';
         if (coordVisible && atajo2) atajo2.style.display = 'block';
       }
+      // SIMPLE-3: el cliente (no founder) ve su propio panel en "Caso a medida".
+      if (coordVisible && user && !_esFounder) asegurarPanelCliente();
     } catch (e) {}
   }
   setInterval(vigilar, 1000);
@@ -1514,6 +1518,9 @@
         // cambió lo elegido → se vuelve a simular antes de sellar
         _yaSimulo = false;
         btn.textContent = 'CERTIFICAR DIRECTO (FOUNDER) →';
+        // y se borra el resultado viejo, para que no muestre otra elección
+        var o = document.getElementById(s === '2' ? 'founderCertOut2' : 'founderCertOut');
+        if (o) { o.textContent = ''; o.style.display = 'none'; }
       });
     }
     document.getElementById('fCampo' + s).style.display = esCampo() ? '' : 'none';
@@ -1537,6 +1544,94 @@
     if (o.cultivo && o.cultivo !== 'ninguno') t += ' · ' + o.cultivo + ' (' + o.pais + ')';
     return t;
   }
+
+  /* ── SIMPLE-3: el panel del CLIENTE, dentro de "Caso a medida" ──
+     El cliente elige lo mismo que el founder y ve gratis la foto del
+     satélite (simulacro: mide, no sella, no guarda). "Pedir esta
+     certificación" NO sella: completa el mail y el WhatsApp con lo que
+     eligió, y el founder la sella después de charlar el pago. */
+  function nombreActivo() {
+    var n = document.getElementById('actNombre');
+    return (n && n.value.trim()) || 'mi campo';
+  }
+
+  function pedidoTexto(o) {
+    var t = 'Hola, quiero certificar el activo "' + nombreActivo() + '"';
+    var id = getActivoId();
+    if (id) t += ' (ref. ' + id + ')';
+    t += '. Producto elegido: ' + resumen(o) + '.';
+    return t;
+  }
+
+  function actualizarContacto() {
+    var o = leerOpciones('C');
+    var mail = document.querySelector('#est-coordinar .coord-mail');
+    var wa   = document.querySelector('#est-coordinar .coord-wa');
+    var linea = document.getElementById('cliPedido');
+    if (o.error) { if (linea) linea.textContent = o.error; return; }
+    var txt = pedidoTexto(o);
+    if (mail) mail.href = 'mailto:info@epimeleia.world?subject=' + encodeURIComponent('Pedido de certificación - ' + nombreActivo()) + '&body=' + encodeURIComponent(txt);
+    if (wa)   wa.href   = 'https://wa.me/5491158004028?text=' + encodeURIComponent(txt);
+    if (linea) linea.textContent = 'Tu pedido: ' + resumen(o) + '. Mandalo por mail o WhatsApp y lo activamos.';
+  }
+
+  function asegurarPanelCliente() {
+    var coord = document.getElementById('est-coordinar');
+    if (!coord) return;
+    var panel = document.getElementById('cliPanel');
+    if (!panel) {
+      panel = document.createElement('div');
+      panel.id = 'cliPanel';
+      panel.style.cssText = 'margin:14px 0 18px; padding:16px; border:1px solid rgba(0,240,255,0.35); border-radius:9px; background:rgba(0,240,255,0.04);';
+      panel.innerHTML =
+        '<div style="font-family:monospace; font-size:9px; letter-spacing:0.2em; color:#00F0FF; text-transform:uppercase; text-align:center; margin-bottom:10px;">ARMÁ TU PEDIDO</div>' +
+        opcionesHTML('C') +
+        '<button id="cliVerBtn" type="button" style="width:100%; font-size:12px; font-weight:700; padding:12px; background:transparent; color:#00F0FF; border:1px solid #00F0FF; cursor:pointer; border-radius:4px; margin-top:4px;">VER MI CAMPO DESDE EL SATÉLITE (GRATIS) &rarr;</button>' +
+        '<div id="cliOut" style="display:none; font-family:monospace; font-size:11px; line-height:1.7; color:#9fb0c9; background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.1); padding:12px; margin-top:10px; white-space:pre-wrap; word-break:break-word;"></div>' +
+        '<div id="cliPedido" style="font-family:monospace; font-size:10.5px; color:#E8E4DA; text-align:center; margin-top:12px; line-height:1.6;"></div>';
+      var ref = coord.querySelector('.coord-sub');
+      coord.insertBefore(panel, ref || coord.firstChild);
+      panel.addEventListener('change', function () {
+        var prod = document.getElementById('fProductoC').value;
+        document.getElementById('fMesesC').style.display = (prod === 'atras') ? 'none' : '';
+        actualizarContacto();
+      });
+      actualizarContacto();
+    }
+    document.getElementById('fCampoC').style.display = esCampo() ? '' : 'none';
+  }
+
+  document.addEventListener('click', async function (ev) {
+    if (!ev.target || ev.target.id !== 'cliVerBtn') return;
+    var btn = ev.target, out = document.getElementById('cliOut');
+    out.style.display = 'block';
+    var supa = initSupa(), activoId = getActivoId();
+    if (!supa) { out.textContent = 'No se pudo cargar. Recargá la página.'; return; }
+    if (!activoId) { out.textContent = 'Primero registrá tu campo (Firmar y registrar).'; return; }
+    var ses = await supa.auth.getSession();
+    var token = ses && ses.data && ses.data.session ? ses.data.session.access_token : null;
+    if (!token) { out.textContent = 'Entrá a tu cuenta para ver tu campo.'; return; }
+    btn.disabled = true;
+    out.textContent = 'Mirando tu campo desde el satélite… un momento.';
+    try {
+      var r = await fetch(PUENTE_SELLO, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filaId: activoId, ejecutar: false, token: token, vista: 'cliente' })
+      });
+      var d = await r.json();
+      if (!d.ok) { out.textContent = 'No se pudo: ' + (d.error || 'probá en un momento.'); }
+      else {
+        var t = 'Lo que ve el satélite hoy sobre "' + (d.activo || nombreActivo()) + '"\n';
+        if (d.fechaPasada) t += 'Pasada: ' + d.fechaPasada + '\n';
+        if (d.calidad != null) t += 'Calidad de la lectura: ' + d.calidad + '%\n';
+        if (d.mediciones) for (var i = 0; i < d.mediciones.length; i++) { var m = d.mediciones[i]; t += '  · ' + m.etiqueta + ': ' + m.valor + ' (' + m.interpretacion + ')\n'; }
+        t += '\nEsto es una vista previa: todavía no se selló nada.\nPara certificarlo, mandanos tu pedido por mail o WhatsApp.';
+        out.textContent = t;
+      }
+    } catch (e) {
+      out.textContent = 'No se pudo contactar al servidor. Probá de nuevo.';
+    } finally { btn.disabled = false; }
+  });
 
   setInterval(function () {
     var a1 = document.getElementById('founderAtajo'), a2 = document.getElementById('founderAtajo2');
