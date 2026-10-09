@@ -16,6 +16,7 @@ const blockchain     = require('./blockchain');
 const activoSupabase = require('./activo-supabase');
 const reports        = require('./reports');       // para disparar el email del certificado
 const paqueteEvidencia = require('./paquete-evidencia'); // PASO D-3: hash del paquete verificable
+const rendimiento    = require('./traz-rendimiento');  // SIMPLE-1: rinde de referencia para la capacidad automática
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 
@@ -152,6 +153,65 @@ async function sellarEvidencia(onchainId, medicion, activo) {
   };
 }
 
+/* ─── SIMPLE-1: capacidad automática ──────────────────────────
+ * Después de sellar la parcela, si la fila tiene cultivo y país,
+ * se declara sola su capacidad anual en TRAZ:
+ *   hectáreas (del polígono) × rinde de referencia (FAO).
+ * Nadie escribe toneladas. Si falta un dato o TRAZ falla, el sello
+ * de la parcela queda igual: esto nunca lo rompe.
+ * TRAZ rechaza solo una segunda declaración del mismo año (no duplica).
+ */
+function postLocal(ruta, cuerpo, puerto, secreto, timeoutMs) {
+  return new Promise((resolve) => {
+    const data = JSON.stringify(cuerpo);
+    const req = http.request({
+      host: '127.0.0.1', port: puerto, path: ruta, method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data), 'x-traz-secret': secreto },
+    }, (res) => {
+      let txt = '';
+      res.on('data', (c) => { txt += c; });
+      res.on('end', () => { try { resolve(JSON.parse(txt)); } catch { resolve({ ok: false, error: 'Respuesta no JSON de TRAZ.' }); } });
+    });
+    req.on('error', (e) => resolve({ ok: false, error: 'TRAZ no responde: ' + e.message }));
+    req.setTimeout(timeoutMs, () => { req.destroy(); resolve({ ok: false, error: 'TRAZ tardó demasiado.' }); });
+    req.write(data); req.end();
+  });
+}
+
+async function declararCapacidadAuto(filaId, onchainId, email) {
+  try {
+    const { data: f, error } = await supabase.from('activos')
+      .select('cultivo, pais, superficie_ha').eq('id', filaId).maybeSingle();
+    if (error) return { declarada: false, motivo: 'no se pudo leer la parcela: ' + error.message };
+    if (!f || !f.cultivo || !f.pais) return { declarada: false, motivo: 'la parcela no tiene cultivo o país cargado' };
+    const ha = Number(f.superficie_ha);
+    if (!(ha > 0)) return { declarada: false, motivo: 'la parcela no tiene superficie' };
+
+    const ref = await rendimiento.obtenerReferencia({ cultivo: f.cultivo, pais: f.pais });
+    const rinde = ref && Number(ref.rinde);
+    if (!(rinde > 0)) return { declarada: false, motivo: 'cultivo sin rinde de referencia: ' + f.cultivo };
+
+    const baseHa = Math.round(ha * 100) / 100;
+    const produccion = Math.round(baseHa * rinde * 100) / 100;
+    const r = await postLocal('/declarar', {
+      ejecutar: true,
+      origen: { tipo: 'epimeleia', ref: onchainId },
+      cultivo: f.cultivo, pais: f.pais, anio: new Date().getFullYear(),
+      baseHa, fuenteBase: 'epimeleia-satelite',
+      produccionDeclarada: produccion,
+      titularEmail: email,
+    }, Number(process.env.TRAZ_PORT) || 8791, process.env.TRAZ_SECRET || '', 120000);
+
+    if (r && r.ok && r.sellado) {
+      L(`capacidad declarada · ${f.cultivo} ${baseHa} ha × ${rinde} = ${r.capacidadAnual} t · tx ${r.txHash}`);
+      return { declarada: true, cultivo: f.cultivo, ha: baseHa, rinde, capacidadAnual: r.capacidadAnual, txHash: r.txHash };
+    }
+    return { declarada: false, motivo: (r && r.error) || 'TRAZ no declaró' };
+  } catch (e) {
+    return { declarada: false, motivo: e.message };
+  }
+}
+
 async function procesarSello(filaId, ejecutar) {
   const activo = await activoSupabase.traerActivoParaCertificado(filaId);
   if (!activo.encontrado)   return { ok: false, error: activo.motivo };
@@ -188,6 +248,10 @@ async function procesarSello(filaId, ejecutar) {
     if (onchainId == null) return { ok: false, error: 'El alta no devolvio id on-chain. Revisar en Polygonscan.' };
   }
   const sello = await sellarEvidencia(onchainId, m, activo);
+
+  // SIMPLE-1: la capacidad se declara sola (no frena ni rompe el sello).
+  const capacidad = await declararCapacidadAuto(activo.filaId, onchainId, email);
+  if (!capacidad.declarada) L('capacidad no declarada: ' + capacidad.motivo);
 
   var emailEnviado = false;
   var emailMotivo = null;
@@ -243,6 +307,7 @@ async function procesarSello(filaId, ejecutar) {
     polygonscan: `https://polygonscan.com/tx/${sello.txHash}`,
     emailEnviado: emailEnviado, emailMotivo: emailMotivo,
     deforestacion: deforestacionResumen,
+    capacidad: capacidad,
   };
 }
 
