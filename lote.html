@@ -119,6 +119,12 @@ h1{font-family:'Playfair Display',serif;font-weight:400;font-size:clamp(26px,4vw
       <div class="hash-k">HUELLA ESCRITA EN LA TRANSACCIÓN DE POLYGON (LEÍDA DE LA CADENA)</div>
       <div class="hash-v" id="hashCadena">—</div>
     </div>
+    <!-- DESCARGA: la prueba del embarque es del cliente, no depende de EPIMELEIA -->
+    <div class="hash-row" id="rowDescarga" style="display:none;">
+      <div class="hash-k">TU COPIA DE LA PRUEBA</div>
+      <button id="btnDescargar" type="button" style="margin-top:8px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1px;padding:10px 16px;background:transparent;color:var(--emerald);border:1px solid var(--emerald);border-radius:3px;cursor:pointer;">DESCARGAR EL PAQUETE DEL LOTE ↓</button>
+      <div style="font-size:13px;color:var(--muted);margin-top:10px;line-height:1.6;">Guardalo. Es el archivo exacto que se selló: su huella keccak256 es la que está escrita en la transacción de Polygon. Con este archivo y la transacción podés comprobar el embarque siempre, aunque EPIMELEIA no exista.</div>
+    </div>
   </div>
 
   <div id="datos" class="oculto">
@@ -239,6 +245,15 @@ h1{font-family:'Playfair Display',serif;font-weight:400;font-size:clamp(26px,4vw
       $('rowRecalc').className = 'hash-row ' + (coincide ? 'match' : 'nomatch');
       $('rowCadena').className = 'hash-row ' + (coincide ? 'match' : 'nomatch');
       if (coincide) {
+        $('rowDescarga').style.display = '';
+        $('btnDescargar').onclick = function () {
+          var blob = new Blob([data.canonical], { type: 'application/json;charset=utf-8' });
+          var a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          a.download = 'epimeleia-lote-' + String(codigo).replace(/[^A-Za-z0-9._-]/g, '') + '-paquete-sellado.json';
+          document.body.appendChild(a); a.click(); a.remove();
+          setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
+        };
         mostrarEstado('ok', '✓', 'Lote verificado',
           'La huella recalculada en tu navegador coincide con la escrita en Polygon (bloque ' + esc(data.bloque) + '). ' +
           'Las parcelas, sus toneladas y sus pruebas son <strong>exactamente las que se sellaron</strong>. Nadie las tocó.');
