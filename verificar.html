@@ -110,6 +110,12 @@ h1{font-family:'Playfair Display',serif;font-weight:400;font-size:clamp(26px,4vw
       <div class="hash-k">HUELLA SELLADA EN POLYGON</div>
       <div class="hash-v" id="hashSellado">—</div>
     </div>
+    <!-- DESCARGA: la prueba es del cliente, no depende de EPIMELEIA -->
+    <div class="hash-row" id="rowDescarga" style="display:none;">
+      <div class="hash-k">TU COPIA DE LA PRUEBA</div>
+      <button id="btnDescargar" type="button" style="margin-top:8px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1px;padding:10px 16px;background:transparent;color:var(--emerald);border:1px solid var(--emerald);border-radius:3px;cursor:pointer;">DESCARGAR EL PAQUETE SELLADO ↓</button>
+      <div style="font-size:13px;color:var(--muted);margin-top:10px;line-height:1.6;">Guardalo. Es el archivo exacto que se selló: su huella keccak256 es la que está escrita en Polygon. Con este archivo y la transacción podés comprobarlo siempre, aunque EPIMELEIA no exista.</div>
+    </div>
   </div>
 
   <!-- Datos del activo -->
@@ -234,6 +240,21 @@ h1{font-family:'Playfair Display',serif;font-weight:400;font-size:clamp(26px,4vw
       mostrarEstado('mal','✕','NO coincide',
         'La huella recalculada NO coincide con la sellada. El paquete fue alterado, o hay un error. ' +
         'No confíes en este dato.');
+    }
+
+    // Descarga del paquete exacto (los mismos bytes que se sellaron).
+    if(coincide){
+      $('rowDescarga').style.display = '';
+      $('btnDescargar').onclick = function(){
+        var blob = new Blob([data.canonical], { type: 'application/json;charset=utf-8' });
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'epimeleia-activo-' + id + '-paquete-sellado.json';
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(function(){ URL.revokeObjectURL(a.href); }, 2000);
+      };
+    }else{
+      $('rowDescarga').style.display = 'none';
     }
 
     pintarDatos(data.paquete || {}, data);
