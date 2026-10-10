@@ -206,12 +206,22 @@ tr.no-eleg td{opacity:.5;}
       <div class="card-k">Armar un lote · certificado de embarque</div>
       <div class="caja">
         <div class="lote-grid">
-          <div class="campo"><label for="l-codigo">Código del lote</label><input id="l-codigo" placeholder="LOTE-2026-001" autocomplete="off"></div>
+          <div class="campo"><label for="q-id">ID de la parcela</label><input id="q-id" type="number" min="1" placeholder="20" autocomplete="off"></div>
+          <div class="campo"><label for="q-ton">Toneladas de este embarque</label><input id="q-ton" type="number" min="0" step="0.001" placeholder="20" autocomplete="off"></div>
+          <div class="campo"><label>&nbsp;</label><button class="btn" id="q-agregar" type="button" style="width:100%;">AGREGAR AL LOTE</button></div>
+        </div>
+        <div class="ayuda" id="q-msg" style="padding:0 18px 16px;">Poné el ID y las toneladas. El resto (cultivo, saldo, código, año y fecha) lo completa el sistema.</div>
+      </div>
+
+      <div class="card-k">Datos del lote · se completan solos</div>
+      <div class="caja">
+        <div class="lote-grid">
+          <div class="campo"><label for="l-codigo">Código del lote (automático)</label><input id="l-codigo" placeholder="LOTE-2026-001" autocomplete="off"></div>
           <div class="campo"><label for="l-cultivo">Cultivo</label><input id="l-cultivo" list="l-cultivos" placeholder="soja" autocomplete="off">
             <datalist id="l-cultivos"><option value="soja"><option value="cafe"><option value="cacao"><option value="maiz"><option value="trigo"><option value="carne"><option value="madera"><option value="caucho"><option value="palma"></datalist></div>
           <div class="campo"><label for="l-anio">Año de cosecha</label><input id="l-anio" type="number" min="2000" max="2100"></div>
           <div class="campo"><label for="l-fecha">Fecha del embarque</label><input id="l-fecha" type="date"></div>
-          <div class="campo"><label for="l-receptor">Receptor (email o ID del comprador)</label><input id="l-receptor" placeholder="compras@importador.eu" autocomplete="off"></div>
+          <div class="campo"><label for="l-receptor">Receptor (opcional)</label><input id="l-receptor" placeholder="compras@importador.eu" autocomplete="off"></div>
         </div>
       </div>
 
@@ -412,7 +422,7 @@ function renderArmadorLote() {
     const id = esc(p.activo_id_onchain);
     return `<tr class="${ok ? '' : 'no-eleg'}" ${ok ? '' : 'title="Sellada antes del paquete verificable: no puede entrar a un lote"'}>
       <td><input type="checkbox" class="sel" data-id="${id}" ${ok ? '' : 'disabled'} aria-label="Incluir parcela #${id}"></td>
-      <td class="nombre">${esc(p.nombre_activo || '(sin nombre)')} <span class="ayuda">#${id}</span></td>
+      <td class="nombre">${esc(p.nombre_activo || '(sin nombre)')} <span class="ayuda">#${id}<span id="info-${id}" style="text-transform:none;"></span></span></td>
       <td class="num">${num(p.superficie_ha)}</td>
       <td>${chipVeredicto(p.veredicto)}</td>
       <td>${celdaSello(p)}</td>
@@ -423,10 +433,73 @@ function renderArmadorLote() {
   $('tbody-lote').querySelectorAll('input.sel').forEach((cb) => cb.addEventListener('change', () => {
     const t = $('tbody-lote').querySelector(`input.ton[data-id="${cb.dataset.id}"]`);
     t.disabled = !cb.checked;
-    if (cb.checked) t.focus();
+    if (cb.checked) { t.focus(); traerInfo(cb.dataset.id); } else { autocompletarCultivo(); }
     invalidarSimulacion();
   }));
+  autocompletarDatos();
   $('tbody-lote').querySelectorAll('input.ton').forEach((t) => t.addEventListener('input', invalidarSimulacion));
+}
+
+/* ─── LOTE POR ID: el sistema completa lo que ya sabe ─────────── */
+const INFO = {};   // id → { cultivo, saldo, ... }
+
+async function traerInfo(id) {
+  const anio = Number($('l-anio').value) || new Date().getFullYear();
+  try {
+    const r = await llamarLote({ accion: 'infoParcela', id, anio });
+    if (r && r.ok) INFO[id] = r.parcela; else INFO[id] = { error: (r && r.error) || 'sin datos' };
+  } catch (_) { INFO[id] = { error: 'sin conexión' }; }
+  pintarInfo(id);
+  autocompletarCultivo();
+}
+
+function pintarInfo(id) {
+  const el = document.getElementById('info-' + id);
+  const i = INFO[id];
+  if (!el || !i) return;
+  if (i.error) { el.textContent = ' · ' + i.error; return; }
+  const partes = [];
+  if (i.cultivo) partes.push(i.cultivo);
+  partes.push(i.saldo != null ? 'saldo ' + num(i.saldo, nf2) + ' t de ' + num(i.capacidad, nf2) : 'sin capacidad declarada');
+  el.textContent = ' · ' + partes.join(' · ');
+}
+
+function autocompletarCultivo() {
+  const ids = [];
+  $('tbody-lote').querySelectorAll('input.sel:checked').forEach((cb) => ids.push(cb.dataset.id));
+  const cultivos = [...new Set(ids.map((id) => INFO[id] && INFO[id].cultivo).filter(Boolean))];
+  const c = $('l-cultivo');
+  if (cultivos.length === 1) { c.value = cultivos[0]; c.readOnly = true; }
+  else { c.readOnly = false; if (cultivos.length > 1) mensajeLote('Las parcelas elegidas tienen cultivos distintos (' + esc(cultivos.join(', ')) + '). Un lote lleva un solo cultivo.', false); }
+  invalidarSimulacion();
+}
+
+async function autocompletarDatos() {
+  if (!$('l-anio').value) $('l-anio').value = new Date().getFullYear();
+  if (!$('l-fecha').value) $('l-fecha').value = new Date().toISOString().slice(0, 10);
+  if (!$('l-codigo').value) {
+    try {
+      const r = await llamarLote({ accion: 'siguienteCodigo', anio: Number($('l-anio').value) });
+      if (r && r.ok && !$('l-codigo').value) $('l-codigo').value = r.codigo;
+    } catch (_) {}
+  }
+}
+
+function agregarPorId() {
+  const id = String(Number($('q-id').value) || '');
+  const ton = Number($('q-ton').value);
+  const msg = $('q-msg');
+  if (!id) { msg.textContent = 'Poné el ID de la parcela (ej: 20).'; return; }
+  if (!(ton > 0)) { msg.textContent = 'Poné cuántas toneladas van en este embarque.'; return; }
+  const cb = $('tbody-lote').querySelector(`input.sel[data-id="${id}"]`);
+  if (!cb) { msg.textContent = `La parcela #${id} no es de este cliente o no está sellada.`; return; }
+  if (cb.disabled) { msg.textContent = `La parcela #${id} se selló antes del paquete verificable: no puede entrar a un lote.`; return; }
+  cb.checked = true;
+  const t = $('tbody-lote').querySelector(`input.ton[data-id="${id}"]`);
+  t.disabled = false; t.value = ton;
+  msg.textContent = `#${id} agregada con ${ton} t. Podés agregar otra, o simular.`;
+  $('q-id').value = ''; $('q-ton').value = ''; $('q-id').focus();
+  traerInfo(id);
 }
 
 function datosLote() {
@@ -574,6 +647,8 @@ function iniciarLotes() {
   $('l-fecha').value = hoy.toISOString().slice(0, 10);
   ['l-codigo', 'l-cultivo', 'l-anio', 'l-fecha', 'l-receptor'].forEach((id) => $(id).addEventListener('input', invalidarSimulacion));
   $('btn-simular').addEventListener('click', simularLote);
+  $('q-agregar').addEventListener('click', agregarPorId);
+  $('q-ton').addEventListener('keydown', (e) => { if (e.key === 'Enter') agregarPorId(); });
   $('btn-sellar').addEventListener('click', sellarLote);
   CLIENTE_ID = (PARCELAS.find((p) => p.cliente_id) || {}).cliente_id || null;
   renderArmadorLote();

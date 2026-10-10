@@ -386,6 +386,14 @@ body::after {
         <button class="btn-certificar" onclick="irAlMotor()">DIBUJAR Y CERTIFICAR →</button>
       </div>
 
+      <!-- ══ MI CARTERA · solo visible para el founder (reconoce tu email) ══ -->
+      <div class="founder-block" id="carteraBlock">
+        <div class="founder-eyebrow">SOLO PARA VOS · FOUNDER</div>
+        <div class="founder-title">Mi <em>cartera</em></div>
+        <div class="founder-sub">Tus clientes, sus campos y sus embarques. Armá y sellá lotes.</div>
+        <a class="founder-btn real" href="panel.html" style="display:inline-block;text-decoration:none;">ABRIR MI CARTERA →</a>
+      </div>
+
       <div class="panel-label">TUS DATOS · TOCÁ PARA EDITAR Y GUARDÁ AL FINAL</div>
       <div class="data-grid">
         <div>
@@ -605,6 +613,11 @@ async function cargarCuenta() {
   document.getElementById('aUbicacionRecurso').value  = meta.ubicacion_recurso || '';
 
   // ── PANEL FOUNDER: se muestra SOLO si el email logueado es el del founder ──
+  // MI CARTERA: el acceso al panel, solo para el email del founder.
+  // (La seguridad real la pone el servidor; esto solo decide si se muestra.)
+  if ((user.email || '').toLowerCase().trim() === FOUNDER_EMAIL) {
+    document.getElementById('carteraBlock').classList.add('visible');
+  }
   // (El panel founder por id de fila se quitó: ahora se sella desde
   //  "Dibujar y certificar", con el panel founder dentro del mapa.)
 
