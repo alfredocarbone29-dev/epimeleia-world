@@ -206,8 +206,8 @@ tr.no-eleg td{opacity:.5;}
       <div class="card-k">Armar un lote · certificado de embarque</div>
       <div class="caja">
         <div class="lote-grid">
-          <div class="campo"><label for="q-id">ID de la parcela</label><input id="q-id" type="number" min="1" placeholder="20" autocomplete="off"></div>
-          <div class="campo"><label for="q-ton">Toneladas de este embarque</label><input id="q-ton" type="number" min="0" step="0.001" placeholder="20" autocomplete="off"></div>
+          <div class="campo"><label for="q-id">ID de la parcela</label><input id="q-id" type="number" min="1" placeholder="ej: 20" autocomplete="off"></div>
+          <div class="campo"><label for="q-ton">Toneladas de este embarque</label><input id="q-ton" type="number" min="0" step="0.001" placeholder="ej: 10" autocomplete="off"></div>
           <div class="campo"><label>&nbsp;</label><button class="btn" id="q-agregar" type="button" style="width:100%;">AGREGAR AL LOTE</button></div>
         </div>
         <div class="ayuda" id="q-msg" style="padding:0 18px 16px;">Poné el ID y las toneladas. El resto (cultivo, saldo, código, año y fecha) lo completa el sistema.</div>
@@ -503,7 +503,7 @@ function agregarPorId() {
   const ya = LOTE.find((x) => String(x.id) === id);
   if (ya) ya.ton = ton; else LOTE.push({ id, ton });
   if (CLIENTE_ID !== p.cliente_id) { CLIENTE_ID = p.cliente_id; cargarLotes(); }
-  msg.textContent = `#${id} (${p.nombre_activo}, de ${p.cliente}) agregada con ${ton} t. Podés agregar otra, o simular.`;
+  msg.innerHTML = `<span style="color:var(--emerald);font-size:14px;">✓ #${esc(id)} (${esc(p.nombre_activo)}, de ${esc(p.cliente)}) agregada con ${esc(ton)} t.</span> Las casillas se vaciaron para que agregues otra; si no, bajá y tocá SIMULAR.`;
   $('q-id').value = ''; $('q-ton').value = ''; $('q-id').focus();
   renderArmadorLote(); invalidarSimulacion();
   traerInfo(id);
