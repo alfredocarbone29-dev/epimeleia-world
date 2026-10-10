@@ -16,6 +16,14 @@
  *   del mismo origen, cultivo y año. Antes se podía declarar dos veces y
  *   duplicar la capacidad de una misma tierra.
  *
+ * AJUSTE (10/10/2026): /declarar también rechaza si el POLÍGONO de una
+ *   parcela EPIMELEIA se pisa (más del 2 %) con el de OTRA parcela que ya
+ *   tiene declaración ACEPTADA para el mismo cultivo y año. Cierra el hueco
+ *   de registrar el mismo campo dos veces con IDs distintos. La geometría
+ *   vive en traz-superposicion.js (módulo puro). Corre también en simulacro.
+ *   Solo mismo cultivo y año: un campo puede hacer soja y trigo en la misma
+ *   campaña sin que lo frene.
+ *
  * ═══ LA DECISIÓN DE SELLADO (acá vive) ═══
  *   El hash del paquete se sella con una TRANSACCIÓN CRUDA: una tx común
  *   desde la wallet del protocolo hacia sí misma, con el hash en el campo
@@ -70,14 +78,16 @@ const declaracion = require('./traz-declaracion');
 const atribucion  = require('./traz-atribucion');
 const rendimiento = require('./traz-rendimiento');
 const lote        = require('./traz-lote');
+const sup         = require('./traz-superposicion');
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 
 const PORT   = Number(process.env.TRAZ_PORT) || 8791;
 const SECRET = process.env.TRAZ_SECRET || '';
 
-const TABLA_DECL   = 'traz_declaraciones';
-const TABLA_ATRIB  = 'traz_atribuciones';
+const TABLA_DECL    = 'traz_declaraciones';
+const TABLA_ATRIB   = 'traz_atribuciones';
+const TABLA_ACTIVOS = 'activos';
 
 const L = (...a) => console.log('[traz-servidor]', ...a);
 
@@ -106,6 +116,63 @@ function _falta(campos, datos) {
     if (v === undefined || v === null || v === '') return c;
   }
   return null;
+}
+
+// ─────────────────────────────────────────────────────────────
+//  CONTROL DE SUPERPOSICIÓN (AJUSTE 10/10/2026)
+// ─────────────────────────────────────────────────────────────
+/**
+ * Para una parcela EPIMELEIA, compara su polígono con el de las OTRAS
+ * parcelas que ya tienen declaración ACEPTADA para el mismo cultivo y año.
+ * Devuelve { ok: true, superposicion } o { ok: false, tipo: 'superpuesta', error }.
+ * Si no puede leer el polígono propio, NO frena: lo informa en
+ * `superposicion.chequeada = false` y lo deja en el log.
+ */
+async function _chequearSuperposicion(db, paquete) {
+  const ref = String(paquete.origen.ref);
+
+  const { data: decls, error: eD } = await db.from(TABLA_DECL).select('origen_ref')
+    .eq('origen_tipo', 'epimeleia').eq('cultivo', paquete.cultivo)
+    .eq('anio', paquete.anio).eq('veredicto', 'ACEPTADA');
+  if (eD) return { ok: false, error: 'Error buscando declaraciones para el control de superposición: ' + eD.message };
+
+  const otras = [...new Set((decls || []).map(d => String(d.origen_ref)).filter(r => r && r !== ref))];
+  const ids = [ref, ...otras].map(Number).filter(Number.isFinite);
+
+  const { data: acts, error: eA } = await db.from(TABLA_ACTIVOS)
+    .select('activo_id_onchain, nombre_activo, poligono').in('activo_id_onchain', ids);
+  if (eA) return { ok: false, error: 'Error leyendo polígonos para el control de superposición: ' + eA.message };
+
+  const mapa = new Map((acts || []).map(a => [String(a.activo_id_onchain), a]));
+  const propio = mapa.get(ref);
+  const nuevo = propio ? sup.leerAnillo(propio.poligono) : null;
+
+  if (!nuevo) {
+    L(`superposición · AVISO: no se pudo leer el polígono de #${ref}; no se controló`);
+    return { ok: true, superposicion: { chequeada: false, motivo: `No se pudo leer el polígono de la parcela #${ref}.` } };
+  }
+
+  const existentes = otras.map(r => ({
+    ref: r,
+    nombre: mapa.get(r) ? mapa.get(r).nombre_activo : null,
+    poligono: mapa.get(r) ? mapa.get(r).poligono : null,
+  }));
+  const res = sup.buscarSuperposicion({ nuevo, existentes });
+
+  if (res.conflicto) {
+    const c = res.conflicto;
+    const pct = Math.round(c.fraccion * 100);
+    L(`superposición · RECHAZO: #${ref} se pisa ${pct}% con #${c.ref}`);
+    return {
+      ok: false, tipo: 'superpuesta',
+      error: `Esta tierra ya está declarada: se pisa un ${pct} % con la parcela #${c.ref}` +
+             `${c.nombre ? ' (' + c.nombre + ')' : ''} para ${paquete.cultivo} ${paquete.anio}. ` +
+             `No se declara dos veces la misma tierra.`,
+      superposicion: { chequeada: true, conflicto: c, comparadas: res.comparadas },
+    };
+  }
+
+  return { ok: true, superposicion: { chequeada: true, comparadas: res.comparadas, ilegibles: res.ilegibles } };
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -164,13 +231,22 @@ async function procesarDeclaracion(datos, ejecutar, deps = {}) {
     }
   }
 
+  // La misma TIERRA tampoco se declara dos veces bajo IDs distintos
+  // (AJUSTE 10/10/2026). Solo para parcelas EPIMELEIA, que tienen polígono.
+  let superposicion = null;
+  if (paquete.veredicto === 'ACEPTADA' && paquete.origen && paquete.origen.tipo === 'epimeleia') {
+    const r = await _chequearSuperposicion(db, paquete);
+    if (!r.ok) return r;
+    superposicion = r.superposicion;
+  }
+
   // Simulacro: qué haría, sin sellar ni guardar.
   if (!ejecutar) {
     return {
       ok: true, simulacro: true,
       veredicto: paquete.veredicto, capacidadAnual: paquete.capacidadAnual,
       rindeDeclarado: paquete.rindeDeclarado, techo: paquete.techo,
-      referencia, hash,
+      referencia, hash, superposicion,
     };
   }
 
@@ -213,6 +289,7 @@ async function procesarDeclaracion(datos, ejecutar, deps = {}) {
     capacidadAnual: paquete.capacidadAnual,
     hash, txHash: sello.txHash, bloque: sello.bloque,
     polygonscan: `https://polygonscan.com/tx/${sello.txHash}`,
+    superposicion,
   };
 }
 
