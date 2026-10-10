@@ -100,6 +100,41 @@ async function accionLote(supabase, body, res) {
     if (error) return res.status(500).json({ ok: false, error: 'No se pudieron leer los lotes.' });
     return res.status(200).json({ ok: true, lotes: data || [] });
   }
+  // LOTE POR ID: lo que el sistema ya sabe de una parcela (cultivo y saldo).
+  if (accion === 'infoParcela') {
+    const id = Number(body.id);
+    if (!Number.isInteger(id) || id < 1) return res.status(400).json({ ok: false, error: 'ID inválido.' });
+    const anio = Number(body.anio) || new Date().getFullYear();
+    const { data: act } = await supabase.from('activos')
+      .select('activo_id_onchain, nombre_activo, cultivo, pais, cliente_id').eq('activo_id_onchain', id).maybeSingle();
+    if (!act) return res.status(404).json({ ok: false, error: `No existe la parcela #${id}.` });
+    const { data: decls } = await supabase.from('traz_declaraciones')
+      .select('id, cultivo, anio, capacidad_anual').eq('origen_tipo', 'epimeleia').eq('origen_ref', String(id))
+      .eq('anio', anio).eq('veredicto', 'ACEPTADA').order('sellado_en', { ascending: false }).limit(1);
+    const decl = (decls && decls[0]) || null;
+    let usadas = 0;
+    if (decl) {
+      const { data: at } = await supabase.from('traz_atribuciones')
+        .select('toneladas').eq('declaracion_id', decl.id).eq('veredicto', 'ATRIBUIDA');
+      usadas = (at || []).reduce((s, x) => s + (Number(x.toneladas) || 0), 0);
+    }
+    return res.status(200).json({ ok: true, parcela: {
+      id, nombre: act.nombre_activo, clienteId: act.cliente_id,
+      cultivo: (decl && decl.cultivo) || act.cultivo || null, pais: act.pais || null, anio,
+      capacidad: decl ? Number(decl.capacidad_anual) : null,
+      usadas: Math.round(usadas * 1000) / 1000,
+      saldo: decl ? Math.round((Number(decl.capacidad_anual) - usadas) * 1000) / 1000 : null,
+    } });
+  }
+  // LOTE POR ID: el próximo código libre (LOTE-AAAA-NNN), para no inventarlo.
+  if (accion === 'siguienteCodigo') {
+    const anio = Number(body.anio) || new Date().getFullYear();
+    const pref = `LOTE-${anio}-`;
+    const { data } = await supabase.from('traz_lotes').select('codigo').like('codigo', pref + '%');
+    let max = 0;
+    for (const f of data || []) { const n = parseInt(String(f.codigo).slice(pref.length), 10); if (n > max) max = n; }
+    return res.status(200).json({ ok: true, codigo: pref + String(max + 1).padStart(3, '0') });
+  }
   if (accion === 'simular' || accion === 'sellar') {
     if (!TRAZ_SECRET || !TRAZ_VPS_URL) return res.status(500).json({ ok: false, error: 'Faltan TRAZ_SECRET o TRAZ_VPS_URL en Vercel.' });
     const datos = { codigo: body.codigo, cultivo: body.cultivo, anio: body.anio, fecha: body.fecha, receptor: body.receptor, parcelas: body.parcelas };
