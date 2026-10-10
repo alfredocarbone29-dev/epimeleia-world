@@ -386,69 +386,6 @@ body::after {
         <button class="btn-certificar" onclick="irAlMotor()">DIBUJAR Y CERTIFICAR →</button>
       </div>
 
-      <!-- ══ PANEL FOUNDER · aparece solo si entrás con tu email de founder ══ -->
-      <div class="founder-block" id="founderBlock">
-        <div class="founder-eyebrow">PANEL FOUNDER · SELLADO DIRECTO</div>
-        <div class="founder-title">Sellar un activo <em>desde acá</em></div>
-        <div class="founder-sub">Pegá el id de fila del activo (de Supabase) y sellalo sin pasar por el pago. Empezá siempre con "Probar" (simulacro, no gasta gas): mide el campo y te muestra qué sellaría. Si los números cierran, "Sellar de verdad".</div>
-        <div class="founder-tools">
-          <input class="founder-input" id="founderFila" type="text" placeholder="id de fila del activo (ej: e63e2f1c-0e75-...)" autocomplete="off">
-          <button class="founder-btn sim" id="founderBtnSim" onclick="founderSellar(false)">PROBAR (SIMULACRO)</button>
-          <button class="founder-btn real" id="founderBtnReal" onclick="founderSellar(true)">SELLAR DE VERDAD</button>
-        </div>
-        <!-- SIMPLE-2: el producto que contrató el cliente, elegido al sellar -->
-        <div class="founder-tools">
-          <select class="founder-input" id="founderProducto" onchange="founderProductoCambio()" aria-label="Producto">
-            <option value="atras">PRODUCTO · Histórico (deforestación desde 2020)</option>
-            <option value="adelante">PRODUCTO · Monitoreo (cada quincena)</option>
-            <option value="ambos">PRODUCTO · Ambos</option>
-          </select>
-          <select class="founder-input" id="founderMeses" aria-label="Meses de cobertura" style="display:none;">
-            <option value="">COBERTURA · ¿cuántos meses?</option>
-            <option value="3">3 meses</option>
-            <option value="6">6 meses</option>
-            <option value="12">12 meses</option>
-            <option value="24">24 meses</option>
-            <option value="36">36 meses</option>
-          </select>
-        </div>
-        <div class="founder-tools">
-          <select class="founder-input" id="founderCultivo" aria-label="Cultivo">
-            <option value="ninguno">CULTIVO · ninguno (bosque, agua, otro)</option>
-            <option value="soja">Soja</option>
-            <option value="cafe">Café</option>
-            <option value="cacao">Cacao</option>
-            <option value="palma">Palma</option>
-            <option value="caucho">Caucho</option>
-          </select>
-          <select class="founder-input" id="founderPais" aria-label="País">
-            <option value="">PAÍS · elegí</option>
-            <option value="ARG">Argentina</option>
-            <option value="BOL">Bolivia</option>
-            <option value="BRA">Brasil</option>
-            <option value="CHL">Chile</option>
-            <option value="COL">Colombia</option>
-            <option value="CRI">Costa Rica</option>
-            <option value="ECU">Ecuador</option>
-            <option value="GTM">Guatemala</option>
-            <option value="HND">Honduras</option>
-            <option value="MEX">México</option>
-            <option value="PRY">Paraguay</option>
-            <option value="PER">Perú</option>
-            <option value="URY">Uruguay</option>
-            <option value="CIV">Costa de Marfil</option>
-            <option value="ETH">Etiopía</option>
-            <option value="GHA">Ghana</option>
-            <option value="KEN">Kenia</option>
-            <option value="UGA">Uganda</option>
-            <option value="IDN">Indonesia</option>
-            <option value="VNM">Vietnam</option>
-          </select>
-        </div>
-        <div class="founder-out" id="founderOut"></div>
-        <div class="founder-hint">SIMULACRO = mide y muestra, no gasta gas · SELLAR DE VERDAD = escribe en Polygon (gasta gas real)</div>
-      </div>
-
       <div class="panel-label">TUS DATOS · TOCÁ PARA EDITAR Y GUARDÁ AL FINAL</div>
       <div class="data-grid">
         <div>
@@ -668,9 +605,8 @@ async function cargarCuenta() {
   document.getElementById('aUbicacionRecurso').value  = meta.ubicacion_recurso || '';
 
   // ── PANEL FOUNDER: se muestra SOLO si el email logueado es el del founder ──
-  if ((user.email || '').toLowerCase().trim() === FOUNDER_EMAIL) {
-    document.getElementById('founderBlock').classList.add('visible');
-  }
+  // (El panel founder por id de fila se quitó: ahora se sella desde
+  //  "Dibujar y certificar", con el panel founder dentro del mapa.)
 
   irA('cuenta');
 }
