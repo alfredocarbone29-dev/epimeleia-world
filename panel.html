@@ -281,6 +281,7 @@ const fecha = (v) => (v ? new Date(v).toLocaleDateString('es-AR', { day: '2-digi
 let PARCELAS = [];
 let TOKEN = '';
 let CLIENTE_ID = null;
+let CLIENTE_FIJO_ID = null;
 let FIRMA_APTA = null;
 const API_LOTE = '/api/panel';
 
@@ -414,30 +415,35 @@ function esElegible(p) {
   return p.sellada_onchain && p.activo_id_onchain != null && Number(p.activo_id_onchain) >= VERIFICABLE_DESDE;
 }
 
+let LOTE = [];   // [{ id, ton }] — solo lo que agregaste por ID
+
 function renderArmadorLote() {
-  const selladas = PARCELAS.filter((p) => p.sellada_onchain && p.activo_id_onchain != null)
-    .sort((a, b) => Number(b.activo_id_onchain) - Number(a.activo_id_onchain));
-  $('tbody-lote').innerHTML = selladas.length ? selladas.map((p) => {
-    const ok = esElegible(p);
-    const id = esc(p.activo_id_onchain);
-    return `<tr class="${ok ? '' : 'no-eleg'}" ${ok ? '' : 'title="Sellada antes del paquete verificable: no puede entrar a un lote"'}>
-      <td><input type="checkbox" class="sel" data-id="${id}" ${ok ? '' : 'disabled'} aria-label="Incluir parcela #${id}"></td>
-      <td class="nombre">${esc(p.nombre_activo || '(sin nombre)')} <span class="ayuda">#${id}<span id="info-${id}" style="text-transform:none;"></span></span></td>
+  if (!LOTE.length) {
+    $('tbody-lote').innerHTML = '<tr><td colspan="6" class="ayuda">Todavía no agregaste parcelas. Poné un ID arriba.</td></tr>';
+    return;
+  }
+  $('tbody-lote').innerHTML = LOTE.map((it) => {
+    const p = PARCELAS.find((x) => String(x.activo_id_onchain) === String(it.id)) || {};
+    const id = esc(it.id);
+    return `<tr>
+      <td><button type="button" class="quitar" data-id="${id}" title="Quitar del lote" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;">✕</button></td>
+      <td class="nombre">${esc(p.nombre_activo || '(sin nombre)')} <span class="ayuda">#${id}<span id="info-${id}" style="text-transform:none;"></span></span><div class="ayuda" style="text-transform:none;">${esc(p.cliente || '')}</div></td>
       <td class="num">${num(p.superficie_ha)}</td>
       <td>${chipVeredicto(p.veredicto)}</td>
       <td>${celdaSello(p)}</td>
-      <td class="num"><input class="ton" type="number" min="0" step="0.001" data-id="${id}" placeholder="t" disabled aria-label="Toneladas de #${id}"></td>
+      <td class="num"><input class="ton" type="number" min="0" step="0.001" data-id="${id}" value="${esc(it.ton)}" aria-label="Toneladas de #${id}"></td>
     </tr>`;
-  }).join('') : '<tr><td colspan="6" class="ayuda">Este cliente no tiene parcelas selladas.</td></tr>';
-
-  $('tbody-lote').querySelectorAll('input.sel').forEach((cb) => cb.addEventListener('change', () => {
-    const t = $('tbody-lote').querySelector(`input.ton[data-id="${cb.dataset.id}"]`);
-    t.disabled = !cb.checked;
-    if (cb.checked) { t.focus(); traerInfo(cb.dataset.id); } else { autocompletarCultivo(); }
+  }).join('');
+  $('tbody-lote').querySelectorAll('button.quitar').forEach((b) => b.addEventListener('click', () => {
+    LOTE = LOTE.filter((x) => String(x.id) !== b.dataset.id);
+    if (!LOTE.length) { CLIENTE_ID = CLIENTE_FIJO_ID; }
+    renderArmadorLote(); autocompletarCultivo(); cargarLotes();
+  }));
+  $('tbody-lote').querySelectorAll('input.ton').forEach((t) => t.addEventListener('input', () => {
+    const it = LOTE.find((x) => String(x.id) === t.dataset.id); if (it) it.ton = Number(t.value);
     invalidarSimulacion();
   }));
-  autocompletarDatos();
-  $('tbody-lote').querySelectorAll('input.ton').forEach((t) => t.addEventListener('input', invalidarSimulacion));
+  LOTE.forEach((it) => pintarInfo(String(it.id)));
 }
 
 /* ─── LOTE POR ID: el sistema completa lo que ya sabe ─────────── */
@@ -465,8 +471,7 @@ function pintarInfo(id) {
 }
 
 function autocompletarCultivo() {
-  const ids = [];
-  $('tbody-lote').querySelectorAll('input.sel:checked').forEach((cb) => ids.push(cb.dataset.id));
+  const ids = LOTE.map((x) => String(x.id));
   const cultivos = [...new Set(ids.map((id) => INFO[id] && INFO[id].cultivo).filter(Boolean))];
   const c = $('l-cultivo');
   if (cultivos.length === 1) { c.value = cultivos[0]; c.readOnly = true; }
@@ -491,23 +496,21 @@ function agregarPorId() {
   const msg = $('q-msg');
   if (!id) { msg.textContent = 'Poné el ID de la parcela (ej: 20).'; return; }
   if (!(ton > 0)) { msg.textContent = 'Poné cuántas toneladas van en este embarque.'; return; }
-  const cb = $('tbody-lote').querySelector(`input.sel[data-id="${id}"]`);
-  if (!cb) { msg.textContent = `La parcela #${id} no es de este cliente o no está sellada.`; return; }
-  if (cb.disabled) { msg.textContent = `La parcela #${id} se selló antes del paquete verificable: no puede entrar a un lote.`; return; }
-  cb.checked = true;
-  const t = $('tbody-lote').querySelector(`input.ton[data-id="${id}"]`);
-  t.disabled = false; t.value = ton;
-  msg.textContent = `#${id} agregada con ${ton} t. Podés agregar otra, o simular.`;
+  const p = PARCELAS.find((x) => String(x.activo_id_onchain) === id);
+  if (!p) { msg.textContent = `No existe una parcela sellada con el ID #${id}.`; return; }
+  if (!esElegible(p)) { msg.textContent = `La parcela #${id} se selló antes del paquete verificable: no puede entrar a un lote.`; return; }
+  if (LOTE.length && p.cliente_id !== CLIENTE_ID) { msg.textContent = `La #${id} es de otro cliente (${p.cliente}). Un lote es de un solo cliente.`; return; }
+  const ya = LOTE.find((x) => String(x.id) === id);
+  if (ya) ya.ton = ton; else LOTE.push({ id, ton });
+  if (CLIENTE_ID !== p.cliente_id) { CLIENTE_ID = p.cliente_id; cargarLotes(); }
+  msg.textContent = `#${id} (${p.nombre_activo}, de ${p.cliente}) agregada con ${ton} t. Podés agregar otra, o simular.`;
   $('q-id').value = ''; $('q-ton').value = ''; $('q-id').focus();
+  renderArmadorLote(); invalidarSimulacion();
   traerInfo(id);
 }
 
 function datosLote() {
-  const parcelas = [];
-  $('tbody-lote').querySelectorAll('input.sel:checked').forEach((cb) => {
-    const t = $('tbody-lote').querySelector(`input.ton[data-id="${cb.dataset.id}"]`);
-    parcelas.push({ activoIdOnchain: Number(cb.dataset.id), toneladas: Number(t.value) });
-  });
+  const parcelas = LOTE.map((x) => ({ activoIdOnchain: Number(x.id), toneladas: Number(x.ton) }));
   return {
     codigo: $('l-codigo').value.trim(),
     cultivo: $('l-cultivo').value.trim().toLowerCase(),
@@ -650,8 +653,10 @@ function iniciarLotes() {
   $('q-agregar').addEventListener('click', agregarPorId);
   $('q-ton').addEventListener('keydown', (e) => { if (e.key === 'Enter') agregarPorId(); });
   $('btn-sellar').addEventListener('click', sellarLote);
-  CLIENTE_ID = (PARCELAS.find((p) => p.cliente_id) || {}).cliente_id || null;
+  CLIENTE_FIJO_ID = CLIENTE_FIJO ? ((PARCELAS.find((p) => p.cliente_id) || {}).cliente_id || null) : null;
+  CLIENTE_ID = CLIENTE_FIJO_ID;
   renderArmadorLote();
+  autocompletarDatos();
   cargarLotes();
 }
 
@@ -696,6 +701,12 @@ async function iniciar() {
     iniciarLotes();
   } else {
     renderClientes(clientes);
+    // El ID es único: el armador funciona desde la cartera entera.
+    const bl = $('bloque-lotes');
+    const ref = $('bloque-clientes');
+    if (bl && ref && ref.parentNode) ref.parentNode.insertBefore(bl, ref);
+    bl.hidden = false;
+    iniciarLotes();
   }
 
   renderKpis(clientes);
