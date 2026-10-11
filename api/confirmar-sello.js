@@ -139,7 +139,8 @@ module.exports = async (req, res) => {
         return res.status(403).json({ ok: false, error: 'Ese activo no está en tu cuenta.' });
       }
       // Vista previa del cliente: va sin datos de producto (no guarda nada).
-      return reenviarAlVPS(res, { filaId, ejecutar: false });
+      // SIMPLE-4: se marca como vista del cliente → el VPS fuerza simulacro y aplica tope de uso.
+      return reenviarAlVPS(res, { filaId, ejecutar: false, vista: 'cliente' });
     }
 
     // ── CANDADO 2: le hablamos a la puerta del VPS con la clave ───
