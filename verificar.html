@@ -139,6 +139,13 @@ h1{font-family:'Playfair Display',serif;font-weight:400;font-size:clamp(26px,4vw
       <div class="dato"><span class="et">Fuente</span><span class="va" id="dDefFuente">—</span></div>
     </div>
 
+    <!-- CAPACIDAD Y SALDO (AJUSTE 11/10/2026): cuánto puede vender este campo por año -->
+    <div class="card" id="cardCap" style="display:none;">
+      <div class="card-k">CAPACIDAD Y SALDO · TRAZABILIDAD</div>
+      <div id="capList"></div>
+      <div style="font-size:13px;color:var(--muted);margin-top:14px;line-height:1.6;">Ningún campo puede vender más de lo que su superficie y su rinde permiten. Cada lote sellado se descuenta de este saldo; cuando llega a cero, no se pueden sellar más lotes de este campo ese año.</div>
+    </div>
+
     <div class="card" id="cardMed">
       <div class="card-k">MEDICIONES SATELITALES</div>
       <div id="medList"></div>
@@ -287,8 +294,11 @@ h1{font-family:'Playfair Display',serif;font-weight:400;font-size:clamp(26px,4vw
       $('cardDef').style.display = 'none';
     }
 
+    // Capacidad y saldo
+    pintarCapacidad(data.capacidad);
+
     // Mediciones
-    var med = Array.isArray(p.mediciones) ? p.mediciones : [];
+    var med =Array.isArray(p.mediciones) ? p.mediciones : [];
     if(med.length){
       $('cardMed').style.display = '';
       $('medList').innerHTML = med.map(function(m){
@@ -308,6 +318,34 @@ h1{font-family:'Playfair Display',serif;font-weight:400;font-size:clamp(26px,4vw
 
     // Mapa con el polígono
     dibujarMapa(p.poligono);
+  }
+
+  function fmtT(n){
+    if(n == null || !isFinite(Number(n))) return '—';
+    return Number(n).toLocaleString('es-AR',{minimumFractionDigits:0,maximumFractionDigits:2});
+  }
+  function esc(s){
+    return String(s==null?'':s).replace(/[&<>"']/g,function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+  function pintarCapacidad(caps){
+    var card = $('cardCap');
+    if(!Array.isArray(caps) || !caps.length){ card.style.display='none'; return; }
+    card.style.display='';
+    $('capList').innerHTML = caps.map(function(c, i){
+      var calc = (c.hectareas!=null && c.rindeReferencia!=null)
+        ? fmtT(c.hectareas)+' ha × '+fmtT(c.rindeReferencia)+' t/ha'+(c.fuenteReferencia?' ('+esc(c.fuenteReferencia)+')':'')
+        : '—';
+      var filas =
+        '<div class="dato"><span class="et">Cultivo · año</span><span class="va">'+esc(c.cultivo||'—')+' · '+esc(c.anio)+'</span></div>'+
+        '<div class="dato"><span class="et">Cálculo</span><span class="va">'+calc+'</span></div>'+
+        '<div class="dato"><span class="et">Capacidad anual</span><span class="va">'+fmtT(c.capacidadAnual)+' t</span></div>'+
+        '<div class="dato"><span class="et">Ya vendido en lotes sellados</span><span class="va">'+fmtT(c.usado)+' t · '+(c.lotes||0)+(c.lotes===1?' lote':' lotes')+'</span></div>'+
+        '<div class="dato"><span class="et">Saldo disponible</span><span class="va def-limpio">'+fmtT(c.saldo)+' t</span></div>'+
+        (c.polygonscanTx ? '<div class="dato"><span class="et">Declaración en Polygon</span><span class="va"><a href="'+esc(c.polygonscanTx)+'" target="_blank" rel="noopener">ver transacción →</a></span></div>' : '');
+      return (i ? '<div style="height:14px"></div>' : '') + filas;
+    }).join('');
   }
 
   var map = null;
