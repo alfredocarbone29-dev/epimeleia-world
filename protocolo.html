@@ -1545,6 +1545,19 @@
     return t;
   }
 
+  /* ── DEF-1: el veredicto de deforestación, en una línea clara ──
+     Sale del histórico de Global Forest Watch: NO depende de las nubes.
+     Se muestra siempre que exista, haya o no imagen óptica. */
+  function textoDeforestacion(d) {
+    if (!d) return '\nDeforestación (EUDR): sin chequeo disponible para este campo.\n';
+    var p = d.periodo ? ' (' + d.periodo + ')' : '';
+    if (d.hubo) {
+      return '\nDEFORESTACIÓN (EUDR): DETECTADA' +
+        (d.totalHectareas != null ? ' · ' + d.totalHectareas + ' ha' : '') + p + '\n';
+    }
+    return '\nDEFORESTACIÓN (EUDR): NO DETECTADA' + p + '\n';
+  }
+
   /* ── SIMPLE-3: el panel del CLIENTE, dentro de "Caso a medida" ──
      El cliente elige lo mismo que el founder y ve gratis la foto del
      satélite (simulacro: mide, no sella, no guarda). "Pedir esta
@@ -1622,10 +1635,12 @@
       if (!d.ok) {
         // SIMPLE-4: sin pasada limpia NO es una falla. Se dice tal cual, sin sonar a error.
         if (d.tipo === 'medicion') {
-          out.textContent = 'El satélite no tuvo una vista despejada de tu campo.\n' +
+          out.textContent = textoDeforestacion(d.deforestacion).replace(/^\n/, '') +
+            '\nImagen satelital de hoy: sin vista despejada de tu campo.\n' +
             (d.error ? '(' + d.error + ')\n' : '') +
-            '\nNo es una falla del sistema: es el clima. EPIMELEIA no certifica lo que el satélite no vio.' +
-            '\n\nEl chequeo de deforestación no depende de las nubes. Escribinos y lo coordinamos.';
+            '\nNo es una falla: es el clima. EPIMELEIA no muestra lo que el satélite no vio.' +
+            '\nEl chequeo de deforestación sale del histórico satelital y no depende de las nubes.' +
+            '\n\nEscribinos y lo coordinamos.';
         } else if (d.tipo === 'limite') {
           out.textContent = d.error;
         } else {
@@ -1633,7 +1648,8 @@
         }
       }
       else {
-        var t = 'Lo que ve el satélite hoy sobre "' + (d.activo || nombreActivo()) + '"\n';
+        var t = textoDeforestacion(d.deforestacion).replace(/^\n/, '') + '\n';
+        t += 'Lo que ve el satélite hoy sobre "' + (d.activo || nombreActivo()) + '"\n';
         if (d.fechaPasada) t += 'Pasada: ' + d.fechaPasada + '\n';
         if (d.calidad != null) t += 'Calidad de la lectura: ' + d.calidad + '%\n';
         if (d.mediciones) for (var i = 0; i < d.mediciones.length; i++) { var m = d.mediciones[i]; t += '  · ' + m.etiqueta + ': ' + m.valor + ' (' + m.interpretacion + ')\n'; }
@@ -1687,11 +1703,14 @@
       var data = await r.json();
 
       if (!data.ok) {
-        out.innerHTML = 'X ' + (data.error || 'No se pudo.');
+        // DEF-1: si fue por nubes, igual se muestra el veredicto de deforestación.
+        out.textContent = 'X ' + (data.error || 'No se pudo.') +
+          (data.tipo === 'medicion' ? '\n' + textoDeforestacion(data.deforestacion) : '');
       } else if (data.simulacro) {
         var t = 'SIMULACRO OK - no se gasto nada\n';
         t += 'Activo: ' + (data.activo || '-') + ' (' + (data.tipo || '-') + ')\n';
         t += 'Calidad: ' + (data.calidad != null ? data.calidad + '%' : '-') + '\n';
+        t += textoDeforestacion(data.deforestacion);   // DEF-1
         if (data.mediciones) for (var i=0;i<data.mediciones.length;i++){ var m=data.mediciones[i]; t += '  - ' + m.etiqueta + ': ' + m.valor + ' (' + m.interpretacion + ')\n'; }
         t += '\nAl sellar se activa: ' + resumen(op) + '\n';
         t += '\nToca otra vez el boton para SELLAR DE VERDAD.';
