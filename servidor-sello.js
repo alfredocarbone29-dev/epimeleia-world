@@ -272,6 +272,22 @@ async function aplicarDatosProducto(filaId, dp) {
   return { aplicado: true, cambios };
 }
 
+/* ─── DEF-1 (11/10/2026): el veredicto de deforestación NO depende de las nubes ──
+ * Sale del histórico de Global Forest Watch, calculado al registrar el campo.
+ * Por eso se devuelve SIEMPRE que exista, aunque el satélite óptico no haya
+ * visto el campo: la pregunta "¿hubo deforestación?" tiene respuesta igual.
+ * (Sellar SOLO el veredicto, sin imagen, queda para después: el contrato trata
+ *  la nubosidad > 70% como hueco, y eso hay que resolverlo aparte.)
+ */
+function resumenDeforestacion(def) {
+  if (!def || typeof def.huboDeforestacion !== 'boolean') return null;
+  return {
+    hubo:           def.huboDeforestacion,
+    totalHectareas: def.totalHectareasPerdidas != null ? def.totalHectareasPerdidas : null,
+    periodo:        def.periodoAnalizado || null,
+  };
+}
+
 async function procesarSello(filaId, ejecutar, datosProducto) {
   const np = normalizarDatosProducto(datosProducto);
   if (np.error) return { ok: false, error: np.error, tipo: 'datos' };
@@ -286,7 +302,8 @@ async function procesarSello(filaId, ejecutar, datosProducto) {
   if (!cr) return { ok: false, error: 'No se pudo calcular el centro del poligono.' };
 
   const evaluacion = await medirYEvaluar(`FILA-${filaId}`, activo.tipo, activo.geometria);
-  if (!evaluacion.ok) return { ok: false, error: evaluacion.motivo, tipo: 'medicion' };
+  if (!evaluacion.ok) return { ok: false, error: evaluacion.motivo, tipo: 'medicion',
+    deforestacion: resumenDeforestacion(activo.deforestacionHistorica) };   // DEF-1
   const m = evaluacion.medicion;
 
   if (!ejecutar) {
@@ -297,6 +314,7 @@ async function procesarSello(filaId, ejecutar, datosProducto) {
       mediciones: m.mediciones.map(x => ({ etiqueta: x.etiqueta, valor: x.valor, interpretacion: x.interpretacion })),
       onchain: activo.activoIdOnchain,
       producto: dp,   // lo que se aplicaría al sellar de verdad
+      deforestacion: resumenDeforestacion(activo.deforestacionHistorica),   // DEF-1
     };
   }
 
