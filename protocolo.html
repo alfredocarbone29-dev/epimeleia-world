@@ -1619,7 +1619,19 @@
         body: JSON.stringify({ filaId: activoId, ejecutar: false, token: token, vista: 'cliente' })
       });
       var d = await r.json();
-      if (!d.ok) { out.textContent = 'No se pudo: ' + (d.error || 'probá en un momento.'); }
+      if (!d.ok) {
+        // SIMPLE-4: sin pasada limpia NO es una falla. Se dice tal cual, sin sonar a error.
+        if (d.tipo === 'medicion') {
+          out.textContent = 'El satélite no tuvo una vista despejada de tu campo.\n' +
+            (d.error ? '(' + d.error + ')\n' : '') +
+            '\nNo es una falla del sistema: es el clima. EPIMELEIA no certifica lo que el satélite no vio.' +
+            '\n\nEl chequeo de deforestación no depende de las nubes. Escribinos y lo coordinamos.';
+        } else if (d.tipo === 'limite') {
+          out.textContent = d.error;
+        } else {
+          out.textContent = 'No se pudo: ' + (d.error || 'probá en un momento.');
+        }
+      }
       else {
         var t = 'Lo que ve el satélite hoy sobre "' + (d.activo || nombreActivo()) + '"\n';
         if (d.fechaPasada) t += 'Pasada: ' + d.fechaPasada + '\n';

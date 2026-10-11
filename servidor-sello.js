@@ -380,6 +380,30 @@ async function procesarSello(filaId, ejecutar, datosProducto) {
   };
 }
 
+/* ─── SIMPLE-4 (11/10/2026): tope de vistas previas del CLIENTE ──
+ * La vista previa (simulacro) del cliente consulta Copernicus de verdad.
+ * Para que nadie consuma la cuota, cada campo puede pedirla hasta
+ * TOPE_VISTAS veces por hora. El founder NO tiene tope.
+ * Se cuenta en memoria: si el proceso se reinicia, el contador vuelve a 0
+ * (aceptable: es una protección de uso, no de seguridad).
+ */
+const TOPE_VISTAS = 3;
+const VENTANA_TOPE_MS = 60 * 60 * 1000;
+const _vistas = new Map();   // filaId → [timestamps]
+
+function vistaPermitida(filaId) {
+  const ahora = Date.now();
+  const previas = (_vistas.get(String(filaId)) || []).filter(t => ahora - t < VENTANA_TOPE_MS);
+  if (previas.length >= TOPE_VISTAS) {
+    const minutos = Math.ceil((VENTANA_TOPE_MS - (ahora - previas[0])) / 60000);
+    _vistas.set(String(filaId), previas);
+    return { ok: false, minutos };
+  }
+  previas.push(ahora);
+  _vistas.set(String(filaId), previas);
+  return { ok: true };
+}
+
 const server = http.createServer((req, res) => {
   res.setHeader('Content-Type', 'application/json');
 
@@ -403,12 +427,24 @@ const server = http.createServer((req, res) => {
     catch { res.statusCode = 400; return res.end(JSON.stringify({ ok: false, error: 'JSON invalido.' })); }
 
     const filaId   = datos.filaId;
-    const ejecutar = datos.ejecutar === true;
+    const esCliente = datos.vista === 'cliente';
+    // SIMPLE-4: la vista del cliente NUNCA sella, aunque alguien lo pida.
+    const ejecutar = esCliente ? false : datos.ejecutar === true;
     if (!filaId) { res.statusCode = 400; return res.end(JSON.stringify({ ok: false, error: 'Falta filaId.' })); }
+
+    if (esCliente) {
+      const permiso = vistaPermitida(filaId);
+      if (!permiso.ok) {
+        L(`vista previa limitada · fila=${filaId}`);
+        res.statusCode = 429;
+        return res.end(JSON.stringify({ ok: false, tipo: 'limite',
+          error: `Ya miraste este campo ${TOPE_VISTAS} veces en la última hora. Probá de nuevo en ${permiso.minutos} minutos.` }));
+      }
+    }
 
     L(`pedido · fila=${filaId} · ejecutar=${ejecutar}`);
     try {
-      const resultado = await procesarSello(filaId, ejecutar, {
+      const resultado = await procesarSello(filaId, ejecutar, esCliente ? {} : {
         producto: datos.producto, meses: datos.meses, cultivo: datos.cultivo, pais: datos.pais,
       });
       res.statusCode = resultado.ok ? 200 : 422;
