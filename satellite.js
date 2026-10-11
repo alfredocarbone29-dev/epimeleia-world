@@ -152,6 +152,28 @@
  * ⚠️ El nombre _ultimaMedicionValida quedó heredado: ya no devuelve
  *    "la última" sino "la mejor". Se dejó el nombre para no tocar el
  *    lugar que la llama. Renombrarlo es cosmético y queda pendiente.
+ *
+ * ════════════════════════════════════════════════════════════════
+ * AJUSTE 45 (11/10/2026) — VENTANA MÁS LARGA SOLO EN EL ALTA
+ * ════════════════════════════════════════════════════════════════
+ *
+ * EL PROBLEMA: en el trópico en época de lluvias (Ecuador, Ghana…)
+ * 45 días a veces no alcanzan para encontrar UNA pasada limpia, y el
+ * alta de un campo nuevo choca con "se retoma en unos días".
+ *
+ * EL CAMBIO: medirIndicadores() acepta un campo opcional
+ * `ventanaDias`. Si no viene, son 45 días, EXACTAMENTE como antes.
+ * Solo el ALTA (servidor-sello.js) pide 90 días.
+ *
+ * ⛔ LA CORRIDA QUINCENAL (scheduler.js) NO SE TOCA: no pasa
+ *    `ventanaDias`, así que sigue en 45. La evidencia de monitoreo
+ *    tiene que hablar de su período; una foto de hace dos meses no
+ *    puede presentarse como "visto esta quincena".
+ *
+ * QUÉ **NO** CAMBIÓ: el criterio (la pasada MÁS LIMPIA, ajuste 31),
+ * la fórmula de calidad, la regla de lectura, el umbral de nube.
+ * El certificado sigue diciendo la FECHA REAL de la pasada usada.
+ * Si en 90 días tampoco hay ninguna limpia → null → hueco declarado.
  * ════════════════════════════════════════════════════════════════
  */
 
@@ -591,6 +613,8 @@ function _ultimaMedicionValida(intervalos) {
 //   El certificado sigue diciendo la fecha real de la pasada, que puede no ser
 //   la de hoy. Eso ya es honesto y está declarado.
 async function _pedirEstadistica(indice, geometria, token, dias = 45) {
+  // AJUSTE 45: solo valores sensatos; cualquier otra cosa vuelve a 45.
+  dias = (Number.isInteger(dias) && dias >= 1 && dias <= 120) ? dias : 45;
   const desde = new Date(Date.now() - dias * 24 * 3600 * 1000).toISOString();
   const hasta = new Date().toISOString();
 
@@ -621,7 +645,7 @@ async function _pedirEstadistica(indice, geometria, token, dias = 45) {
       'Content-Type':  'application/json',
       'Accept':        'application/json',
     },
-    timeout: 20000,
+    timeout: dias > 45 ? 40000 : 20000,   // AJUSTE 45: más días → más respuesta
   });
 
   return _ultimaMedicionValida(resp.data?.data || []);
@@ -661,6 +685,8 @@ async function medirIndicadores(datosActivo) {
   const { activoId, tipo } = datosActivo;
   const cfg = config.indicadoresPorTipo[tipo] || config.indicadoresPorTipo[7];
   const { geometria, esPoligonoReal } = _geometriaDeActivo(datosActivo);
+  // AJUSTE 45: ventana opcional. Sin ella, 45 días (scheduler intacto).
+  const ventanaDias = datosActivo.ventanaDias || 45;
 
   // AJUSTE 30: la versión y la huella de la regla con la que se va a leer.
   // Se calculan UNA vez acá y viajan con la medición hasta el certificado.
@@ -668,7 +694,7 @@ async function medirIndicadores(datosActivo) {
   const hashRegla    = reglas.hashDeRegla(reglaLectura);
 
   log('MEDIR', `Midiendo indicadores sobre el polígono`, {
-    activoId, tipo: cfg.nombre, esPoligonoReal, reglaLectura
+    activoId, tipo: cfg.nombre, esPoligonoReal, reglaLectura, ventanaDias
   });
 
   if (!esPoligonoReal) {
@@ -713,7 +739,7 @@ async function medirIndicadores(datosActivo) {
 
   for (const indice of indicesUnicos) {
     try {
-      cacheIndice[indice] = await _pedirEstadistica(indice, geometria, token);
+      cacheIndice[indice] = await _pedirEstadistica(indice, geometria, token, ventanaDias);
       await new Promise(r => setTimeout(r, 400)); // respiro entre llamadas
     } catch (err) {
       log('ERROR', `Fallo midiendo ${indice}: ${err.response?.status || ''} ${err.message}`, { activoId });

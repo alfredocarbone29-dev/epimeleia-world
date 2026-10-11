@@ -62,10 +62,16 @@ function nubosidadParaContrato(n) {
   const x = Math.round(n); return x < 0 ? 0 : x > 100 ? 100 : x;
 }
 
+// AJUSTE 45 (11/10/2026): en el ALTA se busca la pasada limpia en 90 días,
+// no 45, para que el trópico en época de lluvias no choque siempre con
+// "se retoma en unos días". El certificado dice la fecha real de la pasada.
+// La corrida quincenal (scheduler.js) NO usa esto: sigue en 45 días.
+const VENTANA_ALTA_DIAS = 90;
+
 async function medirYEvaluar(idParaLog, tipo, geometria) {
-  const medicion = await satellite.medirIndicadores({ activoId: idParaLog, tipo, geometria });
+  const medicion = await satellite.medirIndicadores({ activoId: idParaLog, tipo, geometria, ventanaDias: VENTANA_ALTA_DIAS });
   if (!medicion || medicion.sinDato)
-    return { ok: false, motivo: 'El satelite no tuvo una pasada limpia sobre el campo en la ventana. Se retoma en unos dias.' };
+    return { ok: false, motivo: 'El satelite no tuvo ninguna pasada limpia sobre el campo en los ultimos ' + VENTANA_ALTA_DIAS + ' dias. Se retoma en unos dias.' };
   const nub = medicion.nubosidadPct;
   if (nub === null || nub === undefined)
     return { ok: false, motivo: 'Sin dato de calidad sobre el poligono. No se sella lo que no se midio.' };
