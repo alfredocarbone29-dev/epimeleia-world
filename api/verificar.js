@@ -28,6 +28,9 @@
 // BUSCA POR id on-chain (el número que se ve en Polygon), no por el UUID de
 // fila. Es el identificador público natural.
 //
+// AJUSTE 11/10/2026: devuelve también `capacidad` (capacidad anual, lo usado
+// en lotes y el saldo) leída de traz_declaraciones / traz_atribuciones.
+//
 // VARIABLES DE ENTORNO (ya están en Vercel):
 //   SUPABASE_URL · SUPABASE_SERVICE_KEY
 // ────────────────────────────────────────────────────────────────────────────
@@ -41,6 +44,68 @@ const supabase = createClient(
 
 // Contrato Cert en Polygon (para armar el link de verificación on-chain).
 const CONTRATO_CERT = "0xf59BCFB98Ba9e05dC82d44E508d90917AF8bbc93";
+
+// ─── CAPACIDAD Y SALDO (AJUSTE 11/10/2026) ───────────────────────────────────
+// La página pública muestra también cuánto puede vender la parcela por año
+// (hectáreas × rinde de referencia) y cuánto ya salió en lotes sellados.
+// Es el corazón del producto: "ningún campo declara más de lo que su
+// superficie y su rinde permiten", visible para cualquiera.
+// Solo datos públicos: NUNCA se devuelve el email del titular ni el receptor.
+// Si algo falla acá, la verificación de la evidencia sigue igual (capacidad: null).
+function _num(v) {
+  const n = Number(v);
+  return isFinite(n) ? Math.round(n * 1000) / 1000 : null;
+}
+
+async function leerCapacidad(idOnchain) {
+  try {
+    const { data: decls, error: eD } = await supabase
+      .from("traz_declaraciones")
+      .select("id, cultivo, pais, anio, base_ha, referencia, capacidad_anual, tx_hash, sellado_en")
+      .eq("origen_tipo", "epimeleia")
+      .eq("origen_ref", String(idOnchain))
+      .eq("veredicto", "ACEPTADA");
+    if (eD || !Array.isArray(decls) || !decls.length) return null;
+
+    const ids = decls.map((d) => d.id);
+    const { data: atribs, error: eA } = await supabase
+      .from("traz_atribuciones")
+      .select("declaracion_id, anio, toneladas")
+      .in("declaracion_id", ids)
+      .eq("veredicto", "ATRIBUIDA");
+    const lista = (!eA && Array.isArray(atribs)) ? atribs : [];
+
+    return decls
+      .map((d) => {
+        const suyas = lista.filter((a) => a.declaracion_id === d.id && String(a.anio) === String(d.anio));
+        const usado = suyas.reduce((s, a) => s + Number(a.toneladas || 0), 0);
+        const cap = Number(d.capacidad_anual) || 0;
+        let ref = d.referencia;
+        if (typeof ref === "string") { try { ref = JSON.parse(ref); } catch { ref = null; } }
+        ref = ref || {};
+        const rinde = ref.rinde ?? ref.rindeReferencia ?? ref.valor ??
+          (Number(d.base_ha) > 0 ? cap / Number(d.base_ha) : null);
+        return {
+          cultivo: d.cultivo || null,
+          pais: d.pais || null,
+          anio: d.anio,
+          hectareas: _num(d.base_ha),
+          rindeReferencia: _num(rinde),
+          fuenteReferencia: (typeof ref.fuente === "string" && ref.fuente) || (typeof ref.origen === "string" && ref.origen) || null,
+          capacidadAnual: _num(cap),
+          usado: _num(usado),
+          saldo: _num(Math.max(0, cap - usado)),
+          lotes: suyas.length,
+          txHash: d.tx_hash || null,
+          polygonscanTx: d.tx_hash ? `https://polygonscan.com/tx/${d.tx_hash}` : null,
+        };
+      })
+      .sort((a, b) => Number(b.anio) - Number(a.anio));
+  } catch (e) {
+    console.error("[verificar] capacidad:", e && e.message);
+    return null;
+  }
+}
 
 module.exports = async (req, res) => {
   // CORS abierto: cualquiera puede verificar desde donde sea.
@@ -108,6 +173,10 @@ module.exports = async (req, res) => {
     let paquete = null;
     try { paquete = JSON.parse(canonical); } catch { paquete = null; }
 
+    // Capacidad y saldo (trazabilidad). No forma parte del paquete sellado:
+    // cada declaración y cada lote tienen su propia huella en Polygon.
+    const capacidad = await leerCapacidad(idOnchain);
+
     return res.status(200).json({
       ok: true,
       verificable: true,
@@ -128,6 +197,9 @@ module.exports = async (req, res) => {
       polygonscanContrato: `https://polygonscan.com/address/${CONTRATO_CERT}`,
 
       selladoEn: data.paquete_sellado_en || null,
+
+      // ── Capacidad anual y saldo por cultivo/año (null si no declaró) ──
+      capacidad,
 
       // ── Instrucciones de verificación, embebidas para que sean públicas ──
       comoVerificar: [
