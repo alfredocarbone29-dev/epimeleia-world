@@ -8,8 +8,8 @@ const zonas = {
   MENDOZA:    [[[-68.870,-33.050],[-68.864,-33.050],[-68.864,-33.055],[-68.870,-33.055],[-68.870,-33.050]]],
 };
 const ev = `//VERSION=3
-function setup(){return{input:[{bands:["SCL","dataMask"]}],output:[{id:"data",bands:1,sampleType:"FLOAT32"},{id:"dataMask",bands:1}]};}
-function evaluatePixel(s){return{data:[s.SCL],dataMask:[s.dataMask]};}`;
+function setup(){return{input:[{bands:["SCL","dataMask"]}],output:[{id:"data",bands:6,sampleType:"FLOAT32"},{id:"dataMask",bands:1}]};}
+function evaluatePixel(s){var c=s.SCL;return{data:[c==4?1:0,c==5?1:0,(c==8||c==9||c==10)?1:0,(c==3||c==2)?1:0,c==6?1:0,(c==0||c==1||c==7||c==11)?1:0],dataMask:[s.dataMask]};}`;
 (async () => {
   try {
     const t = await axios.post('https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token',
@@ -21,18 +21,18 @@ function evaluatePixel(s){return{data:[s.SCL],dataMask:[s.dataMask]};}`;
         input: { bounds: { geometry: { type: 'Polygon', coordinates: coords }, properties: { crs: 'http://www.opengis.net/def/crs/EPSG/0/4326' } },
                  data: [{ type: 'sentinel-2-l2a', dataFilter: { mosaickingOrder: 'mostRecent' } }] },
         aggregation: { timeRange: { from: desde, to: hasta }, aggregationInterval: { of: 'P1D' }, evalscript: ev, resx: 0.0001, resy: 0.0001 },
-        calculations: { default: { histograms: { default: { binWidth: 1, lowEdge: 0, highEdge: 12 } } } },
       }, { headers: { Authorization: 'Bearer ' + t.data.access_token, 'Content-Type': 'application/json' }, timeout: 60000, validateStatus: () => true });
       console.log('==== ' + nombre + ' · HTTP ' + r.status);
       const d = (r.data && r.data.data) || [];
       if (!d.length) console.log('RESPUESTA:', JSON.stringify(r.data).slice(0, 500));
       for (const it of d) {
-        const b = it.outputs && it.outputs.data && it.outputs.data.bands && it.outputs.data.bands.B0;
+        const bb = it.outputs && it.outputs.data && it.outputs.data.bands;
         const f = (it.interval && it.interval.from || '').slice(0, 10);
         if (it.error) { console.log(f, 'ERROR', JSON.stringify(it.error).slice(0, 200)); continue; }
-        if (!b) { console.log(f, 'sin stats'); continue; }
-        const h = (b.histogram && b.histogram.bins || []).map(x => Math.round(x.lowEdge) + ':' + x.count).filter(x => !x.endsWith(':0')).join(' ');
-        console.log(f, 'pix', b.stats.sampleCount, 'sinDato', b.stats.noDataCount, 'SCL media', b.stats.mean, '| clases', h);
+        if (!bb || !bb.B0) { console.log(f, 'sin stats'); continue; }
+        const pc = k => (bb[k] && isFinite(bb[k].stats.mean)) ? Math.round(bb[k].stats.mean * 100) + '%' : '-';
+        console.log(f, 'pix', bb.B0.stats.sampleCount, 'sinDato', bb.B0.stats.noDataCount,
+          '| veg', pc('B0'), 'suelo', pc('B1'), 'NUBE', pc('B2'), 'sombra', pc('B3'), 'agua', pc('B4'), 'otro', pc('B5'));
       }
     }
   } catch (e) {
