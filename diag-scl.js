@@ -21,12 +21,12 @@ function evaluatePixel(s){return{data:[s.SCL],dataMask:[s.dataMask]};}`;
         input: { bounds: { geometry: { type: 'Polygon', coordinates: coords }, properties: { crs: 'http://www.opengis.net/def/crs/EPSG/0/4326' } },
                  data: [{ type: 'sentinel-2-l2a', dataFilter: { mosaickingOrder: 'mostRecent' } }] },
         aggregation: { timeRange: { from: desde, to: hasta }, aggregationInterval: { of: 'P1D' }, evalscript: ev, resx: 0.0001, resy: 0.0001 },
-        calculations: { default: { histograms: { default: { bins: 12, lowEdge: 0, highEdge: 12 } } } },
+        calculations: { default: { histograms: { default: { binWidth: 1, lowEdge: 0, highEdge: 12 } } } },
       }, { headers: { Authorization: 'Bearer ' + t.data.access_token, 'Content-Type': 'application/json' }, timeout: 60000, validateStatus: () => true });
       console.log('==== ' + nombre + ' · HTTP ' + r.status);
       const d = (r.data && r.data.data) || [];
       if (!d.length) console.log('RESPUESTA:', JSON.stringify(r.data).slice(0, 500));
-      for (const it of d.slice(-6)) {
+      for (const it of d) {
         const b = it.outputs && it.outputs.data && it.outputs.data.bands && it.outputs.data.bands.B0;
         const f = (it.interval && it.interval.from || '').slice(0, 10);
         if (it.error) { console.log(f, 'ERROR', JSON.stringify(it.error).slice(0, 200)); continue; }
