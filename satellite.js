@@ -615,8 +615,16 @@ function _ultimaMedicionValida(intervalos) {
 async function _pedirEstadistica(indice, geometria, token, dias = 45) {
   // AJUSTE 45: solo valores sensatos; cualquier otra cosa vuelve a 45.
   dias = (Number.isInteger(dias) && dias >= 1 && dias <= 120) ? dias : 45;
-  const desde = new Date(Date.now() - dias * 24 * 3600 * 1000).toISOString();
-  const hasta = new Date().toISOString();
+  // AJUSTE 46 (12/10/2026): el rango va ALINEADO A MEDIANOCHE UTC.
+  //   Desde el 11-12/10/2026 Copernicus devuelve TODAS las pasadas vacías
+  //   (0 píxeles) si los intervalos diarios (P1D) no empiezan a las 00:00
+  //   UTC. Probado sobre la #23: "90 días hasta ahora" → 0 pasadas con
+  //   dato; "90 días hasta hoy 00:00" → 8 pasadas, la del 11/9 con 77 %.
+  //   Costo: la pasada de HOY entra recién mañana. Nada más cambia.
+  const DIA = 24 * 3600 * 1000;
+  const hoy00 = Date.parse(new Date().toISOString().slice(0, 10) + 'T00:00:00Z');
+  const desde = new Date(hoy00 - dias * DIA).toISOString();
+  const hasta = new Date(hoy00).toISOString();
 
   const body = {
     input: {
