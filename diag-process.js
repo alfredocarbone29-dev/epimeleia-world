@@ -19,7 +19,7 @@ function evaluatePixel(s){return[2.5*s.B04,2.5*s.B03,2.5*s.B02,s.dataMask];}`;
                  data: [{ type: tipo, dataFilter: { timeRange: { from: desde, to: hasta }, mosaickingOrder: 'leastCC' } }] },
         output: { width: 256, height: 256, responses: [{ identifier: 'default', format: { type: 'image/png' } }] },
         evalscript: ev,
-      }, { headers: { Authorization: 'Bearer ' + t.data.access_token, 'Content-Type': 'application/json' },
+      }, { headers: { Authorization: 'Bearer ' + t.data.access_token, 'Content-Type': 'application/json', Accept: 'image/png' },
            responseType: 'arraybuffer', timeout: 60000, validateStatus: () => true });
       const buf = Buffer.from(r.data);
       console.log('==== ' + tipo + ' · HTTP ' + r.status + ' · foto de ' + buf.length + ' bytes');
