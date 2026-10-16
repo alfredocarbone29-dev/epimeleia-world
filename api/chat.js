@@ -46,6 +46,14 @@ const Anthropic = require("@anthropic-ai/sdk");
 //   · Casilla única de verificación (campo o lote) y descarga del paquete.
 //   · Los tres productos 01/02/03 y el pedido desde el mapa.
 //   · Respuestas honestas a preguntas difíciles. Reglas y mecánica intactas.
+//
+// ACTUALIZACIÓN DE CONOCIMIENTO (16/10/2026) — solo el system prompt:
+//   · "Tu oficina" (oficina.html): cada cliente entra con un link a su
+//     email, sin contraseña, y lleva la cuenta de SUS parcelas y lotes.
+//   · Verificar muestra el BALANCE DE CAPACIDAD (capacidad, comprometido,
+//     saldo, % utilizado, fecha de corte).
+//   · Origen: el campo limpio no puede ser la puerta de salida del campo
+//     deforestado (anti-lavado). Reglas y mecánica intactas.
 // ══════════════════════════════════════════════════════════════
 
 // ─── DETECCIÓN DE IDIOMA ──────────────────────────────────────────────────────
@@ -218,6 +226,9 @@ CAPACIDAD (EL TOPE DE LA TIERRA): al sellar un campo con su cultivo (soja, café
 EL SALDO: cada embarque descuenta toneladas de la capacidad de cada campo, como una cuenta que nunca puede quedar en negativo. Si alguien quisiera "lavar" producto de otro origen a través de un campo limpio, se queda sin saldo.
 EL LOTE (CERTIFICADO DE EMBARQUE): se arma poniendo el ID de cada campo y las toneladas de ese embarque. El lote es APTO solo si todas sus parcelas pasan las dos pruebas: satélite (sin deforestación según su prueba sellada) y saldo (alcanza lo que le queda). Una sola parcela sucia frena todo el embarque: así, un caso real con deforestación detectada da NO APTO aunque vaya junto a campos limpios. El lote APTO se sella en Polygon y tiene su link público para el comprador.
 DE DÓNDE SALEN LAS TONELADAS: del mundo real —el ticket de balanza (peso bruto menos tara), la carta de porte o lo que declara el exportador para ese envío—. EPIMELEIA no las adivina: las controla contra el tope de la tierra.
+EL BALANCE PÚBLICO (en Verificar): al verificar un campo, además de la prueba satelital, aparece su balance de capacidad productiva, en toneladas métricas y con dos decimales, como un estado contable: capacidad productiva anual (con su base de cálculo, hectáreas × rinde de referencia), lo comprometido en lotes sellados (cuántos lotes), el saldo disponible, el porcentaje utilizado y la fecha y hora de corte en UTC, más el link a la declaración de capacidad en Polygon. Cualquiera —un comprador, un trader, un banco— lo ve sin cuenta y sin confiar en EPIMELEIA.
+EL ORIGEN — EL CAMPO LIMPIO NO ES LA PUERTA DE SALIDA DEL DEFORESTADO: el riesgo real de origen es el lavado: producir en un campo con deforestación y venderlo "a nombre" de un campo limpio. EPIMELEIA lo frena por dos lados. Uno: el campo limpio tiene techo; no puede sellar más de lo que su tierra permite producir, así que si de golpe "vende" de más, el saldo no le alcanza y el lote no se sella. Dos: el campo con deforestación detectada queda a la vista, con su producción posible, y ninguna de esas toneladas puede salir por un lote (cualquier lote que lo incluya da NO APTO). Si aparece volumen de más en un campo vecino, la cuenta no cierra, y eso es público.
+TU OFICINA (oficina.html, botón "Tu oficina" en las páginas EUDR, Plataforma e Instituciones): es el espacio privado de cada cliente. Entra con su email: recibe un link y, al tocarlo, queda adentro, sin contraseña. Ahí ve solo SUS parcelas (con su estado de deforestación y su saldo), arma sus lotes (parcela + toneladas), los simula y, si son APTOS, los sella; ve su lista de lotes con su certificado. Cada lote sellado se descuenta del saldo y se refleja al instante en la página pública de Verificar. Nadie ve ni opera parcelas o lotes de otro cliente. El link solo funciona para emails que ya tienen cuenta (se crea al adherirse). Vos no das acceso ni entrás a ninguna oficina: explicás cómo funciona.
 LO QUE EL LOTE PRUEBA Y LO QUE NO (decilo con franqueza): prueba que el embarque declarado sale de campos sin deforestación posterior al corte y que el volumen no supera lo que esa tierra puede dar, todo sellado y verificable. NO prueba que el grano físico del camión venga de ese campo: eso lo declara el exportador. Tampoco es balance de masa (la EUDR no lo acepta): es origen declarado con tope por campo. Hasta el punto de mezcla, cada tonelada tiene nombre y apellido; después de mezclar, queda el certificado: esta mezcla salió de estos campos, con estas toneladas cada uno.
 
 ═══════════════════════════════════════════════════════════
@@ -229,6 +240,7 @@ PREGUNTAS DIFÍCILES — RESPUESTAS HONESTAS
 · "¿Presentan la DDS en TRACES?" No: EPIMELEIA aporta la prueba en la que se apoya la DDS; la presenta el operador.
 · "¿Se integra con nuestros sistemas?" El sistema ya funciona por consultas automáticas (verificar un campo o un lote es una consulta); una integración a medida se arma sobre eso, y se conversa con el fundador. No prometas plazos.
 · "¿Escala?" Está pensado para escalar; lo correcto es un piloto con parcelas reales para dimensionarlo. No inventes cifras de capacidad.
+· "¿El rinde es el real de mi campo?" Hoy la capacidad usa el rinde de referencia público (FAO) por cultivo y país, no la cosecha medida de ese campo puntual; funciona como techo prudente. Decilo así, sin prometer medición de rinde real. Si quieren profundizar en eso, derivás al fundador (info@epimeleia.world).
 · "¿Ya tienen clientes / quiénes son el equipo?" No inventes nombres, clientes ni cantidad de personas. Decí que EPIMELEIA está en etapa de pilotos, que lo que se muestra es real y verificable, y que esos detalles los conversa directamente el fundador (info@epimeleia.world).
 · "¿En qué se diferencian de otras plataformas satelitales?" Muchas observan bien y piden que se confíe en su método o en su reputación. EPIMELEIA no pide confianza: cualquiera recalcula la prueba en su navegador y la compara con la blockchain. No compite con el satélite que una empresa ya tenga: le suma la capa que hace verificable lo que se afirma. No hables mal de nadie ni nombres competidores.
 
