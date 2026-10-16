@@ -11,6 +11,17 @@
  * Candado founder: igual que api/confirmar-sello.js (Supabase confirma el email
  * y se compara con SELLO_FOUNDER_EMAIL).
  *
+ * AJUSTE OFICINA (16/10/2026) · "TU OFICINA" DEL CLIENTE
+ *   Antes: cualquier sesión que no fuera la del founder se rechazaba (403).
+ *   Ahora: una sesión de cliente (entró a oficina.html con el link de su mail)
+ *   también pasa, pero SOLO ve y opera lo suyo:
+ *     - sin accion      → solo SUS parcelas (cliente_id = su usuario).
+ *     - infoParcela     → solo si la parcela es suya.
+ *     - simular/sellar  → solo si TODAS las parcelas del lote son suyas.
+ *     - estado/listar   → solo SUS lotes.
+ *     - siguienteCodigo → igual que el founder (es solo el próximo número).
+ *   El founder sigue viendo y operando todo, exactamente como antes.
+ *
  * Variables de entorno (Vercel):
  *   SUPABASE_URL, SUPABASE_SERVICE_KEY, SELLO_FOUNDER_EMAIL   (ya existen)
  *   TRAZ_SECRET, TRAZ_VPS_URL                                 (para lotes)
@@ -47,6 +58,29 @@ async function lotePublico(req, res) {
   });
 }
 
+// ─── Cliente: solo SUS parcelas (AJUSTE OFICINA) ────────────────
+async function datosCliente(supabase, userId, res) {
+  const { data, error } = await supabase.from('v_panel_parcelas').select(
+    'id, activo_id_onchain, cliente_id, cliente, nombre_activo, superficie_ha, ' +
+    'veredicto, ha_perdidas, cobertura, ultimo_sello, fecha_alta, sellada_onchain'
+  ).eq('cliente_id', userId).order('fecha_alta', { ascending: false });
+  if (error) {
+    console.error('[panel/oficina] Error leyendo parcelas:', error);
+    return res.status(500).json({ ok: false, error: 'No se pudieron leer tus parcelas.' });
+  }
+  return res.status(200).json({ ok: true, generado: new Date().toISOString(), parcelas: data || [] });
+}
+
+// ¿Todas estas parcelas (por ID on-chain) son de este cliente?
+async function sonDelCliente(supabase, ids, userId) {
+  const lista = [...new Set((ids || []).map(Number).filter((n) => Number.isInteger(n) && n > 0))];
+  if (!lista.length) return false;
+  const { data, error } = await supabase.from('activos')
+    .select('activo_id_onchain, cliente_id').in('activo_id_onchain', lista);
+  if (error || !data || data.length !== lista.length) return false;
+  return data.every((a) => String(a.cliente_id) === String(userId));
+}
+
 // ─── Founder: panel ─────────────────────────────────────────────
 async function datosPanel(supabase, res) {
   const [clientes, parcelas] = await Promise.all([
@@ -81,18 +115,23 @@ async function llamarVps(datos, ejecutar) {
   }
 }
 
-async function accionLote(supabase, body, res) {
+async function accionLote(supabase, body, res, soloCliente) {
+  // soloCliente: null = founder (todo) · id de usuario = cliente (solo lo suyo)
   const accion = body.accion;
   if (accion === 'estado') {
     const codigo = String(body.codigo || '').trim();
     if (!codigo) return res.status(400).json({ ok: false, error: 'Falta el código.' });
     const { data, error } = await supabase.from('traz_lotes')
-      .select('codigo, estado, error, veredicto, tx_hash, bloque, sellado_en, toneladas').eq('codigo', codigo).maybeSingle();
+      .select('codigo, estado, error, veredicto, tx_hash, bloque, sellado_en, toneladas, cliente_id').eq('codigo', codigo).maybeSingle();
     if (error) return res.status(500).json({ ok: false, error: 'No se pudo leer el lote.' });
+    if (data && soloCliente && String(data.cliente_id) !== String(soloCliente)) {
+      return res.status(200).json({ ok: true, lote: null });
+    }
+    if (data) delete data.cliente_id;
     return res.status(200).json({ ok: true, lote: data || null });
   }
   if (accion === 'listar') {
-    const clienteId = String(body.clienteId || '').trim();
+    const clienteId = soloCliente ? String(soloCliente) : String(body.clienteId || '').trim();
     if (!clienteId) return res.status(400).json({ ok: false, error: 'Falta el cliente.' });
     const { data, error } = await supabase.from('traz_lotes')
       .select('codigo, estado, cultivo, anio, fecha, toneladas, tx_hash, sellado_en, error')
@@ -108,6 +147,9 @@ async function accionLote(supabase, body, res) {
     const { data: act } = await supabase.from('activos')
       .select('activo_id_onchain, nombre_activo, cultivo, pais, cliente_id').eq('activo_id_onchain', id).maybeSingle();
     if (!act) return res.status(404).json({ ok: false, error: `No existe la parcela #${id}.` });
+    if (soloCliente && String(act.cliente_id) !== String(soloCliente)) {
+      return res.status(403).json({ ok: false, error: `La parcela #${id} no está registrada a tu nombre.` });
+    }
     const { data: decls } = await supabase.from('traz_declaraciones')
       .select('id, cultivo, anio, capacidad_anual').eq('origen_tipo', 'epimeleia').eq('origen_ref', String(id))
       .eq('anio', anio).eq('veredicto', 'ACEPTADA').order('sellado_en', { ascending: false }).limit(1);
@@ -137,6 +179,12 @@ async function accionLote(supabase, body, res) {
   }
   if (accion === 'simular' || accion === 'sellar') {
     if (!TRAZ_SECRET || !TRAZ_VPS_URL) return res.status(500).json({ ok: false, error: 'Faltan TRAZ_SECRET o TRAZ_VPS_URL en Vercel.' });
+    if (soloCliente) {
+      const ids = (Array.isArray(body.parcelas) ? body.parcelas : []).map((p) => p && p.activoIdOnchain);
+      if (!(await sonDelCliente(supabase, ids, soloCliente))) {
+        return res.status(403).json({ ok: false, error: 'Solo podés armar lotes con parcelas registradas a tu nombre.' });
+      }
+    }
     const datos = { codigo: body.codigo, cultivo: body.cultivo, anio: body.anio, fecha: body.fecha, receptor: body.receptor, parcelas: body.parcelas };
     try {
       return res.status(200).json(await llamarVps(datos, accion === 'sellar'));
@@ -169,12 +217,19 @@ module.exports = async function handler(req, res) {
   const supabase = cliente();
   const { data: u, error: eU } = await supabase.auth.getUser(token);
   if (eU || !u || !u.user) return res.status(401).json({ ok: false, error: 'Tu sesión no es válida. Iniciá sesión de nuevo.' });
-  if ((u.user.email || '').toLowerCase().trim() !== SELLO_FOUNDER_EMAIL) {
-    console.warn('[panel] RECHAZADO · no es el founder');
-    return res.status(403).json({ ok: false, error: 'No tenés permiso para ver este panel.' });
-  }
+  const esFounder = (u.user.email || '').toLowerCase().trim() === SELLO_FOUNDER_EMAIL;
 
   res.setHeader('Cache-Control', 'no-store');
-  if (body.accion) return accionLote(supabase, body, res);
+
+  // AJUSTE OFICINA: el cliente pasa, pero solo con lo suyo.
+  // modo 'oficina' lo pide oficina.html; así el founder también puede ver
+  // SU propia oficina sin que se mezcle con la cartera completa.
+  const modoOficina = body.modo === 'oficina' || !esFounder;
+  if (modoOficina) {
+    if (body.accion) return accionLote(supabase, body, res, u.user.id);
+    return datosCliente(supabase, u.user.id, res);
+  }
+
+  if (body.accion) return accionLote(supabase, body, res, null);
   return datosPanel(supabase, res);
 };
