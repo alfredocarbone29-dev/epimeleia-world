@@ -56,6 +56,28 @@ h1{font-family:'Playfair Display',serif;font-weight:400;font-size:clamp(26px,4vw
 .dato .va{color:var(--text);font-family:'JetBrains Mono',monospace;font-size:13px;text-align:right;word-break:break-word;}
 .def-hubo{color:var(--amber);}
 .def-limpio{color:var(--emerald);}
+/* BALANCE DE CAPACIDAD (formato estado contable) */
+.bal{border:1px solid var(--line2);border-radius:3px;overflow:hidden;background:var(--panel);}
+.bal + .bal{margin-top:16px;}
+.bal-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:4px 12px;padding:14px 18px;border-bottom:1px solid var(--line2);background:rgba(255,255,255,0.02);}
+.bal-t{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2px;color:var(--white);}
+.bal-u{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1.5px;color:var(--muted);}
+.bal-row{display:grid;grid-template-columns:1fr auto;gap:4px 16px;padding:12px 18px;border-bottom:1px solid var(--line);align-items:baseline;}
+.bal-row .k{font-size:15px;color:var(--text);}
+.bal-row .n{font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--text);text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;}
+.bal-row .d{grid-column:1 / -1;font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--muted);letter-spacing:.3px;}
+.bal-row.menos .n::before{content:'− ';color:var(--muted);}
+.bal-row.total{border-top:1px solid var(--line2);border-bottom:none;background:linear-gradient(150deg,rgba(95,173,95,0.09),transparent 70%);padding:16px 18px;}
+.bal-row.total .k{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2px;color:var(--emerald);}
+.bal-row.total .n{font-size:20px;color:var(--emerald);font-weight:500;}
+.bal-row.total.cero .k,.bal-row.total.cero .n{color:var(--amber);}
+.bal-bar{padding:0 18px 16px;}
+.bal-bar-track{height:6px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden;}
+.bal-bar-fill{height:100%;background:var(--emerald);border-radius:3px;}
+.bal-bar-lab{display:flex;justify-content:space-between;margin-top:7px;font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.5px;color:var(--muted);}
+.bal-foot{padding:12px 18px;border-top:1px solid var(--line);font-family:'JetBrains Mono',monospace;font-size:10px;line-height:1.8;color:var(--muted);}
+.bal-foot a{color:var(--emerald);}
+.bal-nota{font-size:13px;color:var(--muted);margin-top:16px;line-height:1.65;}
 
 #mapa{width:100%;height:300px;border:1px solid var(--line);border-radius:4px;margin-bottom:20px;background:var(--panel);}
 
@@ -139,11 +161,11 @@ h1{font-family:'Playfair Display',serif;font-weight:400;font-size:clamp(26px,4vw
       <div class="dato"><span class="et">Fuente</span><span class="va" id="dDefFuente">—</span></div>
     </div>
 
-    <!-- CAPACIDAD Y SALDO (AJUSTE 11/10/2026): cuánto puede vender este campo por año -->
+    <!-- BALANCE DE CAPACIDAD (AJUSTE 16/10/2026 · formato profesional / financiero) -->
     <div class="card" id="cardCap" style="display:none;">
-      <div class="card-k">CAPACIDAD Y SALDO · TRAZABILIDAD</div>
+      <div class="card-k">BALANCE DE CAPACIDAD PRODUCTIVA · TRAZABILIDAD</div>
       <div id="capList"></div>
-      <div style="font-size:13px;color:var(--muted);margin-top:14px;line-height:1.6;">Ningún campo puede vender más de lo que su superficie y su rinde permiten. Cada lote sellado se descuenta de este saldo; cuando llega a cero, no se pueden sellar más lotes de este campo ese año.</div>
+      <div class="bal-nota">La capacidad anual surge de la superficie certificada por el rinde de referencia del cultivo, y quedó declarada en Polygon. Cada lote sellado se descuenta de esa capacidad; un activo no puede respaldar más volumen del que su superficie permite producir. Con saldo cero, no se pueden sellar nuevos lotes de este activo para ese año.</div>
     </div>
 
     <div class="card" id="cardMed">
@@ -329,22 +351,38 @@ h1{font-family:'Playfair Display',serif;font-weight:400;font-size:clamp(26px,4vw
       return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
     });
   }
+  function fmtTon(n){
+    if(n==null || isNaN(n)) return '—';
+    return Number(n).toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2});
+  }
+  function fmtPct(n){
+    return Number(n).toLocaleString('es-AR',{minimumFractionDigits:1,maximumFractionDigits:1})+' %';
+  }
   function pintarCapacidad(caps){
     var card = $('cardCap');
     if(!Array.isArray(caps) || !caps.length){ card.style.display='none'; return; }
     card.style.display='';
-    $('capList').innerHTML = caps.map(function(c, i){
-      var calc = (c.hectareas!=null && c.rindeReferencia!=null)
-        ? fmtT(c.hectareas)+' ha × '+fmtT(c.rindeReferencia)+' t/ha'+(c.fuenteReferencia?' ('+esc(c.fuenteReferencia)+')':'')
-        : '—';
-      var filas =
-        '<div class="dato"><span class="et">Cultivo · año</span><span class="va">'+esc(c.cultivo||'—')+' · '+esc(c.anio)+'</span></div>'+
-        '<div class="dato"><span class="et">Cálculo</span><span class="va">'+calc+'</span></div>'+
-        '<div class="dato"><span class="et">Capacidad anual</span><span class="va">'+fmtT(c.capacidadAnual)+' t</span></div>'+
-        '<div class="dato"><span class="et">Ya vendido en lotes sellados</span><span class="va">'+fmtT(c.usado)+' t · '+(c.lotes||0)+(c.lotes===1?' lote':' lotes')+'</span></div>'+
-        '<div class="dato"><span class="et">Saldo disponible</span><span class="va def-limpio">'+fmtT(c.saldo)+' t</span></div>'+
-        (c.polygonscanTx ? '<div class="dato"><span class="et">Declaración en Polygon</span><span class="va"><a href="'+esc(c.polygonscanTx)+'" target="_blank" rel="noopener">ver transacción →</a></span></div>' : '');
-      return (i ? '<div style="height:14px"></div>' : '') + filas;
+    var ahora = new Date();
+    var corte = ahora.toISOString().slice(0,10).split('-').reverse().join('/') + ' ' + ahora.toISOString().slice(11,16) + ' UTC';
+    $('capList').innerHTML = caps.map(function(c){
+      var cap = Number(c.capacidadAnual)||0, usado = Number(c.usado)||0, saldo = Number(c.saldo)||0;
+      var pct = cap > 0 ? Math.min(100, Math.max(0, usado / cap * 100)) : 0;
+      var nLotes = c.lotes||0;
+      var base = (c.hectareas!=null && c.rindeReferencia!=null)
+        ? fmtT(c.hectareas)+' ha × '+fmtT(c.rindeReferencia)+' t/ha'+(c.fuenteReferencia?' · rinde de referencia '+esc(c.fuenteReferencia):' · rinde de referencia')
+        : '';
+      var cultivo = esc(String(c.cultivo||'—').toUpperCase());
+      return '<div class="bal">'+
+        '<div class="bal-head"><span class="bal-t">'+cultivo+' · CAMPAÑA '+esc(c.anio)+'</span><span class="bal-u">TONELADAS MÉTRICAS</span></div>'+
+        '<div class="bal-row"><span class="k">Capacidad productiva anual</span><span class="n">'+fmtTon(cap)+'</span>'+(base?'<span class="d">'+base+'</span>':'')+'</div>'+
+        '<div class="bal-row menos"><span class="k">Comprometido en lotes sellados</span><span class="n">'+fmtTon(usado)+'</span><span class="d">'+nLotes+(nLotes===1?' lote sellado':' lotes sellados')+' en Polygon</span></div>'+
+        '<div class="bal-row total'+(saldo<=0?' cero':'')+'"><span class="k">SALDO DISPONIBLE</span><span class="n">'+fmtTon(saldo)+'</span></div>'+
+        '<div class="bal-bar"><div class="bal-bar-track"><div class="bal-bar-fill" style="width:'+pct.toFixed(2)+'%"></div></div>'+
+          '<div class="bal-bar-lab"><span>Utilizado '+fmtPct(pct)+'</span><span>Disponible '+fmtPct(100-pct)+'</span></div></div>'+
+        '<div class="bal-foot">Corte: '+corte+
+          (c.polygonscanTx ? '<br>Declaración de capacidad: <a href="'+esc(c.polygonscanTx)+'" target="_blank" rel="noopener">ver transacción en Polygon →</a>' : '')+
+        '</div>'+
+      '</div>';
     }).join('');
   }
 
