@@ -437,6 +437,17 @@ section { position:relative; }
 .mapa-float:focus-visible { outline:2px solid var(--white); outline-offset:3px; }
 @media(max-width:520px){ .mapa-float { max-width:66vw; padding:11px 14px; gap:9px; left:14px; bottom:72px; } .mapa-float-txt b{ font-size:12.5px; } .mapa-float-txt small{ font-size:8px; } .mapa-float-ico svg{ width:19px; height:19px; } }
 @media(prefers-reduced-motion: reduce){ .mapa-float{ animation:none; } }
+
+/* ══ BOTÓN FLOTANTE · TU OFICINA (idéntico en EUDR, Plataforma e Instituciones) ══
+   Arriba de EPI, a la derecha. Colores fijos para que se vea igual en las tres. */
+.ofi-float{position:fixed; right:clamp(16px,3vw,32px); bottom:calc(clamp(16px,3vw,32px) + 72px); z-index:60; display:flex; align-items:center; gap:10px; background:#F4F0E8; color:#070B0A; text-decoration:none; padding:11px 16px 11px 13px; border-radius:30px; box-shadow:0 8px 30px rgba(0,0,0,0.55); font-family:'JetBrains Mono','IBM Plex Mono',monospace; transition:transform .2s, background .2s;}
+.ofi-float:hover{background:#FFFFFF; transform:translateY(-2px);}
+.ofi-float svg{width:20px; height:20px; flex-shrink:0;}
+.ofi-float-txt{display:flex; flex-direction:column; line-height:1.15;}
+.ofi-float-txt b{font-size:11px; letter-spacing:2px; font-weight:600;}
+.ofi-float-txt small{font-size:8.5px; letter-spacing:0.3px; opacity:0.7; margin-top:3px;}
+.ofi-float:focus-visible{outline:2px solid #5FAD5F; outline-offset:3px;}
+@media(max-width:520px){ .ofi-float{ right:14px; bottom:84px; width:60px; padding:9px 0 8px; border-radius:16px; flex-direction:column; gap:4px; } .ofi-float-txt b{ font-size:7.5px; letter-spacing:1px; } .ofi-float-txt small{ display:none; } }
 </style>
 </head>
 <body>
@@ -936,5 +947,15 @@ window.addEventListener('scroll', ()=>{
   lastY = y;
 }, { passive:true });
 </script>
+
+<!-- BOTÓN FLOTANTE · TU OFICINA (idéntico en EUDR, Plataforma e Instituciones) -->
+<a class="ofi-float" href="oficina.html" aria-label="Tu oficina: tus parcelas, lotes y saldos">
+  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect x="4" y="10" width="16" height="11" rx="1.5" stroke="currentColor" stroke-width="1.7"/>
+    <path d="M8 10V7a4 4 0 0 1 8 0v3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+    <circle cx="12" cy="15.5" r="1.6" fill="currentColor"/>
+  </svg>
+  <span class="ofi-float-txt"><b>TU OFICINA</b><small>Tus lotes y saldos →</small></span>
+</a>
 </body>
-</html>
+</html>
