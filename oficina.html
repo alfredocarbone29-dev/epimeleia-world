@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>EPIMELEIA · Tu oficina</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Crimson+Pro:wght@0,300;0,400;0,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<!--
+  EPIMELEIA · oficina.html — "TU OFICINA" DEL CLIENTE (16/10/2026)
+  ─────────────────────────────────────────────────────────────────
+  El cliente entra SIN contraseña: pone su email y Supabase le manda un link.
+  Toca el link, entra, y su navegador lo recuerda.
+  Adentro ve SOLO sus parcelas y arma/sella SUS lotes. Cada lote sellado
+  descuenta el saldo y se ve al instante en Verificar.
+  La seguridad la pone api/panel.js: con una sesión de cliente, el servidor
+  solo devuelve y opera parcelas cuyo cliente_id es ese usuario.
+-->
+<style>
+:root{
+  --void:#040904; --deep:#080E08; --surface:#0C130C; --panel:#101810; --card:#141C14;
+  --line:rgba(255,255,255,0.06); --line2:rgba(255,255,255,0.1);
+  --text:#E8E4DA; --muted:#7E8C7E; --dim:#445844;
+  --green:#4A8A4A; --emerald:#5FAD5F; --teal:#3A8A7A; --gold2:#E5C870; --white:#F4F0E8;
+  --amber:#C89A4A;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+body{background:radial-gradient(ellipse 70% 50% at 15% 8%,rgba(58,138,122,0.07) 0%,transparent 55%),var(--deep);color:var(--text);font-family:'Crimson Pro',Georgia,serif;font-size:18px;line-height:1.7;min-height:100vh;-webkit-font-smoothing:antialiased;}
+a{color:var(--emerald);text-decoration:none;} a:hover{text-decoration:underline;}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px clamp(16px,5vw,48px);border-bottom:1px solid var(--line);background:rgba(4,9,4,0.86);}
+.brand{font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:5px;color:var(--white);}
+.brand span{color:var(--gold2);}
+.topbar a,.topbar button{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--muted);background:none;border:none;cursor:pointer;}
+main{max-width:1000px;margin:0 auto;padding:clamp(28px,6vw,60px) clamp(16px,5vw,48px);}
+.eyebrow{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:3px;color:var(--gold2);margin-bottom:12px;}
+h1{font-family:'Playfair Display',serif;font-weight:400;font-size:clamp(26px,4vw,38px);color:var(--white);line-height:1.2;margin-bottom:10px;}
+.sub{color:var(--muted);font-size:clamp(15px,1.7vw,18px);line-height:1.6;margin-bottom:26px;max-width:640px;}
+.card-k{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--emerald);margin:32px 0 12px;text-transform:uppercase;}
+.caja{border:1px solid var(--line);border-radius:4px;background:var(--surface);overflow-x:auto;}
+.login{max-width:440px;border:1px solid var(--line2);border-radius:4px;background:var(--panel);padding:clamp(24px,4vw,36px);}
+.login label,.campo label{display:block;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:6px;}
+input,select{width:100%;background:var(--deep);border:1px solid var(--line2);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:14px;padding:12px;border-radius:3px;outline:none;}
+input:focus,select:focus{border-color:var(--emerald);}
+.btn{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1.5px;padding:13px 20px;border-radius:3px;cursor:pointer;border:1px solid var(--line2);background:transparent;color:var(--text);}
+.btn:hover:not(:disabled){border-color:var(--emerald);color:var(--emerald);}
+.btn.primario{background:var(--emerald);border-color:var(--emerald);color:var(--void);}
+.btn.primario:hover:not(:disabled){background:var(--green);color:var(--void);}
+.btn:disabled{opacity:.35;cursor:not-allowed;}
+.msg{font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.6;margin-top:14px;color:var(--muted);}
+.msg.ok{color:var(--emerald);} .msg.err{color:var(--amber);}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;}
+th,td{padding:12px 14px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap;}
+th{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:400;letter-spacing:2px;color:var(--muted);text-transform:uppercase;}
+td{font-size:16px;} td.num,th.num{text-align:right;} td.num{font-family:'JetBrains Mono',monospace;font-size:13px;}
+tr:last-child td{border-bottom:none;}
+td.nombre{font-family:'Playfair Display',serif;color:var(--white);text-transform:capitalize;}
+.chip{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;padding:4px 9px;border-radius:3px;border:1px solid;}
+.chip.limpia{color:var(--emerald);border-color:rgba(95,173,95,0.35);background:rgba(95,173,95,0.08);}
+.chip.hubo{color:var(--amber);border-color:rgba(200,154,74,0.4);background:rgba(200,154,74,0.08);}
+.chip.sin{color:var(--muted);border-color:var(--line2);}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;padding:16px;}
+.acciones{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:14px 0 6px;}
+.ayuda{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;color:var(--dim);}
+.res{border:1px solid var(--line2);border-radius:4px;padding:16px 18px;margin-top:12px;background:var(--surface);}
+.res.ok{border-color:rgba(95,173,95,0.5);} .res.mal{border-color:rgba(200,154,74,0.5);}
+.res-t{font-family:'Playfair Display',serif;font-size:21px;color:var(--white);margin-bottom:4px;}
+.res.ok .res-t{color:var(--emerald);} .res.mal .res-t{color:var(--amber);}
+.res-d{font-size:15px;color:rgba(232,228,218,0.78);}
+.res-l div{padding:6px 0;border-top:1px solid var(--line);font-size:15px;}
+.res-l small{display:block;color:var(--muted);font-size:14px;padding-left:18px;}
+.v{color:var(--emerald);} .x{color:var(--amber);}
+.oculto{display:none;}
+.foot{margin-top:40px;padding-top:22px;border-top:1px solid var(--line);font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;color:var(--dim);text-align:center;line-height:2;}
+@media(max-width:700px){
+  #t-parcelas thead{display:none;}
+  #t-parcelas,#t-parcelas tbody,#t-parcelas tr,#t-parcelas td{display:block;width:100%;}
+  #t-parcelas tr{padding:14px;border-bottom:1px solid var(--line);}
+  #t-parcelas td{border:none;padding:3px 0;white-space:normal;text-align:left;}
+  #t-parcelas td[data-l]::before{content:attr(data-l);display:inline-block;min-width:100px;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);}
+}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="brand">EPIMELEIA<span> · TU OFICINA</span></span>
+  <span>
+    <button id="btn-salir" class="oculto" type="button">SALIR</button>
+    <a href="index.html">← INICIO</a>
+  </span>
+</div>
+
+<main>
+  <!-- ── ENTRAR (sin contraseña) ── -->
+  <section id="v-login">
+    <div class="eyebrow">TU OFICINA · SIN CONTRASEÑA</div>
+    <h1>Entrá con tu email</h1>
+    <p class="sub">Poné el email con el que registraste tus parcelas. Te mandamos un link: lo tocás y entrás. Tu navegador te recuerda, así que la próxima vez entrás directo.</p>
+    <div class="login">
+      <label for="email">Tu email</label>
+      <input id="email" type="email" placeholder="nombre@tuempresa.com" autocomplete="email">
+      <div style="margin-top:14px;"><button class="btn primario" id="btn-link" type="button" style="width:100%;">ENVIARME EL LINK</button></div>
+      <div class="msg" id="msg-login"></div>
+    </div>
+  </section>
+
+  <!-- ── LA OFICINA ── -->
+  <section id="v-oficina" class="oculto">
+    <div class="eyebrow" id="quien">TU OFICINA</div>
+    <h1>Tus parcelas y tus embarques</h1>
+    <p class="sub">Acá llevás la cuenta de lo que vende cada parcela. Cada lote que sellás se descuenta del saldo y aparece al instante en la página pública de Verificar.</p>
+    <div class="msg" id="msg-ofi"></div>
+
+    <div class="card-k">Tus parcelas</div>
+    <div class="caja">
+      <table id="t-parcelas">
+        <thead><tr><th>Parcela</th><th class="num">ID</th><th class="num">Hectáreas</th><th>Deforestación</th><th class="num">Saldo disponible</th><th>Prueba pública</th></tr></thead>
+        <tbody id="tb-parcelas"><tr><td colspan="6" class="ayuda">Cargando…</td></tr></tbody>
+      </table>
+    </div>
+
+    <div id="bloque-lote">
+      <div class="card-k">Armar un embarque (lote)</div>
+      <div class="caja">
+        <div class="grid">
+          <div class="campo"><label for="q-id">Parcela</label><select id="q-id"></select></div>
+          <div class="campo"><label for="q-ton">Toneladas</label><input id="q-ton" type="number" min="0" step="0.001" placeholder="ej: 10"></div>
+          <div class="campo"><label>&nbsp;</label><button class="btn" id="q-agregar" type="button" style="width:100%;">AGREGAR AL LOTE</button></div>
+        </div>
+        <div class="grid" style="padding-top:0;">
+          <div class="campo"><label for="l-codigo">Código del lote</label><input id="l-codigo" readonly></div>
+          <div class="campo"><label for="l-anio">Año de cosecha</label><input id="l-anio" type="number" min="2000" max="2100"></div>
+          <div class="campo"><label for="l-fecha">Fecha del embarque</label><input id="l-fecha" type="date"></div>
+          <div class="campo"><label for="l-receptor">Comprador (opcional)</label><input id="l-receptor" placeholder="compras@importador.eu"></div>
+        </div>
+      </div>
+
+      <div class="caja" style="margin-top:12px;">
+        <table>
+          <thead><tr><th></th><th>Parcela en el lote</th><th class="num">Toneladas</th></tr></thead>
+          <tbody id="tb-lote"><tr><td colspan="3" class="ayuda">Elegí una parcela y las toneladas, y tocá AGREGAR.</td></tr></tbody>
+        </table>
+      </div>
+      <div class="acciones">
+        <button class="btn" id="btn-simular" type="button">SIMULAR</button>
+        <button class="btn primario" id="btn-sellar" type="button" disabled>SELLAR EN POLYGON</button>
+        <span class="ayuda">Primero simulá. Solo se sella un lote APTO.</span>
+      </div>
+      <div id="lote-res"></div>
+    </div>
+
+    <div class="card-k">Tus lotes</div>
+    <div class="caja">
+      <table>
+        <thead><tr><th>Código</th><th>Cultivo</th><th class="num">Año</th><th class="num">Toneladas</th><th>Estado</th><th>Certificado</th></tr></thead>
+        <tbody id="tb-lotes"><tr><td colspan="6" class="ayuda">Sin lotes todavía.</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+
+  <div class="foot">EPIMELEIA · Notario Digital Ambiental · Polygon Mainnet<br>No vendemos el dato. Vendemos la prueba de que nadie lo tocó.</div>
+</main>
+
+<script>
+const SUPABASE_URL = 'https://rfpiirxsdhfnvstwjjbh.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_Ym3gRRPfLZPGm4srzFDdTw_dcWvqxZ2';
+const API = '/api/panel';
+const VERIFICABLE_DESDE = 18;
+
+const $ = (id) => document.getElementById(id);
+const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+const nf = new Intl.NumberFormat('es-AR', { maximumFractionDigits: 2 });
+const num = (v) => (v === null || v === undefined || v === '' ? '—' : nf.format(Number(v)));
+
+let supa = null, TOKEN = '', PARCELAS = [], INFO = {}, LOTE = [], FIRMA = null;
+
+function msg(id, texto, tipo) { const m = $(id); m.innerHTML = texto; m.className = 'msg' + (tipo ? ' ' + tipo : ''); }
+function chip(v) {
+  if (v === 'limpia') return '<span class="chip limpia">No detectada</span>';
+  if (v === 'hubo deforestacion') return '<span class="chip hubo">Detectada</span>';
+  return '<span class="chip sin">Sin chequeo</span>';
+}
+async function api(cuerpo) {
+  const r = await fetch(API, { method:'POST', headers:{ 'Content-Type':'application/json' },
+    body: JSON.stringify({ token: TOKEN, modo: 'oficina', ...cuerpo }) });
+  return r.json();
+}
+
+/* ── Entrar con link al email ── */
+async function pedirLink() {
+  const email = $('email').value.trim().toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return msg('msg-login', 'Escribí un email válido.', 'err');
+  $('btn-link').disabled = true;
+  msg('msg-login', 'Enviando…');
+  const { error } = await supa.auth.signInWithOtp({
+    email,
+    options: { emailRedirectTo: location.origin + '/oficina.html', shouldCreateUser: false },
+  });
+  $('btn-link').disabled = false;
+  if (error) {
+    const t = (error.message || '').toLowerCase();
+    if (t.includes('signup') || t.includes('not found') || t.includes('not allowed')) {
+      return msg('msg-login', 'Ese email no tiene parcelas registradas en EPIMELEIA. Si creés que es un error, escribinos a info@epimeleia.world.', 'err');
+    }
+    if (t.includes('rate') || t.includes('seconds')) return msg('msg-login', 'Ya te mandamos un link hace un momento. Esperá un minuto y probá de nuevo.', 'err');
+    return msg('msg-login', 'No se pudo enviar el link. Probá de nuevo en un momento.', 'err');
+  }
+  msg('msg-login', '✓ Listo. Revisá tu correo (y la carpeta de spam) y tocá el link para entrar.', 'ok');
+}
+
+/* ── Cargar la oficina ── */
+async function cargarOficina() {
+  $('v-login').classList.add('oculto');
+  $('v-oficina').classList.remove('oculto');
+  $('btn-salir').classList.remove('oculto');
+  let r;
+  try { r = await api({}); } catch (_) { return msg('msg-ofi', 'No se pudo contactar al servidor. Probá de nuevo.', 'err'); }
+  if (!r || !r.ok) return msg('msg-ofi', esc((r && r.error) || 'No se pudo cargar tu oficina.'), 'err');
+  PARCELAS = (r.parcelas || []).filter((p) => p.sellada_onchain && p.activo_id_onchain != null);
+  if (!PARCELAS.length) {
+    $('tb-parcelas').innerHTML = '<tr><td colspan="6" class="ayuda">Todavía no tenés parcelas selladas a tu nombre.</td></tr>';
+    $('bloque-lote').classList.add('oculto');
+    return;
+  }
+  renderParcelas();
+  $('q-id').innerHTML = PARCELAS
+    .filter((p) => Number(p.activo_id_onchain) >= VERIFICABLE_DESDE)
+    .map((p) => `<option value="${esc(p.activo_id_onchain)}">#${esc(p.activo_id_onchain)} · ${esc(p.nombre_activo || 'parcela')}</option>`).join('');
+  iniciarLote();
+  await refrescarSaldos();
+  cargarLotes();
+}
+
+function renderParcelas() {
+  $('tb-parcelas').innerHTML = PARCELAS.map((p) => {
+    const id = esc(p.activo_id_onchain);
+    const i = INFO[p.activo_id_onchain];
+    const saldo = !i ? '…' : (i.error ? '—' : (i.saldo != null ? num(i.saldo) + ' t' + (i.cultivo ? ' · ' + esc(i.cultivo) : '') : 'sin capacidad'));
+    return `<tr>
+      <td class="nombre">${esc(p.nombre_activo || '(sin nombre)')}</td>
+      <td class="num" data-l="ID">#${id}</td>
+      <td class="num" data-l="Hectáreas">${num(p.superficie_ha)}</td>
+      <td data-l="Deforestación">${chip(p.veredicto)}</td>
+      <td class="num" data-l="Saldo">${saldo}</td>
+      <td data-l="Prueba"><a href="/verificar.html?id=${encodeURIComponent(p.activo_id_onchain)}" target="_blank" rel="noopener">VERIFICAR →</a></td>
+    </tr>`;
+  }).join('');
+}
+
+async function refrescarSaldos() {
+  const anio = Number($('l-anio').value) || new Date().getFullYear();
+  await Promise.all(PARCELAS.map(async (p) => {
+    try {
+      const r = await api({ accion: 'infoParcela', id: Number(p.activo_id_onchain), anio });
+      INFO[p.activo_id_onchain] = r && r.ok ? r.parcela : { error: true };
+    } catch (_) { INFO[p.activo_id_onchain] = { error: true }; }
+  }));
+  renderParcelas();
+}
+
+/* ── Armar lote ── */
+async function nuevoCodigo() {
+  $('l-codigo').value = '';
+  try {
+    const r = await api({ accion: 'siguienteCodigo', anio: Number($('l-anio').value) });
+    if (r && r.ok) $('l-codigo').value = r.codigo;
+  } catch (_) {}
+}
+function iniciarLote() {
+  const hoy = new Date();
+  $('l-anio').value = hoy.getFullYear();
+  $('l-fecha').value = hoy.toISOString().slice(0, 10);
+  nuevoCodigo();
+  renderLote();
+}
+function invalidar() { FIRMA = null; $('btn-sellar').disabled = true; }
+function renderLote() {
+  if (!LOTE.length) { $('tb-lote').innerHTML = '<tr><td colspan="3" class="ayuda">Elegí una parcela y las toneladas, y tocá AGREGAR.</td></tr>'; return; }
+  $('tb-lote').innerHTML = LOTE.map((it) => {
+    const p = PARCELAS.find((x) => String(x.activo_id_onchain) === String(it.id)) || {};
+    return `<tr><td><button type="button" data-id="${esc(it.id)}" class="quitar" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;">✕</button></td>
+      <td class="nombre">${esc(p.nombre_activo || '')} <span class="ayuda">#${esc(it.id)}</span></td>
+      <td class="num">${num(it.ton)} t</td></tr>`;
+  }).join('');
+  $('tb-lote').querySelectorAll('button.quitar').forEach((b) => b.addEventListener('click', () => {
+    LOTE = LOTE.filter((x) => String(x.id) !== b.dataset.id); renderLote(); invalidar();
+  }));
+}
+function agregar() {
+  const id = $('q-id').value; const ton = Number($('q-ton').value);
+  if (!id) return;
+  if (!(ton > 0)) { $('lote-res').innerHTML = '<div class="res mal"><div class="res-d">Poné cuántas toneladas van en este embarque.</div></div>'; return; }
+  const cult = INFO[id] && INFO[id].cultivo;
+  const otro = LOTE.find((x) => INFO[x.id] && INFO[x.id].cultivo && cult && INFO[x.id].cultivo !== cult);
+  if (otro) { $('lote-res').innerHTML = '<div class="res mal"><div class="res-d">Un lote lleva un solo cultivo.</div></div>'; return; }
+  const ya = LOTE.find((x) => String(x.id) === String(id));
+  if (ya) ya.ton = ton; else LOTE.push({ id, ton });
+  $('q-ton').value = ''; $('lote-res').innerHTML = '';
+  renderLote(); invalidar();
+}
+function datos() {
+  const cult = LOTE.map((x) => INFO[x.id] && INFO[x.id].cultivo).find(Boolean) || '';
+  return {
+    codigo: $('l-codigo').value.trim(), cultivo: String(cult).toLowerCase(),
+    anio: Number($('l-anio').value), fecha: $('l-fecha').value, receptor: $('l-receptor').value.trim(),
+    parcelas: LOTE.map((x) => ({ activoIdOnchain: Number(x.id), toneladas: Number(x.ton) })),
+  };
+}
+function resultado(r, titulo) {
+  const apto = r.veredicto === 'APTO';
+  const filas = (r.parcelas || []).map((p) => {
+    const n = esc(p.nombreActivo || 'Parcela') + ' #' + esc(p.activoIdOnchain) + ' · ' + num(p.toneladas) + ' t';
+    if (p.ok) return `<div><span class="v">✓</span> ${n}<small>Sin deforestación · saldo disponible ${num(p.saldoDisponible)} t</small></div>`;
+    return `<div><span class="x">✕</span> ${n}${(p.motivos || []).map((m) => `<small>${esc(m)}</small>`).join('')}</div>`;
+  }).join('');
+  const gen = (r.motivosGenerales || []).map((m) => `<div><span class="x">✕</span> ${esc(m)}</div>`).join('');
+  $('lote-res').innerHTML = `<div class="res ${apto ? 'ok' : 'mal'}"><div class="res-t">${esc(titulo || (apto ? 'Lote APTO' : 'Lote NO APTO'))}</div>
+    <div class="res-d">${apto ? 'Pasa las dos pruebas: satélite y saldo. Total ' + num(r.toneladasTotal) + ' t.' : 'No se puede sellar: no se descuenta ni se sella nada.'}</div>
+    <div class="res-l">${gen}${filas}</div></div>`;
+}
+function aviso(texto, ok) { $('lote-res').innerHTML = `<div class="res ${ok ? 'ok' : 'mal'}"><div class="res-d">${texto}</div></div>`; }
+
+async function simular() {
+  const d = datos();
+  if (!d.parcelas.length) return aviso('Agregá al menos una parcela con sus toneladas.', false);
+  if (!d.codigo) await nuevoCodigo();
+  $('btn-simular').disabled = true; aviso('Simulando… (no gasta nada)', true);
+  try {
+    const r = await api({ accion: 'simular', ...datos() });
+    if (r && Array.isArray(r.parcelas)) { resultado(r); if (r.ok && r.veredicto === 'APTO') { FIRMA = JSON.stringify(datos()); $('btn-sellar').disabled = false; } }
+    else aviso(esc((r && r.error) || 'No se pudo simular.'), false);
+  } catch (_) { aviso('No se pudo contactar al servidor.', false); }
+  finally { $('btn-simular').disabled = false; }
+}
+async function sellar() {
+  const d = datos();
+  if (!FIRMA || JSON.stringify(d) !== FIRMA) { invalidar(); return aviso('Los datos cambiaron desde la simulación. Simulá de nuevo.', false); }
+  const total = d.parcelas.reduce((s, p) => s + p.toneladas, 0);
+  if (!confirm(`Vas a sellar el lote ${d.codigo} en Polygon y descontar ${total} t de tu saldo.\n\nEs real y no se puede deshacer. ¿Seguir?`)) return;
+  $('btn-sellar').disabled = true; $('btn-simular').disabled = true;
+  aviso('Sellando en Polygon… puede tardar un par de minutos. No cierres la página.', true);
+  try {
+    const r = await api({ accion: 'sellar', ...d });
+    if (!r || !r.ok) { if (r && Array.isArray(r.parcelas)) resultado(r, r.error); else aviso(esc((r && r.error) || 'No se pudo sellar.'), false); return; }
+    await esperar(d.codigo);
+  } catch (_) { aviso('Se perdió la conexión. El sellado puede seguir: mirá tus lotes en un momento.', false); }
+  finally {
+    $('btn-simular').disabled = false; invalidar();
+    // La oficina se actualiza sola: saldo nuevo, lote vacío y código siguiente.
+    LOTE = []; renderLote(); await nuevoCodigo(); await refrescarSaldos(); cargarLotes();
+  }
+}
+async function esperar(codigo) {
+  const limite = Date.now() + 6 * 60 * 1000;
+  while (Date.now() < limite) {
+    await new Promise((ok) => setTimeout(ok, 4000));
+    let r; try { r = await api({ accion: 'estado', codigo }); } catch (_) { continue; }
+    const l = r && r.lote; if (!l) continue;
+    if (l.estado === 'SELLADO') {
+      return aviso(`<strong>Lote ${esc(codigo)} sellado.</strong> ${num(l.toneladas)} t · bloque ${esc(l.bloque)}.<br><a href="/lote.html?codigo=${encodeURIComponent(codigo)}" target="_blank" rel="noopener">Abrir el certificado público →</a>`, true);
+    }
+    if (l.estado === 'ERROR') return aviso('El sellado se cortó: ' + esc(l.error), false);
+  }
+  aviso('Sigue procesando. Revisá tus lotes en unos minutos.', true);
+}
+async function cargarLotes() {
+  try {
+    const r = await api({ accion: 'listar' });
+    const lotes = (r && r.lotes) || [];
+    $('tb-lotes').innerHTML = lotes.length ? lotes.map((l) => `<tr>
+      <td class="nombre" style="text-transform:none;">${esc(l.codigo)}</td><td>${esc(l.cultivo)}</td>
+      <td class="num">${esc(l.anio)}</td><td class="num">${num(l.toneladas)}</td>
+      <td>${l.estado === 'SELLADO' ? '<span class="chip limpia">Sellado</span>' : (l.estado === 'ERROR' ? '<span class="chip hubo">Error</span>' : '<span class="chip sin">En proceso</span>')}</td>
+      <td>${l.estado === 'SELLADO' ? `<a href="/lote.html?codigo=${encodeURIComponent(l.codigo)}" target="_blank" rel="noopener">VER CERTIFICADO →</a>` : '—'}</td></tr>`).join('')
+      : '<tr><td colspan="6" class="ayuda">Sin lotes todavía.</td></tr>';
+  } catch (_) {}
+}
+
+/* ── Arranque ── */
+(async function iniciar() {
+  if (!window.supabase || !window.supabase.createClient) return msg('msg-login', 'No se pudo cargar la página. Recargá.', 'err');
+  supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  $('btn-link').addEventListener('click', pedirLink);
+  $('email').addEventListener('keydown', (e) => { if (e.key === 'Enter') pedirLink(); });
+  $('q-agregar').addEventListener('click', agregar);
+  $('btn-simular').addEventListener('click', simular);
+  $('btn-sellar').addEventListener('click', sellar);
+  ['l-anio', 'l-fecha', 'l-receptor'].forEach((id) => $(id).addEventListener('input', invalidar));
+  $('btn-salir').addEventListener('click', async () => { await supa.auth.signOut(); location.href = 'oficina.html'; });
+
+  // Al volver del link del mail, Supabase deja la sesión lista.
+  supa.auth.onAuthStateChange((evento, sesion) => {
+    if (sesion && sesion.access_token && !TOKEN) { TOKEN = sesion.access_token; $('quien').textContent = 'TU OFICINA · ' + (sesion.user.email || '').toUpperCase(); cargarOficina(); }
+  });
+  const { data: { session } } = await supa.auth.getSession();
+  if (session && session.access_token && !TOKEN) {
+    TOKEN = session.access_token;
+    $('quien').textContent = 'TU OFICINA · ' + (session.user.email || '').toUpperCase();
+    cargarOficina();
+  }
+})();
+</script>
+</body>
+</html>
