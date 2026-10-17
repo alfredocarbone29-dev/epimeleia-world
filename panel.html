@@ -120,6 +120,18 @@ tr.no-eleg td{opacity:.5;}
 .res-l .x{color:var(--amber);} .res-l .v{color:var(--emerald);}
 .res-l small{display:block;color:var(--muted);font-size:14px;padding-left:18px;}
 
+/* SEMÁFORO (17/10/2026) */
+.sem{display:inline-flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;padding:4px 10px;border:1px solid;border-radius:3px;white-space:nowrap;}
+.sem::before{content:'';width:9px;height:9px;border-radius:50%;background:currentColor;flex-shrink:0;}
+.sem.verde{color:#5FAD5F;border-color:rgba(95,173,95,0.4);background:rgba(95,173,95,0.07);}
+.sem.amarillo{color:#E5C870;border-color:rgba(229,200,112,0.45);background:rgba(229,200,112,0.07);}
+.sem.rojo{color:#E0705C;border-color:rgba(224,112,92,0.5);background:rgba(224,112,92,0.08);}
+.sem.gris{color:#7E8C7E;border-color:rgba(255,255,255,0.12);}
+.sem-mot{list-style:none;margin:8px 0 0;padding:0;}
+.sem-mot li{font-size:14.5px;line-height:1.55;color:rgba(232,228,218,0.85);padding:4px 0 4px 16px;position:relative;border-top:1px solid var(--line);}
+.sem-mot li::before{content:'';position:absolute;left:2px;top:12px;width:6px;height:6px;border-radius:50%;background:#7E8C7E;}
+.sem-mot li.amarillo::before{background:#E5C870;} .sem-mot li.rojo::before{background:#E0705C;} .sem-mot li.verde::before{background:#5FAD5F;}
+
 @media(max-width:700px){
   #tabla-parcelas thead{display:none;}
   #tabla-parcelas,#tabla-parcelas tbody,#tabla-parcelas tr,#tabla-parcelas td{display:block;width:100%;}
@@ -208,9 +220,9 @@ tr.no-eleg td{opacity:.5;}
         <div class="lote-grid">
           <div class="campo"><label for="q-id">ID de la parcela</label><input id="q-id" type="number" min="1" placeholder="ej: 20" autocomplete="off"></div>
           <div class="campo"><label for="q-ton">Toneladas de este embarque</label><input id="q-ton" type="number" min="0" step="0.001" placeholder="ej: 10" autocomplete="off"></div>
-          <div class="campo"><label>&nbsp;</label><button class="btn" id="q-agregar" type="button" style="width:100%;">AGREGAR AL LOTE</button></div>
+          <div class="campo"><label>&nbsp;</label><button class="btn" id="q-agregar" type="button" style="width:100%;">+ SUMAR OTRA PARCELA</button></div>
         </div>
-        <div class="ayuda" id="q-msg" style="padding:0 18px 16px;">Poné el ID y las toneladas. El resto (cultivo, saldo, código, año y fecha) lo completa el sistema.</div>
+        <div class="ayuda" id="q-msg" style="padding:0 18px 16px;font-size:12px;letter-spacing:.5px;">Poné el número de la parcela y las toneladas, y tocá CERTIFICAR. El resto (cultivo, saldo, código, año y fecha) lo completa el sistema.</div>
       </div>
 
       <div class="card-k">Datos del lote · se completan solos</div>
@@ -233,9 +245,9 @@ tr.no-eleg td{opacity:.5;}
         </table>
       </div>
       <div class="acciones">
-        <button class="btn" id="btn-simular" type="button">SIMULAR LOTE</button>
-        <button class="btn primario" id="btn-sellar" type="button" disabled>SELLAR LOTE EN POLYGON</button>
-        <span class="ayuda" id="lote-ayuda">Primero simulá. Solo se puede sellar un lote APTO, con los mismos datos que simulaste.</span>
+        <button class="btn primario" id="btn-certificar" type="button">CERTIFICAR</button>
+        <button class="btn" id="btn-simular" type="button">SOLO SIMULAR</button>
+        <span class="ayuda" id="lote-ayuda">CERTIFICAR revisa satélite y saldo; si el lote es APTO te pide una confirmación y lo sella en Polygon. "Solo simular" no sella ni gasta nada.</span>
       </div>
       <div id="lote-resultado"></div>
 
@@ -282,7 +294,12 @@ let PARCELAS = [];
 let TOKEN = '';
 let CLIENTE_ID = null;
 let CLIENTE_FIJO_ID = null;
-let FIRMA_APTA = null;
+let EMAIL = '';
+const SEM_ETIQ = { verde:'Sin señales', amarillo:'Mirar', rojo:'Revisar', gris:'Sin datos' };
+function sem(r) {
+  if (!r || !r.color) return '';
+  return `<span class="sem ${esc(r.color)}" title="${esc((r.motivos || []).map((m) => m.texto).join(' · '))}">${esc(SEM_ETIQ[r.color] || r.color)}</span>`;
+}
 const API_LOTE = '/api/panel';
 
 function mostrarEstado(html, esError) {
@@ -490,23 +507,58 @@ async function autocompletarDatos() {
   }
 }
 
+// Al escribir el número aparece sola la ficha de la parcela (AJUSTE 17/10).
+let _fichaT = null;
+function fichaPorId() {
+  clearTimeout(_fichaT);
+  const id = String(Number($('q-id').value) || '');
+  const msg = $('q-msg');
+  if (!id) { msg.textContent = 'Poné el número de la parcela y las toneladas, y tocá CERTIFICAR.'; return; }
+  const p = PARCELAS.find((x) => String(x.activo_id_onchain) === id);
+  if (!p) { msg.innerHTML = `<span style="color:var(--amber);">No existe una parcela sellada con el número #${esc(id)}.</span>`; return; }
+  if (!esElegible(p)) { msg.innerHTML = `<span style="color:var(--amber);">La #${esc(id)} se selló antes del paquete verificable: no puede entrar a un lote.</span>`; return; }
+  msg.innerHTML = `<strong style="color:var(--white);font-family:'Playfair Display',serif;font-size:15px;text-transform:capitalize;">${esc(p.nombre_activo || 'Parcela')}</strong> · #${esc(id)} · ${esc(p.cliente || '')} · <span id="ficha-extra">…</span>`;
+  _fichaT = setTimeout(async () => {
+    try {
+      const anio = Number($('l-anio').value) || new Date().getFullYear();
+      const [inf, rg] = await Promise.all([
+        llamarLote({ accion: 'infoParcela', id: Number(id), anio }),
+        llamarLote({ accion: 'riesgo', anio, parcelas: [{ activoIdOnchain: Number(id), toneladas: 0 }] }),
+      ]);
+      if (String(Number($('q-id').value) || '') !== id) return;
+      const i = inf && inf.ok ? inf.parcela : null;
+      if (i) INFO[id] = i;
+      const ret = p.veredicto === 'hubo deforestacion';
+      const saldo = i && i.saldo != null ? `${num(i.saldo, nf2)} t ${ret ? 'retenidas' : 'disponibles'}` : 'sin capacidad declarada';
+      const el = document.getElementById('ficha-extra');
+      if (el) el.innerHTML = `${esc((i && i.cultivo) || 'sin cultivo')} · ${saldo} ${sem(rg && rg.ok && rg.riesgos ? rg.riesgos[id] : null)}`;
+    } catch (_) {}
+  }, 350);
+}
+
 function agregarPorId() {
   const id = String(Number($('q-id').value) || '');
   const ton = Number($('q-ton').value);
   const msg = $('q-msg');
-  if (!id) { msg.textContent = 'Poné el ID de la parcela (ej: 20).'; return; }
-  if (!(ton > 0)) { msg.textContent = 'Poné cuántas toneladas van en este embarque.'; return; }
+  if (!id) { msg.textContent = 'Poné el número de la parcela (ej: 20).'; return false; }
+  if (!(ton > 0)) { msg.textContent = 'Poné cuántas toneladas van en este embarque.'; return false; }
   const p = PARCELAS.find((x) => String(x.activo_id_onchain) === id);
-  if (!p) { msg.textContent = `No existe una parcela sellada con el ID #${id}.`; return; }
-  if (!esElegible(p)) { msg.textContent = `La parcela #${id} se selló antes del paquete verificable: no puede entrar a un lote.`; return; }
-  if (LOTE.length && p.cliente_id !== CLIENTE_ID) { msg.textContent = `La #${id} es de otro cliente (${p.cliente}). Un lote es de un solo cliente.`; return; }
+  if (!p) { msg.textContent = `No existe una parcela sellada con el número #${id}.`; return false; }
+  if (!esElegible(p)) { msg.textContent = `La parcela #${id} se selló antes del paquete verificable: no puede entrar a un lote.`; return false; }
+  if (LOTE.length && p.cliente_id !== CLIENTE_ID) { msg.textContent = `La #${id} es de otro cliente (${p.cliente}). Un lote es de un solo cliente.`; return false; }
   const ya = LOTE.find((x) => String(x.id) === id);
   if (ya) ya.ton = ton; else LOTE.push({ id, ton });
   if (CLIENTE_ID !== p.cliente_id) { CLIENTE_ID = p.cliente_id; cargarLotes(); }
-  msg.innerHTML = `<span style="color:var(--emerald);font-size:14px;">✓ #${esc(id)} (${esc(p.nombre_activo)}, de ${esc(p.cliente)}) agregada con ${esc(ton)} t.</span> Las casillas se vaciaron para que agregues otra; si no, bajá y tocá SIMULAR.`;
+  msg.innerHTML = `<span style="color:var(--emerald);font-size:14px;">✓ #${esc(id)} (${esc(p.nombre_activo)}, de ${esc(p.cliente)}) agregada con ${esc(ton)} t.</span> Si va otra parcela, escribila; si no, tocá CERTIFICAR.`;
   $('q-id').value = ''; $('q-ton').value = ''; $('q-id').focus();
   renderArmadorLote(); invalidarSimulacion();
   traerInfo(id);
+  return true;
+}
+// Si quedó escrito algo sin sumar, se suma solo antes de simular o certificar.
+function sumarPendiente() {
+  if (String($('q-id').value || '').trim() || String($('q-ton').value || '').trim()) return agregarPorId();
+  return true;
 }
 
 function datosLote() {
@@ -516,15 +568,12 @@ function datosLote() {
     cultivo: $('l-cultivo').value.trim().toLowerCase(),
     anio: Number($('l-anio').value),
     fecha: $('l-fecha').value,
-    receptor: $('l-receptor').value.trim(),
+    receptor: $('l-receptor').value.trim() || EMAIL,
     parcelas,
   };
 }
 
-function invalidarSimulacion() {
-  FIRMA_APTA = null;
-  $('btn-sellar').disabled = true;
-}
+function invalidarSimulacion() { /* AJUSTE 17/10: CERTIFICAR simula y sella los mismos datos */ }
 
 function renderResultado(r, titulo) {
   const apto = r.veredicto === 'APTO';
@@ -559,47 +608,85 @@ async function llamarLote(cuerpo) {
   return r.json();
 }
 
-async function simularLote() {
-  const d = datosLote();
-  if (!d.parcelas.length) return mensajeLote('Elegí al menos una parcela y cargá sus toneladas.', false);
-  $('btn-simular').disabled = true;
-  mensajeLote('Simulando… (no gasta gas ni descuenta nada)', true);
+// Señal de riesgo del lote simulado (informativa; se sella con el lote).
+async function riesgoDelLote(d) {
   try {
-    const r = await llamarLote({ accion: 'simular', ...d });
-    if (r && Array.isArray(r.parcelas)) {
-      renderResultado(r);
-      if (r.ok && r.veredicto === 'APTO') { FIRMA_APTA = JSON.stringify(d); $('btn-sellar').disabled = false; }
-    } else {
-      mensajeLote(esc((r && r.error) || 'No se pudo simular.'), false);
-    }
-  } catch (_) {
-    mensajeLote('No se pudo contactar al servidor.', false);
-  } finally {
-    $('btn-simular').disabled = false;
-  }
+    const r = await llamarLote({ accion: 'riesgo', anio: d.anio, parcelas: d.parcelas });
+    if (!r || !r.ok) return null;
+    const filas = d.parcelas.map((p) => {
+      const x = r.riesgos && r.riesgos[p.activoIdOnchain];
+      const pa = PARCELAS.find((q) => String(q.activo_id_onchain) === String(p.activoIdOnchain)) || {};
+      const mot = x ? (x.motivos || []).map((m) => `<li class="${esc(m.nivel)}">${esc(m.texto)}</li>`).join('') : '';
+      return `<div style="margin-top:10px;"><strong>${esc(pa.nombre_activo || 'Parcela')}</strong> <span class="ayuda">#${esc(p.activoIdOnchain)}</span> ${sem(x)}<ul class="sem-mot">${mot}</ul></div>`;
+    }).join('');
+    const caja = document.createElement('div');
+    caja.className = 'res';
+    caja.innerHTML = `<div class="res-t" style="font-size:18px;">Señal de riesgo del lote: <span id="sem-lote">${sem({ color: r.color, motivos: [] })}</span></div>
+      <div class="res-d">Es informativa: no cambia APTO / NO APTO. Queda sellada con el lote.</div>${filas}`;
+    $('lote-resultado').appendChild(caja);
+    return r.color;
+  } catch (_) { return null; }
 }
 
-async function sellarLote() {
-  const d = datosLote();
-  if (!FIRMA_APTA || JSON.stringify(d) !== FIRMA_APTA) { invalidarSimulacion(); return mensajeLote('Los datos cambiaron desde la simulación. Simulá de nuevo.', false); }
-  const total = d.parcelas.reduce((s, p) => s + p.toneladas, 0);
-  if (!confirm(`Vas a sellar el lote ${d.codigo} en Polygon y descontar ${total} t del saldo de ${d.parcelas.length} parcela(s).\n\nEsto es real y no se puede deshacer. ¿Seguir?`)) return;
-  $('btn-sellar').disabled = true; $('btn-simular').disabled = true;
-  mensajeLote('Sellando en Polygon… una transacción por parcela y una para el lote. Puede tardar un par de minutos.', true);
+async function autoCodigo() {
+  if ($('l-codigo').value.trim()) return;
   try {
-    const r = await llamarLote({ accion: 'sellar', ...d });
-    if (!r || !r.ok) {
-      if (r && Array.isArray(r.parcelas)) renderResultado(r, r.error); else mensajeLote(esc((r && r.error) || 'No se pudo sellar.'), false);
-      $('btn-simular').disabled = false;
-      return;
+    const r = await llamarLote({ accion: 'siguienteCodigo', anio: Number($('l-anio').value) });
+    if (r && r.ok && !$('l-codigo').value) $('l-codigo').value = r.codigo;
+  } catch (_) {}
+}
+
+function botones(on) { $('btn-certificar').disabled = !on; $('btn-simular').disabled = !on; $('q-agregar').disabled = !on; }
+
+// Simula (no gasta). Devuelve { r, color } o null.
+async function correrSimulacion() {
+  if (!sumarPendiente()) return null;
+  const d0 = datosLote();
+  if (!d0.parcelas.length) { mensajeLote('Poné el número de la parcela y las toneladas.', false); return null; }
+  await autoCodigo();
+  const d = datosLote();
+  mensajeLote('Revisando satélite y saldo… (no gasta gas ni descuenta nada)', true);
+  try {
+    const r = await llamarLote({ accion: 'simular', ...d });
+    if (r && Array.isArray(r.parcelas)) { renderResultado(r); const color = await riesgoDelLote(d); return { r, color, d }; }
+    mensajeLote(esc((r && r.error) || 'No se pudo simular.'), false);
+  } catch (_) { mensajeLote('No se pudo contactar al servidor.', false); }
+  return null;
+}
+
+async function simularLote() {
+  botones(false);
+  try { await correrSimulacion(); } finally { botones(true); }
+}
+
+// CERTIFICAR = simular y, si es APTO, una confirmación y se sella. (AJUSTE 17/10)
+async function certificarLote() {
+  botones(false);
+  let sellando = false;
+  try {
+    const sim = await correrSimulacion();
+    if (!sim || !(sim.r.ok && sim.r.veredicto === 'APTO')) return;
+    const d = sim.d;
+    const total = d.parcelas.reduce((s, p) => s + p.toneladas, 0);
+    const senal = sim.color ? `\nSeñal de riesgo: ${SEM_ETIQ[sim.color] || sim.color}.` : '';
+    if (!confirm(`Lote APTO.${senal}\n\nVas a sellar el lote ${d.codigo} en Polygon y descontar ${num(total, nf2)} t del saldo de ${d.parcelas.length} parcela(s).\nEsto es real y no se puede deshacer. ¿Sellar?`)) return;
+    sellando = true;
+    mensajeLote('Sellando en Polygon… una transacción por parcela y una para el lote. Puede tardar un par de minutos.', true);
+    try {
+      const r = await llamarLote({ accion: 'sellar', ...d });
+      if (!r || !r.ok) { if (r && Array.isArray(r.parcelas)) renderResultado(r, r.error); else mensajeLote(esc((r && r.error) || 'No se pudo sellar.'), false); return; }
+      await esperarSellado(d.codigo);
+    } catch (_) {
+      mensajeLote('Se perdió la conexión. El sellado puede seguir en el servidor: mirá la lista de lotes en un momento.', false);
     }
-    await esperarSellado(d.codigo);
-  } catch (_) {
-    mensajeLote('Se perdió la conexión. El sellado puede seguir en el servidor: mirá la lista de lotes en un momento.', false);
   } finally {
-    $('btn-simular').disabled = false;
-    invalidarSimulacion();
-    cargarLotes();
+    botones(true);
+    if (sellando) {
+      // Se actualiza solo: lote vacío, código siguiente, saldos nuevos y lista de lotes.
+      LOTE = []; Object.keys(INFO).forEach((k) => delete INFO[k]);
+      $('l-codigo').value = ''; renderArmadorLote(); autocompletarCultivo();
+      await autoCodigo(); cargarLotes();
+    }
   }
 }
 
@@ -650,9 +737,10 @@ function iniciarLotes() {
   $('l-fecha').value = hoy.toISOString().slice(0, 10);
   ['l-codigo', 'l-cultivo', 'l-anio', 'l-fecha', 'l-receptor'].forEach((id) => $(id).addEventListener('input', invalidarSimulacion));
   $('btn-simular').addEventListener('click', simularLote);
+  $('btn-certificar').addEventListener('click', certificarLote);
   $('q-agregar').addEventListener('click', agregarPorId);
-  $('q-ton').addEventListener('keydown', (e) => { if (e.key === 'Enter') agregarPorId(); });
-  $('btn-sellar').addEventListener('click', sellarLote);
+  $('q-id').addEventListener('input', fichaPorId);
+  ['q-id', 'q-ton'].forEach((id) => $(id).addEventListener('keydown', (e) => { if (e.key === 'Enter') certificarLote(); }));
   CLIENTE_FIJO_ID = CLIENTE_FIJO ? ((PARCELAS.find((p) => p.cliente_id) || {}).cliente_id || null) : null;
   CLIENTE_ID = CLIENTE_FIJO_ID;
   renderArmadorLote();
@@ -673,6 +761,7 @@ async function iniciar() {
   }
 
   TOKEN = session.access_token;
+  EMAIL = (session.user && session.user.email) || '';
   let r, data;
   try {
     r = await fetch(API_PANEL, {
