@@ -437,8 +437,12 @@ h1{font-family:'Playfair Display',serif;font-weight:400;font-size:clamp(26px,4vw
       return;
     }
     var hist = (r.historia||[]).filter(function(h){ return h.vigor!=null; }).length;
+    var sinCiclo = !!(r.ciclo && r.ciclo.sinCiclo);
+    var alerta = sinCiclo
+      ? '<div class="bal-row total cero" style="border-top:none;"><span class="k" style="color:#E0705C;">LO DECLARADO NO COINCIDE CON LO OBSERVADO</span><span class="d" style="color:rgba(232,228,218,0.85);">El campo está declarado como '+esc(String(r.cultivo||'cultivo anual'))+', pero el satélite no ve un ciclo de cultivo en toda la campaña: el vigor se mantuvo casi plano (entre '+esc(String(r.ciclo.min).replace('.',','))+' y '+esc(String(r.ciclo.max).replace('.',','))+') en vez de arrancar bajo, crecer y cosecharse. Así se ve un monte, una pastura o un campo sin sembrar. Las comparaciones de abajo no se leen como rinde.</span></div>'
+      : '';
     $('rindeCuerpo').innerHTML = '<div class="bal">'+
-      '<div class="bal-head"><span class="bal-t">'+cult+' · CAMPAÑA '+esc(r.campana)+'</span><span class="bal-u">ÍNDICE SATELITAL RELATIVO</span></div>'+
+      '<div class="bal-head"><span class="bal-t">'+cult+' · CAMPAÑA '+esc(r.campana)+'</span><span class="bal-u">'+(sinCiclo?'SIN CICLO DE CULTIVO':'ÍNDICE SATELITAL RELATIVO')+'</span></div>'+ alerta +
       '<div class="bal-row"><span class="k">Respecto de su zona</span><span class="n">'+fmtPctSigno(r.vsZona)+'</span><span class="d">Comparado con una franja de 2 km alrededor del campo, en la misma campaña</span></div>'+
       '<div class="bal-row"><span class="k">Respecto de su historia</span><span class="n">'+fmtPctSigno(r.vsHistoria)+'</span><span class="d">Comparado con el promedio de '+hist+' campaña'+(hist===1?'':'s')+' anterior'+(hist===1?'':'es')+' del mismo campo</span></div>'+
       '</div>'+ curvaSVG(r.curva) +
