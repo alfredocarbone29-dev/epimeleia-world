@@ -77,6 +77,17 @@ h1{font-family:'Playfair Display',serif;font-weight:400;font-size:clamp(26px,4vw
 .bal-bar-lab{display:flex;justify-content:space-between;margin-top:7px;font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.5px;color:var(--muted);}
 .bal-foot{padding:12px 18px;border-top:1px solid var(--line);font-family:'JetBrains Mono',monospace;font-size:10px;line-height:1.8;color:var(--muted);}
 .bal-foot a{color:var(--emerald);}
+/* SEMÁFORO DE RIESGO DE ORIGEN (17/10/2026) */
+.sem{display:inline-flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;padding:4px 10px;border:1px solid;border-radius:3px;white-space:nowrap;}
+.sem::before{content:'';width:9px;height:9px;border-radius:50%;background:currentColor;box-shadow:0 0 8px currentColor;flex-shrink:0;}
+.sem.verde{color:#5FAD5F;border-color:rgba(95,173,95,0.4);background:rgba(95,173,95,0.07);}
+.sem.amarillo{color:#E5C870;border-color:rgba(229,200,112,0.45);background:rgba(229,200,112,0.07);}
+.sem.rojo{color:#E0705C;border-color:rgba(224,112,92,0.5);background:rgba(224,112,92,0.08);}
+.sem.gris{color:#7E8C7E;border-color:rgba(255,255,255,0.12);}
+.sem-mot{list-style:none;margin:12px 0 0;padding:0;}
+.sem-mot li{position:relative;padding:7px 0 7px 18px;border-top:1px solid rgba(255,255,255,0.06);font-size:15px;line-height:1.5;color:rgba(232,228,218,0.85);}
+.sem-mot li::before{content:'';position:absolute;left:2px;top:15px;width:7px;height:7px;border-radius:50%;}
+.sem-mot li.verde::before{background:#5FAD5F;} .sem-mot li.amarillo::before{background:#E5C870;} .sem-mot li.rojo::before{background:#E0705C;} .sem-mot li.gris::before{background:#7E8C7E;}
 .bal-nota{font-size:13px;color:var(--muted);margin-top:16px;line-height:1.65;}
 
 #mapa{width:100%;height:300px;border:1px solid var(--line);border-radius:4px;margin-bottom:20px;background:var(--panel);}
@@ -159,6 +170,14 @@ h1{font-family:'Playfair Display',serif;font-weight:400;font-size:clamp(26px,4vw
       <div class="dato"><span class="et">Veredicto</span><span class="va" id="dVeredicto">—</span></div>
       <div class="dato"><span class="et">Período</span><span class="va" id="dPeriodo">—</span></div>
       <div class="dato"><span class="et">Fuente</span><span class="va" id="dDefFuente">—</span></div>
+    </div>
+
+    <!-- SEMÁFORO DE RIESGO DE ORIGEN (AJUSTE 17/10/2026) -->
+    <div class="card" id="cardRiesgo" style="display:none;">
+      <div class="card-k">SEÑAL DE RIESGO DE ORIGEN</div>
+      <div id="riesgoCab"></div>
+      <ul class="sem-mot" id="riesgoMot"></ul>
+      <div class="bal-nota" id="riesgoPie"></div>
     </div>
 
     <!-- BALANCE DE CAPACIDAD (AJUSTE 16/10/2026 · formato profesional / financiero) -->
@@ -318,6 +337,7 @@ h1{font-family:'Playfair Display',serif;font-weight:400;font-size:clamp(26px,4vw
 
     // Capacidad y saldo
     pintarCapacidad(data.capacidad);
+    pintarRiesgo(data.riesgo);
 
     // Mediciones
     var med =Array.isArray(p.mediciones) ? p.mediciones : [];
@@ -357,6 +377,17 @@ h1{font-family:'Playfair Display',serif;font-weight:400;font-size:clamp(26px,4vw
   }
   function fmtPct(n){
     return Number(n).toLocaleString('es-AR',{minimumFractionDigits:1,maximumFractionDigits:1})+' %';
+  }
+  var SEM_ETIQ = { verde:'Sin señales', amarillo:'Mirar con atención', rojo:'Revisar antes de comprar', gris:'Sin datos suficientes' };
+  function pintarRiesgo(r){
+    var card = $('cardRiesgo');
+    if(!r || !r.color || !Array.isArray(r.motivos)){ card.style.display='none'; return; }
+    card.style.display='';
+    $('riesgoCab').innerHTML = '<span class="sem '+esc(r.color)+'">'+esc(SEM_ETIQ[r.color]||r.color)+'</span>';
+    $('riesgoMot').innerHTML = r.motivos.map(function(m){ return '<li class="'+esc(m.nivel)+'">'+esc(m.texto)+'</li>'; }).join('');
+    var t = r.calculadoEn ? new Date(r.calculadoEn) : new Date();
+    var corte = t.toISOString().slice(0,10).split('-').reverse().join('/')+' '+t.toISOString().slice(11,16)+' UTC';
+    $('riesgoPie').innerHTML = 'Indicador calculado al '+corte+' con los datos sellados de este campo: deforestación, polígono, capacidad y lotes. Las reglas son las mismas para todos los campos. No reemplaza la debida diligencia: señala dónde mirar. La cercanía a otros campos se mide solo entre los registrados en EPIMELEIA.';
   }
   function pintarCapacidad(caps){
     var card = $('cardCap');

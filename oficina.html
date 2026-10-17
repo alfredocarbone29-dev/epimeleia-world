@@ -72,6 +72,19 @@ td.nombre{font-family:'Playfair Display',serif;color:var(--white);text-transform
 .v{color:var(--emerald);} .x{color:var(--amber);}
 .oculto{display:none;}
 .foot{margin-top:40px;padding-top:22px;border-top:1px solid var(--line);font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;color:var(--dim);text-align:center;line-height:2;}
+/* SEMÁFORO DE RIESGO DE ORIGEN (17/10/2026) */
+.sem{display:inline-flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;padding:4px 10px;border:1px solid;border-radius:3px;white-space:nowrap;}
+.sem::before{content:'';width:9px;height:9px;border-radius:50%;background:currentColor;box-shadow:0 0 8px currentColor;flex-shrink:0;}
+.sem.verde{color:#5FAD5F;border-color:rgba(95,173,95,0.4);background:rgba(95,173,95,0.07);}
+.sem.amarillo{color:#E5C870;border-color:rgba(229,200,112,0.45);background:rgba(229,200,112,0.07);}
+.sem.rojo{color:#E0705C;border-color:rgba(224,112,92,0.5);background:rgba(224,112,92,0.08);}
+.sem.gris{color:#7E8C7E;border-color:rgba(255,255,255,0.12);}
+.sem-mot{list-style:none;margin:12px 0 0;padding:0;}
+.sem-mot li{position:relative;padding:7px 0 7px 18px;border-top:1px solid rgba(255,255,255,0.06);font-size:15px;line-height:1.5;color:rgba(232,228,218,0.85);}
+.sem-mot li::before{content:'';position:absolute;left:2px;top:15px;width:7px;height:7px;border-radius:50%;}
+.sem-mot li.verde::before{background:#5FAD5F;} .sem-mot li.amarillo::before{background:#E5C870;} .sem-mot li.rojo::before{background:#E0705C;} .sem-mot li.gris::before{background:#7E8C7E;}
+.res-sem{margin-top:12px;}
+.res-sem .res-t{font-size:17px;}
 @media(max-width:700px){
   #t-parcelas thead{display:none;}
   #t-parcelas,#t-parcelas tbody,#t-parcelas tr,#t-parcelas td{display:block;width:100%;}
@@ -116,8 +129,8 @@ td.nombre{font-family:'Playfair Display',serif;color:var(--white);text-transform
     <div class="card-k">Tus parcelas</div>
     <div class="caja">
       <table id="t-parcelas">
-        <thead><tr><th>Parcela</th><th class="num">ID</th><th class="num">Hectáreas</th><th>Deforestación</th><th class="num">Saldo disponible</th><th>Prueba pública</th></tr></thead>
-        <tbody id="tb-parcelas"><tr><td colspan="6" class="ayuda">Cargando…</td></tr></tbody>
+        <thead><tr><th>Parcela</th><th class="num">ID</th><th class="num">Hectáreas</th><th>Deforestación</th><th class="num">Saldo disponible</th><th>Riesgo</th><th>Prueba pública</th></tr></thead>
+        <tbody id="tb-parcelas"><tr><td colspan="7" class="ayuda">Cargando…</td></tr></tbody>
       </table>
     </div>
 
@@ -174,7 +187,14 @@ const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<'
 const nf = new Intl.NumberFormat('es-AR', { maximumFractionDigits: 2 });
 const num = (v) => (v === null || v === undefined || v === '' ? '—' : nf.format(Number(v)));
 
-let supa = null, TOKEN = '', PARCELAS = [], INFO = {}, LOTE = [], FIRMA = null;
+let supa = null, TOKEN = '', PARCELAS = [], INFO = {}, LOTE = [], FIRMA = null, RIESGO = {};
+const SEM_ETIQ = { verde:'Sin señales', amarillo:'Mirar', rojo:'Revisar', gris:'Sin datos' };
+function sem(r) {
+  if (r === undefined) return '<span class="ayuda">…</span>';
+  if (!r || !r.color) return '—';
+  const tip = (r.motivos || []).map((m) => m.texto).join(' · ');
+  return `<span class="sem ${esc(r.color)}" title="${esc(tip)}">${esc(SEM_ETIQ[r.color] || r.color)}</span>`;
+}
 
 function msg(id, texto, tipo) { const m = $(id); m.innerHTML = texto; m.className = 'msg' + (tipo ? ' ' + tipo : ''); }
 function chip(v) {
@@ -220,7 +240,7 @@ async function cargarOficina() {
   if (!r || !r.ok) return msg('msg-ofi', esc((r && r.error) || 'No se pudo cargar tu oficina.'), 'err');
   PARCELAS = (r.parcelas || []).filter((p) => p.sellada_onchain && p.activo_id_onchain != null);
   if (!PARCELAS.length) {
-    $('tb-parcelas').innerHTML = '<tr><td colspan="6" class="ayuda">Todavía no tenés parcelas selladas a tu nombre.</td></tr>';
+    $('tb-parcelas').innerHTML = '<tr><td colspan="7" class="ayuda">Todavía no tenés parcelas selladas a tu nombre.</td></tr>';
     $('bloque-lote').classList.add('oculto');
     return;
   }
@@ -244,6 +264,7 @@ function renderParcelas() {
       <td class="num" data-l="Hectáreas">${num(p.superficie_ha)}</td>
       <td data-l="Deforestación">${chip(p.veredicto)}</td>
       <td class="num" data-l="Saldo">${saldo}</td>
+      <td data-l="Riesgo">${Number(p.activo_id_onchain) >= VERIFICABLE_DESDE ? sem(RIESGO[p.activo_id_onchain]) : '—'}</td>
       <td data-l="Prueba"><a href="/verificar.html?id=${encodeURIComponent(p.activo_id_onchain)}" target="_blank" rel="noopener">VERIFICAR →</a></td>
     </tr>`;
   }).join('');
@@ -258,6 +279,39 @@ async function refrescarSaldos() {
     } catch (_) { INFO[p.activo_id_onchain] = { error: true }; }
   }));
   renderParcelas();
+  refrescarRiesgo();
+}
+
+// Semáforo de cada parcela (sin lote: toneladas 0).
+async function refrescarRiesgo() {
+  const ids = PARCELAS.map((p) => Number(p.activo_id_onchain)).filter((n) => n >= VERIFICABLE_DESDE);
+  if (!ids.length) return;
+  try {
+    const r = await api({ accion: 'riesgo', anio: Number($('l-anio').value) || new Date().getFullYear(),
+      parcelas: ids.map((id) => ({ activoIdOnchain: id, toneladas: 0 })) });
+    RIESGO = (r && r.ok && r.riesgos) || {};
+    ids.forEach((id) => { if (!(id in RIESGO)) RIESGO[id] = null; });
+  } catch (_) { ids.forEach((id) => { RIESGO[id] = null; }); }
+  renderParcelas();
+}
+
+// Semáforo del lote simulado (cuenta las toneladas del lote).
+async function riesgoDelLote(d) {
+  try {
+    const r = await api({ accion: 'riesgo', anio: d.anio, parcelas: d.parcelas });
+    if (!r || !r.ok) return;
+    const filas = d.parcelas.map((p) => {
+      const x = r.riesgos && r.riesgos[p.activoIdOnchain];
+      const pa = PARCELAS.find((q) => String(q.activo_id_onchain) === String(p.activoIdOnchain)) || {};
+      const mot = x ? (x.motivos || []).map((m) => `<li class="${esc(m.nivel)}">${esc(m.texto)}</li>`).join('') : '<li class="gris">No se pudo calcular.</li>';
+      return `<div style="margin-top:10px;"><span class="nombre" style="font-family:'Playfair Display',serif;color:var(--white);text-transform:capitalize;">${esc(pa.nombre_activo || 'Parcela')}</span> <span class="ayuda">#${esc(p.activoIdOnchain)}</span> ${sem(x || null)}<ul class="sem-mot">${mot}</ul></div>`;
+    }).join('');
+    const caja = document.createElement('div');
+    caja.className = 'res res-sem';
+    caja.innerHTML = `<div class="res-t">Señal de riesgo del lote: ${sem({ color: r.color, motivos: [] })}</div>
+      <div class="res-d">Es informativa: no cambia APTO / NO APTO. Indica dónde mirar, con las mismas reglas para todos.</div>${filas}`;
+    $('lote-res').appendChild(caja);
+  } catch (_) {}
 }
 
 /* ── Armar lote ── */
@@ -329,7 +383,7 @@ async function simular() {
   $('btn-simular').disabled = true; aviso('Simulando… (no gasta nada)', true);
   try {
     const r = await api({ accion: 'simular', ...datos() });
-    if (r && Array.isArray(r.parcelas)) { resultado(r); if (r.ok && r.veredicto === 'APTO') { FIRMA = JSON.stringify(datos()); $('btn-sellar').disabled = false; } }
+    if (r && Array.isArray(r.parcelas)) { resultado(r); if (r.ok && r.veredicto === 'APTO') { FIRMA = JSON.stringify(datos()); $('btn-sellar').disabled = false; } await riesgoDelLote(datos()); }
     else aviso(esc((r && r.error) || 'No se pudo simular.'), false);
   } catch (_) { aviso('No se pudo contactar al servidor.', false); }
   finally { $('btn-simular').disabled = false; }
