@@ -378,6 +378,26 @@ async function accionLote(supabase, body, res, soloCliente) {
       }
     }
     const datos = { codigo: body.codigo, cultivo: body.cultivo, anio: body.anio, fecha: body.fecha, receptor: body.receptor, parcelas: body.parcelas };
+    // AJUSTE 17/10: al SELLAR, la señal de riesgo se calcula ACÁ (servidor) y viaja
+    // al VPS para quedar dentro del paquete sellado del lote. Nunca se toma del navegador.
+    if (accion === 'sellar') {
+      try {
+        const anioL = Number(body.anio) || new Date().getFullYear();
+        const lista = (Array.isArray(body.parcelas) ? body.parcelas : []).slice(0, 100);
+        const parcelasR = [];
+        let colorL = 'verde';
+        for (const p of lista) {
+          const id = Number(p && p.activoIdOnchain);
+          if (!Number.isInteger(id) || id <= 0) continue;
+          const r = await calcularRiesgo(supabase, id, { anio: anioL, toneladasLote: Number(p.toneladas) || 0 });
+          parcelasR.push({ activoIdOnchain: id, color: r.color, motivos: r.motivos });
+          if (RIESGO_ORDEN[r.color] > RIESGO_ORDEN[colorL]) colorL = r.color;
+        }
+        if (parcelasR.length) datos.senalRiesgo = { version: 'riesgo-v1', color: colorL, calculadoEn: new Date().toISOString(), parcelas: parcelasR };
+      } catch (e) {
+        console.error('[panel/lote] señal de riesgo no calculada (el lote se sella igual):', e && e.message);
+      }
+    }
     try {
       return res.status(200).json(await llamarVps(datos, accion === 'sellar'));
     } catch (err) {
