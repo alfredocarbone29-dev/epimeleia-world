@@ -336,6 +336,7 @@ h1{font-family:'Playfair Display',serif;font-weight:400;font-size:clamp(26px,4vw
     }
 
     // Capacidad y saldo
+    RETENIDO = !!(def && def.hubo === true);
     pintarCapacidad(data.capacidad);
     pintarRiesgo(data.riesgo);
 
@@ -389,6 +390,7 @@ h1{font-family:'Playfair Display',serif;font-weight:400;font-size:clamp(26px,4vw
     var corte = t.toISOString().slice(0,10).split('-').reverse().join('/')+' '+t.toISOString().slice(11,16)+' UTC';
     $('riesgoPie').innerHTML = 'Indicador calculado al '+corte+' con los datos sellados de este campo: deforestación, polígono, capacidad y lotes. Las reglas son las mismas para todos los campos. No reemplaza la debida diligencia: señala dónde mirar. La cercanía a otros campos se mide solo entre los registrados en EPIMELEIA.';
   }
+  var RETENIDO = false; // AJUSTE 17/10: campo con deforestación → su capacidad queda RETENIDA
   function pintarCapacidad(caps){
     var card = $('cardCap');
     if(!Array.isArray(caps) || !caps.length){ card.style.display='none'; return; }
@@ -407,9 +409,11 @@ h1{font-family:'Playfair Display',serif;font-weight:400;font-size:clamp(26px,4vw
         '<div class="bal-head"><span class="bal-t">'+cultivo+' · CAMPAÑA '+esc(c.anio)+'</span><span class="bal-u">TONELADAS MÉTRICAS</span></div>'+
         '<div class="bal-row"><span class="k">Capacidad productiva anual</span><span class="n">'+fmtTon(cap)+'</span>'+(base?'<span class="d">'+base+'</span>':'')+'</div>'+
         '<div class="bal-row menos"><span class="k">Comprometido en lotes sellados</span><span class="n">'+fmtTon(usado)+'</span><span class="d">'+nLotes+(nLotes===1?' lote sellado':' lotes sellados')+' en Polygon</span></div>'+
-        '<div class="bal-row total'+(saldo<=0?' cero':'')+'"><span class="k">SALDO DISPONIBLE</span><span class="n">'+fmtTon(saldo)+'</span></div>'+
-        '<div class="bal-bar"><div class="bal-bar-track"><div class="bal-bar-fill" style="width:'+pct.toFixed(2)+'%"></div></div>'+
-          '<div class="bal-bar-lab"><span>Utilizado '+fmtPct(pct)+'</span><span>Disponible '+fmtPct(100-pct)+'</span></div></div>'+
+        (RETENIDO
+          ? '<div class="bal-row total cero"><span class="k">RETENIDAS · NO PUEDEN SALIR</span><span class="n">'+fmtTon(saldo)+'</span><span class="d">Deforestación detectada: ninguna de estas toneladas puede salir por un lote.</span></div>'
+          : '<div class="bal-row total'+(saldo<=0?' cero':'')+'"><span class="k">SALDO DISPONIBLE</span><span class="n">'+fmtTon(saldo)+'</span></div>')+
+        '<div class="bal-bar"><div class="bal-bar-track"><div class="bal-bar-fill" style="'+(RETENIDO?'background:var(--amber);':'')+'width:'+pct.toFixed(2)+'%"></div></div>'+
+          '<div class="bal-bar-lab"><span>Utilizado '+fmtPct(pct)+'</span><span>'+(RETENIDO?'Retenido ':'Disponible ')+fmtPct(100-pct)+'</span></div></div>'+
         '<div class="bal-foot">Corte: '+corte+
           (c.polygonscanTx ? '<br>Declaración de capacidad: <a href="'+esc(c.polygonscanTx)+'" target="_blank" rel="noopener">ver transacción en Polygon →</a>' : '')+
         '</div>'+

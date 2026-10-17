@@ -257,7 +257,11 @@ function renderParcelas() {
   $('tb-parcelas').innerHTML = PARCELAS.map((p) => {
     const id = esc(p.activo_id_onchain);
     const i = INFO[p.activo_id_onchain];
-    const saldo = !i ? '…' : (i.error ? '—' : (i.saldo != null ? num(i.saldo) + ' t' + (i.cultivo ? ' · ' + esc(i.cultivo) : '') : 'sin capacidad'));
+    const retenida = p.veredicto === 'hubo deforestacion';
+    const saldo = !i ? '…' : (i.error ? '—' : (i.saldo != null
+      ? (retenida ? `<span style="color:var(--amber);" title="Deforestación detectada: ninguna de estas toneladas puede salir por un lote.">${num(i.saldo)} t · retenidas</span>`
+                  : num(i.saldo) + ' t' + (i.cultivo ? ' · ' + esc(i.cultivo) : ''))
+      : 'sin capacidad'));
     return `<tr>
       <td class="nombre">${esc(p.nombre_activo || '(sin nombre)')}</td>
       <td class="num" data-l="ID">#${id}</td>
