@@ -565,7 +565,7 @@ function datosLote() {
   const parcelas = LOTE.map((x) => ({ activoIdOnchain: Number(x.id), toneladas: Number(x.ton) }));
   return {
     codigo: $('l-codigo').value.trim(),
-    cultivo: $('l-cultivo').value.trim().toLowerCase(),
+    cultivo: ($('l-cultivo').value.trim() || [...new Set(LOTE.map((x) => INFO[String(x.id)] && INFO[String(x.id)].cultivo).filter(Boolean))].join('')).toLowerCase(),
     anio: Number($('l-anio').value),
     fecha: $('l-fecha').value,
     receptor: $('l-receptor').value.trim() || EMAIL,
@@ -643,6 +643,10 @@ async function correrSimulacion() {
   if (!sumarPendiente()) return null;
   const d0 = datosLote();
   if (!d0.parcelas.length) { mensajeLote('Poné el número de la parcela y las toneladas.', false); return null; }
+  // Esperar los datos de cada parcela (cultivo y saldo) antes de simular.
+  await Promise.all(LOTE.filter((x) => !INFO[String(x.id)] || INFO[String(x.id)].error || !INFO[String(x.id)].cultivo)
+    .map((x) => traerInfo(String(x.id))));
+  autocompletarCultivo();
   await autoCodigo();
   const d = datosLote();
   mensajeLote('Revisando satélite y saldo… (no gasta gas ni descuenta nada)', true);
