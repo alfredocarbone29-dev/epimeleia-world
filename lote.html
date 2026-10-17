@@ -84,6 +84,17 @@ h1{font-family:'Playfair Display',serif;font-weight:400;font-size:clamp(26px,4vw
 .nota{font-size:14.5px;color:rgba(232,228,218,0.65);line-height:1.7;}
 .foot{margin-top:40px;padding-top:24px;border-top:1px solid var(--line);font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;color:var(--dim);line-height:2;text-align:center;}
 .oculto{display:none;}
+/* SEÑAL DE RIESGO SELLADA (17/10/2026) */
+.sem{display:inline-flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;padding:4px 10px;border:1px solid;border-radius:3px;white-space:nowrap;}
+.sem::before{content:'';width:9px;height:9px;border-radius:50%;background:currentColor;flex-shrink:0;}
+.sem.verde{color:#5FAD5F;border-color:rgba(95,173,95,0.4);background:rgba(95,173,95,0.07);}
+.sem.amarillo{color:#E5C870;border-color:rgba(229,200,112,0.45);background:rgba(229,200,112,0.07);}
+.sem.rojo{color:#E0705C;border-color:rgba(224,112,92,0.5);background:rgba(224,112,92,0.08);}
+.sem.gris{color:#7E8C7E;border-color:rgba(255,255,255,0.12);}
+.sem-mot{list-style:none;margin:8px 0 0;padding:0;}
+.sem-mot li{font-size:14.5px;line-height:1.55;color:rgba(232,228,218,0.82);padding:4px 0 4px 16px;position:relative;}
+.sem-mot li::before{content:'';position:absolute;left:2px;top:12px;width:6px;height:6px;border-radius:50%;background:#7E8C7E;}
+.sem-mot li.amarillo::before{background:#E5C870;} .sem-mot li.rojo::before{background:#E0705C;} .sem-mot li.verde::before{background:#5FAD5F;}
 @media(max-width:600px){ .dato{flex-direction:column;gap:2px;} .dato .va{text-align:left;} }
 </style>
 </head>
@@ -145,6 +156,13 @@ h1{font-family:'Playfair Display',serif;font-weight:400;font-size:clamp(26px,4vw
       <div id="listaParcelas"></div>
     </div>
 
+    <div class="card oculto" id="cardRiesgo">
+      <div class="card-k">SEÑAL DE RIESGO DE ORIGEN · SELLADA CON EL LOTE</div>
+      <div id="riesgoCab"></div>
+      <div id="riesgoLista"></div>
+      <p class="nota" id="riesgoPie" style="margin-top:12px;"></p>
+    </div>
+
     <div class="card">
       <div class="card-k">DÓNDE COMPROBARLO EN LA CADENA</div>
       <div class="links">
@@ -184,7 +202,10 @@ h1{font-family:'Playfair Display',serif;font-weight:400;font-size:clamp(26px,4vw
 
   function esc(v){ return String(v == null ? '' : v).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
   function corto(h){ h = String(h || ''); return h.length > 20 ? h.slice(0, 10) + '…' + h.slice(-8) : h; }
-  function num(n){ return Number(n).toLocaleString('es-AR', { maximumFractionDigits: 3 }); }
+  // AJUSTE 17/10: toneladas con dos decimales fijos, igual que el balance de Verificar
+  // (antes 49,997 acá y 50,00 allá). El valor exacto sigue en el paquete descargable.
+  function num(n){ return Number(n).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+  var SEM_ETIQ = { verde:'Sin señales', amarillo:'Mirar con atención', rojo:'Revisar', gris:'Sin datos suficientes' };
 
   function mostrarEstado(clase, ico, titulo, detalle){
     var e = $('estado');
@@ -281,6 +302,24 @@ h1{font-family:'Playfair Display',serif;font-weight:400;font-size:clamp(26px,4vw
     $('dCantidad').textContent = lista.length;
     $('dVeredicto').textContent = p.veredicto === 'APTO' ? 'APTO · todas las parcelas libres de deforestación' : (p.veredicto || '—');
     $('dReceptor').textContent = corto(p.receptorHash) || '—';
+
+    // Señal de riesgo sellada (solo lotes traz-lote-v2 en adelante)
+    var sr = p.senalRiesgo;
+    if (sr && sr.color) {
+      $('cardRiesgo').classList.remove('oculto');
+      $('riesgoCab').innerHTML = '<span class="sem ' + esc(sr.color) + '">' + esc(SEM_ETIQ[sr.color] || sr.color) + '</span>';
+      var nombres = {}; lista.forEach(function(x){ nombres[x.activoIdOnchain] = x.nombreActivo; });
+      $('riesgoLista').innerHTML = (sr.parcelas || []).map(function(q){
+        return '<div class="parcela"><div class="parcela-top"><span class="parcela-n">' + esc(nombres[q.activoIdOnchain] || ('Parcela #' + q.activoIdOnchain)) + '</span>' +
+          '<span class="sem ' + esc(q.color) + '">' + esc(SEM_ETIQ[q.color] || q.color) + '</span></div>' +
+          '<ul class="sem-mot">' + (q.motivos || []).map(function(m){ return '<li class="' + esc(m.nivel) + '">' + esc(m.texto) + '</li>'; }).join('') + '</ul></div>';
+      }).join('');
+      var t = sr.calculadoEn ? new Date(sr.calculadoEn) : null;
+      $('riesgoPie').textContent = 'Así estaba cada parcela en el momento de sellar este lote' + (t ? ' (' + t.toISOString().slice(0,16).replace('T',' ') + ' UTC)' : '') +
+        '. Forma parte del paquete sellado: no se puede cambiar después. Es informativa: no cambia el veredicto APTO; señala dónde mirar, con las mismas reglas para todos los campos.';
+    } else {
+      $('cardRiesgo').classList.add('oculto');
+    }
 
     $('listaParcelas').innerHTML = lista.map(function(x){
       var id = Number(x.activoIdOnchain);

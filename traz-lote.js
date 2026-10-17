@@ -37,6 +37,13 @@
  *   dentro de la huella de cada paquete satelital), ni el email del
  *   receptor (solo su huella), ni el cliente.
  *
+ * AJUSTE 17/10/2026 · LA SEÑAL DE RIESGO QUEDA SELLADA EN EL LOTE
+ *   Si el pedido trae `senalRiesgo` (lo calcula api/panel.js en el servidor,
+ *   nunca el navegador), entra al paquete del lote y por lo tanto a su huella
+ *   en Polygon. El paquete pasa a 'traz-lote-v2'. Es informativa: NO cambia
+ *   APTO / NO APTO. Un lote sin señal se sella igual que antes ('traz-lote-v1').
+ *   Los lotes ya sellados no cambian: su paquete guardado es el que se selló.
+ *
  * Este módulo NO toca el oráculo ni los contratos .sol.
  * ═════════════════════════════════════════════════════════════
  */
@@ -45,6 +52,8 @@ const { ethers } = require('ethers');
 const { sellarPaquete } = require('./paquete-evidencia');
 
 const TRAZ_LOTE_VERSION = 'traz-lote-v1';
+const TRAZ_LOTE_VERSION_CON_RIESGO = 'traz-lote-v2';
+const COLORES_RIESGO = ['verde', 'amarillo', 'rojo', 'gris'];
 
 const TABLA_LOTES = 'traz_lotes';
 const TABLA_DECL  = 'traz_declaraciones';
@@ -74,6 +83,22 @@ function _codigoValido(c) {
 
 function _fechaValida(f) {
   return typeof f === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(f) && !isNaN(Date.parse(f));
+}
+
+// Limpia la señal de riesgo que viene del servidor: solo campos conocidos,
+// textos acotados. Si algo no cuadra, el lote se sella sin señal (como antes).
+function _normalizarRiesgo(r) {
+  if (!r || typeof r !== 'object' || !COLORES_RIESGO.includes(r.color)) return null;
+  const parcelas = (Array.isArray(r.parcelas) ? r.parcelas : []).slice(0, MAX_PARCELAS).map((p) => {
+    const id = Number(p && p.activoIdOnchain);
+    if (!Number.isInteger(id) || id <= 0 || !COLORES_RIESGO.includes(p.color)) return null;
+    const motivos = (Array.isArray(p.motivos) ? p.motivos : []).slice(0, 10)
+      .filter((m) => m && COLORES_RIESGO.includes(m.nivel) && typeof m.texto === 'string')
+      .map((m) => ({ nivel: m.nivel, texto: m.texto.slice(0, 300) }));
+    return { activoIdOnchain: id, color: p.color, motivos };
+  }).filter(Boolean).sort((a, b) => a.activoIdOnchain - b.activoIdOnchain);
+  const calculadoEn = typeof r.calculadoEn === 'string' && !isNaN(Date.parse(r.calculadoEn)) ? new Date(r.calculadoEn).toISOString() : null;
+  return { version: typeof r.version === 'string' ? r.version.slice(0, 20) : 'riesgo-v1', color: r.color, calculadoEn, parcelas };
 }
 
 function referenciaDeLote(codigo) {
@@ -113,7 +138,8 @@ function normalizarEntrada(datos) {
   }
   parcelas.sort((a, b) => a.activoIdOnchain - b.activoIdOnchain);
 
-  return { codigo, cultivo, anio, fecha, receptor, parcelas, errores };
+  const senalRiesgo = _normalizarRiesgo(d.senalRiesgo);
+  return { codigo, cultivo, anio, fecha, receptor, parcelas, errores, senalRiesgo };
 }
 
 // ─── Prueba 1: el satélite (sobre el paquete SELLADO) ───────────
@@ -230,8 +256,12 @@ async function evaluarParcela(db, parcela, lote) {
 // ─── El paquete público del lote ────────────────────────────────
 function construirPaqueteLote(lote, items) {
   const ordenados = items.slice().sort((a, b) => a.activoIdOnchain - b.activoIdOnchain);
-  return {
-    version: TRAZ_LOTE_VERSION,
+  const ids = new Set(ordenados.map((i) => i.activoIdOnchain));
+  const riesgo = lote.senalRiesgo
+    ? { ...lote.senalRiesgo, parcelas: lote.senalRiesgo.parcelas.filter((p) => ids.has(p.activoIdOnchain)) }
+    : null;
+  const paquete = {
+    version: riesgo ? TRAZ_LOTE_VERSION_CON_RIESGO : TRAZ_LOTE_VERSION,
     tipo: 'lote',
     codigo: lote.codigo,
     cultivo: lote.cultivo,
@@ -250,6 +280,9 @@ function construirPaqueteLote(lote, items) {
       atribucionHash: String(i.atribucionHash).toLowerCase(),
     })),
   };
+  // Señal de riesgo al momento del sellado (AJUSTE 17/10): entra a la huella.
+  if (riesgo) paquete.senalRiesgo = riesgo;
+  return paquete;
 }
 
 function _resumen(items) {
@@ -397,6 +430,7 @@ async function procesarLote(datos, ejecutar, deps = {}) {
 
 module.exports = {
   TRAZ_LOTE_VERSION,
+  TRAZ_LOTE_VERSION_CON_RIESGO,
   VEREDICTO,
   ESTADO,
   referenciaDeLote,
