@@ -127,6 +127,9 @@ async function leerCapacidad(idOnchain) {
 //     (al simular un lote, cuenta también ese lote)
 //   · Campo con deforestación detectada a 500 m o menos ......... ROJO
 //   · Campo con deforestación detectada a 5 km o menos .......... AMARILLO
+//   · Cultivo ANUAL declarado, pero el satélite no ve un ciclo de
+//     cultivo en la campaña (no arranca bajo, no sube, no baja) .. ROJO
+//     (lo declarado no coincide con lo observado; ver cicloDeCurva)
 //   · Usó el 70 % o más de su capacidad del año, pero el satélite
 //     vio una campaña 15 % o más por DEBAJO de su zona .......... AMARILLO
 //     (rinde medido, solo cultivos anuales; ver rinde.js)
@@ -180,6 +183,22 @@ function _rFechaDe(fila) {
 const _rPct = (n) => Math.round(n * 10) / 10;
 const _rFmt = (n) => Number(n).toLocaleString("es-AR", { maximumFractionDigits: 1 });
 
+// ¿La curva de la campaña muestra un ciclo de cultivo anual? (AJUSTE 17/10)
+// Un cultivo anual arranca con el suelo casi pelado, crece y se cosecha: el vigor
+// (NDVI) sube y baja mucho. Un monte, una pastura o un campo sin sembrar quedan
+// casi planos. Se mira solo lo que vio el satélite óptico (y los huecos cortos unidos).
+// Caso real que la originó: #30, declarado soja al azar, curva plana en 0,80.
+const CICLO_AMPLITUD_MIN = 0.25;
+function cicloDeCurva(curva) {
+  const v = (Array.isArray(curva) ? curva : [])
+    .filter((p) => p && p.ndvi != null && isFinite(p.ndvi) && p.origen !== 'radar' && p.origen !== 'sin dato')
+    .map((p) => Number(p.ndvi));
+  if (v.length < 6) return null;
+  const min = Math.min(...v), max = Math.max(...v);
+  const amplitud = Math.round((max - min) * 1000) / 1000;
+  return { min: Math.round(min * 1000) / 1000, max: Math.round(max * 1000) / 1000, amplitud, puntos: v.length, sinCiclo: amplitud < CICLO_AMPLITUD_MIN };
+}
+
 // supabase: cliente con service key · idOnchain: número · opciones: { anio, toneladasLote }
 async function calcularRiesgo(supabase, idOnchain, opciones) {
   const anio = Number(opciones && opciones.anio) || new Date().getFullYear();
@@ -196,6 +215,20 @@ async function calcularRiesgo(supabase, idOnchain, opciones) {
   const paq = _rPaquete(act && act.paquete_evidencia);
   const hubo = (vp && vp.veredicto === "hubo deforestacion") || (paq && paq.deforestacion && paq.deforestacion.hubo === true);
   if (hubo) sumar("rojo", "Deforestación detectada en este campo: ninguna tonelada puede salir en un lote.");
+
+  // 1b) Rinde medido de la campaña de este año (si se midió). AJUSTE 17/10.
+  let rc0 = null;
+  try {
+    const { data: rc } = await supabase.from("rinde_campanas")
+      .select("campana, cultivo, vs_zona, aplica, detalle").eq("activo_id_onchain", id).eq("anio_cosecha", anio).eq("aplica", true).limit(1);
+    rc0 = (rc && rc[0]) || null;
+  } catch (_) { rc0 = null; }
+  if (rc0 && !hubo) {
+    const c = cicloDeCurva(rc0.detalle && rc0.detalle.curva);
+    if (c && c.sinCiclo) {
+      sumar("rojo", `El satélite no ve un ciclo de ${rc0.cultivo || "cultivo anual"} en la campaña ${rc0.campana}: el vigor se mantuvo casi plano (entre ${String(c.min).replace(".", ",")} y ${String(c.max).replace(".", ",")}) en vez de crecer y cosecharse. Lo declarado no coincide con lo observado.`);
+    }
+  }
 
   // 2) Capacidad del año y uso.
   const { data: decls } = await supabase.from("traz_declaraciones")
@@ -225,15 +258,8 @@ async function calcularRiesgo(supabase, idOnchain, opciones) {
       sumar("gris", `Capacidad declarada en cero para ${anio}.`);
     }
     // Rinde medido por satélite (AJUSTE 17/10): vende mucho pero el satélite vio poco.
-    if (capacidad > 0 && usoPct !== null && usoPct >= 70) {
-      try {
-        const { data: rc } = await supabase.from("rinde_campanas")
-          .select("campana, vs_zona, aplica").eq("activo_id_onchain", id).eq("anio_cosecha", anio).eq("aplica", true).limit(1);
-        const r0 = rc && rc[0];
-        if (r0 && r0.vs_zona !== null && Number(r0.vs_zona) <= -0.15) {
-          sumar("amarillo", `${tonLote ? "Con este lote usa" : "Usó"} el ${_rFmt(usoPct)} % de su capacidad, pero el satélite vio la campaña ${r0.campana} un ${_rFmt(Math.abs(Number(r0.vs_zona)) * 100)} % por debajo de su zona: vende como si hubiera rendido más de lo que se vio crecer.`);
-        }
-      } catch (_) { /* sin tabla o sin dato: la regla no se aplica */ }
+    if (capacidad > 0 && usoPct !== null && usoPct >= 70 && rc0 && rc0.vs_zona !== null && Number(rc0.vs_zona) <= -0.15) {
+      sumar("amarillo", `${tonLote ? "Con este lote usa" : "Usó"} el ${_rFmt(usoPct)} % de su capacidad, pero el satélite vio la campaña ${rc0.campana} un ${_rFmt(Math.abs(Number(rc0.vs_zona)) * 100)} % por debajo de su zona: vende como si hubiera rendido más de lo que se vio crecer.`);
     }
   }
 
@@ -358,6 +384,7 @@ module.exports = async (req, res) => {
           temporada: d.temporada || null, motivo: d.motivo || null,
           historia: Array.isArray(d.historia) ? d.historia.map((h) => ({ campana: h.campana, vigor: h.vigor })) : [],
           curva: Array.isArray(d.curva) ? d.curva.map((p) => ({ fecha: p.fecha, ndvi: p.ndvi, origen: p.origen })) : [],
+          ciclo: f.aplica ? cicloDeCurva(d.curva) : null,
           calculadoEn: f.calculado_en,
         };
       }
