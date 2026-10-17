@@ -7,8 +7,17 @@
  * distingue una buena campaña de una floja.
  *
  * USO (en el servidor, dentro de ~/epimeleia-world):
- *     node rinde.js 29            → última campaña completa del campo #29
+ *     node rinde.js 29            → última campaña completa del campo #29 (solo muestra)
  *     node rinde.js 29 2024       → campaña que empezó en 2024
+ *     node rinde.js 29 --guardar  → además la GUARDA (tabla rinde_campanas) y
+ *                                   aparece en Verificar y en el semáforo
+ *     node rinde.js todos --guardar → todos los campos con capacidad declarada
+ *
+ * AJUSTE (17/10, pruebas reales #29 soja y #22 cacao): el rinde por satélite
+ * SOLO aplica a cultivos ANUALES (soja, maíz, trigo, girasol). En perennes
+ * (cacao, café, palma, caucho) la copa está verde todo el año y el rinde está
+ * en frutos que el satélite no ve: se guarda "no aplica" y el techo sigue
+ * saliendo del rinde de referencia.
  *
  * QUÉ HACE, EN CRIOLLO
  *   1. Toma el polígono sellado del campo (de Supabase, el mismo de Verificar).
@@ -65,12 +74,19 @@ async function tokenCopernicus() {
   return r.data.access_token;
 }
 
-async function leerCampo(idOnchain) {
+let _sb = null;
+function supa() {
+  if (_sb) return _sb;
   const url = _env('SUPABASE_URL');
   const key = _env('SUPABASE_SERVICE_KEY', 'SUPABASE_SERVICE_ROLE_KEY', 'SUPABASE_KEY');
   if (!url || !key) throw new Error('No encuentro SUPABASE_URL / SUPABASE_SERVICE_KEY en el .env del servidor.');
   const { createClient } = require('@supabase/supabase-js');
-  const sb = createClient(url, key, { auth: { persistSession: false } });
+  _sb = createClient(url, key, { auth: { persistSession: false } });
+  return _sb;
+}
+
+async function leerCampo(idOnchain) {
+  const sb = supa();
   const { data, error } = await sb.from('activos')
     .select('activo_id_onchain, nombre_activo, cultivo, pais, paquete_evidencia')
     .eq('activo_id_onchain', Number(idOnchain)).maybeSingle();
@@ -128,7 +144,7 @@ function temporada(cultivo, lat, anioInicio) {
     a = new Date().getUTCFullYear();
     while (Date.parse(iso(cruza ? a + 1 : a, hastaMes[0], hastaMes[1])) + DIA > hoy) a--;
   }
-  const v = (aa) => ({ desde: iso(aa, desdeMes[0], desdeMes[1]), hasta: new Date(Date.parse(iso(cruza ? aa + 1 : aa, hastaMes[0], hastaMes[1])) + DIA).toISOString(), etiqueta: cruza ? `${aa}/${String(aa + 1).slice(2)}` : String(aa) });
+  const v = (aa) => ({ desde: iso(aa, desdeMes[0], desdeMes[1]), hasta: new Date(Date.parse(iso(cruza ? aa + 1 : aa, hastaMes[0], hastaMes[1])) + DIA).toISOString(), etiqueta: cruza ? `${aa}/${String(aa + 1).slice(2)}` : String(aa), anioCosecha: cruza ? aa + 1 : aa });
   return { nombre, actual: v(a), anteriores: [v(a - 1), v(a - 2), v(a - 3)] };
 }
 
@@ -202,6 +218,15 @@ async function medirRinde(idOnchain, anioInicio) {
   const campo = await leerCampo(idOnchain);
   const [lon, lat] = centro(anilloDe(campo.poligono));
   const temp = temporada(campo.cultivo, lat, anioInicio);
+  if (PERENNES.includes(campo.cultivo)) {
+    return {
+      aplica: false,
+      campo: { id: campo.id, nombre: campo.nombre, cultivo: campo.cultivo, pais: campo.pais },
+      temporada: temp.nombre, campana: temp.actual.etiqueta, anioCosecha: temp.actual.anioCosecha,
+      motivo: 'Cultivo perenne: la copa está verde todo el año y el rinde está en frutos que el satélite no ve. El techo sale del rinde de referencia.',
+      calculadoEn: new Date().toISOString(),
+    };
+  }
   const token = await tokenCopernicus();
   const pausa = () => new Promise((ok) => setTimeout(ok, 500));
 
@@ -277,8 +302,9 @@ async function medirRinde(idOnchain, anioInicio) {
   const orientativo = campo.rindeRef != null && vsHistoria != null ? Math.round(campo.rindeRef * Math.max(0.3, Math.min(2, 1 + vsHistoria)) * 100) / 100 : null;
 
   return {
+    aplica: true,
     campo: { id: campo.id, nombre: campo.nombre, cultivo: campo.cultivo || '(sin cultivo)', pais: campo.pais },
-    temporada: temp.nombre, campana: temp.actual.etiqueta, ventana: temp.actual,
+    temporada: temp.nombre, campana: temp.actual.etiqueta, anioCosecha: temp.actual.anioCosecha, ventana: temp.actual,
     curva: curva.map((p) => ({ fecha: p.fecha && p.fecha.slice(0, 10), ndvi: p.valor != null ? Math.round(p.valor * 1000) / 1000 : null, origen: p.origen, calidad: p.calidad, radarVHdB: vhPorFecha[p.fecha] != null ? Math.round(vhPorFecha[p.fecha] * 100) / 100 : null })),
     pasadasOpticas: ndvi.filter((p) => p.valor !== null).length,
     rellenosRadar: curva.filter((p) => p.origen === 'radar').length,
@@ -294,6 +320,10 @@ async function medirRinde(idOnchain, anioInicio) {
 
 function imprimir(r) {
   const L = (s = '') => console.log(s);
+  if (r.aplica === false) {
+    L(); L(` #${r.campo.id} ${r.campo.nombre || ''} · ${r.campo.cultivo} · campaña ${r.campana}`);
+    L(' RINDE POR SATÉLITE: NO APLICA'); L(' ' + r.motivo); L(); return;
+  }
   L(); L('══════════════════════════════════════════════════════════════');
   L(` RINDE MEDIDO · #${r.campo.id} ${r.campo.nombre || ''} · ${r.campo.cultivo}`);
   L(` Campaña ${r.campana} (${r.temporada})`);
@@ -316,12 +346,46 @@ function imprimir(r) {
   L(' Ojo: si en alguna campaña anterior el campo tuvo otro cultivo (rotación soja/maíz), esa comparación se distorsiona.'); L();
 }
 
-if (require.main === module) {
-  const id = process.argv[2], anio = process.argv[3] ? Number(process.argv[3]) : null;
-  if (!id) { console.log('Uso: node rinde.js <ID del campo> [año de inicio de campaña]'); process.exit(1); }
-  medirRinde(id, anio)
-    .then((r) => { imprimir(r); require('fs').writeFileSync(`rinde-${id}.json`, JSON.stringify(r, null, 2)); console.log(` (detalle guardado en rinde-${id}.json)`); })
-    .catch((e) => { console.error('\n ✕ No se pudo medir:', e.response ? `${e.response.status} ${JSON.stringify(e.response.data).slice(0, 400)}` : e.message, '\n'); process.exit(1); });
+// Guarda una campaña en Supabase (tabla rinde_campanas). Una fila por campo y campaña.
+async function guardar(r) {
+  const fila = {
+    activo_id_onchain: r.campo.id, campana: r.campana, anio_cosecha: r.anioCosecha,
+    cultivo: r.campo.cultivo, aplica: r.aplica !== false,
+    vigor: r.vigor ?? null, promedio_historia: r.promedioHistoria ?? null, vigor_zona: r.vigorZona ?? null,
+    vs_historia: r.vsHistoria != null ? Math.round(r.vsHistoria * 10000) / 10000 : null,
+    vs_zona: r.vsZona != null ? Math.round(r.vsZona * 10000) / 10000 : null,
+    pasadas_opticas: r.pasadasOpticas ?? null, rellenos_radar: r.rellenosRadar ?? null,
+    detalle: r, calculado_en: r.calculadoEn,
+  };
+  const { error } = await supa().from('rinde_campanas').upsert(fila, { onConflict: 'activo_id_onchain,campana' });
+  if (error) throw new Error('No se pudo guardar en rinde_campanas: ' + error.message);
 }
 
-module.exports = { medirRinde, imprimir, temporada, vigorDeCampana, franjaVecinos };
+async function idsConCapacidad() {
+  const { data, error } = await supa().from('traz_declaraciones')
+    .select('origen_ref').eq('origen_tipo', 'epimeleia').eq('veredicto', 'ACEPTADA');
+  if (error) throw new Error('Supabase: ' + error.message);
+  return [...new Set((data || []).map((d) => Number(d.origen_ref)).filter((n) => n >= 18))].sort((a, b) => a - b);
+}
+
+if (require.main === module) {
+  const args = process.argv.slice(2);
+  const conGuardar = args.includes('--guardar');
+  const resto = args.filter((a) => a !== '--guardar');
+  const id = resto[0], anio = resto[1] ? Number(resto[1]) : null;
+  if (!id) { console.log('Uso: node rinde.js <ID del campo | todos> [año de inicio de campaña] [--guardar]'); process.exit(1); }
+  const error = (e) => (e.response ? `${e.response.status} ${JSON.stringify(e.response.data).slice(0, 400)}` : e.message);
+  (async () => {
+    const ids = id === 'todos' ? await idsConCapacidad() : [Number(id)];
+    for (const n of ids) {
+      try {
+        const r = await medirRinde(n, anio);
+        imprimir(r);
+        require('fs').writeFileSync(`rinde-${n}.json`, JSON.stringify(r, null, 2));
+        if (conGuardar) { await guardar(r); console.log(` ✓ #${n} guardado: ya se ve en Verificar.`); }
+      } catch (e) { console.error(`\n ✕ #${n} no se pudo medir: ${error(e)}\n`); }
+    }
+  })().catch((e) => { console.error('\n ✕', error(e), '\n'); process.exit(1); });
+}
+
+module.exports = { medirRinde, imprimir, guardar, temporada, vigorDeCampana, franjaVecinos };

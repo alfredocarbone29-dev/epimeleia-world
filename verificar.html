@@ -88,6 +88,14 @@ h1{font-family:'Playfair Display',serif;font-weight:400;font-size:clamp(26px,4vw
 .sem-mot li{position:relative;padding:7px 0 7px 18px;border-top:1px solid rgba(255,255,255,0.06);font-size:15px;line-height:1.5;color:rgba(232,228,218,0.85);}
 .sem-mot li::before{content:'';position:absolute;left:2px;top:15px;width:7px;height:7px;border-radius:50%;}
 .sem-mot li.verde::before{background:#5FAD5F;} .sem-mot li.amarillo::before{background:#E5C870;} .sem-mot li.rojo::before{background:#E0705C;} .sem-mot li.gris::before{background:#7E8C7E;}
+/* RINDE MEDIDO POR SATÉLITE (17/10/2026) */
+.rin-graf{margin:14px 0 6px;}
+.rin-graf > svg{width:100%;height:auto;display:block;}
+.rin-clave svg{width:12px;height:12px;flex-shrink:0;}
+.rin-graf .eje{stroke:rgba(255,255,255,0.08);stroke-width:1;}
+.rin-graf .lbl{font-family:'JetBrains Mono',monospace;font-size:9px;fill:#7E8C7E;}
+.rin-clave{display:flex;flex-wrap:wrap;gap:14px;font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--muted);margin-top:6px;}
+.rin-clave span{display:inline-flex;align-items:center;gap:6px;}
 .bal-nota{font-size:13px;color:var(--muted);margin-top:16px;line-height:1.65;}
 
 #mapa{width:100%;height:300px;border:1px solid var(--line);border-radius:4px;margin-bottom:20px;background:var(--panel);}
@@ -178,6 +186,13 @@ h1{font-family:'Playfair Display',serif;font-weight:400;font-size:clamp(26px,4vw
       <div id="riesgoCab"></div>
       <ul class="sem-mot" id="riesgoMot"></ul>
       <div class="bal-nota" id="riesgoPie"></div>
+    </div>
+
+    <!-- RINDE MEDIDO POR SATÉLITE (AJUSTE 17/10/2026) -->
+    <div class="card" id="cardRinde" style="display:none;">
+      <div class="card-k">VIGOR DE LA CAMPAÑA · RINDE MEDIDO POR SATÉLITE</div>
+      <div id="rindeCuerpo"></div>
+      <div class="bal-nota" id="rindePie"></div>
     </div>
 
     <!-- BALANCE DE CAPACIDAD (AJUSTE 16/10/2026 · formato profesional / financiero) -->
@@ -339,6 +354,7 @@ h1{font-family:'Playfair Display',serif;font-weight:400;font-size:clamp(26px,4vw
     RETENIDO = !!(def && def.hubo === true);
     pintarCapacidad(data.capacidad);
     pintarRiesgo(data.riesgo);
+    pintarRinde(data.rinde);
 
     // Mediciones
     var med =Array.isArray(p.mediciones) ? p.mediciones : [];
@@ -380,6 +396,56 @@ h1{font-family:'Playfair Display',serif;font-weight:400;font-size:clamp(26px,4vw
     return Number(n).toLocaleString('es-AR',{minimumFractionDigits:1,maximumFractionDigits:1})+' %';
   }
   var SEM_ETIQ = { verde:'Sin señales', amarillo:'Mirar con atención', rojo:'Revisar antes de comprar', gris:'Sin datos suficientes' };
+  function fmtPctSigno(x){
+    if(x==null || isNaN(x)) return '—';
+    var v = Number(x)*100;
+    return (v>=0?'+':'−')+Math.abs(v).toLocaleString('es-AR',{minimumFractionDigits:1,maximumFractionDigits:1})+' %';
+  }
+  function curvaSVG(curva){
+    var pts = (curva||[]).filter(function(p){ return p.ndvi!=null; });
+    if(pts.length < 3) return '';
+    var W=360,H=170,L=30,R=8,T=8,B=22, t0=Date.parse(curva[0].fecha), t1=Date.parse(curva[curva.length-1].fecha)||t0+1;
+    var x=function(f){ return L+(W-L-R)*((Date.parse(f)-t0)/Math.max(1,(t1-t0))); };
+    var y=function(v){ return T+(H-T-B)*(1-Math.max(0,Math.min(1,v))); };
+    var g='';
+    [0,0.25,0.5,0.75,1].forEach(function(v){ g+='<line class="eje" x1="'+L+'" x2="'+(W-R)+'" y1="'+y(v)+'" y2="'+y(v)+'"/><text class="lbl" x="'+(L-6)+'" y="'+(y(v)+3)+'" text-anchor="end">'+v.toFixed(2).replace('.',',')+'</text>'; });
+    var meses={}; curva.forEach(function(p){ var m=p.fecha.slice(0,7); if(!meses[m]) meses[m]=p.fecha; });
+    var nom=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+    Object.keys(meses).forEach(function(m){ g+='<text class="lbl" x="'+x(meses[m])+'" y="'+(H-8)+'" text-anchor="middle">'+nom[Number(m.slice(5,7))-1]+'</text>'; });
+    var d=pts.map(function(p,i){ return (i?'L':'M')+x(p.fecha).toFixed(1)+' '+y(p.ndvi).toFixed(1); }).join(' ');
+    g+='<path d="'+d+'" fill="none" stroke="#5FAD5F" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>';
+    pts.forEach(function(p){
+      var cx=x(p.fecha).toFixed(1), cy=y(p.ndvi).toFixed(1), tip=p.fecha+' · NDVI '+p.ndvi.toFixed(3).replace('.',',')+' · '+p.origen;
+      if(p.origen==='radar') g+='<g><title>'+esc(tip)+'</title><rect x="'+(cx-4.5)+'" y="'+(cy-4.5)+'" width="9" height="9" transform="rotate(45 '+cx+' '+cy+')" fill="#E5C870" stroke="#0C130C" stroke-width="2"/></g>';
+      else if(p.origen==='unido') g+='<g><title>'+esc(tip)+'</title><circle cx="'+cx+'" cy="'+cy+'" r="4.5" fill="#0C130C" stroke="#5FAD5F" stroke-width="2"/></g>';
+      else g+='<g><title>'+esc(tip)+'</title><circle cx="'+cx+'" cy="'+cy+'" r="4.5" fill="#5FAD5F" stroke="#0C130C" stroke-width="2"/></g>';
+    });
+    return '<div class="rin-graf"><svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Curva de vigor (NDVI) de la campaña">'+g+'</svg>'+
+      '<div class="rin-clave"><span><svg width="12" height="12"><circle cx="6" cy="6" r="4.5" fill="#5FAD5F"/></svg>visto por el satélite óptico</span>'+
+      '<span><svg width="12" height="12"><circle cx="6" cy="6" r="4" fill="none" stroke="#5FAD5F" stroke-width="2"/></svg>hueco corto, unido</span>'+
+      '<span><svg width="12" height="12"><rect x="2.5" y="2.5" width="7" height="7" transform="rotate(45 6 6)" fill="#E5C870"/></svg>completado con radar</span></div></div>';
+  }
+  function pintarRinde(r){
+    var card = $('cardRinde');
+    if(!r){ card.style.display='none'; return; }
+    card.style.display='';
+    var cult = esc(String(r.cultivo||'').toUpperCase());
+    if(r.aplica === false){
+      $('rindeCuerpo').innerHTML = '<div class="bal"><div class="bal-head"><span class="bal-t">'+cult+' · CAMPAÑA '+esc(r.campana)+'</span><span class="bal-u">NO APLICA</span></div>'+
+        '<div class="bal-row"><span class="k">'+esc(r.motivo||'Cultivo perenne: el rinde no se mide por satélite.')+'</span></div></div>';
+      $('rindePie').textContent = 'En cultivos perennes (cacao, café, palma, caucho) el techo de volumen sale del rinde de referencia por cultivo.';
+      return;
+    }
+    var hist = (r.historia||[]).filter(function(h){ return h.vigor!=null; }).length;
+    $('rindeCuerpo').innerHTML = '<div class="bal">'+
+      '<div class="bal-head"><span class="bal-t">'+cult+' · CAMPAÑA '+esc(r.campana)+'</span><span class="bal-u">ÍNDICE SATELITAL RELATIVO</span></div>'+
+      '<div class="bal-row"><span class="k">Respecto de su zona</span><span class="n">'+fmtPctSigno(r.vsZona)+'</span><span class="d">Comparado con una franja de 2 km alrededor del campo, en la misma campaña</span></div>'+
+      '<div class="bal-row"><span class="k">Respecto de su historia</span><span class="n">'+fmtPctSigno(r.vsHistoria)+'</span><span class="d">Comparado con el promedio de '+hist+' campaña'+(hist===1?'':'s')+' anterior'+(hist===1?'':'es')+' del mismo campo</span></div>'+
+      '</div>'+ curvaSVG(r.curva) +
+      '<div class="rin-clave">'+esc(String(r.pasadasOpticas!=null?r.pasadasOpticas:'—'))+' pasadas ópticas útiles · '+esc(String(r.rellenosRadar||0))+' huecos largos completados con radar'+(r.temporada?' · temporada '+esc(r.temporada):'')+'</div>';
+    var t = r.calculadoEn ? new Date(r.calculadoEn) : null;
+    $('rindePie').textContent = 'Vigor del cultivo medido por Sentinel-2 a lo largo de toda la campaña, con radar Sentinel-1 donde las nubes taparon. Es un índice relativo, no toneladas: todavía no está calibrado con cosechas reales. Si el campo rotó de cultivo en años anteriores, la comparación con su historia se distorsiona.'+(t?' Calculado el '+t.toISOString().slice(0,10).split('-').reverse().join('/')+'.':'');
+  }
   function pintarRiesgo(r){
     var card = $('cardRiesgo');
     if(!r || !r.color || !Array.isArray(r.motivos)){ card.style.display='none'; return; }
