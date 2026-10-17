@@ -137,6 +137,9 @@ async function llamarVps(datos, ejecutar) {
 //     (al simular un lote, cuenta también ese lote)
 //   · Campo con deforestación detectada a 500 m o menos ......... ROJO
 //   · Campo con deforestación detectada a 5 km o menos .......... AMARILLO
+//   · Usó el 70 % o más de su capacidad del año, pero el satélite
+//     vio una campaña 15 % o más por DEBAJO de su zona .......... AMARILLO
+//     (rinde medido, solo cultivos anuales; ver rinde.js)
 //     (solo entre los campos registrados en EPIMELEIA)
 const RIESGO_ORDEN = { verde: 0, gris: 1, amarillo: 2, rojo: 3 };
 const RIESGO_KM_ROJO = 0.5, RIESGO_KM_AMARILLO = 5;
@@ -230,6 +233,17 @@ async function calcularRiesgo(supabase, idOnchain, opciones) {
       if (recPct >= 50) sumar("amarillo", `Vendió el ${_rFmt(recPct)} % de su capacidad anual en los últimos 30 días${tonLote ? " (contando este lote)" : ""}. Puede ser normal justo después de la cosecha; fuera de esa época, conviene mirar.`);
     } else if (!hubo) {
       sumar("gris", `Capacidad declarada en cero para ${anio}.`);
+    }
+    // Rinde medido por satélite (AJUSTE 17/10): vende mucho pero el satélite vio poco.
+    if (capacidad > 0 && usoPct !== null && usoPct >= 70) {
+      try {
+        const { data: rc } = await supabase.from("rinde_campanas")
+          .select("campana, vs_zona, aplica").eq("activo_id_onchain", id).eq("anio_cosecha", anio).eq("aplica", true).limit(1);
+        const r0 = rc && rc[0];
+        if (r0 && r0.vs_zona !== null && Number(r0.vs_zona) <= -0.15) {
+          sumar("amarillo", `${tonLote ? "Con este lote usa" : "Usó"} el ${_rFmt(usoPct)} % de su capacidad, pero el satélite vio la campaña ${r0.campana} un ${_rFmt(Math.abs(Number(r0.vs_zona)) * 100)} % por debajo de su zona: vende como si hubiera rendido más de lo que se vio crecer.`);
+        }
+      } catch (_) { /* sin tabla o sin dato: la regla no se aplica */ }
     }
   }
 
