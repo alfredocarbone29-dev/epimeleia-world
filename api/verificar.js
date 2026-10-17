@@ -31,6 +31,10 @@
 // AJUSTE 11/10/2026: devuelve también `capacidad` (capacidad anual, lo usado
 // en lotes y el saldo) leída de traz_declaraciones / traz_atribuciones.
 //
+// AJUSTE 17/10/2026: devuelve también `riesgo`, el SEMÁFORO DE RIESGO DE ORIGEN
+// (verde / amarillo / rojo / gris + motivos), calculado al momento con los
+// datos sellados. Si algo falla, la verificación sigue igual (riesgo: null).
+//
 // VARIABLES DE ENTORNO (ya están en Vercel):
 //   SUPABASE_URL · SUPABASE_SERVICE_KEY
 // ────────────────────────────────────────────────────────────────────────────
@@ -107,6 +111,153 @@ async function leerCapacidad(idOnchain) {
   }
 }
 
+// ─── SEMÁFORO DE RIESGO DE ORIGEN (AJUSTE 17/10/2026) ───────────────────────
+// Un indicador simple y explicable, calculado al momento con datos que ya
+// están sellados (veredicto de deforestación, polígono, capacidad y lotes).
+// NO reemplaza la debida diligencia: señala DÓNDE mirar (enfoque de riesgo).
+//   ROJO     → revisar antes de comprar.
+//   AMARILLO → mirar con atención.
+//   VERDE    → sin señales.
+//   GRIS     → no hay datos suficientes (sin capacidad declarada).
+// Reglas (iguales para todos, siempre las mismas):
+//   · Deforestación detectada en el propio campo ............... ROJO
+//   · Sin saldo (usó el 100 % de su capacidad del año) .......... ROJO
+//   · Usó el 90 % o más de su capacidad del año ................. AMARILLO
+//   · Vendió el 50 % o más de su capacidad en los últimos 30 días AMARILLO
+//     (al simular un lote, cuenta también ese lote)
+//   · Campo con deforestación detectada a 500 m o menos ......... ROJO
+//   · Campo con deforestación detectada a 5 km o menos .......... AMARILLO
+//     (solo entre los campos registrados en EPIMELEIA)
+const RIESGO_ORDEN = { verde: 0, gris: 1, amarillo: 2, rojo: 3 };
+const RIESGO_KM_ROJO = 0.5, RIESGO_KM_AMARILLO = 5;
+
+function _rPaquete(v) {
+  if (!v) return null;
+  if (typeof v === "object") return v;
+  try { return JSON.parse(v); } catch { return null; }
+}
+function _rAnillo(paq) {
+  const g = paq && (paq.poligono || paq.geometry || paq.geometria);
+  if (!g || !Array.isArray(g.coordinates)) return null;
+  let c = g.coordinates;
+  if (g.type === "MultiPolygon") c = c[0];
+  const anillo = Array.isArray(c) && Array.isArray(c[0]) && Array.isArray(c[0][0]) ? c[0] : c;
+  return Array.isArray(anillo) && anillo.length >= 3 && anillo.every((p) => Array.isArray(p) && isFinite(p[0]) && isFinite(p[1])) ? anillo : null;
+}
+function _rKm(a, b) {
+  const R = 6371, rad = Math.PI / 180;
+  const dLa = (b[1] - a[1]) * rad, dLo = (b[0] - a[0]) * rad;
+  const h = Math.sin(dLa / 2) ** 2 + Math.cos(a[1] * rad) * Math.cos(b[1] * rad) * Math.sin(dLo / 2) ** 2;
+  return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)));
+}
+function _rDentro(p, anillo) {
+  let dentro = false;
+  for (let i = 0, j = anillo.length - 1; i < anillo.length; j = i++) {
+    const [xi, yi] = anillo[i], [xj, yj] = anillo[j];
+    if ((yi > p[1]) !== (yj > p[1]) && p[0] < ((xj - xi) * (p[1] - yi)) / (yj - yi) + xi) dentro = !dentro;
+  }
+  return dentro;
+}
+// Distancia aproximada entre dos polígonos (0 si se tocan o se pisan).
+function _rDistPoligonos(A, B) {
+  if (A.some((p) => _rDentro(p, B)) || B.some((p) => _rDentro(p, A))) return 0;
+  const paso = (n) => Math.max(1, Math.floor(n / 150));
+  let min = Infinity;
+  for (let i = 0; i < A.length; i += paso(A.length))
+    for (let j = 0; j < B.length; j += paso(B.length)) {
+      const d = _rKm(A[i], B[j]); if (d < min) min = d;
+    }
+  return min;
+}
+function _rFechaDe(fila) {
+  const v = fila && (fila.creado_en || fila.created_at || fila.atribuido_en || fila.sellado_en || fila.fecha);
+  const t = v ? Date.parse(v) : NaN;
+  return isFinite(t) ? t : null;
+}
+const _rPct = (n) => Math.round(n * 10) / 10;
+const _rFmt = (n) => Number(n).toLocaleString("es-AR", { maximumFractionDigits: 1 });
+
+// supabase: cliente con service key · idOnchain: número · opciones: { anio, toneladasLote }
+async function calcularRiesgo(supabase, idOnchain, opciones) {
+  const anio = Number(opciones && opciones.anio) || new Date().getFullYear();
+  const tonLote = Math.max(0, Number(opciones && opciones.toneladasLote) || 0);
+  const motivos = [];
+  const sumar = (nivel, texto) => motivos.push({ nivel, texto });
+  const id = Number(idOnchain);
+
+  // 1) El propio campo: deforestación y polígono.
+  const { data: act } = await supabase.from("activos")
+    .select("activo_id_onchain, paquete_evidencia").eq("activo_id_onchain", id).maybeSingle();
+  const { data: vp } = await supabase.from("v_panel_parcelas")
+    .select("veredicto").eq("activo_id_onchain", id).maybeSingle();
+  const paq = _rPaquete(act && act.paquete_evidencia);
+  const hubo = (vp && vp.veredicto === "hubo deforestacion") || (paq && paq.deforestacion && paq.deforestacion.hubo === true);
+  if (hubo) sumar("rojo", "Deforestación detectada en este campo: ninguna tonelada puede salir en un lote.");
+
+  // 2) Capacidad del año y uso.
+  const { data: decls } = await supabase.from("traz_declaraciones")
+    .select("id, capacidad_anual").eq("origen_tipo", "epimeleia").eq("origen_ref", String(id))
+    .eq("anio", anio).eq("veredicto", "ACEPTADA").limit(1);
+  const decl = decls && decls[0];
+  let capacidad = null, usado = 0, usoPct = null;
+  if (!decl) {
+    if (!hubo) sumar("gris", `Sin capacidad declarada para ${anio}: no hay base para medir el volumen.`);
+  } else {
+    capacidad = Number(decl.capacidad_anual) || 0;
+    const { data: at } = await supabase.from("traz_atribuciones")
+      .select("*").eq("declaracion_id", decl.id).eq("veredicto", "ATRIBUIDA");
+    const filas = Array.isArray(at) ? at : [];
+    usado = filas.reduce((s, x) => s + (Number(x.toneladas) || 0), 0);
+    const despues = usado + tonLote;
+    usoPct = capacidad > 0 ? (despues / capacidad) * 100 : 100;
+    if (capacidad > 0) {
+      if (usoPct >= 100 - 1e-9) sumar("rojo", `Sin saldo: ${tonLote ? "con este lote " : ""}llega al ${_rFmt(usoPct)} % de su capacidad de ${anio}.`);
+      else if (usoPct >= 90) sumar("amarillo", `${tonLote ? "Con este lote usa" : "Usó"} el ${_rFmt(usoPct)} % de su capacidad de ${anio}: queda poco margen.`);
+      const hace30 = Date.now() - 30 * 24 * 3600 * 1000;
+      const recientes = filas.filter((x) => { const t = _rFechaDe(x); return t !== null && t >= hace30; })
+        .reduce((s, x) => s + (Number(x.toneladas) || 0), 0) + tonLote;
+      const recPct = (recientes / capacidad) * 100;
+      if (recPct >= 50) sumar("amarillo", `Vendió el ${_rFmt(recPct)} % de su capacidad anual en los últimos 30 días${tonLote ? " (contando este lote)" : ""}.`);
+    } else if (!hubo) {
+      sumar("gris", `Capacidad declarada en cero para ${anio}.`);
+    }
+  }
+
+  // 3) Vecinos con deforestación (entre los campos registrados en EPIMELEIA).
+  let vecino = null;
+  const anillo = _rAnillo(paq);
+  if (anillo) {
+    const { data: sucios } = await supabase.from("v_panel_parcelas")
+      .select("activo_id_onchain, nombre_activo").eq("veredicto", "hubo deforestacion").limit(500);
+    const otros = (sucios || []).filter((s) => s.activo_id_onchain != null && Number(s.activo_id_onchain) !== id);
+    if (otros.length) {
+      const { data: geos } = await supabase.from("activos")
+        .select("activo_id_onchain, paquete_evidencia").in("activo_id_onchain", otros.map((s) => Number(s.activo_id_onchain)));
+      for (const g of geos || []) {
+        const otro = _rAnillo(_rPaquete(g.paquete_evidencia));
+        if (!otro) continue;
+        const km = _rDistPoligonos(anillo, otro);
+        if (km <= RIESGO_KM_AMARILLO && (!vecino || km < vecino.km)) vecino = { id: Number(g.activo_id_onchain), km };
+      }
+    }
+    if (vecino) {
+      const dist = vecino.km === 0 ? "pegado o superpuesto a este campo" : `a ${vecino.km < 1 ? Math.round(vecino.km * 1000) + " m" : _rFmt(vecino.km) + " km"}`;
+      sumar(vecino.km <= RIESGO_KM_ROJO ? "rojo" : "amarillo", `Hay un campo con deforestación detectada ${dist} (#${vecino.id}): riesgo de que su producción salga por este campo.`);
+    }
+  }
+
+  let color = "verde";
+  for (const m of motivos) if (RIESGO_ORDEN[m.nivel] > RIESGO_ORDEN[color]) color = m.nivel;
+  if (!motivos.length) sumar("verde", "Sin señales de riesgo con los datos sellados a hoy.");
+  return {
+    color, motivos, anio,
+    capacidad: capacidad !== null ? Math.round(capacidad * 1000) / 1000 : null,
+    usoPct: usoPct !== null ? _rPct(usoPct) : null,
+    vecinoKm: vecino ? Math.round(vecino.km * 1000) / 1000 : null,
+    calculadoEn: new Date().toISOString(),
+  };
+}
+
 module.exports = async (req, res) => {
   // CORS abierto: cualquiera puede verificar desde donde sea.
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -177,6 +328,11 @@ module.exports = async (req, res) => {
     // cada declaración y cada lote tienen su propia huella en Polygon.
     const capacidad = await leerCapacidad(idOnchain);
 
+    // Semáforo de riesgo de origen (AJUSTE 17/10/2026). Nunca rompe la verificación.
+    let riesgo = null;
+    try { riesgo = await calcularRiesgo(supabase, Number(idOnchain), { anio: new Date().getFullYear() }); }
+    catch (e) { console.error("[verificar] riesgo:", e && e.message); }
+
     return res.status(200).json({
       ok: true,
       verificable: true,
@@ -200,6 +356,9 @@ module.exports = async (req, res) => {
 
       // ── Capacidad anual y saldo por cultivo/año (null si no declaró) ──
       capacidad,
+
+      // ── Semáforo de riesgo de origen (null si no se pudo calcular) ──
+      riesgo,
 
       // ── Instrucciones de verificación, embebidas para que sean públicas ──
       comoVerificar: [
