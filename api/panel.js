@@ -227,7 +227,7 @@ async function calcularRiesgo(supabase, idOnchain, opciones) {
       const recientes = filas.filter((x) => { const t = _rFechaDe(x); return t !== null && t >= hace30; })
         .reduce((s, x) => s + (Number(x.toneladas) || 0), 0) + tonLote;
       const recPct = (recientes / capacidad) * 100;
-      if (recPct >= 50) sumar("amarillo", `Vendió el ${_rFmt(recPct)} % de su capacidad anual en los últimos 30 días${tonLote ? " (contando este lote)" : ""}.`);
+      if (recPct >= 50) sumar("amarillo", `Vendió el ${_rFmt(recPct)} % de su capacidad anual en los últimos 30 días${tonLote ? " (contando este lote)" : ""}. Puede ser normal justo después de la cosecha; fuera de esa época, conviene mirar.`);
     } else if (!hubo) {
       sumar("gris", `Capacidad declarada en cero para ${anio}.`);
     }
