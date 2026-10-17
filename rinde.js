@@ -30,8 +30,9 @@
  *     montes, otros cultivos). Sirve como contexto, no como verdad.
  *
  * TEMPORADA (calendario simple, por hemisferio):
- *   · soja / maíz / trigo-girasol de verano → hemisferio sur: 1 nov → 30 abr
- *                                            hemisferio norte: 1 may → 31 oct
+ *   · soja / maíz / trigo-girasol de verano → hemisferio sur: 1 nov → 31 may
+ *                                            hemisferio norte: 1 may → 30 nov
+ *     (hasta mayo para no cortar la soja tardía o de segunda antes de la cosecha)
  *   · cacao / café / palma / caucho (perennes) → 12 meses: 1 jul → 30 jun
  *
  * COSTO: unas 6 consultas a Copernicus por corrida (cuota gratuita).
@@ -118,8 +119,8 @@ function temporada(cultivo, lat, anioInicio) {
   const iso = (a, m, d) => new Date(Date.UTC(a, m - 1, d)).toISOString();
   let desdeMes, hastaMes, nombre;
   if (PERENNES.includes(cultivo)) { desdeMes = [7, 1]; hastaMes = [6, 30]; nombre = 'perenne · julio a junio'; }
-  else if (lat < 0) { desdeMes = [11, 1]; hastaMes = [4, 30]; nombre = 'verano hemisferio sur · noviembre a abril'; }
-  else { desdeMes = [5, 1]; hastaMes = [10, 31]; nombre = 'verano hemisferio norte · mayo a octubre'; }
+  else if (lat < 0) { desdeMes = [11, 1]; hastaMes = [5, 31]; nombre = 'verano hemisferio sur · noviembre a mayo'; }
+  else { desdeMes = [5, 1]; hastaMes = [11, 30]; nombre = 'verano hemisferio norte · mayo a noviembre'; }
   const cruza = desdeMes[0] > hastaMes[0];
   // Si no se pidió año: la última campaña COMPLETA.
   let a = anioInicio;
@@ -185,6 +186,13 @@ function regresion(pares) { // y = a + b·x
   const r = (n * sxy - sx * sy) / Math.sqrt(den * (n * syy - sy * sy) || 1);
   return { a, b, r };
 }
+function unirHuecosCortos(serie) {
+  return serie.map((p, i) => {
+    if (p.valor !== null) return p;
+    const ant = serie[i - 1], sig = serie[i + 1];
+    return (ant && sig && ant.valor !== null && sig.valor !== null) ? { ...p, valor: (ant.valor + sig.valor) / 2 } : p;
+  });
+}
 const dB = (lin) => (lin > 0 ? 10 * Math.log10(lin) : null);
 const pct = (x) => (x == null ? '—' : (x >= 0 ? '+' : '') + (Math.round(x * 1000) / 10).toString().replace('.', ',') + ' %');
 const f3 = (x) => (x == null ? '   —  ' : x.toFixed(3));
@@ -218,8 +226,14 @@ async function medirRinde(idOnchain, anioInicio) {
   const pares = ndvi.filter((p) => p.valor !== null && vhPorFecha[p.fecha] != null).map((p) => [vhPorFecha[p.fecha], p.valor]);
   const reg = regresion(pares);
   const usarRadar = !!(reg && reg.r >= 0.5);
-  const curva = ndvi.map((p) => {
+  // AJUSTE (17/10, prueba real #29): un hueco CORTO (un solo intervalo de 10 días
+  // entre dos lecturas ópticas) se completa UNIENDO LOS PUNTOS: es más preciso que
+  // el radar. El radar queda para los huecos LARGOS (20 días o más sin ver), que es
+  // donde de verdad aporta (trópico nublado).
+  const curva = ndvi.map((p, i) => {
     if (p.valor !== null) return { ...p, origen: 'óptico' };
+    const ant = ndvi[i - 1], sig = ndvi[i + 1];
+    if (ant && sig && ant.valor !== null && sig.valor !== null) return { ...p, valor: (ant.valor + sig.valor) / 2, origen: 'unido' };
     const vh = vhPorFecha[p.fecha];
     if (usarRadar && vh != null) return { ...p, valor: Math.max(-0.1, Math.min(1, reg.a + reg.b * vh)), origen: 'radar' };
     return { ...p, origen: 'sin dato' };
@@ -230,7 +244,7 @@ async function medirRinde(idOnchain, anioInicio) {
   const historia = [];
   for (const v of temp.anteriores) {
     try {
-      const s = aSerie(await estadistica(token, campo.poligono, v, S2, 0.0001)).map((p) => (p.calidad >= CALIDAD_MIN ? p : { ...p, valor: null }));
+      const s = unirHuecosCortos(aSerie(await estadistica(token, campo.poligono, v, S2, 0.0001)).map((p) => (p.calidad >= CALIDAD_MIN ? p : { ...p, valor: null })));
       historia.push({ campana: v.etiqueta, vigor: vigorDeCampana(s, v), pasadas: s.filter((p) => p.valor !== null).length });
     } catch (e) { historia.push({ campana: v.etiqueta, vigor: null, error: e.message }); }
     await pausa();
@@ -241,7 +255,7 @@ async function medirRinde(idOnchain, anioInicio) {
   // 5) Zona: franja de 2 km alrededor, misma campaña (óptico, resolución más gruesa)
   let vigorZona = null;
   try {
-    const s = aSerie(await estadistica(token, franjaVecinos(campo.poligono), temp.actual, S2, 0.0002)).map((p) => (p.calidad >= CALIDAD_MIN ? p : { ...p, valor: null }));
+    const s = unirHuecosCortos(aSerie(await estadistica(token, franjaVecinos(campo.poligono), temp.actual, S2, 0.0002)).map((p) => (p.calidad >= CALIDAD_MIN ? p : { ...p, valor: null })));
     vigorZona = vigorDeCampana(s, temp.actual);
   } catch (e) { console.log(`  (zona: ${e.response ? e.response.status : ''} ${e.message})`); }
 
@@ -255,6 +269,7 @@ async function medirRinde(idOnchain, anioInicio) {
     curva: curva.map((p) => ({ fecha: p.fecha && p.fecha.slice(0, 10), ndvi: p.valor != null ? Math.round(p.valor * 1000) / 1000 : null, origen: p.origen, calidad: p.calidad, radarVHdB: vhPorFecha[p.fecha] != null ? Math.round(vhPorFecha[p.fecha] * 100) / 100 : null })),
     pasadasOpticas: ndvi.filter((p) => p.valor !== null).length,
     rellenosRadar: curva.filter((p) => p.origen === 'radar').length,
+    unidos: curva.filter((p) => p.origen === 'unido').length,
     radar: { orbita, pasadas: radar.filter((p) => p.valor !== null).length, parecidoConOptico: reg ? Math.round(reg.r * 100) / 100 : null, usado: usarRadar },
     vigor, historia, promedioHistoria: promHist != null ? Math.round(promHist * 100) / 100 : null,
     vigorZona, vsHistoria, vsZona,
@@ -274,7 +289,7 @@ function imprimir(r) {
   L('   fecha        NDVI    origen      radar VH (dB)');
   for (const p of r.curva) L(`   ${p.fecha}   ${f3(p.ndvi)}   ${(p.origen + '        ').slice(0, 10)}  ${p.radarVHdB != null ? p.radarVHdB.toFixed(2) : '—'}`);
   L();
-  L(` Pasadas ópticas útiles: ${r.pasadasOpticas} · completadas con radar: ${r.rellenosRadar}`);
+  L(` Pasadas ópticas útiles: ${r.pasadasOpticas} · huecos cortos unidos: ${r.unidos} · huecos largos completados con radar: ${r.rellenosRadar}`);
   L(` Radar: órbita ${r.radar.orbita || '—'}, ${r.radar.pasadas} pasadas, parecido con el óptico r=${r.radar.parecidoConOptico ?? '—'} → ${r.radar.usado ? 'SE USA para rellenar' : 'NO se usa (se parecen poco o faltan datos)'}`);
   L();
   L(` VIGOR DE LA CAMPAÑA: ${r.vigor ?? 'sin datos suficientes'}`);
@@ -284,7 +299,8 @@ function imprimir(r) {
   L(` ► Respecto de su historia: ${pct(r.vsHistoria)}`);
   L(` ► Respecto de su zona:     ${pct(r.vsZona)}`);
   if (r.rindeReferencia != null) L(` ► Rinde de referencia ${r.rindeReferencia} t/ha → orientativo ${r.rindeOrientativo ?? '—'} t/ha (NO calibrado)`);
-  L(); L(' ' + r.advertencia); L();
+  L(); L(' ' + r.advertencia);
+  L(' Ojo: si en alguna campaña anterior el campo tuvo otro cultivo (rotación soja/maíz), esa comparación se distorsiona.'); L();
 }
 
 if (require.main === module) {
