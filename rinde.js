@@ -235,7 +235,20 @@ async function medirRinde(idOnchain, anioInicio) {
     const ant = ndvi[i - 1], sig = ndvi[i + 1];
     if (ant && sig && ant.valor !== null && sig.valor !== null) return { ...p, valor: (ant.valor + sig.valor) / 2, origen: 'unido' };
     const vh = vhPorFecha[p.fecha];
-    if (usarRadar && vh != null) return { ...p, valor: Math.max(-0.1, Math.min(1, reg.a + reg.b * vh)), origen: 'radar' };
+    if (usarRadar && vh != null) {
+      // AJUSTE (17/10, 2.ª prueba real #29): con suelo pelado el radar rebota distinto
+      // según la lluvia y se pasa. El radar puede decir DÓNDE cae el valor entre las
+      // lecturas ópticas vecinas, pero NUNCA salirse de ellas.
+      let a = null, b = null;
+      for (let k = i - 1; k >= 0; k--) if (ndvi[k].valor !== null) { a = ndvi[k].valor; break; }
+      for (let k = i + 1; k < ndvi.length; k++) if (ndvi[k].valor !== null) { b = ndvi[k].valor; break; }
+      const ref = [a, b].filter((x) => x !== null);
+      let lo = -0.1, hi = 1;
+      if (ref.length === 2) { lo = Math.min(...ref); hi = Math.max(...ref); }
+      else if (ref.length === 1) { lo = ref[0] - 0.15; hi = ref[0] + 0.15; }
+      const est = reg.a + reg.b * vh;
+      return { ...p, valor: Math.max(lo, Math.min(hi, est)), origen: 'radar' };
+    }
     return { ...p, origen: 'sin dato' };
   });
   const vigor = vigorDeCampana(curva, temp.actual);
