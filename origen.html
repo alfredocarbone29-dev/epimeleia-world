@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <!-- Google tag (gtag.js) — EPIMELEIA Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-JKB0L91JHH"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-JKB0L91JHH');
+  </script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EPIMELEIA ORIGEN — Nadie puede vender más de lo que su tierra produce</title>
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="EPIMELEIA">
+<meta property="og:title" content="EPIMELEIA ORIGEN — Nadie puede vender más de lo que su tierra produce">
+<meta property="og:description" content="Observación satelital, Global Forest Watch y blockchain en un solo lugar: de dónde viene lo que se vende y cuánto pudo producir ese campo.">
+<meta property="og:image" content="https://www.epimeleia.world/image_d8f5651c.png">
+<meta property="og:url" content="https://www.epimeleia.world/origen.html">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="EPIMELEIA ORIGEN — Nadie puede vender más de lo que su tierra produce">
+<meta name="twitter:description" content="Observación satelital, Global Forest Watch y blockchain en un solo lugar: de dónde viene lo que se vende y cuánto pudo producir ese campo.">
+<meta name="twitter:image" content="https://www.epimeleia.world/image_d8f5651c.png">
+<meta name="description" content="Control de origen y de volumen por campo: techo de producción, saldo que baja con cada venta, semáforo de riesgo y rinde medido por Sentinel-2 y Sentinel-1. Sellado en Polygon.">
+<meta name="robots" content="index, follow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,700;1,400&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,400&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --void:#040904; --deep:#080E08; --surface:#0C130C; --panel:#101810; --card:#141C14;
+  --line:rgba(255,255,255,0.055); --line2:rgba(255,255,255,0.09);
+  --text:#E8E4DA; --muted:#7E8C7E; --dim:#445844;
+  --green:#4A8A4A; --emerald:#5FAD5F; --teal:#3A8A7A; --gold:#C8A84B; --gold2:#E5C870; --white:#F4F0E8;
+  --amber:#C89A4A; --azure:#8FB0DA; --red:#C8604A;
+}
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+body {
+  background:
+    radial-gradient(ellipse 70% 50% at 15% 8%, rgba(200,168,75,0.06) 0%, transparent 55%),
+    radial-gradient(ellipse 55% 45% at 88% 92%, rgba(74,138,74,0.05) 0%, transparent 55%),
+    var(--deep);
+  color:var(--text); font-family:'Crimson Pro',Georgia,serif; font-size:18px; line-height:1.7;
+  min-height:100vh; -webkit-font-smoothing:antialiased;
+}
+a { color:inherit; }
+.divider { height:1px; background:var(--line); max-width:1180px; margin:0 auto; }
+
+/* TOPBAR */
+.topbar { position:sticky; top:0; z-index:100; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:16px; padding:20px clamp(20px,5vw,64px); background:rgba(4,9,4,0.86); backdrop-filter:blur(20px); border-bottom:1px solid var(--line); }
+.brand { font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:5px; color:var(--white); text-decoration:none; }
+.brand span { color:var(--gold2); }
+.topnav { display:flex; flex-wrap:wrap; gap:8px; }
+.topnav a { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:1.5px; color:var(--muted); text-decoration:none; border:1px solid transparent; padding:9px 13px; transition:color .2s, border-color .2s; }
+.topnav a:hover { color:var(--text); border-color:var(--line2); }
+.topnav .nav-home { color:var(--teal); border-color:rgba(58,138,122,0.25); }
+
+/* HERO */
+.hero { max-width:1000px; margin:0 auto; padding:clamp(64px,11vw,130px) clamp(24px,5vw,64px) clamp(44px,7vw,80px); text-align:center; }
+.hero-k { font-family:'JetBrains Mono',monospace; font-size:clamp(10px,1.3vw,12px); letter-spacing:6px; color:var(--gold2); }
+.hero-t { font-family:'Playfair Display',serif; font-weight:400; font-size:clamp(34px,6.4vw,72px); line-height:1.1; color:var(--white); margin-top:26px; }
+.hero-t em { font-style:italic; color:var(--gold2); }
+.hero-rule { width:64px; height:1px; background:var(--dim); margin:34px auto; }
+.hero-sub { font-family:'Playfair Display',serif; font-style:italic; font-size:clamp(19px,2.4vw,27px); line-height:1.45; color:rgba(244,240,232,0.85); max-width:780px; margin:0 auto; }
+.hero-plain { font-size:clamp(16px,1.7vw,19px); color:rgba(232,228,218,0.66); max-width:660px; margin:28px auto 0; }
+
+/* SECCIONES */
+.sec { max-width:1080px; margin:0 auto; padding:clamp(52px,8vw,96px) clamp(24px,5vw,64px); }
+.head { text-align:center; margin-bottom:clamp(30px,5vw,50px); }
+.eyebrow { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:3px; color:var(--teal); margin-bottom:16px; }
+.head-title { font-family:'Playfair Display',serif; font-weight:400; font-size:clamp(24px,3.6vw,42px); color:var(--white); line-height:1.2; max-width:820px; margin:0 auto; }
+.head-title em { font-style:italic; color:var(--gold2); }
+.head-sub { font-size:clamp(16px,1.7vw,19px); color:rgba(232,228,218,0.64); max-width:660px; margin:22px auto 0; }
+
+/* EL PROBLEMA */
+.problema { max-width:760px; margin:0 auto; border-left:2px solid var(--gold); padding:6px 0 6px clamp(20px,3vw,32px); }
+.problema p { font-size:clamp(17px,1.8vw,20px); color:rgba(232,228,218,0.8); margin-bottom:16px; }
+.problema p:last-child { margin-bottom:0; }
+.problema b { color:var(--white); font-weight:600; }
+
+/* QUÉ OBSERVAMOS */
+.obs-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:14px; max-width:980px; margin:0 auto; }
+.obs { background:var(--card); border:1px solid var(--line2); padding:clamp(22px,3vw,32px); }
+.obs-k { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:2px; color:var(--emerald); }
+.obs-q { font-family:'Playfair Display',serif; font-size:clamp(19px,2.2vw,24px); color:var(--white); line-height:1.25; margin-top:12px; }
+.obs-d { font-size:15.5px; color:rgba(232,228,218,0.64); line-height:1.6; margin-top:10px; }
+.obs.full { grid-column:1 / -1; background:linear-gradient(150deg, rgba(200,168,75,0.08), var(--card) 60%); border-color:rgba(200,168,75,0.3); }
+.obs.full .obs-k { color:var(--gold2); }
+
+/* TRES PASOS */
+.steps { display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--line); border:1px solid var(--line); max-width:980px; margin:0 auto; }
+.step { background:var(--deep); padding:clamp(26px,3.2vw,38px) clamp(20px,2.2vw,30px); }
+.step-n { font-family:'Playfair Display',serif; font-size:44px; color:var(--gold2); line-height:1; opacity:0.85; }
+.step-t { font-family:'Playfair Display',serif; font-size:clamp(20px,2.2vw,25px); color:var(--white); margin:16px 0 10px; }
+.step-d { font-size:15.5px; color:rgba(232,228,218,0.64); line-height:1.6; }
+
+/* SEMÁFORO */
+.sem { max-width:980px; margin:clamp(30px,5vw,46px) auto 0; display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+.sem-c { border:1px solid var(--line2); background:var(--card); padding:20px 22px; }
+.sem-h { display:flex; align-items:center; gap:10px; font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:2px; }
+.dot { width:12px; height:12px; border-radius:50%; flex-shrink:0; }
+.dot.v { background:var(--emerald); box-shadow:0 0 12px rgba(95,173,95,0.6); }
+.dot.a { background:var(--amber); box-shadow:0 0 12px rgba(200,154,74,0.6); }
+.dot.r { background:var(--red); box-shadow:0 0 12px rgba(200,96,74,0.6); }
+.sem-d { font-size:15px; color:rgba(232,228,218,0.66); line-height:1.55; margin-top:10px; }
+.sem-foot { max-width:720px; margin:24px auto 0; text-align:center; font-size:15.5px; color:rgba(232,228,218,0.6); font-style:italic; }
+
+/* CASOS */
+.casos { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; max-width:1000px; margin:0 auto; }
+.caso { display:flex; flex-direction:column; background:var(--card); border:1px solid var(--line2); padding:clamp(22px,3vw,30px); text-decoration:none; transition:transform .18s, border-color .2s, background .2s; }
+.caso:hover { transform:translateY(-3px); background:var(--panel); }
+.caso.v:hover { border-color:var(--emerald); }
+.caso.r:hover { border-color:var(--red); }
+.caso-top { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.caso-id { font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:2px; color:var(--muted); }
+.caso-tag { font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:1.5px; display:flex; align-items:center; gap:8px; }
+.caso.v .caso-tag { color:var(--emerald); }
+.caso.r .caso-tag { color:var(--red); }
+.caso-t { font-family:'Playfair Display',serif; font-size:clamp(19px,2.1vw,23px); color:var(--white); line-height:1.25; margin-top:16px; }
+.caso-d { font-size:15px; color:rgba(232,228,218,0.64); line-height:1.6; margin-top:10px; flex:1; }
+.caso-go { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:1.5px; color:var(--teal); margin-top:18px; }
+.lote-link { display:block; max-width:1000px; margin:14px auto 0; text-decoration:none; border:1px solid rgba(200,154,74,0.35); background:linear-gradient(150deg, rgba(200,154,74,0.08), var(--card) 60%); padding:clamp(20px,3vw,26px) clamp(22px,3vw,30px); transition:border-color .2s, background .2s; }
+.lote-link:hover { border-color:var(--amber); background:var(--panel); }
+.lote-k { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:2px; color:var(--amber); }
+.lote-t { font-family:'Playfair Display',serif; font-size:clamp(18px,2vw,22px); color:var(--white); margin-top:8px; }
+.lote-d { font-size:15px; color:rgba(232,228,218,0.62); margin-top:6px; }
+.azar { text-align:center; max-width:640px; margin:24px auto 0; font-size:15.5px; color:rgba(232,228,218,0.6); font-style:italic; }
+
+/* HONESTIDAD */
+.limites { max-width:860px; margin:0 auto; display:grid; gap:1px; background:var(--line); border:1px solid var(--line); }
+.lim { background:var(--deep); display:grid; grid-template-columns:200px 1fr; gap:20px; padding:20px clamp(18px,3vw,28px); }
+.lim-k { font-family:'JetBrains Mono',monospace; font-size:10.5px; letter-spacing:1.5px; color:var(--gold2); padding-top:3px; }
+.lim-d { font-size:16px; color:rgba(232,228,218,0.72); line-height:1.6; }
+.lim-d b { color:var(--white); font-weight:600; }
+
+/* PUERTAS DE ENTRADA */
+.entradas { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; max-width:980px; margin:0 auto; }
+.ent { display:block; text-decoration:none; background:var(--card); border:1px solid var(--line2); padding:24px; transition:transform .18s, border-color .2s; }
+.ent:hover { transform:translateY(-3px); }
+.ent-k { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:2px; }
+.ent-t { font-family:'Playfair Display',serif; font-size:21px; color:var(--white); margin-top:10px; line-height:1.2; }
+.ent-d { font-size:15px; color:rgba(232,228,218,0.62); margin-top:8px; line-height:1.5; }
+.ent.eudr .ent-k { color:var(--emerald); } .ent.eudr:hover { border-color:var(--emerald); }
+.ent.plat .ent-k { color:var(--teal); } .ent.plat:hover { border-color:var(--teal); }
+.ent.inst .ent-k { color:var(--azure); } .ent.inst:hover { border-color:var(--azure); }
+
+/* COMPROBALO VOS */
+.comprobar { max-width:640px; margin:0 auto; text-align:center; }
+.comp-form { display:flex; gap:10px; margin-top:28px; }
+.comp-form input { flex:1; min-width:0; background:var(--surface); border:1px solid var(--line2); color:var(--white); font-family:'JetBrains Mono',monospace; font-size:18px; letter-spacing:2px; padding:16px 18px; outline:none; transition:border-color .2s; }
+.comp-form input:focus { border-color:var(--gold); }
+.comp-form input::placeholder { color:var(--dim); font-size:14px; letter-spacing:1px; }
+.comp-form button { flex-shrink:0; font-family:'JetBrains Mono',monospace; font-size:13px; letter-spacing:1.5px; color:var(--void); background:var(--gold2); border:none; padding:0 26px; cursor:pointer; transition:background .2s; }
+.comp-form button:hover { background:var(--gold); }
+.comp-alt { margin-top:26px; font-size:15.5px; color:rgba(232,228,218,0.6); }
+.comp-alt a { color:var(--gold2); text-decoration:none; border-bottom:1px solid rgba(229,200,112,0.4); }
+.comp-alt a:hover { border-bottom-color:var(--gold2); }
+.cierre { max-width:700px; margin:clamp(44px,6vw,64px) auto 0; padding-top:clamp(30px,4vw,42px); border-top:1px solid var(--line); text-align:center; font-family:'Playfair Display',serif; font-style:italic; font-size:clamp(19px,2.4vw,28px); color:var(--white); line-height:1.35; }
+.cierre span { font-style:normal; color:var(--gold2); }
+
+/* FOOTER */
+.footer { border-top:1px solid var(--line); background:var(--void); }
+.footer-in { max-width:820px; margin:0 auto; padding:clamp(44px,7vw,80px) clamp(24px,5vw,64px); text-align:center; }
+.footer-mail { display:inline-flex; font-family:'JetBrains Mono',monospace; font-size:clamp(13px,1.6vw,16px); letter-spacing:1px; color:var(--void); background:var(--gold2); padding:18px 36px; text-decoration:none; transition:background .2s; }
+.footer-mail:hover { background:var(--gold); }
+.footer-fine { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:1px; color:var(--dim); line-height:2; margin-top:34px; }
+.footer-fine a { color:var(--muted); text-decoration:none; }
+
+/* TU OFICINA (idéntico a EUDR, Plataforma e Instituciones) */
+.ofi-float{position:fixed; right:clamp(16px,3vw,32px); bottom:calc(clamp(16px,3vw,32px) + 72px); z-index:60; display:flex; align-items:center; gap:10px; background:#F4F0E8; color:#070B0A; text-decoration:none; padding:11px 16px 11px 13px; border-radius:30px; box-shadow:0 8px 30px rgba(0,0,0,0.55); font-family:'JetBrains Mono',monospace; transition:transform .2s, background .2s;}
+.ofi-float:hover{background:#FFFFFF; transform:translateY(-2px);}
+.ofi-float svg{width:20px; height:20px; flex-shrink:0;}
+.ofi-float-txt{display:flex; flex-direction:column; line-height:1.15;}
+.ofi-float-txt b{font-size:11px; letter-spacing:2px; font-weight:600;}
+.ofi-float-txt small{font-size:8.5px; letter-spacing:0.3px; opacity:0.7; margin-top:3px;}
+@media(max-width:520px){ .ofi-float{ right:14px; bottom:84px; width:60px; padding:9px 0 8px; border-radius:16px; flex-direction:column; gap:4px; } .ofi-float-txt b{ font-size:7.5px; letter-spacing:1px; } .ofi-float-txt small{ display:none; } }
+
+/* EPI */
+.epi-bubble { position:fixed; right:clamp(16px,3vw,32px); bottom:clamp(16px,3vw,32px); z-index:400; width:60px; height:60px; border-radius:50%; background:radial-gradient(circle at 35% 30%, var(--panel), var(--surface)); border:1px solid rgba(95,173,95,0.35); cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 6px 26px rgba(0,0,0,0.5); transition:transform .25s ease, opacity .3s ease; }
+.epi-bubble:hover { transform:scale(1.08); }
+.epi-bubble svg { width:26px; height:26px; }
+.spark-lg { fill:var(--emerald); } .spark-sm { fill:var(--gold2); }
+.epi-bubble.hidden { opacity:0; pointer-events:none; transform:scale(0.6); }
+.epi-panel { position:fixed; right:clamp(16px,3vw,32px); bottom:clamp(16px,3vw,32px); z-index:401; width:min(380px, calc(100vw - 32px)); height:min(560px, calc(100vh - 64px)); background:var(--void); border:1px solid var(--line2); display:none; flex-direction:column; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,0.6); }
+.epi-panel.open { display:flex; }
+.epi-top { flex-shrink:0; padding:16px 18px; border-bottom:1px solid var(--line); display:flex; align-items:center; justify-content:space-between; }
+.epi-top-l { display:flex; align-items:center; gap:10px; }
+.epi-top-ico { width:26px; height:26px; }
+.epi-top-name { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:3px; color:var(--text); }
+.epi-top-sub { font-family:'JetBrains Mono',monospace; font-size:7px; letter-spacing:1px; color:var(--dim); margin-top:2px; }
+.epi-close { background:none; border:none; color:var(--dim); font-size:16px; cursor:pointer; }
+.epi-msgs { flex:1; overflow-y:auto; padding:20px 16px; display:flex; flex-direction:column; gap:16px; }
+.emsg { display:flex; gap:9px; }
+.emsg.user { flex-direction:row-reverse; }
+.emsg-av { width:22px; height:22px; flex-shrink:0; border:1px solid var(--line2); display:flex; align-items:center; justify-content:center; font-family:'JetBrains Mono',monospace; font-size:6px; margin-top:2px; }
+.emsg-av.agent { color:var(--emerald); background:var(--surface); }
+.emsg-av.user { color:var(--muted); background:var(--panel); }
+.emsg-b { max-width:calc(100% - 34px); padding:12px 14px; font-size:15px; line-height:1.6; border:1px solid; }
+.emsg-b.agent { background:var(--surface); border-color:var(--line); color:var(--text); }
+.emsg-b.user { background:var(--panel); border-color:var(--line2); color:rgba(232,228,218,0.75); }
+.epi-input { flex-shrink:0; padding:14px 16px; border-top:1px solid var(--line); }
+.epi-input-row { display:flex; gap:8px; align-items:flex-end; }
+.epi-input textarea { flex:1; background:var(--surface); border:1px solid var(--line2); color:var(--text); font-family:'Crimson Pro',serif; font-size:15px; padding:11px 13px; outline:none; resize:none; min-height:44px; max-height:110px; line-height:1.5; }
+.epi-input textarea:focus { border-color:var(--teal); }
+.epi-send { width:44px; height:44px; flex-shrink:0; background:var(--white); border:none; color:var(--void); font-size:16px; cursor:pointer; }
+.epi-hint { font-family:'JetBrains Mono',monospace; font-size:7px; letter-spacing:1px; color:var(--dim); text-align:center; margin-top:9px; }
+
+@media(max-width:860px){ .casos, .entradas, .sem { grid-template-columns:1fr; } }
+@media(max-width:760px){ .steps, .obs-grid { grid-template-columns:1fr; } .topnav { display:none; } .lim { grid-template-columns:1fr; gap:6px; } }
+@media(max-width:420px){ .comp-form { flex-direction:column; } .comp-form button { padding:16px; } }
+@media(prefers-reduced-motion: reduce){ *, *::before, *::after { animation:none !important; transition:none !important; } html { scroll-behavior:auto; } }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a class="brand" href="index.html">EPIMELEIA<span> · ORIGEN</span></a>
+  <nav class="topnav">
+    <a class="nav-home" href="index.html">← INICIO</a>
+    <a href="#casos">CASOS REALES</a>
+    <a href="#comprobar">COMPROBALO VOS</a>
+  </nav>
+</div>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-k">EPIMELEIA ORIGEN</div>
+  <h1 class="hero-t">Nadie puede vender más de lo que <em>su tierra produce</em>.</h1>
+  <div class="hero-rule"></div>
+  <p class="hero-sub">Todo lo que la observación satelital permite saber de un campo, reunido en un solo lugar: de dónde viene lo que se vende, y cuánto pudo producir esa tierra.</p>
+  <p class="hero-plain">No hace falta armarlo pieza por pieza. Llegues desde EUDR, desde un banco o desde cualquier caso de uso, esto es lo que hay detrás de cada parcela registrada en EPIMELEIA.</p>
+</section>
+
+<div class="divider"></div>
+
+<!-- EL PROBLEMA -->
+<section class="sec">
+  <div class="head">
+    <div class="eyebrow">EL PROBLEMA DEL ORIGEN</div>
+    <h2 class="head-title">Un campo limpio puede ser <em>la puerta de salida</em> de uno deforestado</h2>
+  </div>
+  <div class="problema">
+    <p>El papel aguanta todo. Un campo sin deforestación tiene sus permisos en regla y vende sin problemas. Pero si declara más toneladas de las que su tierra puede dar, <b>esa diferencia sale de otro lado</b>, muchas veces de un campo que no podría vender por su cuenta.</p>
+    <p>Así se lava el origen: el grano o el cacao de un campo deforestado viaja con los papeles de uno limpio. Revisar que el campo limpio esté limpio no alcanza. <b>Hay que controlar cuánto vende.</b></p>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- QUÉ OBSERVAMOS -->
+<section class="sec">
+  <div class="head">
+    <div class="eyebrow">QUÉ OBSERVAMOS DESDE UNA COORDENADA</div>
+    <h2 class="head-title">Cuatro fuentes miran el mismo campo, <em>cada una pregunta algo distinto</em></h2>
+    <p class="head-sub">Fuentes públicas y reconocidas, las mismas que usan gobiernos y la Unión Europea. Nada propietario que tengas que creernos.</p>
+  </div>
+  <div class="obs-grid">
+    <div class="obs">
+      <div class="obs-k">SENTINEL-2 · ESA / COPERNICUS</div>
+      <div class="obs-q">¿Hubo cultivo, y con qué fuerza creció?</div>
+      <div class="obs-d">Mide el verdor de la vegetación pasada tras pasada. Dibuja la curva de la campaña: siembra, crecimiento y cosecha.</div>
+    </div>
+    <div class="obs">
+      <div class="obs-k">SENTINEL-1 · RADAR</div>
+      <div class="obs-q">¿Qué pasó mientras estuvo nublado?</div>
+      <div class="obs-d">El radar ve a través de las nubes. Cuando la vista óptica queda tapada por semanas, completa la curva, y solo si coincide con lo que el campo ya mostró.</div>
+    </div>
+    <div class="obs">
+      <div class="obs-k">GLOBAL FOREST WATCH · UMD GLAD</div>
+      <div class="obs-q">¿Se perdió bosque desde 2020?</div>
+      <div class="obs-d">En el propio campo y en los vecinos registrados, hasta 5 km a la redonda. Un campo limpio al lado de uno deforestado también se marca.</div>
+    </div>
+    <div class="obs">
+      <div class="obs-k">LO DECLARADO VS. LO OBSERVADO</div>
+      <div class="obs-q">¿El campo hace lo que dice que hace?</div>
+      <div class="obs-d">Si se declara un cultivo anual y el satélite no ve ningún ciclo de cultivo en la campaña, lo dice: lo declarado no coincide con lo observado.</div>
+    </div>
+    <div class="obs full">
+      <div class="obs-k">POLYGON · BLOCKCHAIN</div>
+      <div class="obs-q">Y todo queda escrito donde nadie lo puede cambiar.</div>
+      <div class="obs-d">Cada certificación y cada embarque se sellan en Polygon Mainnet. Ni el productor, ni el comprador, ni EPIMELEIA pueden editarlo después. Cualquiera lo recalcula.</div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- TRES PASOS -->
+<section class="sec">
+  <div class="head">
+    <div class="eyebrow">CÓMO SE CIERRA LA PUERTA</div>
+    <h2 class="head-title">Tres reglas simples, <em>ninguna depende de una persona</em></h2>
+  </div>
+  <div class="steps">
+    <div class="step">
+      <div class="step-n">1</div>
+      <div class="step-t">La tierra pone el techo</div>
+      <div class="step-d">Hectáreas del campo por el rinde de referencia de su cultivo: eso es lo máximo que ese campo puede producir en el año. Un campo deforestado queda con su capacidad retenida.</div>
+    </div>
+    <div class="step">
+      <div class="step-n">2</div>
+      <div class="step-t">Cada venta resta</div>
+      <div class="step-d">Cada embarque certificado descuenta sus toneladas del saldo de los campos de origen. Cuando el saldo llega a cero, ese campo ya no puede respaldar más ventas ese año.</div>
+    </div>
+    <div class="step">
+      <div class="step-n">3</div>
+      <div class="step-t">El satélite controla</div>
+      <div class="step-d">Mide cómo le fue de verdad al campo: el vigor de la campaña comparado con sus años anteriores y con los campos de su zona. Y da una señal de riesgo.</div>
+    </div>
+  </div>
+
+  <div class="sem">
+    <div class="sem-c"><div class="sem-h" style="color:var(--emerald)"><span class="dot v"></span>VERDE</div><div class="sem-d">Sin deforestación, con saldo disponible y un ciclo de cultivo coherente con lo declarado.</div></div>
+    <div class="sem-c"><div class="sem-h" style="color:var(--amber)"><span class="dot a"></span>AMARILLO</div><div class="sem-d">Algo para mirar: saldo casi agotado, ventas muy rápidas, rinde por debajo de su zona o deforestación cercana.</div></div>
+    <div class="sem-c"><div class="sem-h" style="color:var(--red)"><span class="dot r"></span>ROJO</div><div class="sem-d">Deforestación propia o vecina inmediata, saldo agotado, o lo declarado no coincide con lo que se ve desde el espacio.</div></div>
+  </div>
+  <p class="sem-foot">La señal informa, no decide. Muestra lo que hay para que cada comprador, banco o auditor tome su decisión. Y queda sellada junto con cada embarque.</p>
+</section>
+
+<div class="divider"></div>
+
+<!-- CASOS REALES -->
+<section class="sec" id="casos">
+  <div class="head">
+    <div class="eyebrow">CASOS REALES · REGISTRADOS EN EPIMELEIA</div>
+    <h2 class="head-title">Tres campos, <em>tres respuestas distintas</em></h2>
+    <p class="head-sub">Tocá cualquiera y mirá su ficha completa en Verificar: saldo, señal de riesgo, curva de la campaña y sello en blockchain.</p>
+  </div>
+  <div class="casos">
+    <a class="caso v" href="verificar.html?id=29">
+      <div class="caso-top"><span class="caso-id">PARCELA #29</span><span class="caso-tag"><span class="dot v"></span>VERDE</span></div>
+      <div class="caso-t">Soja con la campaña completa</div>
+      <div class="caso-d">El satélite ve siembra, crecimiento y cosecha. Su vigor quedó por encima del promedio de los campos de su zona. Tiene saldo para vender.</div>
+      <div class="caso-go">VER EN VERIFICAR →</div>
+    </a>
+    <a class="caso r" href="verificar.html?id=30">
+      <div class="caso-top"><span class="caso-id">PARCELA #30</span><span class="caso-tag"><span class="dot r"></span>ROJO</span></div>
+      <div class="caso-t">Declarada soja, sin ciclo de cultivo</div>
+      <div class="caso-d">Los papeles dicen soja. Desde el espacio no se ve ninguna campaña. Lo declarado no coincide con lo observado, y queda a la vista de cualquiera.</div>
+      <div class="caso-go">VER EN VERIFICAR →</div>
+    </a>
+    <a class="caso r" href="verificar.html?id=32">
+      <div class="caso-top"><span class="caso-id">PARCELA #32</span><span class="caso-tag"><span class="dot r"></span>ROJO</span></div>
+      <div class="caso-t">Con pérdida de bosque</div>
+      <div class="caso-d">Global Forest Watch detecta deforestación después de 2020. Su capacidad queda retenida: no puede respaldar ventas propias ni prestar su origen a otros.</div>
+      <div class="caso-go">VER EN VERIFICAR →</div>
+    </a>
+  </div>
+  <a class="lote-link" href="verificar.html?lote=LOTE-2026-011">
+    <div class="lote-k">UN EMBARQUE COMPLETO · LOTE-2026-011</div>
+    <div class="lote-t">De qué campos salió cada tonelada, y cuánto saldo le quedó a cada uno.</div>
+    <div class="lote-d">El certificado de embarque, con la señal de riesgo sellada en el momento de la venta. Ver en Verificar →</div>
+  </a>
+  <p class="azar">Los campos y sus cultivos se eligieron al azar para probar el sistema. El resultado no se acomodó: es lo que el satélite vio.</p>
+</section>
+
+<div class="divider"></div>
+
+<!-- LO QUE NO HACE -->
+<section class="sec">
+  <div class="head">
+    <div class="eyebrow">CON LOS PIES EN LA TIERRA</div>
+    <h2 class="head-title">Lo que el satélite mide, <em>y lo que no</em></h2>
+    <p class="head-sub">Para confiar en una prueba hay que saber dónde termina. Esto es lo que decimos y lo que no decimos.</p>
+  </div>
+  <div class="limites">
+    <div class="lim"><div class="lim-k">TONELADAS</div><div class="lim-d">El satélite <b>no cuenta toneladas</b>. Mide si hubo cultivo y con qué fuerza creció. El techo de producción sale de las hectáreas por el rinde de referencia de cada cultivo.</div></div>
+    <div class="lim"><div class="lim-k">RINDE MEDIDO</div><div class="lim-d">Es <b>comparativo</b>: cómo le fue a ese campo frente a sus propios años anteriores y frente a los campos de su zona. Sirve para detectar lo que no cierra, no para pesar una cosecha.</div></div>
+    <div class="lim"><div class="lim-k">CULTIVOS PERENNES</div><div class="lim-d">En cacao, café o frutales el verdor no varía con la cosecha, así que <b>el rinde por satélite no aplica</b>. Ahí el control es el techo de producción, el saldo y la vigilancia de bosque.</div></div>
+    <div class="lim"><div class="lim-k">QUIÉN DECIDE</div><div class="lim-d">EPIMELEIA <b>no es auditor ni regulador</b>. Es un registro neutral: deja la prueba, y cada quien la usa frente a quien corresponda.</div></div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- LLEGUES POR DONDE LLEGUES -->
+<section class="sec">
+  <div class="head">
+    <div class="eyebrow">LLEGUES POR DONDE LLEGUES</div>
+    <h2 class="head-title">Todo esto está detrás de <em>cada puerta</em></h2>
+  </div>
+  <div class="entradas">
+    <a class="ent eudr" href="eudr.html"><div class="ent-k">CUMPLIMIENTO EUDR</div><div class="ent-t">EPIMELEIA EUDR</div><div class="ent-d">Para exportadores y traders: el respaldo de tu DDS, con control de volumen por campo.</div></a>
+    <a class="ent plat" href="plataforma.html"><div class="ent-k">CASOS DE USO</div><div class="ent-t">EPIMELEIA PLATAFORMA</div><div class="ent-d">Agro, minería, agua, forestal y más: la misma observación aplicada a cada recurso.</div></a>
+    <a class="ent inst" href="instituciones.html"><div class="ent-k">BANCOS · FONDOS</div><div class="ent-t">EPIMELEIA INSTITUCIONES</div><div class="ent-d">Para quien financia: el riesgo de origen de toda una cartera, verificable por terceros.</div></a>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- COMPROBALO VOS -->
+<section class="sec" id="comprobar">
+  <div class="comprobar">
+    <div class="eyebrow">COMPROBALO VOS</div>
+    <h2 class="head-title">No nos creas. <em>Revisalo.</em></h2>
+    <p class="head-sub">Poné el número de cualquier parcela registrada y mirá su ficha pública: saldo, señal de riesgo, campaña y sello. La huella se recalcula en tu navegador.</p>
+    <form class="comp-form" onsubmit="return comprobar(event)">
+      <input id="compId" type="text" inputmode="numeric" placeholder="Número de parcela, ej. 29" autocomplete="off" aria-label="Número de parcela">
+      <button type="submit">VERIFICAR →</button>
+    </form>
+    <p class="comp-alt">¿Querés ver tu propio campo? <a href="protocolo.html">Dibujalo en el mapa y probalo en vivo</a>, sin registrarte.</p>
+  </div>
+  <p class="cierre">No vendemos el dato. Vendemos <span>la prueba de que nadie lo tocó</span>.</p>
+</section>
+
+<footer class="footer">
+  <div class="footer-in">
+    <a class="footer-mail" href="mailto:info@epimeleia.world">info@epimeleia.world</a>
+    <div class="footer-fine">
+      EPIMELEIA · Notario Digital Ambiental · Polygon Mainnet<br>
+      <a href="index.html">← Volver al inicio</a>
+    </div>
+  </div>
+</footer>
+
+<!-- BOTÓN FLOTANTE · TU OFICINA -->
+<a class="ofi-float" href="oficina.html" aria-label="Tu oficina: tus parcelas, lotes y saldos">
+  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect x="4" y="10" width="16" height="11" rx="1.5" stroke="currentColor" stroke-width="1.7"/>
+    <path d="M8 10V7a4 4 0 0 1 8 0v3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+    <circle cx="12" cy="15.5" r="1.6" fill="currentColor"/>
+  </svg>
+  <span class="ofi-float-txt"><b>TU OFICINA</b><small>Tus lotes y saldos →</small></span>
+</a>
+
+<!-- EPI -->
+<button class="epi-bubble" id="epiBubble" onclick="abrirEpi()" aria-label="Hablar con EPI">
+  <svg viewBox="0 0 24 24">
+    <path class="spark-lg" d="M12 2l1.6 5.2L19 9l-5.4 1.8L12 16l-1.6-5.2L5 9l5.4-1.8z"/>
+    <path class="spark-sm" d="M18.5 14l.7 2.3 2.3.7-2.3.7-.7 2.3-.7-2.3-2.3-.7 2.3-.7z"/>
+  </svg>
+</button>
+<div class="epi-panel" id="epiPanel">
+  <div class="epi-top">
+    <div class="epi-top-l">
+      <svg class="epi-top-ico" viewBox="0 0 24 24">
+        <path class="spark-lg" d="M12 2l1.6 5.2L19 9l-5.4 1.8L12 16l-1.6-5.2L5 9l5.4-1.8z"/>
+        <path class="spark-sm" d="M18.5 14l.7 2.3 2.3.7-2.3.7-.7 2.3-.7-2.3-2.3-.7 2.3-.7z"/>
+      </svg>
+      <div><div class="epi-top-name">EPI</div><div class="epi-top-sub">RESPONDE TUS DUDAS</div></div>
+    </div>
+    <button class="epi-close" onclick="cerrarEpi()">✕</button>
+  </div>
+  <div class="epi-msgs" id="epiMsgs"></div>
+  <div class="epi-input">
+    <div class="epi-input-row">
+      <textarea id="epiText" placeholder="Escribí tu consulta…" rows="1"></textarea>
+      <button class="epi-send" onclick="epiEnviar()">↑</button>
+    </div>
+    <div class="epi-hint">EPI SOLO EXPLICA · NO REALIZA TU ADHESIÓN</div>
+  </div>
+</div>
+
+<script>
+function comprobar(e){
+  e.preventDefault();
+  var v = document.getElementById('compId').value.replace(/[^0-9]/g,'');
+  if (!v) { document.getElementById('compId').focus(); return false; }
+  window.location.href = 'verificar.html?id=' + encodeURIComponent(v);
+  return false;
+}
+
+/* ─── EPI (conectado a /api/chat · solo conversa) ─── */
+let epiHistorial = [], epiPensando = false, epiCerrada = false;
+function abrirEpi(){
+  document.getElementById('epiPanel').classList.add('open');
+  document.getElementById('epiBubble').classList.add('hidden');
+  if(!document.getElementById('epiMsgs').hasChildNodes()){
+    epiMsg('agent','Hola. Soy EPI. Acá te explico cómo EPIMELEIA controla el origen: el techo de producción de cada campo, el saldo que baja con cada venta y la señal de riesgo.\n\nPreguntame lo que quieras.');
+  }
+}
+function cerrarEpi(){
+  document.getElementById('epiPanel').classList.remove('open');
+  document.getElementById('epiBubble').classList.remove('hidden');
+}
+function epiEsc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function epiMsg(rol, texto){
+  const c = document.getElementById('epiMsgs');
+  const w = document.createElement('div'); w.className='emsg '+rol;
+  const html = '<p>' + epiEsc(texto).replace(/\n\n/g,'</p><p>') + '</p>';
+  w.innerHTML = `<div class="emsg-av ${rol}">${rol==='agent'?'EP':'VOS'}</div><div class="emsg-b ${rol}">${html}</div>`;
+  c.appendChild(w); c.scrollTop = c.scrollHeight;
+  return w;
+}
+async function epiEnviar(){
+  const t = document.getElementById('epiText');
+  const v = t.value.trim();
+  if(!v || epiPensando || epiCerrada) return;
+  epiMsg('user', v);
+  epiHistorial.push({ role:'user', content:v });
+  t.value=''; t.style.height='auto';
+  epiPensando = true;
+  const pensando = epiMsg('agent', '…');
+  try {
+    const resp = await fetch('/api/chat', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ messages: epiHistorial }) });
+    const data = await resp.json();
+    pensando.remove();
+    let textoEpi = '';
+    if (data && Array.isArray(data.content)) textoEpi = data.content.filter(b => b.type === 'text').map(b => b.text).join('\n').trim();
+    if (!textoEpi) textoEpi = 'Disculpá, tuve un problema para responder. Probá de nuevo en un momento, o escribí a info@epimeleia.world.';
+    const debeCerrar = textoEpi.includes('[[FIN_CHARLA]]');
+    textoEpi = textoEpi.replace(/\[\[FIN_CHARLA\]\]/g, '').trim();
+    if (textoEpi) { epiMsg('agent', textoEpi); epiHistorial.push({ role:'assistant', content:textoEpi }); }
+    if (debeCerrar) { epiCerrada = true; const box = document.getElementById('epiText'); box.disabled = true; box.placeholder = 'Conversación finalizada.'; }
+  } catch (e) {
+    pensando.remove();
+    epiMsg('agent', 'No pude conectarme en este momento. Revisá tu conexión y probá de nuevo, o escribí a info@epimeleia.world.');
+  } finally { epiPensando = false; }
+}
+document.getElementById('epiText').addEventListener('keydown', e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); epiEnviar(); } });
+document.getElementById('epiText').addEventListener('input', function(){ this.style.height='auto'; this.style.height=Math.min(this.scrollHeight,110)+'px'; });
+</script>
+</body>
+</html>

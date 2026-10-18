@@ -120,10 +120,10 @@ section { position:relative; }
 .puerta.instituciones:hover { border-color:var(--azure); }
 .puerta.instituciones .puerta-k, .puerta.instituciones .puerta-arrow, .puerta.instituciones .puerta-ico { color:var(--azure); }
 .puerta.instituciones .puerta-ico svg { stroke:var(--azure); }
-.puerta.dibuja { background:linear-gradient(150deg, rgba(200,168,75,0.10), var(--card) 60%); border-color:rgba(200,168,75,0.35); }
-.puerta.dibuja:hover { border-color:var(--gold); }
-.puerta.dibuja .puerta-k, .puerta.dibuja .puerta-arrow, .puerta.dibuja .puerta-ico { color:var(--gold2); }
-.puerta.dibuja .puerta-ico svg { stroke:var(--gold2); }
+.puerta.origen { background:linear-gradient(150deg, rgba(200,168,75,0.10), var(--card) 60%); border-color:rgba(200,168,75,0.35); }
+.puerta.origen:hover { border-color:var(--gold); }
+.puerta.origen .puerta-k, .puerta.origen .puerta-arrow, .puerta.origen .puerta-ico { color:var(--gold2); }
+.puerta.origen .puerta-ico svg { stroke:var(--gold2); }
 /* Verificar — comprobar (tono neutro) */
 .puerta.verificar { background:linear-gradient(150deg, rgba(126,140,126,0.08), var(--card) 60%); border-color:var(--line2); }
 .puerta.verificar:hover { border-color:var(--muted); }
@@ -302,7 +302,7 @@ section { position:relative; }
     <p class="hero-publicos-sub">Encontrá la opción que mejor se adapta a tu necesidad.</p>
   </div>
 
-  <!-- SIETE PUERTAS (grilla 2 columnas · contacto a todo el ancho) -->
+  <!-- SEIS PUERTAS (grilla 2 columnas) -->
   <div class="puertas">
     <div class="puertas-lead">ELEGÍ POR DÓNDE ENTRAR</div>
     <div class="puertas-grid">
@@ -360,22 +360,23 @@ section { position:relative; }
         <span class="puerta-arrow">ENTRAR →</span>
       </a>
 
-      <!-- DIBUJÁ Y CERTIFICÁ -->
-      <a class="puerta dibuja" href="protocolo.html">
+      <!-- ORIGEN (reemplaza a Dibujá y certificá; el mapa sigue en LA PRUEBA, en el pie y dentro de Origen) -->
+      <a class="puerta origen" href="origen.html">
         <div class="puerta-top">
-          <span class="puerta-k">PROBALO EN VIVO</span>
+          <span class="puerta-k">ORIGEN · VOLUMEN · RIESGO</span>
           <span class="puerta-ico">
             <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 21.5s7-5.7 7-11.5a7 7 0 1 0-14 0c0 5.8 7 11.5 7 11.5z" stroke-width="1.5"/>
-              <circle cx="12" cy="10" r="2.5" stroke-width="1.5"/>
+              <path d="M3 20h18" stroke-width="1.5"/>
+              <path d="M6 20v-5M10 20v-8M14 20v-11M18 20V6" stroke-width="1.6"/>
+              <path d="M4 6.5h17" stroke-width="1.2" stroke-dasharray="2 2"/>
             </svg>
           </span>
         </div>
         <div>
-          <div class="puerta-name">DIBUJÁ Y CERTIFICÁ</div>
-          <div class="puerta-sub">Marcá tu recurso en el mapa y probalo en vivo, sin registrarte.</div>
+          <div class="puerta-name">EPIMELEIA ORIGEN</div>
+          <div class="puerta-sub">Nadie puede vender más de lo que su tierra produce. Cómo lo controlamos, con casos reales.</div>
         </div>
-        <span class="puerta-arrow">ABRIR EL MAPA →</span>
+        <span class="puerta-arrow">ENTRAR →</span>
       </a>
 
       <!-- VERIFICAR -->
@@ -445,6 +446,7 @@ section { position:relative; }
   </div>
   <div class="tech-stack">
     <span class="tech-chip"><b>Sentinel-2</b> · ESA / Copernicus</span>
+    <span class="tech-chip"><b>Sentinel-1</b> · radar a través de nubes</span>
     <span class="tech-chip"><b>Global Forest Watch</b> · Hansen / UMD GLAD</span>
     <span class="tech-chip"><b>GeoJSON</b> · coordenadas</span>
     <span class="tech-chip"><b>Polygon</b> · sellado on-chain</span>
@@ -476,6 +478,7 @@ section { position:relative; }
     <a class="footer-mail" href="mailto:info@epimeleia.world">info@epimeleia.world</a>
     <div class="footer-secondary">
       <button class="footer-btn" onclick="abrir('comoFunciona')">CÓMO FUNCIONA</button>
+      <a class="footer-btn" href="protocolo.html" style="text-decoration:none;">PROBALO EN VIVO · MAPA</a>
       <button class="footer-btn" onclick="abrir('historia')">NUESTRA HISTORIA</button>
       <button class="footer-btn" onclick="abrir('faqs')">PREGUNTAS FRECUENTES</button>
       <button class="footer-btn" onclick="abrir('terminos')">TÉRMINOS</button>
