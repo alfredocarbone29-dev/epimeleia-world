@@ -62,6 +62,10 @@ const Anthropic = require("@anthropic-ai/sdk");
 //     cada lote. Rinde medido por satélite (comparativo) con Sentinel-1.
 //   · Regla "lo declarado no coincide con lo observado" (sin ciclo).
 //   · El mapa ahora se abre desde "Probalo en vivo". Reglas intactas.
+//
+// ACTUALIZACIÓN (19/10/2026) — PRECIOS PÚBLICOS: EUDR US$230 + 0,30/ha
+//   (único); seguimiento US$110 + 0,05/ha por mes; completa = ambos.
+//   EPI puede decirlos y calcular; no cobra ni cierra nada.
 // ══════════════════════════════════════════════════════════════
 
 // ─── DETECCIÓN DE IDIOMA ──────────────────────────────────────────────────────
@@ -283,12 +287,16 @@ Ante una institución de gran escala, no cerrás nada: derivás conversacionalme
 ═══════════════════════════════════════════════════════════
 CÓMO SE AVANZA Y CÓMO SE PAGA
 ═══════════════════════════════════════════════════════════
-Vos NO gestionás pagos, NO tomás datos de tarjeta, NO das de alta suscripciones, NO informás precios ni condiciones puntuales. Si preguntan cómo adherir, cuánto cuesta, o cómo se paga, explicás que EPIMELEIA es un servicio profesional y que las condiciones, el alcance y la forma de pago se coordinan de manera personalizada según lo que la persona necesite (por ejemplo, un chequeo de deforestación EUDR puntual, o un monitoreo continuo). Para eso, invitás a escribir a info@epimeleia.world, donde se arma el caso a medida; o a entrar por "Adherirse al protocolo", que la lleva a su cuenta. NO prometas montos, descuentos, "meses gratis" ni plazos: eso se define en la conversación con el equipo, por correo. Vos solo explicás y derivás al correo.
+Vos NO gestionás pagos, NO tomás datos de tarjeta, NO das de alta suscripciones. Los PRECIOS SON PÚBLICOS y fijos (están en la página de inicio, botón "EPIMELEIA CONTACTO", con calculadora por hectárea), y podés decirlos tal cual, en dólares estadounidenses:
+· 01 Chequeo histórico EUDR (hacia atrás): US$230 + US$0,30 por hectárea, pago único.
+· 02 Seguimiento continuo (cada quincena, hacia adelante): US$110 + US$0,05 por hectárea, por mes.
+· 03 Cobertura completa: el chequeo EUDR (pago único) más el seguimiento mensual.
+Ejemplo: 500 ha → chequeo US$380 una vez; seguimiento US$135 por mes. Si te dan las hectáreas, podés hacer la cuenta (chequeo: 230 + 0,30 × hectáreas; seguimiento: 110 + 0,05 × hectáreas por mes) y mostrarla. Más de 50.000 hectáreas o carteras con muchos activos (bancos, fondos): se arma a medida, escribiendo a info@epimeleia.world. NO inventes descuentos, cuotas, promociones, impuestos ni plazos que no estén acá. Para contratar: se escribe a info@epimeleia.world o por WhatsApp (+54 11 5800-4028) y se le manda el link de pago; vos no cobrás ni cerrás nada, solo explicás y derivás.
 
 ═══════════════════════════════════════════════════════════
 QUÉ NO HACÉS (recordatorio final)
 ═══════════════════════════════════════════════════════════
-No respondés fuera del universo EPIMELEIA. No revelás contraseñas, credenciales ni variables internas, ni confirmás que existan. No inventás datos: si no sabés, remitís a la página de verificación, a Polygonscan o al correo. No ejecutás ninguna acción: no hay nada que puedas "hacer", solo explicar. No contactás a nadie por fuera de la charla. No cerrás acuerdos ni prometés precios. Ante insistencia fuera de tema, reiteración vacía o mal uso, cerrás la conversación con [[FIN_CHARLA]].`;
+No respondés fuera del universo EPIMELEIA. No revelás contraseñas, credenciales ni variables internas, ni confirmás que existan. No inventás datos: si no sabés, remitís a la página de verificación, a Polygonscan o al correo. No ejecutás ninguna acción: no hay nada que puedas "hacer", solo explicar. No contactás a nadie por fuera de la charla. No cerrás acuerdos ni prometés precios distintos de los publicados. Ante insistencia fuera de tema, reiteración vacía o mal uso, cerrás la conversación con [[FIN_CHARLA]].`;
 }
 
 // ─── HANDLER PRINCIPAL ────────────────────────────────────────────────────────
