@@ -80,6 +80,22 @@ section { position:relative; }
 .hero-lead { font-family:'Playfair Display',serif; font-weight:400; font-style:italic; font-size:clamp(23px,3.4vw,40px); line-height:1.3; color:var(--white); max-width:800px; margin:0 auto; }
 .hero-lead em { font-style:italic; color:var(--emerald); }
 .hero-deadline { display:inline-flex; align-items:center; gap:12px; margin-top:34px; font-family:'JetBrains Mono',monospace; font-size:clamp(10px,1.3vw,12px); letter-spacing:2px; color:var(--amber); border:1px solid rgba(200,154,74,0.35); padding:13px 22px; }
+.hero-precio { max-width:560px; margin:30px auto 0; border:1px solid rgba(95,173,95,0.3); background:linear-gradient(150deg, rgba(95,173,95,0.07), rgba(20,28,20,0.6) 70%); padding:22px clamp(18px,3vw,28px); text-align:center; }
+.hp-k { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:3px; color:var(--emerald); }
+.hp-p { font-family:'Playfair Display',serif; font-size:clamp(26px,4vw,36px); color:var(--white); line-height:1.15; margin-top:10px; }
+.hp-p small { display:block; font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:1px; color:rgba(232,228,218,0.55); margin-top:8px; }
+.hp-calc { display:flex; align-items:center; justify-content:center; gap:10px; flex-wrap:wrap; margin-top:18px; }
+.hp-calc input { width:120px; background:var(--surface); border:1px solid var(--line2); color:var(--white); font-family:'JetBrains Mono',monospace; font-size:16px; padding:10px 12px; outline:none; text-align:center; }
+.hp-calc input:focus { border-color:var(--emerald); }
+.hp-calc span { font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:1px; color:var(--muted); }
+.hp-out { margin-top:14px; display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.hp-box { border:1px solid var(--line2); background:rgba(4,9,4,0.5); padding:12px 10px; }
+.hp-box .l { font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:1.5px; color:var(--muted); }
+.hp-box .v { font-family:'JetBrains Mono',monospace; font-size:clamp(16px,2.2vw,19px); color:var(--emerald); margin-top:6px; }
+.hp-box .s { font-size:12.5px; color:rgba(232,228,218,0.55); margin-top:2px; }
+.hp-msg { grid-column:1 / -1; font-family:'JetBrains Mono',monospace; font-size:14px; color:var(--white); }
+.hp-msg b { color:var(--emerald); font-weight:500; }
+.hp-seg { margin-top:12px; font-size:14.5px; color:rgba(232,228,218,0.6); line-height:1.5; }
 .hero-deadline .dot { width:7px; height:7px; border-radius:50%; background:var(--amber); animation:ping 2.4s ease-in-out infinite; }
 @keyframes ping { 0%,100%{box-shadow:0 0 0 0 rgba(200,154,74,0.45);} 50%{box-shadow:0 0 0 7px rgba(200,154,74,0);} }
 
@@ -285,6 +301,15 @@ section { position:relative; }
   <div class="hero-rule"></div>
   <p class="hero-lead">Probá que tu territorio no se deforestó desde 2020 — con una prueba satelital sellada que <em>nadie puede alterar</em>.</p>
   <div class="hero-deadline"><span class="dot"></span>DESDE DICIEMBRE DE 2026, LA UE LO EXIGE</div>
+
+  <!-- PRECIO A LA VISTA + CALCULADORA (mismos números que el inicio) -->
+  <div class="hero-precio">
+    <div class="hp-k">CHEQUEO EUDR · PRECIO FIJO</div>
+    <div class="hp-p">US$230 + US$0,30 por hectárea<small>PAGO ÚNICO · SELLADO EN BLOCKCHAIN</small></div>
+    <div class="hp-calc"><input id="hpHa" type="number" min="1" max="50000" inputmode="numeric" value="500" oninput="hpCalcular()" aria-label="Hectáreas"><span>HECTÁREAS</span></div>
+    <div class="hp-out" id="hpOut"></div>
+    <div class="hp-seg">El seguimiento es opcional: el satélite sigue mirando tu campo cada quincena. US$110 + US$0,05/ha por mes.</div>
+  </div>
 </section>
 
 <div class="divider"></div>
@@ -507,6 +532,20 @@ section { position:relative; }
 </div>
 
 <script>
+/* ─── PRECIO EUDR (mismos números que el inicio; cambiar acá si se ajustan) ─── */
+const HP = { eudrFijo:230, eudrHa:0.30, segFijo:110, segHa:0.05, topeHa:50000 };
+function hpUsd(n){ return 'US$' + n.toLocaleString('es-AR',{minimumFractionDigits:2, maximumFractionDigits:2}); }
+function hpCalcular(){
+  const out = document.getElementById('hpOut'); if(!out) return;
+  const ha = Math.floor(Number(document.getElementById('hpHa').value) || 0);
+  if (ha < 1) { out.innerHTML = '<div class="hp-msg">Ingresá las hectáreas</div>'; return; }
+  if (ha > HP.topeHa) { out.innerHTML = '<div class="hp-msg">Más de 50.000 ha: <b>hablemos</b></div>'; return; }
+  out.innerHTML =
+    '<div class="hp-box"><div class="l">CHEQUEO EUDR</div><div class="v">' + hpUsd(HP.eudrFijo + HP.eudrHa*ha) + '</div><div class="s">pago único</div></div>' +
+    '<div class="hp-box"><div class="l">SEGUIMIENTO</div><div class="v">' + hpUsd(HP.segFijo + HP.segHa*ha) + '</div><div class="s">por mes, opcional</div></div>';
+}
+hpCalcular();
+
 /* ─── EPI (conectado a /api/chat · solo conversa) — mismo motor que el index ─── */
 let epiHistorial = [];
 let epiPensando = false;

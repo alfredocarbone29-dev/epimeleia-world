@@ -224,10 +224,21 @@ section { position:relative; }
 .mc-alt { text-align:center; font-size:13px; color:rgba(232,228,218,0.55); margin-top:14px; }
 .mc-alt a { color:var(--muted); text-decoration:underline; }
 .mc-alt a:hover { color:var(--text); }
-/* aviso de por qué no se publican precios (dentro del modal de contacto) */
-.mc-precio { margin:16px 0 4px; padding:14px 16px; border:1px solid var(--line); border-left:2px solid var(--teal); background:rgba(95,173,95,0.035); }
-.mc-precio .t { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:2px; color:var(--teal); margin-bottom:8px; }
-.mc-precio p { font-size:13.5px; color:rgba(232,228,218,0.68); line-height:1.65; margin:0; }
+/* precios visibles + calculadora (dentro del modal de contacto) */
+.opt-price { margin-top:8px; font-family:'JetBrains Mono',monospace; font-size:12.5px; letter-spacing:0.5px; color:var(--gold2); }
+.opt-price small { color:rgba(232,228,218,0.5); font-size:11px; letter-spacing:0; }
+.calc { margin:14px 0 4px; padding:16px 18px; border:1px solid var(--line2); border-left:2px solid var(--gold); background:rgba(200,168,75,0.04); }
+.calc .t { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:2px; color:var(--gold2); margin-bottom:10px; }
+.calc-row { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.calc-row input { width:140px; background:var(--surface); border:1px solid var(--line2); color:var(--white); font-family:'JetBrains Mono',monospace; font-size:16px; padding:10px 12px; outline:none; }
+.calc-row input:focus { border-color:var(--gold); }
+.calc-row span { font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--muted); letter-spacing:1px; }
+.calc-out { margin-top:12px; display:grid; gap:6px; }
+.calc-line { display:flex; justify-content:space-between; gap:12px; font-size:14.5px; color:rgba(232,228,218,0.78); border-bottom:1px dashed var(--line); padding-bottom:6px; }
+.calc-line:last-child { border-bottom:none; }
+.calc-line b { font-family:'JetBrains Mono',monospace; font-weight:500; color:var(--white); white-space:nowrap; }
+@media(max-width:520px){ .calc-line { flex-direction:column; gap:2px; } .calc-line b { white-space:normal; } }
+.calc-note { font-size:12.5px; color:rgba(232,228,218,0.5); margin-top:10px; line-height:1.5; }
 
 .epi-bubble { position:fixed; right:clamp(16px,3vw,32px); bottom:clamp(16px,3vw,32px); z-index:400; width:60px; height:60px; border-radius:50%; background:radial-gradient(circle at 35% 30%, var(--panel), var(--surface)); border:1px solid rgba(95,173,95,0.35); cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 6px 26px rgba(0,0,0,0.5); transition:transform .25s ease, box-shadow .3s ease, opacity .3s ease; animation:epiPulse 3.4s ease-in-out infinite; }
 .epi-bubble:hover { transform:scale(1.08); }
@@ -411,7 +422,7 @@ section { position:relative; }
         </div>
         <div>
           <div class="puerta-name">EPIMELEIA CONTACTO</div>
-          <div class="puerta-sub">Las tres formas de contratar y cómo escribirnos. El precio se conversa, sin vueltas.</div>
+          <div class="puerta-sub">Las tres formas de contratar, con sus precios a la vista y una calculadora por hectárea.</div>
         </div>
         <span class="puerta-arrow">VER OPCIONES →</span>
       </button>
@@ -560,28 +571,30 @@ const ONCHAIN = [
   });
 })();
 
-/* ─── MODAL CONTACTO · tres opciones + canales (sin precio) ─── */
+/* ─── MODAL CONTACTO · tres opciones con precio + calculadora + canales ─── */
 const CONTACTO_HTML = `
-<p style="margin-bottom:6px;">Entraste por donde creíste tener tu tema — pero podés elegir cualquiera de las tres. <strong>El precio se arma a tu caso y se conversa</strong>, no hay pago automático.</p>
+<p style="margin-bottom:6px;">Entraste por donde creíste tener tu tema — pero podés elegir cualquiera de las tres. <strong>Los precios son fijos y a la vista</strong>: dependen solo de las hectáreas.</p>
 <div class="opt-list">
   <div class="opt">
     <div class="opt-k">01</div>
-    <div><div class="opt-name">Solo deforestación · EUDR</div><div class="opt-desc">El chequeo histórico de tu territorio, sellado en blockchain. El respaldo de tu Declaración de Diligencia Debida. Una prueba inapelable hacia atrás.</div></div>
+    <div><div class="opt-name">Solo deforestación · EUDR</div><div class="opt-desc">El chequeo histórico de tu territorio, sellado en blockchain. El respaldo de tu Declaración de Diligencia Debida. Una prueba inapelable hacia atrás.</div><div class="opt-price">US$230 + US$0,30 por hectárea <small>· pago único</small></div></div>
   </div>
   <div class="opt">
     <div class="opt-k">02</div>
-    <div><div class="opt-name">Seguimiento continuo</div><div class="opt-desc">El satélite observa tu activo cada quincena, hacia adelante, y sella cada lectura. Recibís avisos de lo que pasa. Un guardián que no duerme.</div></div>
+    <div><div class="opt-name">Seguimiento continuo</div><div class="opt-desc">El satélite observa tu activo cada quincena, hacia adelante, y sella cada lectura. Recibís avisos de lo que pasa. Un guardián que no duerme.</div><div class="opt-price">US$110 + US$0,05 por hectárea <small>· por mes</small></div></div>
   </div>
   <div class="opt combo">
     <div class="opt-k">03</div>
-    <div><div class="opt-name">Cobertura completa · EUDR + seguimiento</div><div class="opt-desc">Las dos cosas: la prueba histórica para la EUDR y el seguimiento continuo hacia adelante. La cobertura completa, del pasado al futuro.</div></div>
+    <div><div class="opt-name">Cobertura completa · EUDR + seguimiento</div><div class="opt-desc">Las dos cosas: la prueba histórica para la EUDR y el seguimiento continuo hacia adelante. La cobertura completa, del pasado al futuro.</div><div class="opt-price">US$230 + US$0,30/ha <small>(una vez)</small> + US$110 + US$0,05/ha <small>por mes</small></div></div>
   </div>
 </div>
-<div class="mc-precio">
-  <div class="t">POR QUÉ NO PUBLICAMOS PRECIOS</div>
-  <p>Los precios están estandarizados, pero varían según el tipo de cliente y la forma de contratación. Publicarlos como una góndola sería engorroso y confuso. A eso se suma el principio de confidencialidad con el que trabajamos: lo acordado con cada cliente es reservado. Por eso el precio se informa previo acuerdo entre las partes.</p>
+<div class="calc">
+  <div class="t">CALCULÁ TU PRECIO</div>
+  <div class="calc-row"><input id="calcHa" type="number" min="1" max="50000" inputmode="numeric" value="500" oninput="calcular()" aria-label="Hectáreas"><span>HECTÁREAS</span></div>
+  <div class="calc-out" id="calcOut"></div>
+  <div class="calc-note">Precios en dólares estadounidenses. Más de 50.000 hectáreas o carteras con muchos activos: escribinos y lo armamos a medida.</div>
 </div>
-<h4>PARA AVANZAR, ESCRIBINOS</h4>
+<h4>PARA CONTRATAR, ESCRIBINOS · TE MANDAMOS EL LINK DE PAGO</h4>
 <div class="mc-canales">
   <a class="mc-btn mail" href="mailto:info@epimeleia.world?subject=Consulta%20EPIMELEIA">✉ info@epimeleia.world</a>
   <a class="mc-btn wa" href="https://wa.me/5491158004028?text=Hola%2C%20quiero%20consultar%20por%20EPIMELEIA." target="_blank" rel="noopener">✆ WhatsApp · +54 11 5800-4028</a>
@@ -589,10 +602,26 @@ const CONTACTO_HTML = `
 `;
 function abrirContacto(){
   document.getElementById('mEyebrow').textContent = 'CONTACTO · CONTRATACIÓN · PRECIOS';
-  document.getElementById('mTitle').innerHTML = 'Elegí una opción y escribinos';
+  document.getElementById('mTitle').innerHTML = 'Elegí una opción, mirá tu precio y escribinos';
   document.getElementById('mBody').innerHTML = CONTACTO_HTML;
+  calcular();
   document.getElementById('ovModal').classList.add('active');
   document.body.style.overflow = 'hidden';
+}
+/* Precios fijos: cambiar solo estos cuatro números si algún día se ajustan */
+const PRECIO = { eudrFijo:230, eudrHa:0.30, segFijo:110, segHa:0.05, topeHa:50000 };
+function usd(n){ return 'US$' + n.toLocaleString('es-AR',{minimumFractionDigits:2, maximumFractionDigits:2}); }
+function calcular(){
+  const out = document.getElementById('calcOut'); if(!out) return;
+  const ha = Math.floor(Number(document.getElementById('calcHa').value) || 0);
+  if (ha < 1) { out.innerHTML = '<div class="calc-line">Ingresá las hectáreas</div>'; return; }
+  if (ha > PRECIO.topeHa) { out.innerHTML = '<div class="calc-line">Más de 50.000 ha: <b>hablemos</b></div>'; return; }
+  const eudr = PRECIO.eudrFijo + PRECIO.eudrHa*ha;
+  const seg  = PRECIO.segFijo  + PRECIO.segHa*ha;
+  out.innerHTML =
+    `<div class="calc-line">01 · Chequeo EUDR <b>${usd(eudr)} única vez</b></div>` +
+    `<div class="calc-line">02 · Seguimiento <b>${usd(seg)} por mes</b></div>` +
+    `<div class="calc-line">03 · Completa <b>${usd(eudr)} + ${usd(seg)}/mes</b></div>`;
 }
 
 /* ─── MODALES INFO ─── */
