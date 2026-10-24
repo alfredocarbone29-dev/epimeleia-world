@@ -377,6 +377,17 @@ async function procesarSello(filaId, ejecutar, datosProducto) {
         // que el simulacro. Es el mismo array que ya está en `m`. Si faltara,
         // reports.js simplemente no muestra la sección (no rompe).
         mediciones:           m.mediciones || null,
+        // AJUSTE 24/10: el mail muestra también el mapa oficial de la UE
+        // (bosque al 31/12/2020) y la capacidad declarada. Si faltan, no se muestran.
+        bosque2020: sello.bosque2020 ? {
+          pct: sello.bosque2020.pctBosque2020, ha: sello.bosque2020.haBosque2020,
+          eraBosque: sello.bosque2020.eraBosque,
+          lectura: bosque.lecturaEUDR(sello.bosque2020, activo.deforestacionHistorica),
+        } : null,
+        capacidad: capacidad && capacidad.declarada ? {
+          cultivo: capacidad.cultivo, ha: capacidad.ha, rinde: capacidad.rinde,
+          capacidadAnual: capacidad.capacidadAnual, txHash: capacidad.txHash,
+        } : null,
       });
       emailEnviado = true;
       L('email del certificado enviado a ' + emailDestino);

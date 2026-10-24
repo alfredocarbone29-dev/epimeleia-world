@@ -206,6 +206,8 @@ async function enviarEvidenciaQuincenal(p) {
     esClimatica,
     deforestacion,
     mediciones,                      // ← AJUSTE 44: números + interpretación humana
+    bosque2020,                      // ← AJUSTE 45: mapa oficial de bosques de la UE (JRC)
+    capacidad,                       // ← AJUSTE 45: capacidad productiva declarada
   } = p;
 
   const geometria = p.geometria || p.geoJSON || p.poligono || p.coordinates || null;
@@ -233,6 +235,8 @@ async function enviarEvidenciaQuincenal(p) {
     esClimatica,
     deforestacion,
     mediciones,                      // ← AJUSTE 44
+    bosque2020,                      // ← AJUSTE 45
+    capacidad,                       // ← AJUSTE 45
     geometria,
     tieneImagenMapa: !!imagenMapa,
   });
@@ -472,10 +476,76 @@ function _seccionDeforestacion(deforestacion) {
   </tr>`;
 }
 
+// ════════════════════════════════════════════════════════════════
+//  AJUSTE 45 · MAPA OFICIAL DE LA UE Y CAPACIDAD, TAMBIÉN EN EL MAIL
+//  ──────────────────────────────────────────────────────────────
+//  El sello ya guardaba el bosque al 31/12/2020 (JRC GFC2020) y la
+//  capacidad declarada, y Verificar los mostraba; el mail no. Ahora sí.
+//  Mismo espíritu honesto: si no llegan, la sección no aparece.
+// ════════════════════════════════════════════════════════════════
+const _nfAR = new Intl.NumberFormat('es-AR', { maximumFractionDigits: 2 });
+function _num(v) { return (v === null || v === undefined || isNaN(Number(v))) ? '—' : _nfAR.format(Number(v)); }
+
+function _seccionBosque2020(b) {
+  if (!b || typeof b.eraBosque !== 'boolean') return '';
+  const era    = b.eraBosque;
+  const acento = era ? '#8a6a1a' : '#3a6a3a';
+  const fondo  = era ? '#faf6ec' : '#f2f6f0';
+  const borde  = era ? '#e6d9b8' : '#d6e4d2';
+  const titulo = era ? `ERA BOSQUE EN UN ${_num(b.pct)} %` : 'NO ERA BOSQUE';
+  const detalle = era ? `${_num(b.pct)} % del campo · ${_num(b.ha)} ha` : '0 % del campo · 0 ha';
+  return `
+  <tr>
+    <td style="padding:0 40px 24px 40px;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="background:${fondo};border:1px solid ${borde};border-radius:2px;">
+        <tr>
+          <td style="padding:20px 24px;">
+            <div style="font-family:monospace;font-size:9px;letter-spacing:2px;color:#8a9e8a;">BOSQUE AL 31/12/2020 · MAPA OFICIAL DE LA UE</div>
+            <div style="font-family:'Georgia',serif;font-size:18px;color:${acento};margin:8px 0 4px 0;">${titulo}</div>
+            <div style="font-family:monospace;font-size:12px;color:#3a4a3a;">${detalle}</div>
+            ${b.lectura ? `<div style="font-family:'Georgia',serif;font-size:13px;color:#3a4a3a;line-height:1.6;margin-top:10px;">${b.lectura}</div>` : ''}
+            <div style="font-family:monospace;font-size:10px;color:#8a9e8a;margin-top:12px;line-height:1.6;">
+              Fuente: JRC Global Forest Cover 2020 (V4) · Comisión Europea<br>
+              Definición de bosque de la EUDR · resolución 10 m · fecha de corte de la ley
+            </div>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>`;
+}
+
+function _seccionCapacidad(c, activoId) {
+  if (!c || !(Number(c.capacidadAnual) > 0)) return '';
+  const urlTx = c.txHash ? `https://polygonscan.com/tx/${c.txHash}` : '';
+  return `
+  <tr>
+    <td style="padding:0 40px 24px 40px;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="background:#f6f4ee;border:1px solid #e0d8c8;border-radius:2px;">
+        <tr>
+          <td style="padding:20px 24px;">
+            <div style="font-family:monospace;font-size:9px;letter-spacing:2px;color:#8a9e8a;">CAPACIDAD PRODUCTIVA DECLARADA · TRAZABILIDAD</div>
+            <div style="font-family:'Georgia',serif;font-size:22px;color:#0f1a0f;margin:8px 0 4px 0;">${_num(c.capacidadAnual)} t <span style="font-size:14px;color:#5a6a5a;">de ${c.cultivo || '—'} por año</span></div>
+            <div style="font-family:monospace;font-size:12px;color:#3a4a3a;">${_num(c.ha)} ha × ${_num(c.rinde)} t/ha (rinde de referencia)</div>
+            <div style="font-family:'Georgia',serif;font-size:13px;color:#3a4a3a;line-height:1.6;margin-top:10px;">
+              Quedó declarada en Polygon. Cada embarque que sellás se descuenta de este saldo: el campo no puede respaldar más volumen del que su superficie permite producir.
+            </div>
+            <div style="margin-top:12px;font-family:monospace;font-size:11px;">
+              <a href="https://epimeleia.world/verificar.html?id=${activoId}" style="color:#3a6a3a;">Ver el saldo en Verificar →</a>
+              ${urlTx ? `&nbsp;·&nbsp; <a href="${urlTx}" style="color:#3a6a3a;">Declaración en Polygonscan →</a>` : ''}
+            </div>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>`;
+}
+
 function _generarHTMLQuincenal({
   activoId, nombreActivo, q, anio, quincenaDelTrimestre,
   sellado, parcial, calidadPct, satelite, fechaPasada, hashEvidencia, txHash, bloque,
   esClimatica, deforestacion, mediciones, tieneImagenMapa, geometria,
+  bosque2020, capacidad,
 }) {
   const contratoCert = config.contratos?.cert || '';
   const urlTx        = txHash ? `https://polygonscan.com/tx/${txHash}` : '';
@@ -529,6 +599,8 @@ function _generarHTMLQuincenal({
   const seccionMediciones = _seccionMediciones(mediciones);   // ← AJUSTE 44
   const seccionUbicacion = _seccionUbicacion(geometria);
   const seccionDeforestacion = _seccionDeforestacion(deforestacion);
+  const seccionBosque2020 = sellado ? _seccionBosque2020(bosque2020) : '';      // ← AJUSTE 45
+  const seccionCapacidad  = sellado ? _seccionCapacidad(capacidad, activoId) : ''; // ← AJUSTE 45
 
   const bloquePrueba = sellado ? `
   <tr>
@@ -610,6 +682,8 @@ function _generarHTMLQuincenal({
   ${seccionMediciones}
   ${seccionUbicacion}
   ${seccionDeforestacion}
+  ${seccionBosque2020}
+  ${seccionCapacidad}
   ${bloquePrueba}
 
   <tr>
