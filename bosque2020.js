@@ -169,8 +169,9 @@ if (require.main === module) {
     } else {
       casos.push({ nombre: 'Campo agrícola · Marcos Juárez (debería dar ~0 % bosque)', geo: { type: 'Polygon', coordinates: [[
         [-62.0538, -32.6600], [-62.0505, -32.6600], [-62.0505, -32.6650], [-62.0538, -32.6650], [-62.0538, -32.6600]]] } });
+      // Selva cerrada en el interior de Amazonas (lejos de ríos y ciudades).
       casos.push({ nombre: 'Selva amazónica · Brasil (debería dar ~100 % bosque)', geo: { type: 'Polygon', coordinates: [[
-        [-60.0300, -3.0000], [-60.0250, -3.0000], [-60.0250, -3.0050], [-60.0300, -3.0050], [-60.0300, -3.0000]]] } });
+        [-64.5000, -6.5000], [-64.4950, -6.5000], [-64.4950, -6.5050], [-64.5000, -6.5050], [-64.5000, -6.5000]]] } });
     }
     console.log('\n MAPA DE BOSQUES 2020 · ' + FUENTE + '\n');
     for (const c of casos) {

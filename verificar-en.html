@@ -183,6 +183,9 @@ h1{font-family:'Playfair Display',serif;font-weight:400;font-size:clamp(26px,4vw
       <div class="dato"><span class="et">Verdict</span><span class="va" id="dVeredicto">—</span></div>
       <div class="dato"><span class="et">Period</span><span class="va" id="dPeriodo">—</span></div>
       <div class="dato"><span class="et">Source</span><span class="va" id="dDefFuente">—</span></div>
+      <!-- FOREST 2020 · official EU map (JRC). Only in seals from 24/10/2026 -->
+      <div class="dato" id="rowB2020" style="display:none;"><span class="et">Forest on 31/12/2020 · official EU map (JRC)</span><span class="va" id="dB2020">—</span></div>
+      <div id="dB2020Lect" style="display:none;font-size:14px;color:var(--muted);line-height:1.6;margin-top:10px;padding-top:10px;border-top:1px solid var(--line);"></div>
     </div>
 
     <!-- SEMÁFORO DE RIESGO DE ORIGEN (AJUSTE 17/10/2026) -->
@@ -409,6 +412,26 @@ h1{font-family:'Playfair Display',serif;font-weight:400;font-size:clamp(26px,4vw
       $('dDefFuente').textContent = def.fuente || '—';
     }else{
       $('cardDef').style.display = 'none';
+    }
+
+    // FOREST 2020 · official EU map (JRC GFC2020). Sealed with the package.
+    var b20 = p.bosque2020;
+    if (b20 && b20.pctBosque2020 != null) {
+      $('cardDef').style.display = '';
+      $('rowB2020').style.display = '';
+      var nb = b20.pctBosque2020 + ' %' + (b20.haBosque2020 ? ' · ' + b20.haBosque2020 + ' ha' : '');
+      $('dB2020').textContent = b20.eraBosque ? nb + ' WAS FOREST' : 'NOT FOREST (0 %)';
+      $('dB2020').className = 'va ' + (b20.eraBosque ? 'def-hubo' : 'def-limpio');
+      var hubo = !!(def && def.hubo);
+      var lect = !b20.eraBosque
+        ? (hubo ? 'According to the official EU map, this plot was not forest in 2020: the tree cover loss recorded by Global Forest Watch is not deforestation in the EUDR sense.'
+                : 'According to the official EU map, this plot was not forest in 2020, and Global Forest Watch records no tree cover loss afterwards.')
+        : (hubo ? 'Part of this plot was forest in 2020 according to the official EU map, and Global Forest Watch records tree cover loss afterwards: it needs review.'
+                : 'Part of this plot was forest in 2020 according to the official EU map, and Global Forest Watch records no tree cover loss afterwards.');
+      $('dB2020Lect').textContent = lect + ' Source: JRC Global Forest Cover 2020, European Commission (EUDR forest definition, 10 m).';
+      $('dB2020Lect').style.display = '';
+    } else {
+      $('rowB2020').style.display = 'none'; $('dB2020Lect').style.display = 'none';
     }
 
     // Capacidad y saldo

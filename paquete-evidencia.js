@@ -114,6 +114,23 @@ function _normalizarDeforestacion(def) {
   };
 }
 
+// BOSQUE 2020 (24/10/2026): ¿era bosque el campo al 31/12/2020 según el
+// mapa oficial de la UE (JRC GFC2020)? Solo números y fuente, sin textos:
+// la lectura en palabras la arma cada página en su idioma.
+function _normalizarBosque2020(b) {
+  if (!b || b.ok !== true) return null;
+  return {
+    fuente:          b.fuente || null,
+    fechaReferencia: b.fechaReferencia || null,
+    resolucionM:     b.resolucionM != null ? Number(b.resolucionM) : null,
+    pixeles:         b.pixeles != null ? Number(b.pixeles) : null,
+    pixelesBosque:   b.pixelesBosque != null ? Number(b.pixelesBosque) : null,
+    pctBosque2020:   b.pctBosque2020 != null ? Number(b.pctBosque2020) : null,
+    haBosque2020:    b.haBosque2020 != null ? Number(b.haBosque2020) : null,
+    eraBosque:       b.eraBosque === true,
+  };
+}
+
 // Normaliza las mediciones (NDVI, humedad…) a lo esencial y estable.
 function _normalizarMediciones(mediciones) {
   if (!Array.isArray(mediciones)) return [];
@@ -138,10 +155,10 @@ function construirPaquete(datos) {
   const {
     activoIdOnchain, nombreActivo, tipoTexto,
     poligono, medicion, deforestacion,
-    titularEmail, trimestre,
+    titularEmail, trimestre, bosque2020,
   } = datos;
 
-  return {
+  const paquete = {
     version:        PAQUETE_VERSION,
     activoIdOnchain: activoIdOnchain != null ? Number(activoIdOnchain) : null,
     nombreActivo:   nombreActivo || null,
@@ -163,6 +180,13 @@ function construirPaquete(datos) {
 
     titularHash:    _titularHash(titularEmail),
   };
+
+  // BOSQUE 2020: entra al paquete solo si se pudo medir. Los paquetes
+  // viejos (sin esta clave) siguen verificándose exactamente igual.
+  const b = _normalizarBosque2020(bosque2020);
+  if (b) paquete.bosque2020 = b;
+
+  return paquete;
 }
 
 // ─── Sellado ────────────────────────────────────────────────────

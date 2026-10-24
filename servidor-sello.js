@@ -17,6 +17,7 @@ const activoSupabase = require('./activo-supabase');
 const reports        = require('./reports');       // para disparar el email del certificado
 const paqueteEvidencia = require('./paquete-evidencia'); // PASO D-3: hash del paquete verificable
 const rendimiento    = require('./traz-rendimiento');  // SIMPLE-1: rinde de referencia para la capacidad automática
+const bosque         = require('./bosque2020');        // BOSQUE 2020: mapa oficial de bosques de la UE (JRC)
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 
@@ -121,6 +122,16 @@ async function sellarEvidencia(onchainId, medicion, activo) {
   const nub = nubosidadParaContrato(medicion.nubosidadPct);
   const periodo = scheduler.periodoDeVentana(new Date());
 
+  // BOSQUE 2020 (24/10/2026): ¿era bosque al 31/12/2020 según el mapa oficial
+  // de la UE? Se mide antes de armar el paquete y queda sellado con él.
+  // Si el mapa no responde, el sello sale igual, sin esta parte.
+  let b2020 = null;
+  try {
+    b2020 = await bosque.bosque2020(activo.geometria);
+    if (b2020 && b2020.ok) L(`bosque 2020 (JRC): ${b2020.pctBosque2020} % · ${b2020.haBosque2020} ha`);
+    else L('bosque 2020 no medido: ' + ((b2020 && b2020.motivo) || 'sin respuesta'));
+  } catch (eB) { L('bosque 2020 falló (el sello sigue): ' + eB.message); b2020 = null; }
+
   const { paquete, canonical, hash: hashPaquete } = paqueteEvidencia.construirYSellar({
     activoIdOnchain: onchainId,
     nombreActivo:    activo.nombreActivo,
@@ -130,6 +141,7 @@ async function sellarEvidencia(onchainId, medicion, activo) {
     poligono:        activo.geometria,
     medicion,
     deforestacion:   activo.deforestacionHistorica || null,
+    bosque2020:      b2020,
   });
 
   const recibo = await blockchain.registrarEvidenciaVentana({
@@ -156,6 +168,7 @@ async function sellarEvidencia(onchainId, medicion, activo) {
     canonical,
     paquete,
     trimestre: periodo.trimestre,
+    bosque2020: (b2020 && b2020.ok) ? b2020 : null,
   };
 }
 
@@ -395,6 +408,11 @@ async function procesarSello(filaId, ejecutar, datosProducto) {
     deforestacion: deforestacionResumen,
     capacidad: capacidad,
     producto: productoAplicado,
+    bosque2020: sello.bosque2020 ? {
+      pct: sello.bosque2020.pctBosque2020, ha: sello.bosque2020.haBosque2020,
+      eraBosque: sello.bosque2020.eraBosque,
+      lectura: bosque.lecturaEUDR(sello.bosque2020, activo.deforestacionHistorica),
+    } : null,
   };
 }
 

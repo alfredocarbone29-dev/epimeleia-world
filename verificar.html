@@ -188,6 +188,9 @@ h1{font-family:'Playfair Display',serif;font-weight:400;font-size:clamp(26px,4vw
       <div class="dato"><span class="et">Veredicto</span><span class="va" id="dVeredicto">—</span></div>
       <div class="dato"><span class="et">Período</span><span class="va" id="dPeriodo">—</span></div>
       <div class="dato"><span class="et">Fuente</span><span class="va" id="dDefFuente">—</span></div>
+      <!-- BOSQUE 2020 · mapa oficial de la UE (JRC). Solo en sellos desde el 24/10/2026 -->
+      <div class="dato" id="rowB2020" style="display:none;"><span class="et">Bosque al 31/12/2020 · mapa oficial UE (JRC)</span><span class="va" id="dB2020">—</span></div>
+      <div id="dB2020Lect" style="display:none;font-size:14px;color:var(--muted);line-height:1.6;margin-top:10px;padding-top:10px;border-top:1px solid var(--line);"></div>
     </div>
 
     <!-- SEMÁFORO DE RIESGO DE ORIGEN (AJUSTE 17/10/2026) -->
@@ -414,6 +417,26 @@ h1{font-family:'Playfair Display',serif;font-weight:400;font-size:clamp(26px,4vw
       $('dDefFuente').textContent = def.fuente || '—';
     }else{
       $('cardDef').style.display = 'none';
+    }
+
+    // BOSQUE 2020 · mapa oficial de la UE (JRC GFC2020). Sellado con el paquete.
+    var b20 = p.bosque2020;
+    if (b20 && b20.pctBosque2020 != null) {
+      $('cardDef').style.display = '';
+      $('rowB2020').style.display = '';
+      var nb = String(b20.pctBosque2020).replace('.', ',') + ' %' + (b20.haBosque2020 ? ' · ' + String(b20.haBosque2020).replace('.', ',') + ' ha' : '');
+      $('dB2020').textContent = b20.eraBosque ? nb + ' ERA BOSQUE' : 'NO ERA BOSQUE (0 %)';
+      $('dB2020').className = 'va ' + (b20.eraBosque ? 'def-hubo' : 'def-limpio');
+      var hubo = !!(def && def.hubo);
+      var lect = !b20.eraBosque
+        ? (hubo ? 'Según el mapa oficial de la UE, este campo no era bosque en 2020: la pérdida de árboles que registra Global Forest Watch no es deforestación en el sentido de la EUDR.'
+                : 'Según el mapa oficial de la UE, este campo no era bosque en 2020, y Global Forest Watch no registra pérdida de árboles después.')
+        : (hubo ? 'Parte del campo era bosque en 2020 según el mapa oficial de la UE, y Global Forest Watch registra pérdida de árboles después: hay que revisarlo.'
+                : 'Parte del campo era bosque en 2020 según el mapa oficial de la UE, y Global Forest Watch no registra pérdida de árboles después.');
+      $('dB2020Lect').textContent = lect + ' Fuente: JRC Global Forest Cover 2020, Comisión Europea (definición de bosque de la EUDR, 10 m).';
+      $('dB2020Lect').style.display = '';
+    } else {
+      $('rowB2020').style.display = 'none'; $('dB2020Lect').style.display = 'none';
     }
 
     // Capacidad y saldo
