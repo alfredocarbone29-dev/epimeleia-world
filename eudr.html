@@ -305,10 +305,10 @@ section { position:relative; }
   <!-- PRECIO A LA VISTA + CALCULADORA (mismos números que el inicio) -->
   <div class="hero-precio">
     <div class="hp-k">CHEQUEO EUDR · PRECIO FIJO</div>
-    <div class="hp-p">US$230 + US$0,30 por hectárea<small>PAGO ÚNICO · SELLADO EN BLOCKCHAIN</small></div>
-    <div class="hp-calc"><input id="hpHa" type="number" min="1" max="50000" inputmode="numeric" value="500" oninput="hpCalcular()" aria-label="Hectáreas"><span>HECTÁREAS</span></div>
+    <div class="hp-p">US$230 por parcela<small>PAGO ÚNICO · SELLADO EN BLOCKCHAIN · SEA CHICA O GRANDE</small></div>
+    <div class="hp-calc"><input id="hpHa" type="number" min="1" max="999" inputmode="numeric" value="1" oninput="hpCalcular()" aria-label="Cantidad de parcelas"><span>PARCELAS</span></div>
     <div class="hp-out" id="hpOut"></div>
-    <div class="hp-seg">El seguimiento es opcional: el satélite sigue mirando tu campo cada quincena. US$110 + US$0,05/ha por mes.</div>
+    <div class="hp-seg">El seguimiento es opcional: el satélite sigue mirando tu campo cada quincena. US$110 por parcela por mes. Si eventualmente la cantidad de parcelas es superior a 20, el precio puede conversarse.</div>
   </div>
 </section>
 
@@ -533,16 +533,16 @@ section { position:relative; }
 
 <script>
 /* ─── PRECIO EUDR (mismos números que el inicio; cambiar acá si se ajustan) ─── */
-const HP = { eudrFijo:230, eudrHa:0.30, segFijo:110, segHa:0.05, topeHa:50000 };
+const HP = { eudr:230, seg:110, topeParcelas:20 };
 function hpUsd(n){ return 'US$' + n.toLocaleString('es-AR',{minimumFractionDigits:2, maximumFractionDigits:2}); }
 function hpCalcular(){
   const out = document.getElementById('hpOut'); if(!out) return;
-  const ha = Math.floor(Number(document.getElementById('hpHa').value) || 0);
-  if (ha < 1) { out.innerHTML = '<div class="hp-msg">Ingresá las hectáreas</div>'; return; }
-  if (ha > HP.topeHa) { out.innerHTML = '<div class="hp-msg">Más de 50.000 ha: <b>hablemos</b></div>'; return; }
+  const n = Math.floor(Number(document.getElementById('hpHa').value) || 0);
+  if (n < 1) { out.innerHTML = '<div class="hp-msg">Ingresá cuántas parcelas</div>'; return; }
+  if (n > HP.topeParcelas) { out.innerHTML = '<div class="hp-msg">Más de 20 parcelas: <b>el precio puede conversarse</b></div>'; return; }
   out.innerHTML =
-    '<div class="hp-box"><div class="l">CHEQUEO EUDR</div><div class="v">' + hpUsd(HP.eudrFijo + HP.eudrHa*ha) + '</div><div class="s">pago único</div></div>' +
-    '<div class="hp-box"><div class="l">SEGUIMIENTO</div><div class="v">' + hpUsd(HP.segFijo + HP.segHa*ha) + '</div><div class="s">por mes, opcional</div></div>';
+    '<div class="hp-box"><div class="l">CHEQUEO EUDR</div><div class="v">' + hpUsd(HP.eudr*n) + '</div><div class="s">pago único</div></div>' +
+    '<div class="hp-box"><div class="l">SEGUIMIENTO</div><div class="v">' + hpUsd(HP.seg*n) + '</div><div class="s">por mes, opcional</div></div>';
 }
 hpCalcular();
 

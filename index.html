@@ -422,7 +422,7 @@ section { position:relative; }
         </div>
         <div>
           <div class="puerta-name">EPIMELEIA CONTACTO</div>
-          <div class="puerta-sub">Las tres formas de contratar, con sus precios a la vista y una calculadora por hectárea.</div>
+          <div class="puerta-sub">Las tres formas de contratar, con precio fijo por parcela, a la vista.</div>
         </div>
         <span class="puerta-arrow">VER OPCIONES →</span>
       </button>
@@ -573,26 +573,26 @@ const ONCHAIN = [
 
 /* ─── MODAL CONTACTO · tres opciones con precio + calculadora + canales ─── */
 const CONTACTO_HTML = `
-<p style="margin-bottom:6px;">Entraste por donde creíste tener tu tema — pero podés elegir cualquiera de las tres. <strong>Los precios son fijos y a la vista</strong>: dependen solo de las hectáreas.</p>
+<p style="margin-bottom:6px;">Entraste por donde creíste tener tu tema — pero podés elegir cualquiera de las tres. <strong>Los precios son fijos y a la vista</strong>: un precio por parcela, sea chica o grande.</p>
 <div class="opt-list">
   <div class="opt">
     <div class="opt-k">01</div>
-    <div><div class="opt-name">Solo deforestación · EUDR</div><div class="opt-desc">El chequeo histórico de tu territorio, sellado en blockchain. El respaldo de tu Declaración de Diligencia Debida. Una prueba inapelable hacia atrás.</div><div class="opt-price">US$230 + US$0,30 por hectárea <small>· pago único</small></div></div>
+    <div><div class="opt-name">Solo deforestación · EUDR</div><div class="opt-desc">El chequeo histórico de tu territorio, sellado en blockchain. El respaldo de tu Declaración de Diligencia Debida. Una prueba inapelable hacia atrás.</div><div class="opt-price">US$230 por parcela <small>· pago único</small></div></div>
   </div>
   <div class="opt">
     <div class="opt-k">02</div>
-    <div><div class="opt-name">Seguimiento continuo</div><div class="opt-desc">El satélite observa tu activo cada quincena, hacia adelante, y sella cada lectura. Recibís avisos de lo que pasa. Un guardián que no duerme.</div><div class="opt-price">US$110 + US$0,05 por hectárea <small>· por mes</small></div></div>
+    <div><div class="opt-name">Seguimiento continuo</div><div class="opt-desc">El satélite observa tu activo cada quincena, hacia adelante, y sella cada lectura. Recibís avisos de lo que pasa. Un guardián que no duerme.</div><div class="opt-price">US$110 por parcela <small>· por mes</small></div></div>
   </div>
   <div class="opt combo">
     <div class="opt-k">03</div>
-    <div><div class="opt-name">Cobertura completa · EUDR + seguimiento</div><div class="opt-desc">Las dos cosas: la prueba histórica para la EUDR y el seguimiento continuo hacia adelante. La cobertura completa, del pasado al futuro.</div><div class="opt-price">US$230 + US$0,30/ha <small>(una vez)</small> + US$110 + US$0,05/ha <small>por mes</small></div></div>
+    <div><div class="opt-name">Cobertura completa · EUDR + seguimiento</div><div class="opt-desc">Las dos cosas: la prueba histórica para la EUDR y el seguimiento continuo hacia adelante. La cobertura completa, del pasado al futuro.</div><div class="opt-price">US$230 <small>(una vez)</small> + US$110 <small>por mes</small>, por parcela</div></div>
   </div>
 </div>
 <div class="calc">
   <div class="t">CALCULÁ TU PRECIO</div>
-  <div class="calc-row"><input id="calcHa" type="number" min="1" max="50000" inputmode="numeric" value="500" oninput="calcular()" aria-label="Hectáreas"><span>HECTÁREAS</span></div>
+  <div class="calc-row"><input id="calcHa" type="number" min="1" max="999" inputmode="numeric" value="1" oninput="calcular()" aria-label="Cantidad de parcelas"><span>PARCELAS</span></div>
   <div class="calc-out" id="calcOut"></div>
-  <div class="calc-note">Precios en dólares estadounidenses. Más de 50.000 hectáreas o carteras con muchos activos: escribinos y lo armamos a medida.</div>
+  <div class="calc-note">Precios en dólares estadounidenses. El precio no depende del tamaño: 10 ha o 5.000 ha pagan lo mismo. Si eventualmente la cantidad de parcelas es superior a 20, el precio puede conversarse.</div>
 </div>
 <h4>PARA CONTRATAR, ESCRIBINOS · TE MANDAMOS EL LINK DE PAGO</h4>
 <div class="mc-canales">
@@ -609,15 +609,15 @@ function abrirContacto(){
   document.body.style.overflow = 'hidden';
 }
 /* Precios fijos: cambiar solo estos cuatro números si algún día se ajustan */
-const PRECIO = { eudrFijo:230, eudrHa:0.30, segFijo:110, segHa:0.05, topeHa:50000 };
+const PRECIO = { eudr:230, seg:110, topeParcelas:20 };
 function usd(n){ return 'US$' + n.toLocaleString('es-AR',{minimumFractionDigits:2, maximumFractionDigits:2}); }
 function calcular(){
   const out = document.getElementById('calcOut'); if(!out) return;
-  const ha = Math.floor(Number(document.getElementById('calcHa').value) || 0);
-  if (ha < 1) { out.innerHTML = '<div class="calc-line">Ingresá las hectáreas</div>'; return; }
-  if (ha > PRECIO.topeHa) { out.innerHTML = '<div class="calc-line">Más de 50.000 ha: <b>hablemos</b></div>'; return; }
-  const eudr = PRECIO.eudrFijo + PRECIO.eudrHa*ha;
-  const seg  = PRECIO.segFijo  + PRECIO.segHa*ha;
+  const n = Math.floor(Number(document.getElementById('calcHa').value) || 0);
+  if (n < 1) { out.innerHTML = '<div class="calc-line">Ingresá cuántas parcelas</div>'; return; }
+  if (n > PRECIO.topeParcelas) { out.innerHTML = '<div class="calc-line">Más de 20 parcelas: <b>el precio puede conversarse</b></div>'; return; }
+  const eudr = PRECIO.eudr*n;
+  const seg  = PRECIO.seg*n;
   out.innerHTML =
     `<div class="calc-line">01 · Chequeo EUDR <b>${usd(eudr)} única vez</b></div>` +
     `<div class="calc-line">02 · Seguimiento <b>${usd(seg)} por mes</b></div>` +
