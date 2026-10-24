@@ -25,6 +25,8 @@
 <meta name="twitter:image" content="https://www.epimeleia.world/image_d8f5651c.png">
 <meta name="description" content="Cumplimiento EUDR: probá que tu territorio no se deforestó desde 2020, con evidencia satelital sellada e inalterable. El respaldo de tu DDS, verificable por terceros.">
 <meta name="robots" content="index, follow">
+<link rel="alternate" hreflang="es" href="https://www.epimeleia.world/eudr.html">
+<link rel="alternate" hreflang="en" href="https://www.epimeleia.world/eudr-en.html">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,700;1,400&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,400&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
@@ -60,6 +62,9 @@ section { position:relative; }
   background:rgba(4,9,4,0.86); backdrop-filter:blur(20px); border-bottom:1px solid var(--line);
 }
 .brand { font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:5px; color:var(--white); text-decoration:none; }
+.lang-link { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:1.5px; color:var(--gold2,#E5C870); text-decoration:none; border:1px solid rgba(229,200,112,0.35); padding:5px 9px; border-radius:3px; }
+.lang-link:hover { border-color:var(--gold2,#E5C870); }
+
 .brand span { color:var(--emerald); }
 .topnav { display:flex; flex-wrap:wrap; gap:8px; }
 .topnav a, .topnav button {
@@ -288,7 +293,10 @@ section { position:relative; }
 
 <!-- TOPBAR -->
 <div class="topbar">
-  <a class="brand" href="index.html">EPIMELEIA<span> · EUDR</span></a>
+  <div style="display:flex;align-items:center;gap:14px;">
+    <a class="brand" href="index.html">EPIMELEIA<span> · EUDR</span></a>
+    <a class="lang-link" href="eudr-en.html" hreflang="en" aria-label="English version">EN</a>
+  </div>
   <nav class="topnav">
     <a class="nav-home" href="index.html">← INICIO</a>
   </nav>

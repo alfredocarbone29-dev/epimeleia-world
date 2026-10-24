@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- Google tag (gtag.js) — EPIMELEIA Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-JKB0L91JHH"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-JKB0L91JHH');
+  </script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EPIMELEIA EUDR — Sealed proof of no deforestation since 2020 · The evidence behind your DDS</title>
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="EPIMELEIA">
+<meta property="og:title" content="EPIMELEIA EUDR">
+<meta property="og:description" content="Prove your land has not been deforested since 2020. A sealed satellite proof your buyer or auditor can verify.">
+<meta property="og:image" content="https://www.epimeleia.world/image_d8f5651c.png">
+<meta property="og:url" content="https://www.epimeleia.world/eudr-en.html">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="EPIMELEIA EUDR">
+<meta name="twitter:description" content="The evidence behind your Due Diligence Statement, sealed on blockchain.">
+<meta name="twitter:image" content="https://www.epimeleia.world/image_d8f5651c.png">
+<meta name="description" content="EUDR compliance: prove your land has not been deforested since 2020, with sealed, tamper-proof satellite evidence. The evidence behind your DDS, verifiable by third parties.">
+<meta name="robots" content="index, follow">
+<link rel="alternate" hreflang="es" href="https://www.epimeleia.world/eudr.html">
+<link rel="alternate" hreflang="en" href="https://www.epimeleia.world/eudr-en.html">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,700;1,400&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,400&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --void:#040904; --deep:#080E08; --surface:#0C130C; --panel:#101810; --card:#141C14;
+  --line:rgba(255,255,255,0.055); --line2:rgba(255,255,255,0.09);
+  --text:#E8E4DA; --muted:#7E8C7E; --dim:#445844;
+  --green:#4A8A4A; --emerald:#5FAD5F; --teal:#3A8A7A; --gold:#C8A84B; --gold2:#E5C870; --white:#F4F0E8;
+  --amber:#C89A4A; --azure:#8FB0DA;
+}
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+body {
+  background:
+    radial-gradient(ellipse 70% 50% at 15% 8%, rgba(95,173,95,0.08) 0%, transparent 55%),
+    radial-gradient(ellipse 55% 45% at 88% 92%, rgba(58,138,122,0.05) 0%, transparent 55%),
+    var(--deep);
+  color:var(--text); font-family:'Crimson Pro',Georgia,serif; font-size:18px; line-height:1.7;
+  min-height:100vh; -webkit-font-smoothing:antialiased;
+}
+body::after {
+  content:''; position:fixed; inset:0; z-index:9999; pointer-events:none;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+}
+section { position:relative; }
+.divider { height:1px; background:var(--line); max-width:1180px; margin:0 auto; }
+
+/* ─── TOPBAR ─── */
+.topbar {
+  position:sticky; top:0; z-index:100;
+  display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:16px;
+  padding:20px clamp(20px,5vw,64px);
+  background:rgba(4,9,4,0.86); backdrop-filter:blur(20px); border-bottom:1px solid var(--line);
+}
+.brand { font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:5px; color:var(--white); text-decoration:none; }
+.brand span { color:var(--emerald); }
+.topnav { display:flex; flex-wrap:wrap; gap:8px; }
+.topnav a, .topnav button {
+  font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:1.5px;
+  color:var(--muted); background:transparent; border:1px solid transparent;
+  padding:9px 13px; cursor:pointer; transition:color .2s, border-color .2s; text-decoration:none;
+}
+.topnav a:hover, .topnav button:hover { color:var(--text); border-color:var(--line2); }
+.topnav .nav-home { color:var(--teal); border-color:rgba(58,138,122,0.25); }
+.topnav .nav-home:hover { border-color:var(--teal); }
+
+/* ─── HERO ─── */
+.hero { max-width:960px; margin:0 auto; padding:clamp(56px,10vw,110px) clamp(24px,5vw,64px) clamp(40px,7vw,72px); text-align:center; }
+.hero-eyebrow { font-family:'JetBrains Mono',monospace; font-size:clamp(10px,1.3vw,13px); letter-spacing:5px; color:var(--emerald); margin-bottom:22px; }
+.hero-mark { font-family:'Playfair Display',serif; font-weight:400; font-size:clamp(40px,8vw,88px); letter-spacing:clamp(3px,1vw,10px); color:var(--white); line-height:1; }
+.hero-mark span { color:var(--emerald); }
+.hero-rule { width:64px; height:1px; background:var(--dim); margin:32px auto; }
+.hero-lead { font-family:'Playfair Display',serif; font-weight:400; font-style:italic; font-size:clamp(23px,3.4vw,40px); line-height:1.3; color:var(--white); max-width:800px; margin:0 auto; }
+.hero-lead em { font-style:italic; color:var(--emerald); }
+.hero-deadline { display:inline-flex; align-items:center; gap:12px; margin-top:34px; font-family:'JetBrains Mono',monospace; font-size:clamp(10px,1.3vw,12px); letter-spacing:2px; color:var(--amber); border:1px solid rgba(200,154,74,0.35); padding:13px 22px; }
+.hero-precio { max-width:560px; margin:30px auto 0; border:1px solid rgba(95,173,95,0.3); background:linear-gradient(150deg, rgba(95,173,95,0.07), rgba(20,28,20,0.6) 70%); padding:22px clamp(18px,3vw,28px); text-align:center; }
+.hp-k { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:3px; color:var(--emerald); }
+.hp-p { font-family:'Playfair Display',serif; font-size:clamp(26px,4vw,36px); color:var(--white); line-height:1.15; margin-top:10px; }
+.hp-p small { display:block; font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:1px; color:rgba(232,228,218,0.55); margin-top:8px; }
+.hp-calc { display:flex; align-items:center; justify-content:center; gap:10px; flex-wrap:wrap; margin-top:18px; }
+.hp-calc input { width:120px; background:var(--surface); border:1px solid var(--line2); color:var(--white); font-family:'JetBrains Mono',monospace; font-size:16px; padding:10px 12px; outline:none; text-align:center; }
+.hp-calc input:focus { border-color:var(--emerald); }
+.hp-calc span { font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:1px; color:var(--muted); }
+.hp-out { margin-top:14px; display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.hp-box { border:1px solid var(--line2); background:rgba(4,9,4,0.5); padding:12px 10px; }
+.hp-box .l { font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:1.5px; color:var(--muted); }
+.hp-box .v { font-family:'JetBrains Mono',monospace; font-size:clamp(16px,2.2vw,19px); color:var(--emerald); margin-top:6px; }
+.hp-box .s { font-size:12.5px; color:rgba(232,228,218,0.55); margin-top:2px; }
+.hp-msg { grid-column:1 / -1; font-family:'JetBrains Mono',monospace; font-size:14px; color:var(--white); }
+.hp-msg b { color:var(--emerald); font-weight:500; }
+.hp-seg { margin-top:12px; font-size:14.5px; color:rgba(232,228,218,0.6); line-height:1.5; }
+.hero-deadline .dot { width:7px; height:7px; border-radius:50%; background:var(--amber); animation:ping 2.4s ease-in-out infinite; }
+@keyframes ping { 0%,100%{box-shadow:0 0 0 0 rgba(200,154,74,0.45);} 50%{box-shadow:0 0 0 7px rgba(200,154,74,0);} }
+
+/* ─── SECCIÓN genérica ─── */
+.sec { max-width:1000px; margin:0 auto; padding:clamp(48px,7vw,88px) clamp(24px,5vw,64px); }
+.eyebrow { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:3px; color:var(--emerald); }
+.head { text-align:center; margin-bottom:clamp(30px,5vw,48px); }
+.head .eyebrow { margin-bottom:16px; }
+.head-title { font-family:'Playfair Display',serif; font-weight:400; font-size:clamp(24px,3.6vw,42px); color:var(--white); line-height:1.2; max-width:800px; margin:0 auto; }
+.head-title em { font-style:italic; color:var(--emerald); }
+.head-sub { font-size:clamp(16px,1.7vw,19px); color:rgba(232,228,218,0.62); max-width:640px; margin:22px auto 0; line-height:1.7; }
+
+/* ─── QUÉ ES (bloque de texto explicativo) ─── */
+.prose { max-width:760px; margin:0 auto; }
+.prose p { font-size:clamp(16px,1.7vw,19px); color:rgba(232,228,218,0.82); line-height:1.75; margin-bottom:20px; }
+.prose p strong { color:var(--white); font-weight:600; }
+.prose .lead { font-family:'Playfair Display',serif; font-style:italic; font-size:clamp(20px,2.4vw,27px); color:var(--white); line-height:1.4; margin-bottom:28px; }
+
+/* ─── TU LUGAR (evidencia vs DDS) ─── */
+.rol { display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--line); border:1px solid var(--line); max-width:860px; margin:0 auto; }
+.rol-cell { background:var(--deep); padding:clamp(26px,3.4vw,40px); }
+.rol-cell.us { background:linear-gradient(150deg, rgba(95,173,95,0.08), var(--deep) 60%); }
+.rol-k { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:2px; margin-bottom:14px; }
+.rol-cell.us .rol-k { color:var(--emerald); }
+.rol-cell.them .rol-k { color:var(--muted); }
+.rol-t { font-family:'Playfair Display',serif; font-size:clamp(19px,2.2vw,25px); color:var(--white); line-height:1.2; margin-bottom:12px; }
+.rol-d { font-size:15.5px; color:rgba(232,228,218,0.68); line-height:1.65; }
+.rol-d strong { color:var(--white); font-weight:600; }
+.rol-foot { max-width:720px; margin:clamp(30px,4vw,40px) auto 0; text-align:center; font-family:'Playfair Display',serif; font-style:italic; font-size:clamp(17px,2vw,23px); color:var(--white); line-height:1.4; }
+.rol-foot span { font-style:normal; color:var(--emerald); }
+@media(max-width:640px){ .rol { grid-template-columns:1fr; } }
+
+/* ─── CÓMO FUNCIONA (3 pasos) ─── */
+.steps { display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--line); border:1px solid var(--line); max-width:900px; margin:0 auto; }
+.step { background:var(--deep); padding:clamp(26px,3.2vw,38px) clamp(20px,2.2vw,30px); text-align:left; }
+.step-k { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:2px; color:var(--emerald); margin-bottom:14px; }
+.step-t { font-family:'Playfair Display',serif; font-size:clamp(19px,2.1vw,24px); color:var(--white); margin-bottom:10px; }
+.step-d { font-size:15.5px; color:rgba(232,228,218,0.62); line-height:1.6; }
+
+/* ─── QUÉ RECIBÍS ─── */
+.recibis { max-width:820px; margin:0 auto; border:1px solid rgba(95,173,95,0.3); border-left:2px solid var(--emerald); background:linear-gradient(135deg, rgba(95,173,95,0.06), transparent); padding:clamp(28px,4vw,44px); }
+.recibis-k { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:3px; color:var(--emerald); margin-bottom:18px; }
+.recibis ul { list-style:none; display:flex; flex-direction:column; gap:16px; }
+.recibis li { display:flex; gap:14px; align-items:flex-start; font-size:clamp(15px,1.6vw,18px); color:rgba(232,228,218,0.82); line-height:1.6; }
+.recibis li::before { content:'✓'; color:var(--emerald); font-family:'JetBrains Mono',monospace; flex-shrink:0; margin-top:2px; }
+.recibis li strong { color:var(--white); font-weight:600; }
+
+/* ─── SERVICIOS (Canasta A) ─── */
+.serv-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:1px; background:var(--line); border:1px solid var(--line); max-width:900px; margin:0 auto; }
+.serv { background:var(--deep); padding:clamp(24px,3vw,34px); }
+.serv-ico { font-size:24px; line-height:1; margin-bottom:14px; }
+.serv-t { font-family:'Playfair Display',serif; font-size:clamp(18px,2vw,22px); color:var(--white); margin-bottom:8px; line-height:1.2; }
+.serv-d { font-size:14.5px; color:rgba(232,228,218,0.62); line-height:1.55; }
+.serv.estrella { background:linear-gradient(150deg, rgba(95,173,95,0.08), var(--deep) 60%); }
+.serv.estrella .serv-t { color:var(--emerald); }
+.serv-apedido { max-width:720px; margin:clamp(26px,4vw,36px) auto 0; text-align:center; border:1px solid var(--line2); padding:clamp(22px,3vw,30px); background:var(--card); }
+.serv-apedido p { font-size:clamp(15px,1.6vw,18px); color:rgba(232,228,218,0.78); line-height:1.6; }
+.serv-apedido strong { color:var(--white); font-weight:600; }
+@media(max-width:640px){ .serv-grid { grid-template-columns:1fr; } }
+
+/* ─── MONITOREO (dos meses, sutil) ─── */
+.mon { max-width:760px; margin:0 auto; text-align:center; padding:clamp(30px,4vw,44px); border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
+.mon-k { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:3px; color:var(--teal); margin-bottom:14px; }
+.mon-t { font-family:'Playfair Display',serif; font-size:clamp(20px,2.6vw,30px); color:var(--white); line-height:1.25; margin-bottom:16px; }
+.mon-t span { font-style:italic; color:var(--teal); }
+.mon-d { font-size:clamp(15px,1.6vw,18px); color:rgba(232,228,218,0.7); line-height:1.65; max-width:600px; margin:0 auto; }
+.mon-d strong { color:var(--white); font-weight:600; }
+
+/* ─── PUERTA / ADHERIRSE ─── */
+.door { text-align:center; padding:clamp(52px,8vw,96px) clamp(24px,5vw,64px); }
+.door-eyebrow { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:3px; color:var(--emerald); margin-bottom:20px; }
+.door-lead { font-family:'Playfair Display',serif; font-size:clamp(24px,3.6vw,40px); color:var(--white); line-height:1.25; max-width:640px; margin:0 auto 16px; }
+.door-sub { font-size:clamp(16px,1.7vw,19px); color:rgba(232,228,218,0.66); max-width:560px; margin:0 auto 34px; line-height:1.65; }
+.door-note { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:1px; color:var(--dim); margin-top:18px; line-height:1.8; }
+
+/* ─── CONTACTO (fundamental, destacado) ─── */
+.contacto { border-top:1px solid var(--line); background:var(--void); }
+.contacto-in { max-width:760px; margin:0 auto; padding:clamp(48px,7vw,88px) clamp(24px,5vw,64px); text-align:center; }
+.contacto-lead { font-family:'Playfair Display',serif; font-style:italic; font-size:clamp(24px,3.8vw,42px); color:var(--white); line-height:1.25; margin-bottom:18px; }
+.contacto-lead span { font-style:normal; color:var(--emerald); }
+.contacto-sub { font-size:clamp(17px,1.8vw,21px); color:rgba(232,228,218,0.7); max-width:560px; margin:0 auto 36px; line-height:1.65; }
+.contacto-mail { display:inline-flex; align-items:center; gap:12px; font-family:'JetBrains Mono',monospace; font-size:clamp(13px,1.6vw,16px); letter-spacing:1px; color:var(--void); background:var(--gold2); border:none; padding:20px 40px; cursor:pointer; transition:background .2s, transform .15s; text-decoration:none; }
+.contacto-mail:hover { background:var(--gold); transform:translateY(-1px); }
+/* canales de contacto (mail + whatsapp lado a lado) */
+.contacto-canales { display:flex; flex-wrap:wrap; gap:12px; justify-content:center; }
+.contacto-wa { display:inline-flex; align-items:center; gap:12px; font-family:'JetBrains Mono',monospace; font-size:clamp(13px,1.6vw,16px); letter-spacing:1px; color:var(--white); background:transparent; border:1px solid var(--emerald); padding:20px 40px; cursor:pointer; transition:background .2s, color .2s, transform .15s; text-decoration:none; }
+.contacto-wa:hover { background:var(--emerald); color:var(--void); transform:translateY(-1px); }
+.contacto-alt { font-size:15px; color:rgba(232,228,218,0.6); margin-top:18px; }
+.contacto-alt a { color:var(--muted); text-decoration:underline; }
+.contacto-alt a:hover { color:var(--text); }
+.contacto-fine { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:1px; color:var(--dim); line-height:2; margin-top:40px; padding-top:30px; border-top:1px solid var(--line); }
+.contacto-fine a { color:var(--muted); text-decoration:none; }
+.contacto-fine a:hover { color:var(--text); }
+
+/* ─── nota legal (respeto al marco) ─── */
+.legal-note { max-width:720px; margin:clamp(30px,4vw,42px) auto 0; padding-top:clamp(24px,3vw,32px); border-top:1px solid var(--line); font-size:clamp(13px,1.4vw,15px); color:rgba(232,228,218,0.55); line-height:1.7; text-align:center; }
+.legal-note a { color:var(--emerald); text-decoration:none; }
+
+/* ─── OPCIONES (las tres formas · idénticas en todo el sitio) ─── */
+/* Mismo componente y mismo texto que el modal de Contacto del index.
+   El satélite no discrimina: la oferta es la misma en toda página; lo
+   único que cambia es a quién le hablamos alrededor. No reescribir el
+   texto de las opciones acá: debe coincidir palabra por palabra con el
+   index, plataforma e instituciones. */
+.opt-list { display:flex; flex-direction:column; gap:10px; margin:0 auto; max-width:720px; text-align:left; }
+.opt { display:flex; gap:14px; background:var(--card); border:1px solid var(--line2); padding:16px 18px; align-items:flex-start; }
+.opt.combo { background:linear-gradient(150deg, rgba(95,173,95,0.1), var(--card) 60%); border-color:rgba(95,173,95,0.3); }
+.opt-k { flex-shrink:0; font-family:'JetBrains Mono',monospace; font-size:16px; color:var(--dim); width:24px; line-height:1.3; }
+.opt.combo .opt-k { color:var(--emerald); }
+.opt-name { font-family:'Playfair Display',serif; font-size:18px; color:var(--white); line-height:1.15; }
+.opt.combo .opt-name { color:var(--emerald); }
+.opt-desc { font-size:13.5px; color:rgba(232,228,218,0.6); line-height:1.5; margin-top:5px; }
+
+
+/* ─── STACK DE BOTONES FLOTANTES FIJOS (izquierda) · acompañan todo el recorrido ─── */
+.float-stack { position:fixed; left:clamp(16px,3vw,32px); bottom:clamp(16px,3vw,32px); z-index:400; display:flex; flex-direction:column; gap:10px; align-items:flex-start; }
+
+.mapa-float { display:flex; align-items:center; gap:12px; max-width:min(78vw,310px); background:var(--gold2); color:var(--void); text-decoration:none; padding:13px 18px; box-shadow:0 8px 30px rgba(0,0,0,0.55); transition:background .2s, transform .2s; animation:mapaFloatIn .5s ease both; }
+.mapa-float:hover { background:var(--gold); transform:translateY(-2px); }
+/* Adherirse — acción principal (verde), mismo formato que el de mapa */
+.adherir-float { display:flex; align-items:center; gap:12px; max-width:min(78vw,310px); background:var(--emerald); color:var(--void); text-decoration:none; padding:13px 18px; box-shadow:0 8px 30px rgba(0,0,0,0.55); transition:background .2s, transform .2s; animation:mapaFloatIn .5s ease both; }
+.adherir-float:hover { background:var(--green); transform:translateY(-2px); }
+@keyframes mapaFloatIn { from{opacity:0; transform:translateY(14px);} to{opacity:1; transform:translateY(0);} }
+.mapa-float-ico { flex-shrink:0; display:flex; }
+.mapa-float-ico svg { width:22px; height:22px; }
+.mapa-float-txt { display:flex; flex-direction:column; line-height:1.2; min-width:0; }
+.mapa-float-txt b { font-family:'Playfair Display',serif; font-size:14.5px; font-weight:600; }
+.mapa-float-txt small { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:0.4px; opacity:0.82; margin-top:3px; }
+.mapa-float:focus-visible, .adherir-float:focus-visible { outline:2px solid var(--white); outline-offset:3px; }
+@media(max-width:520px){ .float-stack { left:14px; bottom:14px; gap:8px; } .mapa-float, .adherir-float { max-width:66vw; padding:11px 14px; gap:9px; } .mapa-float-txt b{ font-size:12.5px; } .mapa-float-txt small{ font-size:8px; } .mapa-float-ico svg{ width:19px; height:19px; } }
+@media(prefers-reduced-motion: reduce){ .mapa-float, .adherir-float { animation:none; } }
+
+/* ─── EPI BURBUJA (igual que el index) ─── */
+.epi-bubble { position:fixed; right:clamp(16px,3vw,32px); bottom:clamp(16px,3vw,32px); z-index:400; width:60px; height:60px; border-radius:50%; background:radial-gradient(circle at 35% 30%, var(--panel), var(--surface)); border:1px solid rgba(95,173,95,0.35); cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 6px 26px rgba(0,0,0,0.5); transition:transform .25s ease, box-shadow .3s ease, opacity .3s ease; animation:epiPulse 3.4s ease-in-out infinite; }
+.epi-bubble:hover { transform:scale(1.08); }
+@keyframes epiPulse { 0%,100%{box-shadow:0 6px 26px rgba(0,0,0,0.5), 0 0 0 0 rgba(95,173,95,0.28);} 50%{box-shadow:0 6px 26px rgba(0,0,0,0.5), 0 0 0 10px rgba(95,173,95,0);} }
+.epi-bubble svg { width:26px; height:26px; }
+.epi-bubble .spark-lg { fill:var(--emerald); }
+.epi-bubble .spark-sm { fill:var(--gold2); }
+.epi-bubble.hidden { opacity:0; pointer-events:none; transform:scale(0.6); }
+.epi-panel { position:fixed; right:clamp(16px,3vw,32px); bottom:clamp(16px,3vw,32px); z-index:401; width:min(380px, calc(100vw - 32px)); height:min(560px, calc(100vh - 64px)); background:var(--void); border:1px solid var(--line2); display:none; flex-direction:column; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,0.6); animation:epiOpen .28s cubic-bezier(.2,.8,.2,1); }
+.epi-panel.open { display:flex; }
+@keyframes epiOpen { from{opacity:0; transform:translateY(16px) scale(.97);} to{opacity:1; transform:translateY(0) scale(1);} }
+.epi-top { flex-shrink:0; padding:16px 18px; border-bottom:1px solid var(--line); display:flex; align-items:center; justify-content:space-between; background:rgba(4,9,4,0.6); }
+.epi-top-l { display:flex; align-items:center; gap:10px; }
+.epi-top-ico { width:26px; height:26px; }
+.epi-top-ico .spark-lg { fill:var(--emerald); }
+.epi-top-ico .spark-sm { fill:var(--gold2); }
+.epi-top-name { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:3px; color:var(--text); }
+.epi-top-sub { font-family:'JetBrains Mono',monospace; font-size:7px; letter-spacing:1px; color:var(--dim); margin-top:2px; }
+.epi-close { background:none; border:none; color:var(--dim); font-size:16px; cursor:pointer; font-family:'JetBrains Mono',monospace; transition:color .2s; }
+.epi-close:hover { color:var(--text); }
+.epi-msgs { flex:1; overflow-y:auto; padding:20px 16px; display:flex; flex-direction:column; gap:16px; }
+.epi-msgs::-webkit-scrollbar { width:2px; }
+.epi-msgs::-webkit-scrollbar-thumb { background:var(--dim); }
+.emsg { display:flex; gap:9px; animation:msgIn .3s ease; }
+@keyframes msgIn { from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);} }
+.emsg.user { flex-direction:row-reverse; }
+.emsg-av { width:22px; height:22px; flex-shrink:0; border:1px solid var(--line2); display:flex; align-items:center; justify-content:center; font-family:'JetBrains Mono',monospace; font-size:6px; margin-top:2px; }
+.emsg-av.agent { color:var(--emerald); background:var(--surface); }
+.emsg-av.user { color:var(--muted); background:var(--panel); }
+.emsg-b { max-width:calc(100% - 34px); padding:12px 14px; font-size:15px; line-height:1.6; border:1px solid; }
+.emsg-b.agent { background:var(--surface); border-color:var(--line); color:var(--text); }
+.emsg-b.user { background:var(--panel); border-color:var(--line2); color:rgba(232,228,218,0.75); }
+.epi-input { flex-shrink:0; padding:14px 16px; border-top:1px solid var(--line); background:rgba(4,9,4,0.7); }
+.epi-input-row { display:flex; gap:8px; align-items:flex-end; }
+.epi-input textarea { flex:1; background:var(--surface); border:1px solid var(--line2); color:var(--text); font-family:'Crimson Pro',serif; font-size:15px; padding:11px 13px; outline:none; resize:none; min-height:44px; max-height:110px; line-height:1.5; transition:border-color .2s; }
+.epi-input textarea:focus { border-color:var(--teal); }
+.epi-input textarea::placeholder { color:var(--dim); font-style:italic; }
+.epi-send { width:44px; height:44px; flex-shrink:0; background:var(--white); border:none; color:var(--void); font-size:16px; cursor:pointer; transition:background .2s; }
+.epi-send:hover { background:var(--gold2); }
+.epi-hint { font-family:'JetBrains Mono',monospace; font-size:7px; letter-spacing:1px; color:var(--dim); text-align:center; margin-top:9px; }
+
+@media(max-width:760px){ .steps { grid-template-columns:1fr; } .topnav { display:none; } }
+@media(prefers-reduced-motion: reduce){ *, *::before, *::after { animation:none !important; transition:none !important; } html { scroll-behavior:auto; } }
+
+/* ══ BOTÓN FLOTANTE · TU OFICINA (idéntico en EUDR, Plataforma e Instituciones) ══
+   Arriba de EPI, a la derecha. Colores fijos para que se vea igual en las tres. */
+.ofi-float{position:fixed; right:clamp(16px,3vw,32px); bottom:calc(clamp(16px,3vw,32px) + 72px); z-index:60; display:flex; align-items:center; gap:10px; background:#F4F0E8; color:#070B0A; text-decoration:none; padding:11px 16px 11px 13px; border-radius:30px; box-shadow:0 8px 30px rgba(0,0,0,0.55); font-family:'JetBrains Mono','IBM Plex Mono',monospace; transition:transform .2s, background .2s;}
+.ofi-float:hover{background:#FFFFFF; transform:translateY(-2px);}
+.ofi-float svg{width:20px; height:20px; flex-shrink:0;}
+.ofi-float-txt{display:flex; flex-direction:column; line-height:1.15;}
+.ofi-float-txt b{font-size:11px; letter-spacing:2px; font-weight:600;}
+.ofi-float-txt small{font-size:8.5px; letter-spacing:0.3px; opacity:0.7; margin-top:3px;}
+.ofi-float:focus-visible{outline:2px solid #5FAD5F; outline-offset:3px;}
+@media(max-width:520px){ .ofi-float{ right:14px; bottom:84px; width:60px; padding:9px 0 8px; border-radius:16px; flex-direction:column; gap:4px; } .ofi-float-txt b{ font-size:7.5px; letter-spacing:1px; } .ofi-float-txt small{ display:none; } }
+
+/* EN/ES switch: always visible, also on mobile */
+.lang { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:1.5px; color:var(--emerald); border:1px solid rgba(95,173,95,0.35); padding:6px 10px; text-decoration:none; margin-left:10px; }
+.lang:hover { border-color:var(--emerald); }
+.brandwrap { display:flex; align-items:center; }
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="brandwrap"><a class="brand" href="index.html">EPIMELEIA<span> · EUDR</span></a><a class="lang" href="eudr.html" hreflang="es" aria-label="Ver en español">ES</a></div>
+  <nav class="topnav">
+    <a href="origen-en.html">ORIGIN</a>
+    <a href="verificar-en.html">VERIFY</a>
+    <a class="nav-home" href="index.html">← HOME</a>
+  </nav>
+</div>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-eyebrow">EUDR COMPLIANCE · EU DEFORESTATION REGULATION</div>
+  <div class="hero-mark">EPIMELEIA <span>EUDR</span></div>
+  <div class="hero-rule"></div>
+  <p class="hero-lead">Prove your land has not been deforested since 2020 — with a sealed satellite proof that <em>no one can alter</em>.</p>
+  <div class="hero-deadline"><span class="dot"></span>FROM DECEMBER 2026, THE EU REQUIRES IT</div>
+
+  <!-- PRICE IN PLAIN SIGHT + CALCULATOR (same numbers as the Spanish site) -->
+  <div class="hero-precio">
+    <div class="hp-k">EUDR CHECK · FIXED PRICE</div>
+    <div class="hp-p">US$230 per plot<small>ONE-TIME PAYMENT · SEALED ON BLOCKCHAIN · ANY SIZE</small></div>
+    <div class="hp-calc"><input id="hpHa" type="number" min="1" max="999" inputmode="numeric" value="1" oninput="hpCalcular()" aria-label="Number of plots"><span>PLOTS</span></div>
+    <div class="hp-out" id="hpOut"></div>
+    <div class="hp-seg">Monitoring is optional: the satellite keeps watching your plot every two weeks. US$110 per plot per month. If the number of plots exceeds 20, the price can be discussed.</div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- WHAT IS THE EUDR -->
+<section class="sec">
+  <div class="head">
+    <div class="eyebrow">WHAT IT IS ABOUT</div>
+    <h2 class="head-title">What the EUDR is</h2>
+  </div>
+  <div class="prose">
+    <p class="lead">From December 2026, to sell certain products into the European Union you will have to prove they did not come from land deforested after 2020.</p>
+    <p>The EU Deforestation Regulation —the <strong>EUDR</strong>— covers soy, cattle, wood, coffee, cocoa, rubber and palm oil, and everything derived from them. If your product is on that list and goes to Europe, your buyer will ask for the proof. Without proof, it doesn't get in.</p>
+    <p>We use the <strong>same data logic as governments and organisations worldwide</strong> to look back at your land and tell you, precisely, whether there was deforestation —and in which year— from 2020 to today.</p>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- WHERE WE FIT: evidence, not the whole DDS -->
+<section class="sec">
+  <div class="head">
+    <div class="eyebrow">WHERE WE FIT</div>
+    <h2 class="head-title">We don't do your filing. We provide <em>the proof</em> it rests on.</h2>
+  </div>
+  <div class="rol">
+    <div class="rol-cell them">
+      <div class="rol-k">THE DDS · YOUR STATEMENT</div>
+      <div class="rol-t">The Due Diligence Statement</div>
+      <div class="rol-d">It is the document filed in the EU's <strong>TRACES</strong> system. It is prepared by the operator or exporter, with their own data, geolocation and risk assessment. That filing is yours or your operator's.</div>
+    </div>
+    <div class="rol-cell us">
+      <div class="rol-k">EPIMELEIA · YOUR EVIDENCE</div>
+      <div class="rol-t">The proof of no deforestation</div>
+      <div class="rol-d">It is the evidence your DDS rests on: satellite evidence, <strong>sealed on blockchain and verifiable by your buyer or auditor</strong>, that your land has been clean since 2020. Without relying on our word.</div>
+    </div>
+  </div>
+  <p class="rol-foot">You —or your operator— file the statement. We give you <span>the proof that backs it</span>.</p>
+</section>
+
+<div class="divider"></div>
+
+<!-- HOW IT WORKS -->
+<section class="sec">
+  <div class="head">
+    <div class="eyebrow">HOW IT WORKS</div>
+    <h2 class="head-title">Three steps, and the proof in minutes</h2>
+  </div>
+  <div class="steps">
+    <div class="step"><div class="step-k">01 · YOU</div><div class="step-t">You mark your land</div><div class="step-d">You draw the outline of your field or plot on the satellite map. That is the area we will analyse.</div></div>
+    <div class="step"><div class="step-k">02 · THE SATELLITE</div><div class="step-t">We look back</div><div class="step-d">We check the satellite record from 2020 to today, year by year, and detect whether there was any loss of forest cover.</div></div>
+    <div class="step"><div class="step-k">03 · THE PROOF</div><div class="step-t">You get the sealed verdict</div><div class="step-d">A certificate with the result —clean or not, and in which year— sealed on blockchain, impossible to alter and verifiable by anyone.</div></div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- WHAT YOU GET -->
+<section class="sec">
+  <div class="head">
+    <div class="eyebrow">WHAT YOU TAKE AWAY</div>
+    <h2 class="head-title">What you get, concretely</h2>
+  </div>
+  <div class="recibis">
+    <div class="recibis-k">YOUR EUDR CERTIFICATE INCLUDES</div>
+    <ul>
+      <li>A <strong>clear verdict</strong>: whether your land had deforestation since 2020, and in which year if it did.</li>
+      <li>The <strong>fingerprint sealed on blockchain</strong> (Polygon), impossible to touch — not by you, not by us.</li>
+      <li>A <strong>public verification link</strong>: your buyer or auditor checks it on their own, without relying on our word.</li>
+      <li>A <strong>TRACES-ready GeoJSON file</strong> of the plot, downloadable from the verification page, in the EU's official geolocation format.</li>
+      <li>The document in <strong>PDF</strong>, ready to accompany your Due Diligence Statement.</li>
+    </ul>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- SERVICES -->
+<section class="sec">
+  <div class="head">
+    <div class="eyebrow">LOOKING BACK · WHAT WE CAN PROVE TODAY</div>
+    <h2 class="head-title">The same satellite that proves no deforestation proves <em>more</em></h2>
+    <p class="head-sub">We can deliver all of this today, with the same technology. If your need isn't on the list, we'll build it with you.</p>
+  </div>
+  <div class="serv-grid">
+    <div class="serv estrella">
+      <div class="serv-ico">🌳</div>
+      <div class="serv-t">EUDR deforestation check</div>
+      <div class="serv-d">The proof that your land has not been deforested since 2020. The evidence behind your DDS.</div>
+    </div>
+    <div class="serv">
+      <div class="serv-ico">🌾</div>
+      <div class="serv-t">Land-use change</div>
+      <div class="serv-d">How your land changed over time: from forest to crops, from farmland to something else. Documented, year by year.</div>
+    </div>
+    <div class="serv">
+      <div class="serv-ico">🌱</div>
+      <div class="serv-t">Reforestation verification</div>
+      <div class="serv-d">Did the restoration project plant what it said since 2020? The satellite record confirms it or disproves it.</div>
+    </div>
+    <div class="serv">
+      <div class="serv-ico">📜</div>
+      <div class="serv-t">Environmental history of a property</div>
+      <div class="serv-d">The state and evolution of a plot over the years — useful before buying, or to leave a record for a third party.</div>
+    </div>
+  </div>
+  <div class="serv-apedido">
+    <p>Need to prove something else about your land? <strong>Tell us and we'll build it with you.</strong> If it can be observed from space, we can probably seal it.</p>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- CONTACT + CERTIFICATION OPTIONS -->
+<section class="contacto">
+  <div class="contacto-in">
+
+    <div class="eyebrow" style="margin-bottom:16px;">YOU CHOOSE · BASED ON YOUR NEEDS</div>
+    <h2 class="head-title" style="margin-bottom:clamp(28px,4vw,40px);">Three ways to certify your land</h2>
+
+    <div class="opt-list" style="margin-bottom:clamp(30px,4vw,44px);">
+      <div class="opt">
+        <div class="opt-k">01</div>
+        <div><div class="opt-name">Deforestation only · EUDR</div><div class="opt-desc">The historical check of your land, sealed on blockchain. The evidence behind your Due Diligence Statement. An indisputable proof looking back.</div></div>
+      </div>
+      <div class="opt">
+        <div class="opt-k">02</div>
+        <div><div class="opt-name">Continuous monitoring</div><div class="opt-desc">The satellite watches your asset every two weeks, going forward, and seals each reading. You get alerts about what happens. A guardian that never sleeps.</div></div>
+      </div>
+      <div class="opt combo">
+        <div class="opt-k">03</div>
+        <div><div class="opt-name">Full coverage · EUDR + monitoring</div><div class="opt-desc">Both: the historical proof for the EUDR and continuous monitoring going forward. Full coverage, from the past to the future.</div></div>
+      </div>
+    </div>
+    <p class="rol-foot" style="margin-bottom:clamp(44px,6vw,68px);">Not sure which one suits you? <span>Write to us and we'll decide together.</span></p>
+
+    <div class="contacto-lead">It matters: <span>don't hesitate to get in touch</span></div>
+    <p class="contacto-sub">We are here to solve your problem. On the other side there are real people who answer — not a machine. Tell us what you need and we'll put your case together, with the payment method that suits you best (bank transfer, prepayment or debit card).</p>
+
+    <div class="contacto-canales">
+      <a class="contacto-mail" href="mailto:info@epimeleia.world?subject=EUDR%20certification%20enquiry">✉ info@epimeleia.world</a>
+      <a class="contacto-wa" href="https://wa.me/5491158004028?text=Hello%2C%20I%27m%20writing%20about%20the%20EUDR%20certification%20of%20my%20land." target="_blank" rel="noopener">✆ WhatsApp · +54 9 11 5800-4028</a>
+    </div>
+    <p class="contacto-alt">You can also write to <a href="mailto:alfredocarbone29@gmail.com">alfredocarbone29@gmail.com</a></p>
+
+    <p class="legal-note">We do not question the legal framework of the countries where we operate: we respect it. We only seek to give you forward-looking tools for your decisions. EPIMELEIA covers deforestation and volume per plot; it does not cover legality or land tenure. If in doubt, write to us and we'll answer personally.</p>
+
+    <div class="contacto-fine">
+      EPIMELEIA · Digital Environmental Notary · Polygon Mainnet<br>
+      <a href="index.html">Home</a> · <a href="origen-en.html">Origin</a> · <a href="verificar-en.html">Verify</a> · <a href="eudr.html">Español</a> · <a href="mailto:info@epimeleia.world">info@epimeleia.world</a>
+    </div>
+  </div>
+</section>
+
+<!-- FIXED FLOATING BUTTONS (left) -->
+<div class="float-stack">
+  <a class="adherir-float" href="cuenta.html?origen=eudr" aria-label="Join the EUDR protocol">
+    <span class="mapa-float-ico">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/>
+        <path d="M8.4 12.2l2.4 2.4 4.8-4.8" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </span>
+    <span class="mapa-float-txt">
+      <b>Join the EUDR protocol</b>
+      <small>Create your account and we'll arrange your check →</small>
+    </span>
+  </a>
+
+  <a class="mapa-float" href="protocolo.html?origen=eudr" aria-label="Draw and certify your plot on the map, no sign-up">
+    <span class="mapa-float-ico">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 21.5s7-5.7 7-11.5a7 7 0 1 0-14 0c0 5.8 7 11.5 7 11.5z" fill="currentColor" opacity="0.22"/>
+        <path d="M12 21.5s7-5.7 7-11.5a7 7 0 1 0-14 0c0 5.8 7 11.5 7 11.5z" stroke="currentColor" stroke-width="1.6"/>
+        <circle cx="12" cy="10" r="2.5" fill="currentColor"/>
+      </svg>
+    </span>
+    <span class="mapa-float-txt">
+      <b>Draw and certify your plot</b>
+      <small>Try it live, no sign-up →</small>
+    </span>
+  </a>
+</div>
+
+<!-- EPI BUBBLE -->
+<button class="epi-bubble" id="epiBubble" onclick="abrirEpi()" aria-label="Talk to EPI">
+  <svg viewBox="0 0 24 24">
+    <path class="spark-lg" d="M12 2l1.6 5.2L19 9l-5.4 1.8L12 16l-1.6-5.2L5 9l5.4-1.8z"/>
+    <path class="spark-sm" d="M18.5 14l.7 2.3 2.3.7-2.3.7-.7 2.3-.7-2.3-2.3-.7 2.3-.7z"/>
+  </svg>
+</button>
+
+<!-- EPI PANEL -->
+<div class="epi-panel" id="epiPanel">
+  <div class="epi-top">
+    <div class="epi-top-l">
+      <svg class="epi-top-ico" viewBox="0 0 24 24">
+        <path class="spark-lg" d="M12 2l1.6 5.2L19 9l-5.4 1.8L12 16l-1.6-5.2L5 9l5.4-1.8z"/>
+        <path class="spark-sm" d="M18.5 14l.7 2.3 2.3.7-2.3.7-.7 2.3-.7-2.3-2.3-.7 2.3-.7z"/>
+      </svg>
+      <div><div class="epi-top-name">EPI</div><div class="epi-top-sub">ANSWERS YOUR QUESTIONS</div></div>
+    </div>
+    <button class="epi-close" onclick="cerrarEpi()" aria-label="Close">✕</button>
+  </div>
+  <div class="epi-msgs" id="epiMsgs"></div>
+  <div class="epi-input">
+    <div class="epi-input-row">
+      <textarea id="epiText" placeholder="Ask me about the EUDR…" rows="1"></textarea>
+      <button class="epi-send" onclick="epiEnviar()" aria-label="Send">↑</button>
+    </div>
+    <div class="epi-hint">EPI ONLY EXPLAINS · IT DOES NOT SIGN YOU UP</div>
+  </div>
+</div>
+
+<script>
+/* ─── EUDR PRICE (same numbers as the Spanish site; change here if adjusted) ─── */
+const HP = { eudr:230, seg:110, topeParcelas:20 };
+function hpUsd(n){ return 'US$' + n.toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2}); }
+function hpCalcular(){
+  const out = document.getElementById('hpOut'); if(!out) return;
+  const n = Math.floor(Number(document.getElementById('hpHa').value) || 0);
+  if (n < 1) { out.innerHTML = '<div class="hp-msg">Enter the number of plots</div>'; return; }
+  if (n > HP.topeParcelas) { out.innerHTML = '<div class="hp-msg">More than 20 plots: <b>the price can be discussed</b></div>'; return; }
+  out.innerHTML =
+    '<div class="hp-box"><div class="l">EUDR CHECK</div><div class="v">' + hpUsd(HP.eudr*n) + '</div><div class="s">one-time</div></div>' +
+    '<div class="hp-box"><div class="l">MONITORING</div><div class="v">' + hpUsd(HP.seg*n) + '</div><div class="s">per month, optional</div></div>';
+}
+hpCalcular();
+
+/* ─── EPI (connected to /api/chat · conversation only) ─── */
+let epiHistorial = [];
+let epiPensando = false;
+let epiCerrada = false;
+
+function abrirEpi(){
+  document.getElementById('epiPanel').classList.add('open');
+  document.getElementById('epiBubble').classList.add('hidden');
+  if(!document.getElementById('epiMsgs').hasChildNodes()){
+    epiMsg('agent','Hi, I\'m EPI. I\'m here to explain how the EUDR check works — what we prove, how we seal the proof that your land has not been deforested since 2020, and what your DDS rests on.\n\nAsk me anything.');
+  }
+}
+function cerrarEpi(){
+  document.getElementById('epiPanel').classList.remove('open');
+  document.getElementById('epiBubble').classList.remove('hidden');
+}
+function epiMsg(rol, texto){
+  const c = document.getElementById('epiMsgs');
+  const w = document.createElement('div'); w.className='emsg '+rol;
+  const html = texto.replace(/\n\n/g,'</p><p>').replace(/^/,'<p>').replace(/$/,'</p>');
+  w.innerHTML = `<div class="emsg-av ${rol}">${rol==='agent'?'EP':'YOU'}</div><div class="emsg-b ${rol}">${html}</div>`;
+  c.appendChild(w); c.scrollTop = c.scrollHeight;
+  return w;
+}
+async function epiEnviar(){
+  const t = document.getElementById('epiText');
+  const v = t.value.trim();
+  if(!v || epiPensando || epiCerrada) return;
+  epiMsg('user', v);
+  epiHistorial.push({ role:'user', content:v });
+  t.value=''; t.style.height='auto';
+  epiPensando = true;
+  const pensando = epiMsg('agent', '…');
+  try {
+    const resp = await fetch('/api/chat', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify({ messages: epiHistorial })
+    });
+    const data = await resp.json();
+    pensando.remove();
+    let textoEpi = '';
+    if (data && Array.isArray(data.content)) {
+      textoEpi = data.content.filter(b => b.type === 'text').map(b => b.text).join('\n').trim();
+    }
+    if (!textoEpi) {
+      textoEpi = 'Sorry, I had a problem answering. Please try again in a moment, or write to info@epimeleia.world.';
+    }
+    const debeCerrar = textoEpi.includes('[[FIN_CHARLA]]');
+    textoEpi = textoEpi.replace(/\[\[FIN_CHARLA\]\]/g, '').trim();
+    if (textoEpi) {
+      epiMsg('agent', textoEpi);
+      epiHistorial.push({ role:'assistant', content:textoEpi });
+    }
+    if (debeCerrar) {
+      epiCerrada = true;
+      const box = document.getElementById('epiText');
+      box.disabled = true;
+      box.placeholder = 'Conversation ended.';
+    }
+  } catch (e) {
+    pensando.remove();
+    epiMsg('agent', 'I couldn\'t connect right now. Check your connection and try again, or write to info@epimeleia.world.');
+  } finally {
+    epiPensando = false;
+  }
+}
+document.getElementById('epiText').addEventListener('keydown', e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); epiEnviar(); } });
+document.getElementById('epiText').addEventListener('input', function(){ this.style.height='auto'; this.style.height=Math.min(this.scrollHeight,110)+'px'; });
+
+let lastY = window.scrollY;
+window.addEventListener('scroll', ()=>{
+  const b = document.getElementById('epiBubble');
+  if (document.getElementById('epiPanel').classList.contains('open')) return;
+  const y = window.scrollY;
+  b.style.transform = y > lastY ? 'translateY(4px)' : 'translateY(-4px)';
+  clearTimeout(window._epiT);
+  window._epiT = setTimeout(()=>{ b.style.transform=''; }, 200);
+  lastY = y;
+}, { passive:true });
+</script>
+
+<!-- FLOATING BUTTON · YOUR OFFICE -->
+<a class="ofi-float" href="oficina.html" aria-label="Your office: your plots, shipments and balances">
+  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect x="4" y="10" width="16" height="11" rx="1.5" stroke="currentColor" stroke-width="1.7"/>
+    <path d="M8 10V7a4 4 0 0 1 8 0v3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+    <circle cx="12" cy="15.5" r="1.6" fill="currentColor"/>
+  </svg>
+  <span class="ofi-float-txt"><b>YOUR OFFICE</b><small>Your shipments and balances →</small></span>
+</a>
+</body>
+</html>

@@ -24,6 +24,8 @@
 <meta name="twitter:image" content="https://www.epimeleia.world/image_d8f5651c.png">
 <meta name="description" content="Control de origen y de volumen por campo: techo de producción, saldo que baja con cada venta, semáforo de riesgo y rinde medido por Sentinel-2 y Sentinel-1. Sellado en Polygon.">
 <meta name="robots" content="index, follow">
+<link rel="alternate" hreflang="es" href="https://www.epimeleia.world/origen.html">
+<link rel="alternate" hreflang="en" href="https://www.epimeleia.world/origen-en.html">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,700;1,400&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,400&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
@@ -56,6 +58,8 @@ a { color:inherit; }
 .topnav a:hover { color:var(--text); border-color:var(--line2); }
 .topnav .nav-home { color:var(--teal); border-color:rgba(58,138,122,0.25); }
 
+.lang-link { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:1.5px; color:var(--gold2); text-decoration:none; border:1px solid rgba(229,200,112,0.35); padding:5px 9px; border-radius:3px; }
+.lang-link:hover { border-color:var(--gold2); }
 /* HERO */
 .hero { max-width:1000px; margin:0 auto; padding:clamp(64px,11vw,130px) clamp(24px,5vw,64px) clamp(44px,7vw,80px); text-align:center; }
 .hero-k { font-family:'JetBrains Mono',monospace; font-size:clamp(10px,1.3vw,12px); letter-spacing:6px; color:var(--gold2); }
@@ -215,7 +219,10 @@ a { color:inherit; }
 <body>
 
 <div class="topbar">
-  <a class="brand" href="index.html">EPIMELEIA<span> · ORIGEN</span></a>
+  <div style="display:flex;align-items:center;gap:14px;">
+    <a class="brand" href="index.html">EPIMELEIA<span> · ORIGEN</span></a>
+    <a class="lang-link" href="origen-en.html" hreflang="en" aria-label="English version">EN</a>
+  </div>
   <nav class="topnav">
     <a class="nav-home" href="index.html">← INICIO</a>
     <a href="#casos">CASOS REALES</a>
