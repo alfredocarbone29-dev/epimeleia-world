@@ -1585,8 +1585,143 @@
     var txt = pedidoTexto(o);
     if (mail) mail.href = 'mailto:info@epimeleia.world?subject=' + encodeURIComponent('Pedido de certificación - ' + nombreActivo()) + '&body=' + encodeURIComponent(txt);
     if (wa)   wa.href   = 'https://wa.me/5491158004028?text=' + encodeURIComponent(txt);
-    if (linea) linea.textContent = 'Tu pedido: ' + resumen(o) + '. Mandalo por mail o WhatsApp y lo activamos.';
+    if (linea) linea.textContent = o.producto === 'atras'
+      ? 'Tu pedido: ' + resumen(o) + '. Mirá tu campo desde el satélite: si se ve, lo pagás acá y se sella al instante. También podés escribirnos.'
+      : 'Tu pedido: ' + resumen(o) + '. Mandalo por mail o WhatsApp y lo activamos.';
+    mostrarPagar(_vistaOk);
   }
+
+  /* ── BILLETERA (24/10/2026): pagar el chequeo EUDR acá mismo ──
+     El botón aparece SOLO si la vista previa dijo que el satélite puede
+     sellar el campo, y solo para el producto 01 (hacia atrás). El precio lo
+     pone el servidor; acá solo se muestra. Pagás en PayPal, volvés, y el
+     campo se sella solo y te llega el certificado por mail. */
+  var PRECIO_EUDR_TXT = 'US$230';
+  var _vistaOk = false;
+
+  function mostrarPagar(si) {
+    var panel = document.getElementById('cliPanel');
+    if (!panel) return;
+    var caja = document.getElementById('cliPagarCaja');
+    if (!caja) {
+      caja = document.createElement('div');
+      caja.id = 'cliPagarCaja';
+      caja.style.cssText = 'display:none; margin-top:12px; padding:14px; border:1px solid rgba(95,173,95,0.55); border-radius:8px; background:rgba(95,173,95,0.07); text-align:center;';
+      caja.innerHTML =
+        '<button id="cliPagarBtn" type="button" style="width:100%; font-size:13px; font-weight:700; letter-spacing:0.04em; padding:14px; background:#5FAD5F; color:#04121a; border:none; cursor:pointer; border-radius:5px;">PAGAR ' + PRECIO_EUDR_TXT + ' Y CERTIFICAR &rarr;</button>' +
+        '<div style="font-family:monospace; font-size:10.5px; color:#9fb0c9; line-height:1.6; margin-top:9px;">Pago único con PayPal (tarjeta o cuenta PayPal). Al confirmar, tu campo se sella en blockchain y te llega el certificado por mail.</div>' +
+        '<div id="cliPagarOut" style="display:none; font-family:monospace; font-size:11px; color:#E8E4DA; margin-top:10px; white-space:pre-wrap;"></div>';
+      var out = document.getElementById('cliOut');
+      if (out && out.parentNode) out.parentNode.insertBefore(caja, out.nextSibling); else panel.appendChild(caja);
+    }
+    var prod = document.getElementById('fProductoC');
+    var es01 = !prod || prod.value === 'atras';
+    caja.style.display = (si && es01) ? 'block' : 'none';
+  }
+
+  document.addEventListener('click', async function (ev) {
+    if (!ev.target || ev.target.id !== 'cliPagarBtn') return;
+    var btn = ev.target, out = document.getElementById('cliPagarOut');
+    out.style.display = 'block';
+    var o = leerOpciones('C');
+    if (o.error) { out.textContent = o.error; return; }
+    var supa = initSupa(), activoId = getActivoId();
+    if (!supa || !activoId) { out.textContent = 'Primero registrá tu campo (Firmar y registrar).'; return; }
+    var ses = await supa.auth.getSession();
+    var tk = ses && ses.data && ses.data.session ? ses.data.session.access_token : null;
+    if (!tk) { out.textContent = 'Entrá a tu cuenta para pagar.'; return; }
+    btn.disabled = true;
+    out.textContent = 'Confirmando con el satélite que tu campo se puede sellar hoy… y preparando el pago.';
+    try {
+      var r = await fetch('/api/crear-suscripcion', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ modo: 'orden', activoId: activoId, token: tk,
+          cultivo: o.cultivo !== 'ninguno' ? o.cultivo : null, pais: o.pais })
+      });
+      var d = await r.json();
+      if (d.ok && d.approvalUrl) {
+        out.textContent = 'Te llevamos a PayPal…';
+        window.location.href = d.approvalUrl;
+        return;
+      }
+      out.textContent = d.tipo === 'medicion'
+        ? 'Hoy el satélite no puede sellar tu campo (' + (d.error || 'nubes') + '). No se te cobra nada. Probá en unos días o escribinos.'
+        : 'No se pudo: ' + (d.error || 'probá en un momento.');
+    } catch (e) {
+      out.textContent = 'No se pudo contactar al servidor. Probá de nuevo.';
+    }
+    btn.disabled = false;
+  });
+
+  /* ── BILLETERA: la vuelta desde PayPal ──
+     PayPal devuelve a protocolo.html?pago=ok&activo=…&token=<orden>.
+     Recién acá se cobra (captura) y se sella. Recargar no cobra dos veces. */
+  (function vueltaDePago() {
+    var q = new URLSearchParams(window.location.search);
+    var pago = q.get('pago');
+    if (pago !== 'ok' && pago !== 'cancelado') return;
+    var activoId = q.get('activo'), orderId = q.get('token');
+
+    var caja = document.createElement('div');
+    caja.style.cssText = 'position:fixed; inset:0; z-index:9000; background:rgba(2,6,10,0.88); display:flex; align-items:center; justify-content:center; padding:20px;';
+    caja.innerHTML = '<div style="max-width:520px; width:100%; background:#08121a; border:1px solid rgba(0,240,255,0.35); border-radius:10px; padding:24px; font-family:monospace; color:#E8E4DA; font-size:12.5px; line-height:1.7;">' +
+      '<div style="font-size:10px; letter-spacing:0.2em; color:#00F0FF; margin-bottom:12px;">EPIMELEIA · TU PAGO</div>' +
+      '<div id="pagoTxt" style="white-space:pre-wrap;"></div>' +
+      '<button id="pagoCerrar" type="button" style="margin-top:16px; width:100%; padding:12px; background:transparent; color:#00F0FF; border:1px solid #00F0FF; border-radius:5px; cursor:pointer; font-weight:700;">CERRAR</button></div>';
+    document.body.appendChild(caja);
+    var txt = caja.querySelector('#pagoTxt');
+    caja.querySelector('#pagoCerrar').onclick = function () { caja.remove(); };
+    try { history.replaceState(null, '', window.location.pathname); } catch (e) {}
+
+    if (pago === 'cancelado') {
+      txt.textContent = 'Cancelaste el pago. No se te cobró nada.\nTu campo quedó registrado: podés pagarlo cuando quieras.';
+      return;
+    }
+    if (!orderId || !activoId) { txt.textContent = 'No se recibió la orden de PayPal. Si se te cobró, escribinos a info@epimeleia.world.'; return; }
+
+    txt.textContent = 'Confirmando tu pago y sellando tu campo en blockchain…\nPuede tardar hasta un minuto. No cierres esta página.';
+
+    (async function () {
+      var tk = null;
+      for (var i = 0; i < 20 && !tk; i++) {
+        var supa = initSupa();
+        if (supa) {
+          try { var ses = await supa.auth.getSession(); tk = ses && ses.data && ses.data.session ? ses.data.session.access_token : null; } catch (e) {}
+        }
+        if (!tk) await new Promise(function (r) { setTimeout(r, 500); });
+      }
+      if (!tk) { txt.textContent = 'Entrá a tu cuenta para confirmar el pago (no se te cobró todavía).'; return; }
+      try {
+        var r = await fetch('/api/crear-suscripcion', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ modo: 'capturar', orderId: orderId, activoId: activoId, token: tk })
+        });
+        var d = await r.json();
+        if (!d.ok) { txt.textContent = 'X ' + (d.error || 'No se pudo confirmar el pago.') + '\n\nCualquier duda: info@epimeleia.world'; return; }
+        if (d.sellado) {
+          var t = '✓ PAGO RECIBIDO Y CAMPO SELLADO\n\n';
+          if (d.onchain != null) t += 'Tu campo es el #' + d.onchain + ' en la cadena.\n';
+          if (d.deforestacion) t += 'Deforestación (EUDR): ' + (d.deforestacion.hubo ? 'DETECTADA' : 'NO DETECTADA') + (d.deforestacion.periodo ? ' (' + d.deforestacion.periodo + ')' : '') + '\n';
+          if (d.capacidad && d.capacidad.declarada) t += 'Techo de producción: ' + d.capacidad.capacidadAnual + ' t/año\n';
+          t += '\nTe llega el certificado por mail.';
+          txt.textContent = t;
+          var box = txt.parentNode;
+          if (d.onchain != null) {
+            var a1 = document.createElement('a'); a1.href = 'verificar.html?id=' + d.onchain; a1.textContent = 'Ver mi campo en Verificar →';
+            a1.style.cssText = 'display:block; margin-top:12px; color:#5FAD5F;'; box.insertBefore(a1, box.lastChild);
+          }
+          if (d.polygonscan) {
+            var a2 = document.createElement('a'); a2.href = d.polygonscan; a2.target = '_blank'; a2.rel = 'noopener'; a2.textContent = 'Ver el sello en Polygonscan →';
+            a2.style.cssText = 'display:block; margin-top:6px; color:#8FB0DA;'; box.insertBefore(a2, box.lastChild);
+          }
+        } else {
+          txt.textContent = '✓ PAGO RECIBIDO\n\n' + (d.mensaje || 'El sello de tu campo se completa en las próximas horas y te llega el certificado por mail.');
+        }
+      } catch (e) {
+        txt.textContent = 'No se pudo contactar al servidor. Recargá esta página en un momento: no se cobra dos veces.\n(Si el problema sigue: info@epimeleia.world)';
+      }
+    })();
+  })();
 
   function asegurarPanelCliente() {
     var coord = document.getElementById('est-coordinar');
@@ -1632,6 +1767,8 @@
         body: JSON.stringify({ filaId: activoId, ejecutar: false, token: token, vista: 'cliente' })
       });
       var d = await r.json();
+      _vistaOk = !!d.ok;
+      mostrarPagar(_vistaOk);
       if (!d.ok) {
         // SIMPLE-4: sin pasada limpia NO es una falla. Se dice tal cual, sin sonar a error.
         if (d.tipo === 'medicion') {
@@ -1653,7 +1790,7 @@
         if (d.fechaPasada) t += 'Pasada: ' + d.fechaPasada + '\n';
         if (d.calidad != null) t += 'Calidad de la lectura: ' + d.calidad + '%\n';
         if (d.mediciones) for (var i = 0; i < d.mediciones.length; i++) { var m = d.mediciones[i]; t += '  · ' + m.etiqueta + ': ' + m.valor + ' (' + m.interpretacion + ')\n'; }
-        t += '\nEsto es una vista previa: todavía no se selló nada.\nPara certificarlo, mandanos tu pedido por mail o WhatsApp.';
+        t += '\nEsto es una vista previa: todavía no se selló nada.\nPara certificarlo, pagalo acá abajo o mandanos tu pedido por mail o WhatsApp.';
         out.textContent = t;
       }
     } catch (e) {
