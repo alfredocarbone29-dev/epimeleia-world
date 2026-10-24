@@ -263,7 +263,7 @@ h1{font-family:'Playfair Display',serif;font-weight:400;font-size:clamp(26px,4vw
      polígono que se selló: no pasa por ningún servidor. */
   var ISO2 = { ARG:'AR', BOL:'BO', BRA:'BR', CHL:'CL', COL:'CO', CRI:'CR', ECU:'EC', GTM:'GT', HND:'HN', MEX:'MX',
     PRY:'PY', PER:'PE', URY:'UY', CIV:'CI', ETH:'ET', GHA:'GH', KEN:'KE', UGA:'UG', IDN:'ID', VNM:'VN' };
-  function t6(x){ return Math.trunc(Number(x) * 1e6) / 1e6; }
+  function t6(x){ return parseFloat(Number(x).toFixed(6)); }   // 6 decimales, sin errores de coma flotante (-33.12 queda -33.12, no -33.119999)
   function anilloTraces(r){
     var out = [];
     (r || []).forEach(function(c){
