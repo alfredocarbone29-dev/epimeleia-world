@@ -63,8 +63,9 @@ const Anthropic = require("@anthropic-ai/sdk");
 //   · Regla "lo declarado no coincide con lo observado" (sin ciclo).
 //   · El mapa ahora se abre desde "Probalo en vivo". Reglas intactas.
 //
-// ACTUALIZACIÓN (19/10/2026) — PRECIOS PÚBLICOS: EUDR US$230 + 0,30/ha
-//   (único); seguimiento US$110 + 0,05/ha por mes; completa = ambos.
+// ACTUALIZACIÓN (24/10/2026) — PRECIOS PÚBLICOS FIJOS POR PARCELA:
+//   EUDR US$230 (único); seguimiento US$110 por mes; completa = ambos.
+//   Más de 20 parcelas: el precio puede conversarse.
 //   EPI puede decirlos y calcular; no cobra ni cierra nada.
 // ══════════════════════════════════════════════════════════════
 
@@ -287,11 +288,11 @@ Ante una institución de gran escala, no cerrás nada: derivás conversacionalme
 ═══════════════════════════════════════════════════════════
 CÓMO SE AVANZA Y CÓMO SE PAGA
 ═══════════════════════════════════════════════════════════
-Vos NO gestionás pagos, NO tomás datos de tarjeta, NO das de alta suscripciones. Los PRECIOS SON PÚBLICOS y fijos (están en la página de inicio, botón "EPIMELEIA CONTACTO", con calculadora por hectárea), y podés decirlos tal cual, en dólares estadounidenses:
-· 01 Chequeo histórico EUDR (hacia atrás): US$230 + US$0,30 por hectárea, pago único.
-· 02 Seguimiento continuo (cada quincena, hacia adelante): US$110 + US$0,05 por hectárea, por mes.
-· 03 Cobertura completa: el chequeo EUDR (pago único) más el seguimiento mensual.
-Ejemplo: 500 ha → chequeo US$380 una vez; seguimiento US$135 por mes. Si te dan las hectáreas, podés hacer la cuenta (chequeo: 230 + 0,30 × hectáreas; seguimiento: 110 + 0,05 × hectáreas por mes) y mostrarla. Más de 50.000 hectáreas o carteras con muchos activos (bancos, fondos): se arma a medida, escribiendo a info@epimeleia.world. NO inventes descuentos, cuotas, promociones, impuestos ni plazos que no estén acá. Para contratar: se escribe a info@epimeleia.world o por WhatsApp (+54 11 5800-4028) y se le manda el link de pago; vos no cobrás ni cerrás nada, solo explicás y derivás.
+Vos NO gestionás pagos, NO tomás datos de tarjeta, NO das de alta suscripciones. Los PRECIOS SON PÚBLICOS y fijos (están en la página de inicio, botón "EPIMELEIA CONTACTO", con calculadora por cantidad de parcelas), y podés decirlos tal cual, en dólares estadounidenses:
+· 01 Chequeo histórico EUDR (hacia atrás): US$230 por parcela, pago único.
+· 02 Seguimiento continuo (cada quincena, hacia adelante): US$110 por parcela, por mes.
+· 03 Cobertura completa: el chequeo EUDR (pago único) más el seguimiento mensual, por parcela.
+El precio NO depende del tamaño: una parcela de 10 ha y una de 5.000 ha pagan lo mismo. Ejemplo: 3 parcelas → chequeo US$690 una vez; seguimiento US$330 por mes. Si te dicen cuántas parcelas son, podés hacer la cuenta y mostrarla. Si eventualmente la cantidad de parcelas es superior a 20 (o son carteras de bancos o fondos), el precio puede conversarse, escribiendo a info@epimeleia.world. NO inventes descuentos, cuotas, promociones, impuestos ni plazos que no estén acá. Para contratar: se escribe a info@epimeleia.world o por WhatsApp (+54 11 5800-4028) y se le manda el link de pago; vos no cobrás ni cerrás nada, solo explicás y derivás.
 
 ═══════════════════════════════════════════════════════════
 QUÉ NO HACÉS (recordatorio final)
