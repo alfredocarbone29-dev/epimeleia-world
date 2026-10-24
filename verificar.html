@@ -155,7 +155,9 @@ h1{font-family:'Playfair Display',serif;font-weight:400;font-size:clamp(26px,4vw
     <div class="hash-row" id="rowDescarga" style="display:none;">
       <div class="hash-k">TU COPIA DE LA PRUEBA</div>
       <button id="btnDescargar" type="button" style="margin-top:8px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1px;padding:10px 16px;background:transparent;color:var(--emerald);border:1px solid var(--emerald);border-radius:3px;cursor:pointer;">DESCARGAR EL PAQUETE SELLADO ↓</button>
+      <button id="btnTraces" type="button" style="margin-top:8px;margin-left:6px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1px;padding:10px 16px;background:transparent;color:var(--gold2,#E5C870);border:1px solid var(--gold2,#E5C870);border-radius:3px;cursor:pointer;">ARCHIVO PARA TRACES (GEOJSON) ↓</button>
       <div style="font-size:13px;color:var(--muted);margin-top:10px;line-height:1.6;">Guardalo. Es el archivo exacto que se selló: su huella keccak256 es la que está escrita en Polygon. Con este archivo y la transacción podés comprobarlo siempre, aunque EPIMELEIA no exista.</div>
+      <div style="font-size:13px;color:var(--muted);margin-top:8px;line-height:1.6;"><b style="color:var(--text);">Archivo para TRACES:</b> la geolocalización de este campo en el formato oficial de la UE (GeoJSON, WGS84, 6 decimales), armada con el mismo polígono que se selló. Es el archivo que se sube en la declaración de diligencia debida.</div>
     </div>
   </div>
 
@@ -253,6 +255,53 @@ h1{font-family:'Playfair Display',serif;font-weight:400;font-size:clamp(26px,4vw
     $('estadoD').innerHTML = detalle;
   }
 
+  /* ── TRACES (24/10/2026): archivo de geolocalización para la UE ──
+     Formato oficial EUDR: GeoJSON FeatureCollection, WGS84, longitud-latitud,
+     6 decimales (truncados), anillo cerrado, sin huecos. Propiedades con el
+     nombre exacto que pide TRACES: ProductionPlace, ProducerCountry (ISO de 2
+     letras) y Area (hectáreas, número). Se arma en tu navegador con el mismo
+     polígono que se selló: no pasa por ningún servidor. */
+  var ISO2 = { ARG:'AR', BOL:'BO', BRA:'BR', CHL:'CL', COL:'CO', CRI:'CR', ECU:'EC', GTM:'GT', HND:'HN', MEX:'MX',
+    PRY:'PY', PER:'PE', URY:'UY', CIV:'CI', ETH:'ET', GHA:'GH', KEN:'KE', UGA:'UG', IDN:'ID', VNM:'VN' };
+  function t6(x){ return Math.trunc(Number(x) * 1e6) / 1e6; }
+  function anilloTraces(r){
+    var out = [];
+    (r || []).forEach(function(c){
+      var p = [t6(c[0]), t6(c[1])];
+      var u = out[out.length - 1];
+      if (!u || u[0] !== p[0] || u[1] !== p[1]) out.push(p);
+    });
+    if (out.length && (out[0][0] !== out[out.length-1][0] || out[0][1] !== out[out.length-1][1])) out.push([out[0][0], out[0][1]]);
+    return out.length >= 4 ? out : null;
+  }
+  function geometriaTraces(g){
+    if (typeof g === 'string') { try { g = JSON.parse(g); } catch(e){ return null; } }
+    if (!g || !g.coordinates) return null;
+    if (g.type === 'Polygon') { var a = anilloTraces(g.coordinates[0]); return a ? { type:'Polygon', coordinates:[a] } : null; }
+    if (g.type === 'MultiPolygon') {
+      var ps = g.coordinates.map(function(p){ var a = anilloTraces(p[0]); return a ? [a] : null; }).filter(Boolean);
+      return ps.length ? { type:'MultiPolygon', coordinates: ps } : null;
+    }
+    if (g.type === 'Point') return { type:'Point', coordinates:[t6(g.coordinates[0]), t6(g.coordinates[1])] };
+    return null;
+  }
+  function featureTraces(geom, nombre, pais3, hectareas){
+    var pr = {};
+    if (nombre) pr.ProductionPlace = String(nombre);
+    var iso = pais3 && ISO2[String(pais3).toUpperCase()];
+    if (iso) pr.ProducerCountry = iso;
+    var ha = Number(hectareas);
+    if (isFinite(ha) && ha > 0) pr.Area = Math.round(ha * 100) / 100;
+    return { type:'Feature', properties: pr, geometry: geom };
+  }
+  function bajarArchivo(texto, nombre, tipo){
+    var blob = new Blob([texto], { type: tipo });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = nombre;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); }, 2000);
+  }
+
   async function verificar(id){
     $('datos').classList.add('oculto');
     $('hashes').classList.add('oculto');
@@ -315,6 +364,15 @@ h1{font-family:'Playfair Display',serif;font-weight:400;font-size:clamp(26px,4vw
         a.download = 'epimeleia-activo-' + id + '-paquete-sellado.json';
         document.body.appendChild(a); a.click(); a.remove();
         setTimeout(function(){ URL.revokeObjectURL(a.href); }, 2000);
+      };
+      // TRACES: la geolocalización en el formato oficial de la UE.
+      $('btnTraces').onclick = function(){
+        var p = data.paquete || {};
+        var geom = geometriaTraces(p.poligono || p.geometry || p.geometria);
+        if (!geom) { alert('Este campo no tiene un polígono válido para TRACES.'); return; }
+        var cap = Array.isArray(data.capacidad) && data.capacidad.length ? data.capacidad[0] : {};
+        var fc = { type:'FeatureCollection', features:[ featureTraces(geom, p.nombreActivo || data.nombreActivo, cap.pais, cap.hectareas) ] };
+        bajarArchivo(JSON.stringify(fc, null, 2), 'epimeleia-traces-' + id + '.geojson', 'application/geo+json');
       };
     }else{
       $('rowDescarga').style.display = 'none';

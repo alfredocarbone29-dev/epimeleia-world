@@ -134,7 +134,11 @@ h1{font-family:'Playfair Display',serif;font-weight:400;font-size:clamp(26px,4vw
     <div class="hash-row" id="rowDescarga" style="display:none;">
       <div class="hash-k">TU COPIA DE LA PRUEBA</div>
       <button id="btnDescargar" type="button" style="margin-top:8px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1px;padding:10px 16px;background:transparent;color:var(--emerald);border:1px solid var(--emerald);border-radius:3px;cursor:pointer;">DESCARGAR EL PAQUETE DEL LOTE ↓</button>
+      <button id="btnTraces" type="button" style="margin-top:8px;margin-left:6px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1px;padding:10px 16px;background:transparent;color:var(--gold2,#E5C870);border:1px solid var(--gold2,#E5C870);border-radius:3px;cursor:pointer;">ARCHIVO PARA TRACES (GEOJSON) ↓</button>
+      <button id="btnCsv" type="button" style="margin-top:8px;margin-left:6px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1px;padding:10px 16px;background:transparent;color:var(--gold2,#E5C870);border:1px solid var(--gold2,#E5C870);border-radius:3px;cursor:pointer;">PLANILLA DEL LOTE (CSV) ↓</button>
       <div style="font-size:13px;color:var(--muted);margin-top:10px;line-height:1.6;">Guardalo. Es el archivo exacto que se selló: su huella keccak256 es la que está escrita en la transacción de Polygon. Con este archivo y la transacción podés comprobar el embarque siempre, aunque EPIMELEIA no exista.</div>
+      <div style="font-size:13px;color:var(--muted);margin-top:8px;line-height:1.6;"><b style="color:var(--text);">Archivo para TRACES:</b> la geolocalización de todas las parcelas del lote en el formato oficial de la UE (GeoJSON, WGS84, 6 decimales), con los mismos polígonos que se sellaron. <b style="color:var(--text);">Planilla:</b> cada parcela con sus toneladas, cultivo, país y el link a su prueba, para abrir en Excel.</div>
+      <div id="trazMsg" style="font-size:12px;color:var(--muted);margin-top:6px;"></div>
     </div>
   </div>
 
@@ -227,6 +231,68 @@ h1{font-family:'Playfair Display',serif;font-weight:400;font-size:clamp(26px,4vw
     throw ultimoError || new Error('No se encontró la transacción.');
   }
 
+  /* ── TRACES (24/10/2026): archivo de geolocalización para la UE ──
+     Formato oficial EUDR: GeoJSON FeatureCollection, WGS84, longitud-latitud,
+     6 decimales (truncados), anillo cerrado, sin huecos. Propiedades con el
+     nombre exacto que pide TRACES: ProductionPlace, ProducerCountry (ISO de 2
+     letras) y Area (hectáreas, número). Se arma en tu navegador con el mismo
+     polígono que se selló: no pasa por ningún servidor. */
+  var ISO2 = { ARG:'AR', BOL:'BO', BRA:'BR', CHL:'CL', COL:'CO', CRI:'CR', ECU:'EC', GTM:'GT', HND:'HN', MEX:'MX',
+    PRY:'PY', PER:'PE', URY:'UY', CIV:'CI', ETH:'ET', GHA:'GH', KEN:'KE', UGA:'UG', IDN:'ID', VNM:'VN' };
+  function t6(x){ return Math.trunc(Number(x) * 1e6) / 1e6; }
+  function anilloTraces(r){
+    var out = [];
+    (r || []).forEach(function(c){
+      var p = [t6(c[0]), t6(c[1])];
+      var u = out[out.length - 1];
+      if (!u || u[0] !== p[0] || u[1] !== p[1]) out.push(p);
+    });
+    if (out.length && (out[0][0] !== out[out.length-1][0] || out[0][1] !== out[out.length-1][1])) out.push([out[0][0], out[0][1]]);
+    return out.length >= 4 ? out : null;
+  }
+  function geometriaTraces(g){
+    if (typeof g === 'string') { try { g = JSON.parse(g); } catch(e){ return null; } }
+    if (!g || !g.coordinates) return null;
+    if (g.type === 'Polygon') { var a = anilloTraces(g.coordinates[0]); return a ? { type:'Polygon', coordinates:[a] } : null; }
+    if (g.type === 'MultiPolygon') {
+      var ps = g.coordinates.map(function(p){ var a = anilloTraces(p[0]); return a ? [a] : null; }).filter(Boolean);
+      return ps.length ? { type:'MultiPolygon', coordinates: ps } : null;
+    }
+    if (g.type === 'Point') return { type:'Point', coordinates:[t6(g.coordinates[0]), t6(g.coordinates[1])] };
+    return null;
+  }
+  function featureTraces(geom, nombre, pais3, hectareas){
+    var pr = {};
+    if (nombre) pr.ProductionPlace = String(nombre);
+    var iso = pais3 && ISO2[String(pais3).toUpperCase()];
+    if (iso) pr.ProducerCountry = iso;
+    var ha = Number(hectareas);
+    if (isFinite(ha) && ha > 0) pr.Area = Math.round(ha * 100) / 100;
+    return { type:'Feature', properties: pr, geometry: geom };
+  }
+  function bajarArchivo(texto, nombre, tipo){
+    var blob = new Blob([texto], { type: tipo });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = nombre;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); }, 2000);
+  }
+
+  // Para TRACES y la planilla se busca la ficha pública de cada parcela
+  // (/api/verificar), la misma que ve cualquiera en Verificar.
+  async function fichasDeParcelas(lista){
+    var out = [];
+    for (var i = 0; i < lista.length; i++) {
+      var x = lista[i], id = Number(x.activoIdOnchain), f = null;
+      if (id >= VERIFICABLE_DESDE) {
+        try { var r = await fetch('/api/verificar?id=' + encodeURIComponent(id)); f = await r.json(); } catch (e) { f = null; }
+      }
+      out.push({ x: x, id: id, f: (f && f.ok !== false) ? f : null });
+    }
+    return out;
+  }
+  function celda(v){ var s = String(v == null ? '' : v); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }
+
   async function verificar(codigo){
     $('datos').classList.add('oculto');
     $('hashes').classList.add('oculto');
@@ -274,6 +340,37 @@ h1{font-family:'Playfair Display',serif;font-weight:400;font-size:clamp(26px,4vw
           a.download = 'epimeleia-lote-' + String(codigo).replace(/[^A-Za-z0-9._-]/g, '') + '-paquete-sellado.json';
           document.body.appendChild(a); a.click(); a.remove();
           setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
+        };
+        var lista = (paquete && Array.isArray(paquete.parcelas)) ? paquete.parcelas : [];
+        var cod = String(codigo).replace(/[^A-Za-z0-9._-]/g, '');
+        $('btnTraces').onclick = async function () {
+          $('trazMsg').textContent = 'Armando el archivo con los polígonos sellados…';
+          var fichas = await fichasDeParcelas(lista), feats = [], faltan = [];
+          fichas.forEach(function (o) {
+            var p = o.f && o.f.paquete ? o.f.paquete : {};
+            var geom = geometriaTraces(p.poligono || p.geometry || p.geometria);
+            if (!geom) { faltan.push('#' + o.id); return; }
+            var cap = o.f && Array.isArray(o.f.capacidad) && o.f.capacidad.length ? o.f.capacidad[0] : {};
+            feats.push(featureTraces(geom, o.x.nombreActivo || p.nombreActivo, cap.pais, cap.hectareas));
+          });
+          if (!feats.length) { $('trazMsg').textContent = 'Ninguna parcela de este lote tiene un polígono público para TRACES.'; return; }
+          bajarArchivo(JSON.stringify({ type:'FeatureCollection', features: feats }, null, 2), 'epimeleia-traces-' + cod + '.geojson', 'application/geo+json');
+          $('trazMsg').textContent = faltan.length ? 'Listo. Sin polígono público (registradas antes de la #' + VERIFICABLE_DESDE + '): ' + faltan.join(', ') + '.' : 'Listo: ' + feats.length + ' parcela(s).';
+        };
+        $('btnCsv').onclick = async function () {
+          $('trazMsg').textContent = 'Armando la planilla…';
+          var fichas = await fichasDeParcelas(lista);
+          var filas = [['lote','parcela','nombre','cultivo','pais','hectareas','toneladas','deforestacion','prueba_satelital','verificar','tx_lote']];
+          fichas.forEach(function (o) {
+            var cap = o.f && Array.isArray(o.f.capacidad) && o.f.capacidad.length ? o.f.capacidad[0] : {};
+            var def = o.x.deforestacion ? (o.x.deforestacion.hubo ? 'detectada' : 'sin deforestacion') + (o.x.deforestacion.periodo ? ' (' + o.x.deforestacion.periodo + ')' : '') : '';
+            filas.push([paquete.codigo || codigo, o.id, o.x.nombreActivo || '', cap.cultivo || paquete.cultivo || '', cap.pais || '',
+              cap.hectareas != null ? cap.hectareas : '', o.x.toneladas != null ? o.x.toneladas : '', def, o.x.origenPaqueteHash || '',
+              o.id >= VERIFICABLE_DESDE ? 'https://www.epimeleia.world/verificar.html?id=' + o.id : '', data.polygonscanTx || '']);
+          });
+          var csv = '\ufeff' + filas.map(function (f) { return f.map(celda).join(','); }).join('\r\n');
+          bajarArchivo(csv, 'epimeleia-lote-' + cod + '.csv', 'text/csv;charset=utf-8');
+          $('trazMsg').textContent = 'Listo: ' + (filas.length - 1) + ' parcela(s).';
         };
         mostrarEstado('ok', '✓', 'Lote verificado',
           'La huella recalculada en tu navegador coincide con la escrita en Polygon (bloque ' + esc(data.bloque) + '). ' +
