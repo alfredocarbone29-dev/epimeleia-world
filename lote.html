@@ -205,14 +205,23 @@ h1{font-family:'Playfair Display',serif;font-weight:400;font-size:clamp(26px,4vw
    o lo último que eligió esta persona, o si llegó desde una página en
    inglés (…-en.html). El botón ES/EN de arriba cambia en el momento. */
 var LANG = (function(){
-  try {
-    var q = new URLSearchParams(location.search).get('lang');
-    if (q === 'en' || q === 'es') { localStorage.setItem('epi_lang', q); return q; }
-    var g = localStorage.getItem('epi_lang');
-    if (g === 'en' || g === 'es') return g;
-  } catch (e) {}
-  if (/-en\.html/.test(document.referrer || '')) return 'en';
-  return 'es';
+  /* AJUSTE 25/10 · manda la página de la que viniste: si llegaste desde una
+     página en español del sitio, se ve en español; desde una en inglés
+     (…-en.html), en inglés. Entre estas páginas de dos idiomas (cuenta,
+     mapa, oficina, lote) se mantiene lo último que elegiste. */
+  var q = null, g = null, d = null;
+  try { q = new URLSearchParams(location.search).get('lang'); } catch (e) {}
+  if (q === 'en' || q === 'es') d = q;
+  if (!d) {
+    var ref = document.referrer || '';
+    var propio = /epimeleia\.world/.test(ref) || ref.indexOf(location.origin) === 0;
+    var bilingue = /\/(cuenta|oficina|lote|protocolo|panel)\.html/.test(ref);
+    if (propio && !bilingue && /\.html|\/$|\/(\?|#|$)/.test(ref)) d = /-en\.html/.test(ref) ? 'en' : 'es';
+  }
+  if (!d) { try { g = localStorage.getItem('epi_lang'); } catch (e) {} if (g === 'en' || g === 'es') d = g; }
+  if (!d) d = 'es';
+  try { localStorage.setItem('epi_lang', d); } catch (e) {}
+  return d;
 })();
 // T('texto en castellano', 'English text') → devuelve el del idioma elegido
 function T(es, en){ return LANG === 'en' ? en : es; }
