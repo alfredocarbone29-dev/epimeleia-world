@@ -63,7 +63,27 @@ async function activoEsDe(filaId, user) {
   }
 }
 
-async function reenviarAlVPS(res, cuerpo) {
+/* AJUSTE 25/10 · LA VISTA PREVIA DEL CLIENTE NO ADELANTA EL RESULTADO
+ * Antes de pagar, el cliente solo necesita saber si el satélite puede ver su
+ * campo. El veredicto (deforestación) y las mediciones son lo que compra:
+ * van en el certificado sellado. Por eso, en la vista del cliente, este
+ * puente deja pasar solo estos campos y descarta todo lo demás. */
+function soloViabilidad(r) {
+  if (!r || typeof r !== 'object') return r;
+  const out = { ok: !!r.ok };
+  for (const k of ['simulacro', 'activo', 'tipo', 'calidad', 'fechaPasada']) {
+    if (r[k] !== undefined) out[k] = r[k];
+  }
+  if (!r.ok) {
+    // Por nubes: un mensaje propio, sin números ni veredictos del VPS.
+    out.error = r.tipo === 'medicion'
+      ? 'Hoy el satélite no tiene una vista despejada de tu campo.'
+      : (r.tipo === 'limite' ? r.error : 'No se pudo hacer la vista previa. Probá en un momento.');
+  }
+  return out;
+}
+
+async function reenviarAlVPS(res, cuerpo, filtro) {
   let respuestaVPS;
   try {
     const r = await fetch(SELLO_VPS_URL, {
@@ -83,7 +103,7 @@ async function reenviarAlVPS(res, cuerpo) {
   }
   // Devolvemos tal cual lo que respondió el VPS (simulacro o sellado real).
   console.log(`[confirmar-sello] VPS respondió · ok=${respuestaVPS?.ok}`);
-  return res.status(200).json(respuestaVPS);
+  return res.status(200).json(filtro ? filtro(respuestaVPS) : respuestaVPS);
 }
 
 module.exports = async (req, res) => {
@@ -140,12 +160,16 @@ module.exports = async (req, res) => {
       }
       // Vista previa del cliente: va sin datos de producto (no guarda nada).
       // SIMPLE-4: se marca como vista del cliente → el VPS fuerza simulacro y aplica tope de uso.
-      return reenviarAlVPS(res, { filaId, ejecutar: false, vista: 'cliente' });
+      return reenviarAlVPS(res, { filaId, ejecutar: false, vista: 'cliente' }, soloViabilidad);
     }
 
     // ── CANDADO 2: le hablamos a la puerta del VPS con la clave ───
     console.log(`[confirmar-sello] Founder OK · sellando fila ${filaId} · ejecutar=${ejecutar === true}`);
 
+    // El founder también puede pedir la vista del cliente, para ver lo mismo que ve él.
+    if (body.vista === 'cliente' && ejecutar !== true) {
+      return reenviarAlVPS(res, { filaId, ejecutar: false, vista: 'cliente' }, soloViabilidad);
+    }
     return reenviarAlVPS(res, { filaId, ejecutar: ejecutar === true, producto, meses, cultivo, pais });
 
   } catch (err) {
