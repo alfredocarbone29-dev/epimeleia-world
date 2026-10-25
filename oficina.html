@@ -92,89 +92,91 @@ td.nombre{font-family:'Playfair Display',serif;color:var(--white);text-transform
   #t-parcelas td{border:none;padding:3px 0;white-space:normal;text-align:left;}
   #t-parcelas td[data-l]::before{content:attr(data-l);display:inline-block;min-width:100px;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);}
 }
+.topbar .lang-link,.lang-link{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.5px;color:var(--gold2);text-decoration:none;border:1px solid rgba(229,200,112,0.35);padding:5px 9px;margin-left:12px;cursor:pointer;background:none;}
+.topbar .lang-link:hover,.lang-link:hover{border-color:var(--gold2);}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
 <div class="topbar">
-  <span class="brand">EPIMELEIA<span> · TU OFICINA</span></span>
+  <span style="display:flex;align-items:center;"><span class="brand">EPIMELEIA<span data-en=" · YOUR OFFICE"> · TU OFICINA</span></span><button class="lang-link" id="langBtn" onclick="cambiarIdioma()" type="button">EN</button></span>
   <span>
-    <button id="btn-salir" class="oculto" type="button">SALIR</button>
-    <a href="index.html">← INICIO</a>
+    <button id="btn-salir" class="oculto" type="button" data-en="SIGN OUT">SALIR</button>
+    <a href="index.html" id="lnk-inicio" data-en="← HOME">← INICIO</a>
   </span>
 </div>
 
 <main>
   <!-- ── ENTRAR (sin contraseña) ── -->
   <section id="v-login">
-    <div class="eyebrow">TU OFICINA · SIN CONTRASEÑA</div>
-    <h1>Entrá con tu email</h1>
-    <p class="sub">Poné el email con el que registraste tus parcelas. Te mandamos un link: lo tocás y entrás. Tu navegador te recuerda, así que la próxima vez entrás directo.</p>
+    <div class="eyebrow" data-en="YOUR OFFICE · NO PASSWORD">TU OFICINA · SIN CONTRASEÑA</div>
+    <h1 data-en="Sign in with your email">Entrá con tu email</h1>
+    <p class="sub" data-en="Enter the email you registered your plots with. We send you a link: tap it and you are in. Your browser remembers you, so next time you go straight in.">Poné el email con el que registraste tus parcelas. Te mandamos un link: lo tocás y entrás. Tu navegador te recuerda, así que la próxima vez entrás directo.</p>
     <div class="login">
-      <label for="email">Tu email</label>
-      <input id="email" type="email" placeholder="nombre@tuempresa.com" autocomplete="email">
-      <div style="margin-top:14px;"><button class="btn primario" id="btn-link" type="button" style="width:100%;">ENVIARME EL LINK</button></div>
+      <label for="email" data-en="Your email">Tu email</label>
+      <input id="email" type="email" placeholder="nombre@tuempresa.com" data-en-ph="name@yourcompany.com" autocomplete="email">
+      <div style="margin-top:14px;"><button class="btn primario" id="btn-link" type="button" style="width:100%;" data-en="SEND ME THE LINK">ENVIARME EL LINK</button></div>
       <div class="msg" id="msg-login"></div>
     </div>
   </section>
 
   <!-- ── LA OFICINA ── -->
   <section id="v-oficina" class="oculto">
-    <div class="eyebrow" id="quien">TU OFICINA</div>
-    <h1>Tus parcelas y tus embarques</h1>
-    <p class="sub">Acá llevás la cuenta de lo que vende cada parcela. Cada lote que sellás se descuenta del saldo y aparece al instante en la página pública de Verificar.</p>
+    <div class="eyebrow" id="quien" data-en="YOUR OFFICE">TU OFICINA</div>
+    <h1 data-en="Your plots and your shipments">Tus parcelas y tus embarques</h1>
+    <p class="sub" data-en="Here you keep track of what each plot sells. Every lot you seal is deducted from the balance and shows up instantly on the public Verify page.">Acá llevás la cuenta de lo que vende cada parcela. Cada lote que sellás se descuenta del saldo y aparece al instante en la página pública de Verificar.</p>
     <div class="msg" id="msg-ofi"></div>
 
-    <div class="card-k">Tus parcelas</div>
+    <div class="card-k" data-en="Your plots">Tus parcelas</div>
     <div class="caja">
       <table id="t-parcelas">
-        <thead><tr><th>Parcela</th><th class="num">ID</th><th class="num">Hectáreas</th><th>Deforestación</th><th class="num">Saldo disponible</th><th>Riesgo</th><th>Prueba pública</th></tr></thead>
-        <tbody id="tb-parcelas"><tr><td colspan="7" class="ayuda">Cargando…</td></tr></tbody>
+        <thead><tr><th data-en="Plot">Parcela</th><th class="num">ID</th><th class="num" data-en="Hectares">Hectáreas</th><th data-en="Deforestation">Deforestación</th><th class="num" data-en="Available balance">Saldo disponible</th><th data-en="Risk">Riesgo</th><th data-en="Public proof">Prueba pública</th></tr></thead>
+        <tbody id="tb-parcelas"><tr><td colspan="7" class="ayuda" data-en="Loading…">Cargando…</td></tr></tbody>
       </table>
     </div>
 
     <div id="bloque-lote">
-      <div class="card-k">Armar un embarque (lote)</div>
+      <div class="card-k" data-en="Build a shipment (lot)">Armar un embarque (lote)</div>
       <div class="caja">
         <div class="grid">
-          <div class="campo"><label for="q-id">Número de parcela (ID)</label><input id="q-id" type="number" inputmode="numeric" min="1" step="1" placeholder="ej: 30"></div>
-          <div class="campo"><label for="q-ton">Toneladas</label><input id="q-ton" type="number" inputmode="decimal" min="0" step="0.001" placeholder="ej: 10"></div>
-          <div class="campo"><label>&nbsp;</label><button class="btn" id="q-agregar" type="button" style="width:100%;">+ SUMAR OTRA PARCELA</button></div>
+          <div class="campo"><label for="q-id" data-en="Plot number (ID)">Número de parcela (ID)</label><input id="q-id" type="number" inputmode="numeric" min="1" step="1" placeholder="ej: 30" data-en-ph="e.g. 30"></div>
+          <div class="campo"><label for="q-ton" data-en="Tonnes">Toneladas</label><input id="q-ton" type="number" inputmode="decimal" min="0" step="0.001" placeholder="ej: 10" data-en-ph="e.g. 10"></div>
+          <div class="campo"><label>&nbsp;</label><button class="btn" id="q-agregar" type="button" style="width:100%;" data-en="+ ADD ANOTHER PLOT">+ SUMAR OTRA PARCELA</button></div>
         </div>
         <div id="q-info" class="ayuda" style="padding:0 16px 14px;font-size:12px;letter-spacing:.5px;min-height:18px;"></div>
         <div class="grid" style="padding-top:0;">
-          <div class="campo"><label for="l-codigo">Código del lote</label><input id="l-codigo" readonly></div>
-          <div class="campo"><label for="l-anio">Año de cosecha</label><input id="l-anio" type="number" min="2000" max="2100"></div>
-          <div class="campo"><label for="l-fecha">Fecha del embarque</label><input id="l-fecha" type="date"></div>
-          <div class="campo"><label for="l-receptor">Comprador (opcional)</label><input id="l-receptor" placeholder="compras@importador.eu"></div>
+          <div class="campo"><label for="l-codigo" data-en="Lot code">Código del lote</label><input id="l-codigo" readonly></div>
+          <div class="campo"><label for="l-anio" data-en="Harvest year">Año de cosecha</label><input id="l-anio" type="number" min="2000" max="2100"></div>
+          <div class="campo"><label for="l-fecha" data-en="Shipment date">Fecha del embarque</label><input id="l-fecha" type="date"></div>
+          <div class="campo"><label for="l-receptor" data-en="Buyer (optional)">Comprador (opcional)</label><input id="l-receptor" placeholder="compras@importador.eu"></div>
         </div>
       </div>
 
       <div class="caja" style="margin-top:12px;">
         <table>
-          <thead><tr><th></th><th>Parcela en el lote</th><th class="num">Toneladas</th></tr></thead>
-          <tbody id="tb-lote"><tr><td colspan="3" class="ayuda">Poné el número de la parcela y las toneladas, y tocá CERTIFICAR.</td></tr></tbody>
+          <thead><tr><th></th><th data-en="Plot in the lot">Parcela en el lote</th><th class="num" data-en="Tonnes">Toneladas</th></tr></thead>
+          <tbody id="tb-lote"><tr><td colspan="3" class="ayuda" data-en="Enter the plot number and the tonnes, and tap CERTIFY.">Poné el número de la parcela y las toneladas, y tocá CERTIFICAR.</td></tr></tbody>
         </table>
       </div>
       <div class="acciones">
-        <button class="btn primario" id="btn-certificar" type="button">CERTIFICAR</button>
-        <button class="btn" id="btn-simular" type="button">SOLO SIMULAR</button>
-        <span class="ayuda">CERTIFICAR revisa satélite y saldo; si el lote es APTO te pide una confirmación y lo sella en Polygon. "Solo simular" no sella ni gasta nada.</span>
+        <button class="btn primario" id="btn-certificar" type="button" data-en="CERTIFY">CERTIFICAR</button>
+        <button class="btn" id="btn-simular" type="button" data-en="SIMULATE ONLY">SOLO SIMULAR</button>
+        <span class="ayuda" data-en="CERTIFY checks satellite and balance; if the lot is ELIGIBLE it asks for one confirmation and seals it on Polygon. &quot;Simulate only&quot; does not seal or spend anything.">CERTIFICAR revisa satélite y saldo; si el lote es APTO te pide una confirmación y lo sella en Polygon. "Solo simular" no sella ni gasta nada.</span>
       </div>
       <div id="lote-res"></div>
     </div>
 
-    <div class="card-k">Tus lotes</div>
+    <div class="card-k" data-en="Your lots">Tus lotes</div>
     <div class="caja">
       <table>
-        <thead><tr><th>Código</th><th>Cultivo</th><th class="num">Año</th><th class="num">Toneladas</th><th>Estado</th><th>Certificado</th></tr></thead>
-        <tbody id="tb-lotes"><tr><td colspan="6" class="ayuda">Sin lotes todavía.</td></tr></tbody>
+        <thead><tr><th data-en="Code">Código</th><th data-en="Crop">Cultivo</th><th class="num" data-en="Year">Año</th><th class="num" data-en="Tonnes">Toneladas</th><th data-en="Status">Estado</th><th data-en="Certificate">Certificado</th></tr></thead>
+        <tbody id="tb-lotes"><tr><td colspan="6" class="ayuda" data-en="No lots yet.">Sin lotes todavía.</td></tr></tbody>
       </table>
     </div>
   </section>
 
-  <div class="foot">EPIMELEIA · Notario Digital Ambiental · Polygon Mainnet<br>No vendemos el dato. Vendemos la prueba de que nadie lo tocó.</div>
+  <div class="foot" data-en="EPIMELEIA · Digital Environmental Notary · Polygon Mainnet<br>We don't sell the data. We sell the proof that no one touched it.">EPIMELEIA · Notario Digital Ambiental · Polygon Mainnet<br>No vendemos el dato. Vendemos la prueba de que nadie lo tocó.</div>
 </main>
 
 <script>
@@ -183,13 +185,47 @@ const SUPABASE_ANON_KEY = 'sb_publishable_Ym3gRRPfLZPGm4srzFDdTw_dcWvqxZ2';
 const API = '/api/panel';
 const VERIFICABLE_DESDE = 18;
 
+/* ══ AJUSTE 25/10 · IDIOMA (español / inglés) ══
+   Igual que cuenta.html: ?lang=en, o lo último elegido, o si llegó desde
+   una página en inglés (…-en.html). El botón ES/EN cambia en el momento. */
+const LANG = (function(){
+  try {
+    const q = new URLSearchParams(location.search).get('lang');
+    if (q === 'en' || q === 'es') { localStorage.setItem('epi_lang', q); return q; }
+    const g = localStorage.getItem('epi_lang');
+    if (g === 'en' || g === 'es') return g;
+  } catch (e) {}
+  if (/-en\.html/.test(document.referrer || '')) return 'en';
+  return 'es';
+})();
+function T(es, en){ return LANG === 'en' ? en : es; }
+function aplicarIdioma(){
+  if (LANG !== 'en') return;
+  document.documentElement.lang = 'en';
+  document.title = 'EPIMELEIA · Your office';
+  document.querySelectorAll('[data-en]').forEach(el => { el.innerHTML = el.dataset.en; });
+  document.querySelectorAll('[data-en-ph]').forEach(el => { el.placeholder = el.dataset.enPh; });
+  document.querySelectorAll('[data-en-aria]').forEach(el => { el.setAttribute('aria-label', el.dataset.enAria); });
+  const b = document.getElementById('langBtn'); if (b) b.textContent = 'ES';
+  const h = document.getElementById('lnk-inicio'); if (h) h.href = 'index-en.html';
+}
+function cambiarIdioma(){
+  const nuevo = LANG === 'en' ? 'es' : 'en';
+  try { localStorage.setItem('epi_lang', nuevo); } catch (e) {}
+  const u = new URL(location.href); u.searchParams.set('lang', nuevo);
+  location.href = u.toString();
+}
+const VERIF = LANG === 'en' ? '/verificar-en.html' : '/verificar.html';
+const LOTEQ = LANG === 'en' ? '&lang=en' : '';
+aplicarIdioma();
+
 const $ = (id) => document.getElementById(id);
 const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
-const nf = new Intl.NumberFormat('es-AR', { maximumFractionDigits: 2 });
+const nf = new Intl.NumberFormat(LANG === 'en' ? 'en-US' : 'es-AR', { maximumFractionDigits: 2 });
 const num = (v) => (v === null || v === undefined || v === '' ? '—' : nf.format(Number(v)));
 
 let supa = null, TOKEN = '', EMAIL = '', PARCELAS = [], INFO = {}, LOTE = [], RIESGO = {};
-const SEM_ETIQ = { verde:'Sin señales', amarillo:'Mirar', rojo:'Revisar', gris:'Sin datos' };
+const SEM_ETIQ = LANG === 'en' ? { verde:'No signals', amarillo:'Watch', rojo:'Review', gris:'No data' } : { verde:'Sin señales', amarillo:'Mirar', rojo:'Revisar', gris:'Sin datos' };
 function sem(r) {
   if (r === undefined) return '<span class="ayuda">…</span>';
   if (!r || !r.color) return '—';
@@ -199,9 +235,9 @@ function sem(r) {
 
 function msg(id, texto, tipo) { const m = $(id); m.innerHTML = texto; m.className = 'msg' + (tipo ? ' ' + tipo : ''); }
 function chip(v) {
-  if (v === 'limpia') return '<span class="chip limpia">No detectada</span>';
-  if (v === 'hubo deforestacion') return '<span class="chip hubo">Detectada</span>';
-  return '<span class="chip sin">Sin chequeo</span>';
+  if (v === 'limpia') return '<span class="chip limpia">' + T('No detectada','Not detected') + '</span>';
+  if (v === 'hubo deforestacion') return '<span class="chip hubo">' + T('Detectada','Detected') + '</span>';
+  return '<span class="chip sin">' + T('Sin chequeo','No check') + '</span>';
 }
 async function api(cuerpo) {
   const r = await fetch(API, { method:'POST', headers:{ 'Content-Type':'application/json' },
@@ -212,9 +248,9 @@ async function api(cuerpo) {
 /* ── Entrar con link al email ── */
 async function pedirLink() {
   const email = $('email').value.trim().toLowerCase();
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return msg('msg-login', 'Escribí un email válido.', 'err');
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return msg('msg-login', T('Escribí un email válido.','Enter a valid email.'), 'err');
   $('btn-link').disabled = true;
-  msg('msg-login', 'Enviando…');
+  msg('msg-login', T('Enviando…','Sending…'));
   const { error } = await supa.auth.signInWithOtp({
     email,
     options: { emailRedirectTo: location.origin + '/oficina.html', shouldCreateUser: false },
@@ -223,12 +259,12 @@ async function pedirLink() {
   if (error) {
     const t = (error.message || '').toLowerCase();
     if (t.includes('signup') || t.includes('not found') || t.includes('not allowed')) {
-      return msg('msg-login', 'Ese email no tiene parcelas registradas en EPIMELEIA. Si creés que es un error, escribinos a info@epimeleia.world.', 'err');
+      return msg('msg-login', T('Ese email no tiene parcelas registradas en EPIMELEIA. Si creés que es un error, escribinos a info@epimeleia.world.','That email has no plots registered with EPIMELEIA. If you think this is a mistake, write to info@epimeleia.world.'), 'err');
     }
-    if (t.includes('rate') || t.includes('seconds')) return msg('msg-login', 'Ya te mandamos un link hace un momento. Esperá un minuto y probá de nuevo.', 'err');
-    return msg('msg-login', 'No se pudo enviar el link. Probá de nuevo en un momento.', 'err');
+    if (t.includes('rate') || t.includes('seconds')) return msg('msg-login', T('Ya te mandamos un link hace un momento. Esperá un minuto y probá de nuevo.','We just sent you a link. Wait a minute and try again.'), 'err');
+    return msg('msg-login', T('No se pudo enviar el link. Probá de nuevo en un momento.','Could not send the link. Try again in a moment.'), 'err');
   }
-  msg('msg-login', '✓ Listo. Revisá tu correo (y la carpeta de spam) y tocá el link para entrar.', 'ok');
+  msg('msg-login', T('✓ Listo. Revisá tu correo (y la carpeta de spam) y tocá el link para entrar.','✓ Done. Check your email (and spam folder) and tap the link to sign in.'), 'ok');
 }
 
 /* ── Cargar la oficina ── */
@@ -237,11 +273,11 @@ async function cargarOficina() {
   $('v-oficina').classList.remove('oculto');
   $('btn-salir').classList.remove('oculto');
   let r;
-  try { r = await api({}); } catch (_) { return msg('msg-ofi', 'No se pudo contactar al servidor. Probá de nuevo.', 'err'); }
-  if (!r || !r.ok) return msg('msg-ofi', esc((r && r.error) || 'No se pudo cargar tu oficina.'), 'err');
+  try { r = await api({}); } catch (_) { return msg('msg-ofi', T('No se pudo contactar al servidor. Probá de nuevo.','Could not reach the server. Try again.'), 'err'); }
+  if (!r || !r.ok) return msg('msg-ofi', esc((r && r.error) || T('No se pudo cargar tu oficina.','Could not load your office.')), 'err');
   PARCELAS = (r.parcelas || []).filter((p) => p.sellada_onchain && p.activo_id_onchain != null);
   if (!PARCELAS.length) {
-    $('tb-parcelas').innerHTML = '<tr><td colspan="7" class="ayuda">Todavía no tenés parcelas selladas a tu nombre.</td></tr>';
+    $('tb-parcelas').innerHTML = '<tr><td colspan="7" class="ayuda">' + T('Todavía no tenés parcelas selladas a tu nombre.','You have no sealed plots in your name yet.') + '</td></tr>';
     $('bloque-lote').classList.add('oculto');
     return;
   }
@@ -257,17 +293,17 @@ function renderParcelas() {
     const i = INFO[p.activo_id_onchain];
     const retenida = p.veredicto === 'hubo deforestacion';
     const saldo = !i ? '…' : (i.error ? '—' : (i.saldo != null
-      ? (retenida ? `<span style="color:var(--amber);" title="Deforestación detectada: ninguna de estas toneladas puede salir por un lote.">${num(i.saldo)} t · retenidas</span>`
+      ? (retenida ? `<span style="color:var(--amber);" title="${T('Deforestación detectada: ninguna de estas toneladas puede salir por un lote.','Deforestation detected: none of these tonnes can leave in a lot.')}">${num(i.saldo)} t · ${T('retenidas','withheld')}</span>`
                   : num(i.saldo) + ' t' + (i.cultivo ? ' · ' + esc(i.cultivo) : ''))
-      : 'sin capacidad'));
+      : T('sin capacidad','no capacity')));
     return `<tr>
-      <td class="nombre">${esc(p.nombre_activo || '(sin nombre)')}</td>
+      <td class="nombre">${esc(p.nombre_activo || T('(sin nombre)','(no name)'))}</td>
       <td class="num" data-l="ID">#${id}</td>
-      <td class="num" data-l="Hectáreas">${num(p.superficie_ha)}</td>
-      <td data-l="Deforestación">${chip(p.veredicto)}</td>
-      <td class="num" data-l="Saldo">${saldo}</td>
-      <td data-l="Riesgo">${Number(p.activo_id_onchain) >= VERIFICABLE_DESDE ? sem(RIESGO[p.activo_id_onchain]) : '—'}</td>
-      <td data-l="Prueba"><a href="/verificar.html?id=${encodeURIComponent(p.activo_id_onchain)}" target="_blank" rel="noopener">VERIFICAR →</a></td>
+      <td class="num" data-l="${T('Hectáreas','Hectares')}">${num(p.superficie_ha)}</td>
+      <td data-l="${T('Deforestación','Deforestation')}">${chip(p.veredicto)}</td>
+      <td class="num" data-l="${T('Saldo','Balance')}">${saldo}</td>
+      <td data-l="${T('Riesgo','Risk')}">${Number(p.activo_id_onchain) >= VERIFICABLE_DESDE ? sem(RIESGO[p.activo_id_onchain]) : '—'}</td>
+      <td data-l="${T('Prueba','Proof')}"><a href="${VERIF}?id=${encodeURIComponent(p.activo_id_onchain)}" target="_blank" rel="noopener">${T('VERIFICAR →','VERIFY →')}</a></td>
     </tr>`;
   }).join('');
   mostrarInfo();
@@ -306,13 +342,13 @@ async function riesgoDelLote(d) {
     const filas = d.parcelas.map((p) => {
       const x = r.riesgos && r.riesgos[p.activoIdOnchain];
       const pa = PARCELAS.find((q) => String(q.activo_id_onchain) === String(p.activoIdOnchain)) || {};
-      const mot = x ? (x.motivos || []).map((m) => `<li class="${esc(m.nivel)}">${esc(m.texto)}</li>`).join('') : '<li class="gris">No se pudo calcular.</li>';
-      return `<div style="margin-top:10px;"><span class="nombre" style="font-family:'Playfair Display',serif;color:var(--white);text-transform:capitalize;">${esc(pa.nombre_activo || 'Parcela')}</span> <span class="ayuda">#${esc(p.activoIdOnchain)}</span> ${sem(x || null)}<ul class="sem-mot">${mot}</ul></div>`;
+      const mot = x ? (x.motivos || []).map((m) => `<li class="${esc(m.nivel)}">${esc(m.texto)}</li>`).join('') : '<li class="gris">' + T('No se pudo calcular.','Could not be calculated.') + '</li>';
+      return `<div style="margin-top:10px;"><span class="nombre" style="font-family:'Playfair Display',serif;color:var(--white);text-transform:capitalize;">${esc(pa.nombre_activo || T('Parcela','Plot'))}</span> <span class="ayuda">#${esc(p.activoIdOnchain)}</span> ${sem(x || null)}<ul class="sem-mot">${mot}</ul></div>`;
     }).join('');
     const caja = document.createElement('div');
     caja.className = 'res res-sem';
-    caja.innerHTML = `<div class="res-t">Señal de riesgo del lote: ${sem({ color: r.color, motivos: [] })}</div>
-      <div class="res-d">Es informativa: no cambia APTO / NO APTO. Indica dónde mirar, con las mismas reglas para todos.</div>${filas}`;
+    caja.innerHTML = `<div class="res-t">${T('Señal de riesgo del lote','Lot risk signal')}: ${sem({ color: r.color, motivos: [] })}</div>
+      <div class="res-d">${T('Es informativa: no cambia APTO / NO APTO. Indica dónde mirar, con las mismas reglas para todos.','It is informational: it does not change ELIGIBLE / NOT ELIGIBLE. It shows where to look, with the same rules for everyone.')}</div>${filas}`;
     $('lote-res').appendChild(caja);
   } catch (_) {}
 }
@@ -336,8 +372,8 @@ function invalidar() { /* AJUSTE 17/10: CERTIFICAR simula y sella los mismos dat
 // La parcela escrita por número: ¿es mía y certificable?
 function miParcela(id) {
   const p = PARCELAS.find((x) => String(x.activo_id_onchain) === String(id));
-  if (!p) return { error: `No tenés una parcela #${id}.` };
-  if (Number(id) < VERIFICABLE_DESDE) return { error: `La parcela #${id} es anterior al sistema verificable (desde la #${VERIFICABLE_DESDE}).` };
+  if (!p) return { error: T(`No tenés una parcela #${id}.`, `You have no plot #${id}.`) };
+  if (Number(id) < VERIFICABLE_DESDE) return { error: T(`La parcela #${id} es anterior al sistema verificable (desde la #${VERIFICABLE_DESDE}).`, `Plot #${id} predates the verifiable system (from #${VERIFICABLE_DESDE} on).`) };
   return { p };
 }
 // Al escribir el número aparece sola la ficha: nombre, cultivo, saldo y semáforo.
@@ -348,11 +384,11 @@ function mostrarInfo() {
   if (m.error) { $('q-info').innerHTML = `<span style="color:var(--amber);">${esc(m.error)}</span>`; return; }
   const i = INFO[id] || {};
   const retenida = m.p.veredicto === 'hubo deforestacion';
-  const saldo = i.saldo != null ? `${num(i.saldo)} t ${retenida ? 'retenidas' : 'disponibles'}` : 'sin capacidad declarada';
-  $('q-info').innerHTML = `<strong style="color:var(--white);font-family:'Playfair Display',serif;font-size:15px;text-transform:capitalize;letter-spacing:0;">${esc(m.p.nombre_activo || 'Parcela')}</strong> · #${esc(id)} · ${esc(i.cultivo || 'sin cultivo')} · ${saldo} ${sem(RIESGO[id])}`;
+  const saldo = i.saldo != null ? `${num(i.saldo)} t ${retenida ? T('retenidas','withheld') : T('disponibles','available')}` : T('sin capacidad declarada','no declared capacity');
+  $('q-info').innerHTML = `<strong style="color:var(--white);font-family:'Playfair Display',serif;font-size:15px;text-transform:capitalize;letter-spacing:0;">${esc(m.p.nombre_activo || T('Parcela','Plot'))}</strong> · #${esc(id)} · ${esc(i.cultivo || T('sin cultivo','no crop'))} · ${saldo} ${sem(RIESGO[id])}`;
 }
 function renderLote() {
-  if (!LOTE.length) { $('tb-lote').innerHTML = '<tr><td colspan="3" class="ayuda">Poné el número de la parcela y las toneladas, y tocá CERTIFICAR.</td></tr>'; return; }
+  if (!LOTE.length) { $('tb-lote').innerHTML = '<tr><td colspan="3" class="ayuda">' + T('Poné el número de la parcela y las toneladas, y tocá CERTIFICAR.','Enter the plot number and the tonnes, and tap CERTIFY.') + '</td></tr>'; return; }
   $('tb-lote').innerHTML = LOTE.map((it) => {
     const p = PARCELAS.find((x) => String(x.activo_id_onchain) === String(it.id)) || {};
     return `<tr><td><button type="button" data-id="${esc(it.id)}" class="quitar" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;">✕</button></td>
@@ -369,10 +405,10 @@ function agregar() {
   if (!id) return false;
   const m = miParcela(id);
   if (m.error) { aviso(esc(m.error), false); return false; }
-  if (!(ton > 0)) { aviso('Poné cuántas toneladas van en este embarque.', false); return false; }
+  if (!(ton > 0)) { aviso(T('Poné cuántas toneladas van en este embarque.','Enter how many tonnes go in this shipment.'), false); return false; }
   const cult = INFO[id] && INFO[id].cultivo;
   const otro = LOTE.find((x) => INFO[x.id] && INFO[x.id].cultivo && cult && INFO[x.id].cultivo !== cult);
-  if (otro) { aviso('Un lote lleva un solo cultivo.', false); return false; }
+  if (otro) { aviso(T('Un lote lleva un solo cultivo.','A lot carries a single crop.'), false); return false; }
   const ya = LOTE.find((x) => String(x.id) === String(id));
   if (ya) ya.ton = ton; else LOTE.push({ id, ton });
   $('q-id').value = ''; $('q-ton').value = ''; $('q-info').innerHTML = ''; $('lote-res').innerHTML = '';
@@ -395,13 +431,13 @@ function datos() {
 function resultado(r, titulo) {
   const apto = r.veredicto === 'APTO';
   const filas = (r.parcelas || []).map((p) => {
-    const n = esc(p.nombreActivo || 'Parcela') + ' #' + esc(p.activoIdOnchain) + ' · ' + num(p.toneladas) + ' t';
-    if (p.ok) return `<div><span class="v">✓</span> ${n}<small>Sin deforestación · saldo disponible ${num(p.saldoDisponible)} t</small></div>`;
+    const n = esc(p.nombreActivo || T('Parcela','Plot')) + ' #' + esc(p.activoIdOnchain) + ' · ' + num(p.toneladas) + ' t';
+    if (p.ok) return `<div><span class="v">✓</span> ${n}<small>${T('Sin deforestación · saldo disponible','No deforestation · available balance')} ${num(p.saldoDisponible)} t</small></div>`;
     return `<div><span class="x">✕</span> ${n}${(p.motivos || []).map((m) => `<small>${esc(m)}</small>`).join('')}</div>`;
   }).join('');
   const gen = (r.motivosGenerales || []).map((m) => `<div><span class="x">✕</span> ${esc(m)}</div>`).join('');
-  $('lote-res').innerHTML = `<div class="res ${apto ? 'ok' : 'mal'}"><div class="res-t">${esc(titulo || (apto ? 'Lote APTO' : 'Lote NO APTO'))}</div>
-    <div class="res-d">${apto ? 'Pasa las dos pruebas: satélite y saldo. Total ' + num(r.toneladasTotal) + ' t.' : 'No se puede sellar: no se descuenta ni se sella nada.'}</div>
+  $('lote-res').innerHTML = `<div class="res ${apto ? 'ok' : 'mal'}"><div class="res-t">${esc(titulo || (apto ? T('Lote APTO','Lot ELIGIBLE') : T('Lote NO APTO','Lot NOT ELIGIBLE')))}</div>
+    <div class="res-d">${apto ? T('Pasa las dos pruebas: satélite y saldo. Total ','Passes both tests: satellite and balance. Total ') + num(r.toneladasTotal) + ' t.' : T('No se puede sellar: no se descuenta ni se sella nada.','It cannot be sealed: nothing is deducted or sealed.')}</div>
     <div class="res-l">${gen}${filas}</div></div>`;
 }
 function aviso(texto, ok) { $('lote-res').innerHTML = `<div class="res ${ok ? 'ok' : 'mal'}"><div class="res-d">${texto}</div></div>`; }
@@ -409,14 +445,14 @@ function aviso(texto, ok) { $('lote-res').innerHTML = `<div class="res ${ok ? 'o
 // Simula (no gasta). Devuelve la respuesta del servidor, o null si no se pudo.
 async function correrSimulacion() {
   if (!sumarPendiente()) return null;
-  if (!LOTE.length) { aviso('Poné el número de la parcela y las toneladas.', false); return null; }
+  if (!LOTE.length) { aviso(T('Poné el número de la parcela y las toneladas.','Enter the plot number and the tonnes.'), false); return null; }
   if (!$('l-codigo').value.trim()) await nuevoCodigo();
-  aviso('Revisando satélite y saldo… (no gasta nada)', true);
+  aviso(T('Revisando satélite y saldo… (no gasta nada)','Checking satellite and balance… (costs nothing)'), true);
   try {
     const r = await api({ accion: 'simular', ...datos() });
     if (r && Array.isArray(r.parcelas)) { resultado(r); await riesgoDelLote(datos()); return r; }
-    aviso(esc((r && r.error) || 'No se pudo simular.'), false);
-  } catch (_) { aviso('No se pudo contactar al servidor.', false); }
+    aviso(esc((r && r.error) || T('No se pudo simular.','Could not simulate.')), false);
+  } catch (_) { aviso(T('No se pudo contactar al servidor.','Could not reach the server.'), false); }
   return null;
 }
 function botones(on) { $('btn-certificar').disabled = !on; $('btn-simular').disabled = !on; $('q-agregar').disabled = !on; }
@@ -436,15 +472,15 @@ async function certificar() {
     const d = datos();
     const total = d.parcelas.reduce((s, p) => s + p.toneladas, 0);
     const color = $('lote-res').querySelector('.res-sem .sem');
-    const senal = color ? `\nSeñal de riesgo: ${color.textContent}.` : '';
-    if (!confirm(`Lote APTO.${senal}\n\nVas a sellar el lote ${d.codigo} en Polygon y descontar ${num(total)} t de tu saldo.\nEs real y no se puede deshacer. ¿Sellar?`)) return;
+    const senal = color ? T(`\nSeñal de riesgo: ${color.textContent}.`, `\nRisk signal: ${color.textContent}.`) : '';
+    if (!confirm(T(`Lote APTO.${senal}\n\nVas a sellar el lote ${d.codigo} en Polygon y descontar ${num(total)} t de tu saldo.\nEs real y no se puede deshacer. ¿Sellar?`, `Lot ELIGIBLE.${senal}\n\nYou are about to seal lot ${d.codigo} on Polygon and deduct ${num(total)} t from your balance.\nIt is real and cannot be undone. Seal it?`))) return;
     sellando = true;
-    aviso('Sellando en Polygon… puede tardar un par de minutos. No cierres la página.', true);
+    aviso(T('Sellando en Polygon… puede tardar un par de minutos. No cierres la página.','Sealing on Polygon… it may take a couple of minutes. Do not close the page.'), true);
     try {
       const s = await api({ accion: 'sellar', ...d });
-      if (!s || !s.ok) { if (s && Array.isArray(s.parcelas)) resultado(s, s.error); else aviso(esc((s && s.error) || 'No se pudo sellar.'), false); return; }
+      if (!s || !s.ok) { if (s && Array.isArray(s.parcelas)) resultado(s, s.error); else aviso(esc((s && s.error) || T('No se pudo sellar.','Could not seal.')), false); return; }
       await esperar(d.codigo);
-    } catch (_) { aviso('Se perdió la conexión. El sellado puede seguir: mirá tus lotes en un momento.', false); }
+    } catch (_) { aviso(T('Se perdió la conexión. El sellado puede seguir: mirá tus lotes en un momento.','The connection was lost. Sealing may continue: check your lots in a moment.'), false); }
   } finally {
     botones(true);
     if (sellando) {
@@ -460,11 +496,11 @@ async function esperar(codigo) {
     let r; try { r = await api({ accion: 'estado', codigo }); } catch (_) { continue; }
     const l = r && r.lote; if (!l) continue;
     if (l.estado === 'SELLADO') {
-      return aviso(`<strong>Lote ${esc(codigo)} sellado.</strong> ${num(l.toneladas)} t · bloque ${esc(l.bloque)}.<br><a href="/lote.html?codigo=${encodeURIComponent(codigo)}" target="_blank" rel="noopener">Abrir el certificado público →</a>`, true);
+      return aviso(T(`<strong>Lote ${esc(codigo)} sellado.</strong> ${num(l.toneladas)} t · bloque ${esc(l.bloque)}.<br><a href="/lote.html?codigo=${encodeURIComponent(codigo)}" target="_blank" rel="noopener">Abrir el certificado público →</a>`, `<strong>Lot ${esc(codigo)} sealed.</strong> ${num(l.toneladas)} t · block ${esc(l.bloque)}.<br><a href="/lote.html?codigo=${encodeURIComponent(codigo)}${LOTEQ}" target="_blank" rel="noopener">Open the public certificate →</a>`), true);
     }
-    if (l.estado === 'ERROR') return aviso('El sellado se cortó: ' + esc(l.error), false);
+    if (l.estado === 'ERROR') return aviso(T('El sellado se cortó: ','Sealing was interrupted: ') + esc(l.error), false);
   }
-  aviso('Sigue procesando. Revisá tus lotes en unos minutos.', true);
+  aviso(T('Sigue procesando. Revisá tus lotes en unos minutos.','Still processing. Check your lots in a few minutes.'), true);
 }
 async function cargarLotes() {
   try {
@@ -473,15 +509,15 @@ async function cargarLotes() {
     $('tb-lotes').innerHTML = lotes.length ? lotes.map((l) => `<tr>
       <td class="nombre" style="text-transform:none;">${esc(l.codigo)}</td><td>${esc(l.cultivo)}</td>
       <td class="num">${esc(l.anio)}</td><td class="num">${num(l.toneladas)}</td>
-      <td>${l.estado === 'SELLADO' ? '<span class="chip limpia">Sellado</span>' : (l.estado === 'ERROR' ? '<span class="chip hubo">Error</span>' : '<span class="chip sin">En proceso</span>')}</td>
-      <td>${l.estado === 'SELLADO' ? `<a href="/lote.html?codigo=${encodeURIComponent(l.codigo)}" target="_blank" rel="noopener">VER CERTIFICADO →</a>` : '—'}</td></tr>`).join('')
-      : '<tr><td colspan="6" class="ayuda">Sin lotes todavía.</td></tr>';
+      <td>${l.estado === 'SELLADO' ? '<span class="chip limpia">' + T('Sellado','Sealed') + '</span>' : (l.estado === 'ERROR' ? '<span class="chip hubo">Error</span>' : '<span class="chip sin">' + T('En proceso','In progress') + '</span>')}</td>
+      <td>${l.estado === 'SELLADO' ? `<a href="/lote.html?codigo=${encodeURIComponent(l.codigo)}${LOTEQ}" target="_blank" rel="noopener">${T('VER CERTIFICADO →','VIEW CERTIFICATE →')}</a>` : '—'}</td></tr>`).join('')
+      : '<tr><td colspan="6" class="ayuda">' + T('Sin lotes todavía.','No lots yet.') + '</td></tr>';
   } catch (_) {}
 }
 
 /* ── Arranque ── */
 (async function iniciar() {
-  if (!window.supabase || !window.supabase.createClient) return msg('msg-login', 'No se pudo cargar la página. Recargá.', 'err');
+  if (!window.supabase || !window.supabase.createClient) return msg('msg-login', T('No se pudo cargar la página. Recargá.','The page could not load. Reload it.'), 'err');
   supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   $('btn-link').addEventListener('click', pedirLink);
   $('email').addEventListener('keydown', (e) => { if (e.key === 'Enter') pedirLink(); });
@@ -495,13 +531,13 @@ async function cargarLotes() {
 
   // Al volver del link del mail, Supabase deja la sesión lista.
   supa.auth.onAuthStateChange((evento, sesion) => {
-    if (sesion && sesion.access_token && !TOKEN) { TOKEN = sesion.access_token; EMAIL = sesion.user.email || ''; $('quien').textContent = 'TU OFICINA · ' + (sesion.user.email || '').toUpperCase(); cargarOficina(); }
+    if (sesion && sesion.access_token && !TOKEN) { TOKEN = sesion.access_token; EMAIL = sesion.user.email || ''; $('quien').textContent = T('TU OFICINA · ','YOUR OFFICE · ') + (sesion.user.email || '').toUpperCase(); cargarOficina(); }
   });
   const { data: { session } } = await supa.auth.getSession();
   if (session && session.access_token && !TOKEN) {
     TOKEN = session.access_token;
     EMAIL = session.user.email || '';
-    $('quien').textContent = 'TU OFICINA · ' + (session.user.email || '').toUpperCase();
+    $('quien').textContent = T('TU OFICINA · ','YOUR OFFICE · ') + (session.user.email || '').toUpperCase();
     cargarOficina();
   }
 })();

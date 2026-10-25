@@ -96,101 +96,103 @@ h1{font-family:'Playfair Display',serif;font-weight:400;font-size:clamp(26px,4vw
 .sem-mot li::before{content:'';position:absolute;left:2px;top:12px;width:6px;height:6px;border-radius:50%;background:#7E8C7E;}
 .sem-mot li.amarillo::before{background:#E5C870;} .sem-mot li.rojo::before{background:#E0705C;} .sem-mot li.verde::before{background:#5FAD5F;}
 @media(max-width:600px){ .dato{flex-direction:column;gap:2px;} .dato .va{text-align:left;} }
+.lang-link { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:1.5px; color:var(--gold2); text-decoration:none; border:1px solid rgba(229,200,112,0.35); padding:5px 9px; margin-left:12px; cursor:pointer; background:none; }
+.lang-link:hover { border-color:var(--gold2); }
 </style>
 </head>
 <body>
 
 <div class="topbar">
-  <span class="brand">EPIMELEIA<span> · LOTE</span></span>
-  <a class="volver" href="index.html">← INICIO</a>
+  <div style="display:flex;align-items:center;"><span class="brand">EPIMELEIA<span> · <span data-en="LOT">LOTE</span></span></span><button class="lang-link" id="langBtn" onclick="cambiarIdioma()" type="button">EN</button></div>
+  <a class="volver" id="lnkInicio" href="index.html" data-en="← HOME">← INICIO</a>
 </div>
 
 <div class="wrap">
-  <div class="eyebrow">CERTIFICADO DE LOTE · VERIFICABLE POR CUALQUIERA</div>
-  <h1>Todo lo que viene en este embarque, comprobado</h1>
-  <p class="sub">Cada parcela de origen está libre de deforestación según su propia prueba sellada, y el volumen no supera lo que esa tierra puede dar. Esta página no te pide que nos creas: <strong>recalcula la huella del lote en tu navegador y la compara con la que está escrita en Polygon</strong>.</p>
+  <div class="eyebrow" data-en="LOT CERTIFICATE · VERIFIABLE BY ANYONE">CERTIFICADO DE LOTE · VERIFICABLE POR CUALQUIERA</div>
+  <h1 data-en="Everything in this shipment, checked">Todo lo que viene en este embarque, comprobado</h1>
+  <p class="sub" data-en="Each origin plot is deforestation-free according to its own sealed proof, and the volume does not exceed what that land can yield. This page does not ask you to trust us: &lt;strong&gt;it recomputes the lot fingerprint in your browser and compares it with the one written on Polygon&lt;/strong&gt;.">Cada parcela de origen está libre de deforestación según su propia prueba sellada, y el volumen no supera lo que esa tierra puede dar. Esta página no te pide que nos creas: <strong>recalcula la huella del lote en tu navegador y la compara con la que está escrita en Polygon</strong>.</p>
 
   <div class="buscar">
-    <input id="codigoInput" type="text" placeholder="Código de lote (ej: LOTE-2026-001)" autocomplete="off">
-    <button id="btnVerificar" type="button">Verificar</button>
+    <input id="codigoInput" type="text" placeholder="Código de lote (ej: LOTE-2026-001)" data-en-ph="Lot code (e.g. LOTE-2026-001)" autocomplete="off">
+    <button id="btnVerificar" type="button" data-en="Verify">Verificar</button>
   </div>
 
   <div id="estado" class="estado oculto">
     <div class="estado-ico" id="estadoIco">⏳</div>
-    <div class="estado-t" id="estadoT">Verificando…</div>
+    <div class="estado-t" id="estadoT" data-en="Verifying…">Verificando…</div>
     <div class="estado-d" id="estadoD"></div>
   </div>
 
   <div id="hashes" class="hashes oculto">
     <div class="hash-row" id="rowRecalc">
-      <div class="hash-k">HUELLA DEL LOTE RECALCULADA EN TU NAVEGADOR (AHORA)</div>
+      <div class="hash-k" data-en="LOT FINGERPRINT RECOMPUTED IN YOUR BROWSER (NOW)">HUELLA DEL LOTE RECALCULADA EN TU NAVEGADOR (AHORA)</div>
       <div class="hash-v" id="hashRecalc">—</div>
     </div>
     <div class="hash-row" id="rowCadena">
-      <div class="hash-k">HUELLA ESCRITA EN LA TRANSACCIÓN DE POLYGON (LEÍDA DE LA CADENA)</div>
+      <div class="hash-k" data-en="FINGERPRINT WRITTEN IN THE POLYGON TRANSACTION (READ FROM THE CHAIN)">HUELLA ESCRITA EN LA TRANSACCIÓN DE POLYGON (LEÍDA DE LA CADENA)</div>
       <div class="hash-v" id="hashCadena">—</div>
     </div>
     <!-- DESCARGA: la prueba del embarque es del cliente, no depende de EPIMELEIA -->
     <div class="hash-row" id="rowDescarga" style="display:none;">
-      <div class="hash-k">TU COPIA DE LA PRUEBA</div>
-      <button id="btnDescargar" type="button" style="margin-top:8px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1px;padding:10px 16px;background:transparent;color:var(--emerald);border:1px solid var(--emerald);border-radius:3px;cursor:pointer;">DESCARGAR EL PAQUETE DEL LOTE ↓</button>
-      <button id="btnTraces" type="button" style="margin-top:8px;margin-left:6px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1px;padding:10px 16px;background:transparent;color:var(--gold2,#E5C870);border:1px solid var(--gold2,#E5C870);border-radius:3px;cursor:pointer;">ARCHIVO PARA TRACES (GEOJSON) ↓</button>
-      <button id="btnCsv" type="button" style="margin-top:8px;margin-left:6px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1px;padding:10px 16px;background:transparent;color:var(--gold2,#E5C870);border:1px solid var(--gold2,#E5C870);border-radius:3px;cursor:pointer;">PLANILLA DEL LOTE (CSV) ↓</button>
-      <div style="font-size:13px;color:var(--muted);margin-top:10px;line-height:1.6;">Guardalo. Es el archivo exacto que se selló: su huella keccak256 es la que está escrita en la transacción de Polygon. Con este archivo y la transacción podés comprobar el embarque siempre, aunque EPIMELEIA no exista.</div>
-      <div style="font-size:13px;color:var(--muted);margin-top:8px;line-height:1.6;"><b style="color:var(--text);">Archivo para TRACES:</b> la geolocalización de todas las parcelas del lote en el formato oficial de la UE (GeoJSON, WGS84, 6 decimales), con los mismos polígonos que se sellaron. <b style="color:var(--text);">Planilla:</b> cada parcela con sus toneladas, cultivo, país y el link a su prueba, para abrir en Excel.</div>
+      <div class="hash-k" data-en="YOUR COPY OF THE PROOF">TU COPIA DE LA PRUEBA</div>
+      <button id="btnDescargar" type="button" style="margin-top:8px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1px;padding:10px 16px;background:transparent;color:var(--emerald);border:1px solid var(--emerald);border-radius:3px;cursor:pointer;" data-en="DOWNLOAD THE LOT PACKAGE ↓">DESCARGAR EL PAQUETE DEL LOTE ↓</button>
+      <button id="btnTraces" type="button" style="margin-top:8px;margin-left:6px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1px;padding:10px 16px;background:transparent;color:var(--gold2,#E5C870);border:1px solid var(--gold2,#E5C870);border-radius:3px;cursor:pointer;" data-en="FILE FOR TRACES (GEOJSON) ↓">ARCHIVO PARA TRACES (GEOJSON) ↓</button>
+      <button id="btnCsv" type="button" style="margin-top:8px;margin-left:6px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1px;padding:10px 16px;background:transparent;color:var(--gold2,#E5C870);border:1px solid var(--gold2,#E5C870);border-radius:3px;cursor:pointer;" data-en="LOT SPREADSHEET (CSV) ↓">PLANILLA DEL LOTE (CSV) ↓</button>
+      <div style="font-size:13px;color:var(--muted);margin-top:10px;line-height:1.6;" data-en="Keep it. It is the exact file that was sealed: its keccak256 fingerprint is the one written in the Polygon transaction. With this file and the transaction you can always check the shipment, even if EPIMELEIA no longer exists.">Guardalo. Es el archivo exacto que se selló: su huella keccak256 es la que está escrita en la transacción de Polygon. Con este archivo y la transacción podés comprobar el embarque siempre, aunque EPIMELEIA no exista.</div>
+      <div style="font-size:13px;color:var(--muted);margin-top:8px;line-height:1.6;" data-en="&lt;b style=&quot;color:var(--text);&quot;&gt;File for TRACES:&lt;/b&gt; the geolocation of every plot in the lot in the official EU format (GeoJSON, WGS84, 6 decimals), with the same polygons that were sealed. &lt;b style=&quot;color:var(--text);&quot;&gt;Spreadsheet:&lt;/b&gt; each plot with its tonnes, crop, country and the link to its proof, to open in Excel."><b style="color:var(--text);">Archivo para TRACES:</b> la geolocalización de todas las parcelas del lote en el formato oficial de la UE (GeoJSON, WGS84, 6 decimales), con los mismos polígonos que se sellaron. <b style="color:var(--text);">Planilla:</b> cada parcela con sus toneladas, cultivo, país y el link a su prueba, para abrir en Excel.</div>
       <div id="trazMsg" style="font-size:12px;color:var(--muted);margin-top:6px;"></div>
     </div>
   </div>
 
   <div id="datos" class="oculto">
     <div class="card">
-      <div class="card-k">LOTE</div>
-      <div class="dato"><span class="et">Código</span><span class="va" id="dCodigo">—</span></div>
-      <div class="dato"><span class="et">Cultivo</span><span class="va" id="dCultivo">—</span></div>
-      <div class="dato"><span class="et">Año de cosecha</span><span class="va" id="dAnio">—</span></div>
-      <div class="dato"><span class="et">Fecha</span><span class="va" id="dFecha">—</span></div>
-      <div class="dato"><span class="et">Volumen total</span><span class="va" id="dToneladas">—</span></div>
-      <div class="dato"><span class="et">Parcelas de origen</span><span class="va" id="dCantidad">—</span></div>
-      <div class="dato"><span class="et">Veredicto</span><span class="va apto" id="dVeredicto">—</span></div>
-      <div class="dato"><span class="et">Receptor (huella)</span><span class="va" id="dReceptor">—</span></div>
+      <div class="card-k" data-en="LOT">LOTE</div>
+      <div class="dato"><span class="et" data-en="Code">Código</span><span class="va" id="dCodigo">—</span></div>
+      <div class="dato"><span class="et" data-en="Crop">Cultivo</span><span class="va" id="dCultivo">—</span></div>
+      <div class="dato"><span class="et" data-en="Harvest year">Año de cosecha</span><span class="va" id="dAnio">—</span></div>
+      <div class="dato"><span class="et" data-en="Date">Fecha</span><span class="va" id="dFecha">—</span></div>
+      <div class="dato"><span class="et" data-en="Total volume">Volumen total</span><span class="va" id="dToneladas">—</span></div>
+      <div class="dato"><span class="et" data-en="Origin plots">Parcelas de origen</span><span class="va" id="dCantidad">—</span></div>
+      <div class="dato"><span class="et" data-en="Verdict">Veredicto</span><span class="va apto" id="dVeredicto">—</span></div>
+      <div class="dato"><span class="et" data-en="Recipient (fingerprint)">Receptor (huella)</span><span class="va" id="dReceptor">—</span></div>
     </div>
 
     <div class="card">
-      <div class="card-k">PARCELAS DE ORIGEN</div>
+      <div class="card-k" data-en="ORIGIN PLOTS">PARCELAS DE ORIGEN</div>
       <div id="listaParcelas"></div>
     </div>
 
     <div class="card oculto" id="cardRiesgo">
-      <div class="card-k">SEÑAL DE RIESGO DE ORIGEN · SELLADA CON EL LOTE</div>
+      <div class="card-k" data-en="ORIGIN RISK SIGNAL · SEALED WITH THE LOT">SEÑAL DE RIESGO DE ORIGEN · SELLADA CON EL LOTE</div>
       <div id="riesgoCab"></div>
       <div id="riesgoLista"></div>
       <p class="nota" id="riesgoPie" style="margin-top:12px;"></p>
     </div>
 
     <div class="card">
-      <div class="card-k">DÓNDE COMPROBARLO EN LA CADENA</div>
+      <div class="card-k" data-en="WHERE TO CHECK IT ON THE CHAIN">DÓNDE COMPROBARLO EN LA CADENA</div>
       <div class="links">
-        <a id="lnkTx" href="#" target="_blank" rel="noopener">Ver la transacción del lote en Polygonscan →</a>
+        <a id="lnkTx" href="#" target="_blank" rel="noopener" data-en="View the lot transaction on Polygonscan →">Ver la transacción del lote en Polygonscan →</a>
       </div>
     </div>
 
     <div class="card">
-      <div class="card-k">CÓMO SE VERIFICA ESTO (SIN CONFIAR EN NADIE)</div>
+      <div class="card-k" data-en="HOW THIS IS VERIFIED (WITHOUT TRUSTING ANYONE)">CÓMO SE VERIFICA ESTO (SIN CONFIAR EN NADIE)</div>
       <ul class="pasos">
-        <li>Bajamos el paquete del lote tal cual se selló: las parcelas, sus toneladas y la huella de cada prueba.</li>
-        <li>Tu navegador le calcula la huella keccak256 — el mismo cálculo que hizo el sistema al sellar.</li>
-        <li>Tu navegador lee la transacción directamente de Polygon y compara: si coinciden, el lote es exactamente el que se selló.</li>
-        <li>Cada parcela tiene su propia prueba satelital. Tocá su número para verificarla igual, una por una.</li>
+        <li data-en="We download the lot package exactly as it was sealed: the plots, their tonnes and the fingerprint of each proof.">Bajamos el paquete del lote tal cual se selló: las parcelas, sus toneladas y la huella de cada prueba.</li>
+        <li data-en="Your browser computes its keccak256 fingerprint — the same calculation the system made when sealing.">Tu navegador le calcula la huella keccak256 — el mismo cálculo que hizo el sistema al sellar.</li>
+        <li data-en="Your browser reads the transaction directly from Polygon and compares: if they match, the lot is exactly the one that was sealed.">Tu navegador lee la transacción directamente de Polygon y compara: si coinciden, el lote es exactamente el que se selló.</li>
+        <li data-en="Each plot has its own satellite proof. Tap its number to verify it the same way, one by one.">Cada parcela tiene su propia prueba satelital. Tocá su número para verificarla igual, una por una.</li>
       </ul>
     </div>
 
     <div class="card">
-      <div class="card-k">QUÉ PRUEBA Y QUÉ NO</div>
-      <p class="nota">Prueba que cada parcela declarada para este lote está libre de deforestación según su chequeo satelital sellado, que el volumen atribuido a cada una no supera su capacidad declarada, y que esta lista no se modificó después de sellarse. La correspondencia física entre el producto embarcado y estas parcelas la declara el exportador.</p>
+      <div class="card-k" data-en="WHAT IT PROVES AND WHAT IT DOESN'T">QUÉ PRUEBA Y QUÉ NO</div>
+      <p class="nota" data-en="It proves that each plot declared for this lot is deforestation-free according to its sealed satellite check, that the volume attributed to each one does not exceed its declared capacity, and that this list was not modified after it was sealed. The physical correspondence between the shipped product and these plots is declared by the exporter.">Prueba que cada parcela declarada para este lote está libre de deforestación según su chequeo satelital sellado, que el volumen atribuido a cada una no supera su capacidad declarada, y que esta lista no se modificó después de sellarse. La correspondencia física entre el producto embarcado y estas parcelas la declara el exportador.</p>
     </div>
   </div>
 
-  <div class="foot">
+  <div class="foot" data-en="EPIMELEIA · Digital Environmental Notary · Polygon Mainnet&lt;br&gt;We don't sell the data. We sell the proof that no one touched it.">
     EPIMELEIA · Notario Digital Ambiental · Polygon Mainnet<br>
     No vendemos el dato. Vendemos la prueba de que nadie lo tocó.
   </div>
@@ -198,6 +200,41 @@ h1{font-family:'Playfair Display',serif;font-weight:400;font-size:clamp(26px,4vw
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.2/ethers.umd.min.js"></script>
 <script>
+/* ══ AJUSTE 25/10 · IDIOMA (español / inglés) ══
+   Una sola página, dos idiomas. Se elige así: ?lang=en en la dirección,
+   o lo último que eligió esta persona, o si llegó desde una página en
+   inglés (…-en.html). El botón ES/EN de arriba cambia en el momento. */
+var LANG = (function(){
+  try {
+    var q = new URLSearchParams(location.search).get('lang');
+    if (q === 'en' || q === 'es') { localStorage.setItem('epi_lang', q); return q; }
+    var g = localStorage.getItem('epi_lang');
+    if (g === 'en' || g === 'es') return g;
+  } catch (e) {}
+  if (/-en\.html/.test(document.referrer || '')) return 'en';
+  return 'es';
+})();
+// T('texto en castellano', 'English text') → devuelve el del idioma elegido
+function T(es, en){ return LANG === 'en' ? en : es; }
+function aplicarIdioma(){
+  if (LANG !== 'en') return;
+  document.documentElement.lang = 'en';
+  document.title = 'EPIMELEIA · Lot certificate';
+  document.querySelectorAll('[data-en]').forEach(function(el){ el.innerHTML = el.dataset.en; });
+  document.querySelectorAll('[data-en-ph]').forEach(function(el){ el.placeholder = el.dataset.enPh; });
+  document.querySelectorAll('[data-en-aria]').forEach(function(el){ el.setAttribute('aria-label', el.dataset.enAria); });
+  var b = document.getElementById('langBtn'); if (b) b.textContent = 'ES';
+  var h = document.getElementById('lnkInicio'); if (h) h.href = 'index-en.html';
+}
+function cambiarIdioma(){
+  var nuevo = LANG === 'en' ? 'es' : 'en';
+  try { localStorage.setItem('epi_lang', nuevo); } catch (e) {}
+  var u = new URL(location.href); u.searchParams.set('lang', nuevo);   // conserva ?codigo=
+  location.href = u.toString();
+}
+aplicarIdioma();
+var VERIF_PAG = LANG === 'en' ? 'verificar-en.html' : 'verificar.html';
+
 (function(){
   'use strict';
   var $ = function(id){ return document.getElementById(id); };
@@ -208,8 +245,8 @@ h1{font-family:'Playfair Display',serif;font-weight:400;font-size:clamp(26px,4vw
   function corto(h){ h = String(h || ''); return h.length > 20 ? h.slice(0, 10) + '…' + h.slice(-8) : h; }
   // AJUSTE 17/10: toneladas con dos decimales fijos, igual que el balance de Verificar
   // (antes 49,997 acá y 50,00 allá). El valor exacto sigue en el paquete descargable.
-  function num(n){ return Number(n).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
-  var SEM_ETIQ = { verde:'Sin señales', amarillo:'Mirar con atención', rojo:'Revisar', gris:'Sin datos suficientes' };
+  function num(n){ return Number(n).toLocaleString(LANG === 'en' ? 'en-US' : 'es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+  var SEM_ETIQ = LANG === 'en' ? { verde:'No signals', amarillo:'Look closely', rojo:'Review', gris:'Not enough data' } : { verde:'Sin señales', amarillo:'Mirar con atención', rojo:'Revisar', gris:'Sin datos suficientes' };
 
   function mostrarEstado(clase, ico, titulo, detalle){
     var e = $('estado');
@@ -228,7 +265,7 @@ h1{font-family:'Playfair Display',serif;font-weight:400;font-size:clamp(26px,4vw
         if (tx) return tx;
       } catch (e) { ultimoError = e; }
     }
-    throw ultimoError || new Error('No se encontró la transacción.');
+    throw ultimoError || new Error(T('No se encontró la transacción.','Transaction not found.'));
   }
 
   /* ── TRACES (24/10/2026): archivo de geolocalización para la UE ──
@@ -296,22 +333,22 @@ h1{font-family:'Playfair Display',serif;font-weight:400;font-size:clamp(26px,4vw
   async function verificar(codigo){
     $('datos').classList.add('oculto');
     $('hashes').classList.add('oculto');
-    mostrarEstado('', '⏳', 'Verificando…', 'Bajando el paquete del lote, recalculando su huella y leyendo Polygon.');
+    mostrarEstado('', '⏳', T('Verificando…','Verifying…'), T('Bajando el paquete del lote, recalculando su huella y leyendo Polygon.','Downloading the lot package, recomputing its fingerprint and reading Polygon.'));
 
     var data;
     try {
       var r = await fetch('/api/panel?lote=' + encodeURIComponent(codigo));
       data = await r.json();
     } catch (e) {
-      return mostrarEstado('mal', '✕', 'No se pudo consultar', 'Revisá tu conexión y probá de nuevo.');
+      return mostrarEstado('mal', '✕', T('No se pudo consultar','Could not check'), T('Revisá tu conexión y probá de nuevo.','Check your connection and try again.'));
     }
     if (!data || !data.ok) {
-      return mostrarEstado('mal', '✕', 'No encontrado', esc((data && data.error) || 'No hay un lote sellado con ese código.'));
+      return mostrarEstado('mal', '✕', T('No encontrado','Not found'), esc((data && data.error) || T('No hay un lote sellado con ese código.','There is no sealed lot with that code.')));
     }
 
     var recalculado;
     try { recalculado = ethers.keccak256(ethers.toUtf8Bytes(data.canonical)).toLowerCase(); }
-    catch (e) { return mostrarEstado('mal', '✕', 'Error recalculando', 'No se pudo calcular la huella en este navegador.'); }
+    catch (e) { return mostrarEstado('mal', '✕', T('Error recalculando','Recompute error'), T('No se pudo calcular la huella en este navegador.','The fingerprint could not be computed in this browser.')); }
 
     var paquete;
     try { paquete = JSON.parse(data.canonical); } catch (e) { paquete = null; }
@@ -344,7 +381,7 @@ h1{font-family:'Playfair Display',serif;font-weight:400;font-size:clamp(26px,4vw
         var lista = (paquete && Array.isArray(paquete.parcelas)) ? paquete.parcelas : [];
         var cod = String(codigo).replace(/[^A-Za-z0-9._-]/g, '');
         $('btnTraces').onclick = async function () {
-          $('trazMsg').textContent = 'Armando el archivo con los polígonos sellados…';
+          $('trazMsg').textContent = T('Armando el archivo con los polígonos sellados…','Building the file with the sealed polygons…');
           var fichas = await fichasDeParcelas(lista), feats = [], faltan = [];
           fichas.forEach(function (o) {
             var p = o.f && o.f.paquete ? o.f.paquete : {};
@@ -353,12 +390,12 @@ h1{font-family:'Playfair Display',serif;font-weight:400;font-size:clamp(26px,4vw
             var cap = o.f && Array.isArray(o.f.capacidad) && o.f.capacidad.length ? o.f.capacidad[0] : {};
             feats.push(featureTraces(geom, o.x.nombreActivo || p.nombreActivo, cap.pais, cap.hectareas));
           });
-          if (!feats.length) { $('trazMsg').textContent = 'Ninguna parcela de este lote tiene un polígono público para TRACES.'; return; }
+          if (!feats.length) { $('trazMsg').textContent = T('Ninguna parcela de este lote tiene un polígono público para TRACES.','No plot in this lot has a public polygon for TRACES.'); return; }
           bajarArchivo(JSON.stringify({ type:'FeatureCollection', features: feats }, null, 2), 'epimeleia-traces-' + cod + '.geojson', 'application/geo+json');
-          $('trazMsg').textContent = faltan.length ? 'Listo. Sin polígono público (registradas antes de la #' + VERIFICABLE_DESDE + '): ' + faltan.join(', ') + '.' : 'Listo: ' + feats.length + ' parcela(s).';
+          $('trazMsg').textContent = faltan.length ? T('Listo. Sin polígono público (registradas antes de la #','Done. No public polygon (registered before #') + VERIFICABLE_DESDE + '): ' + faltan.join(', ') + '.' : T('Listo: ','Done: ') + feats.length + T(' parcela(s).',' plot(s).');
         };
         $('btnCsv').onclick = async function () {
-          $('trazMsg').textContent = 'Armando la planilla…';
+          $('trazMsg').textContent = T('Armando la planilla…','Building the spreadsheet…');
           var fichas = await fichasDeParcelas(lista);
           var filas = [['lote','parcela','nombre','cultivo','pais','hectareas','toneladas','deforestacion','prueba_satelital','verificar','tx_lote']];
           fichas.forEach(function (o) {
@@ -370,20 +407,20 @@ h1{font-family:'Playfair Display',serif;font-weight:400;font-size:clamp(26px,4vw
           });
           var csv = '\ufeff' + filas.map(function (f) { return f.map(celda).join(','); }).join('\r\n');
           bajarArchivo(csv, 'epimeleia-lote-' + cod + '.csv', 'text/csv;charset=utf-8');
-          $('trazMsg').textContent = 'Listo: ' + (filas.length - 1) + ' parcela(s).';
+          $('trazMsg').textContent = T('Listo: ','Done: ') + (filas.length - 1) + T(' parcela(s).',' plot(s).');
         };
-        mostrarEstado('ok', '✓', 'Lote verificado',
-          'La huella recalculada en tu navegador coincide con la escrita en Polygon (bloque ' + esc(data.bloque) + '). ' +
-          'Las parcelas, sus toneladas y sus pruebas son <strong>exactamente las que se sellaron</strong>. Nadie las tocó.');
+        mostrarEstado('ok', '✓', T('Lote verificado','Lot verified'),
+          T('La huella recalculada en tu navegador coincide con la escrita en Polygon (bloque ','The fingerprint recomputed in your browser matches the one written on Polygon (block ') + esc(data.bloque) + '). ' +
+          T('Las parcelas, sus toneladas y sus pruebas son <strong>exactamente las que se sellaron</strong>. Nadie las tocó.','The plots, their tonnes and their proofs are <strong>exactly the ones that were sealed</strong>. No one touched them.'));
       } else {
-        mostrarEstado('mal', '✕', 'NO coincide',
-          'La huella recalculada NO coincide con la escrita en Polygon. El paquete fue alterado o hay un error. No confíes en este lote.');
+        mostrarEstado('mal', '✕', T('NO coincide','DOES NOT match'),
+          T('La huella recalculada NO coincide con la escrita en Polygon. El paquete fue alterado o hay un error. No confíes en este lote.','The recomputed fingerprint does NOT match the one written on Polygon. The package was altered or there is an error. Do not trust this lot.'));
       }
     } else {
-      $('hashCadena').textContent = 'No se pudo leer la cadena desde este navegador.';
-      mostrarEstado('', '—', 'Huella recalculada, falta la cadena',
-        'Tu navegador recalculó la huella, pero no pudo leer Polygon ahora (' + esc(errorCadena && errorCadena.message ? errorCadena.message : 'sin conexión') + '). ' +
-        'Podés compararla vos: abrí la transacción en Polygonscan y mirá el campo <em>Input Data</em>.');
+      $('hashCadena').textContent = T('No se pudo leer la cadena desde este navegador.','The chain could not be read from this browser.');
+      mostrarEstado('', '—', T('Huella recalculada, falta la cadena','Fingerprint recomputed, chain missing'),
+        T('Tu navegador recalculó la huella, pero no pudo leer Polygon ahora (','Your browser recomputed the fingerprint, but could not read Polygon right now (') + esc(errorCadena && errorCadena.message ? errorCadena.message : T('sin conexión','no connection')) + '). ' +
+        T('Podés compararla vos: abrí la transacción en Polygonscan y mirá el campo <em>Input Data</em>.','You can compare it yourself: open the transaction on Polygonscan and look at the <em>Input Data</em> field.'));
     }
     $('lnkTx').href = data.polygonscanTx;
     $('datos').classList.remove('oculto');
@@ -397,7 +434,7 @@ h1{font-family:'Playfair Display',serif;font-weight:400;font-size:clamp(26px,4vw
     $('dToneladas').textContent = p.toneladasTotal != null ? num(p.toneladasTotal) + ' t' : '—';
     var lista = Array.isArray(p.parcelas) ? p.parcelas : [];
     $('dCantidad').textContent = lista.length;
-    $('dVeredicto').textContent = p.veredicto === 'APTO' ? 'APTO · todas las parcelas libres de deforestación' : (p.veredicto || '—');
+    $('dVeredicto').textContent = p.veredicto === 'APTO' ? T('APTO · todas las parcelas libres de deforestación','ELIGIBLE · all plots deforestation-free') : (p.veredicto || '—');
     $('dReceptor').textContent = corto(p.receptorHash) || '—';
 
     // Señal de riesgo sellada (solo lotes traz-lote-v2 en adelante)
@@ -407,13 +444,14 @@ h1{font-family:'Playfair Display',serif;font-weight:400;font-size:clamp(26px,4vw
       $('riesgoCab').innerHTML = '<span class="sem ' + esc(sr.color) + '">' + esc(SEM_ETIQ[sr.color] || sr.color) + '</span>';
       var nombres = {}; lista.forEach(function(x){ nombres[x.activoIdOnchain] = x.nombreActivo; });
       $('riesgoLista').innerHTML = (sr.parcelas || []).map(function(q){
-        return '<div class="parcela"><div class="parcela-top"><span class="parcela-n">' + esc(nombres[q.activoIdOnchain] || ('Parcela #' + q.activoIdOnchain)) + '</span>' +
+        return '<div class="parcela"><div class="parcela-top"><span class="parcela-n">' + esc(nombres[q.activoIdOnchain] || (T('Parcela #','Plot #') + q.activoIdOnchain)) + '</span>' +
           '<span class="sem ' + esc(q.color) + '">' + esc(SEM_ETIQ[q.color] || q.color) + '</span></div>' +
           '<ul class="sem-mot">' + (q.motivos || []).map(function(m){ return '<li class="' + esc(m.nivel) + '">' + esc(m.texto) + '</li>'; }).join('') + '</ul></div>';
       }).join('');
       var t = sr.calculadoEn ? new Date(sr.calculadoEn) : null;
-      $('riesgoPie').textContent = 'Así estaba cada parcela en el momento de sellar este lote' + (t ? ' (' + t.toISOString().slice(0,16).replace('T',' ') + ' UTC)' : '') +
-        '. Forma parte del paquete sellado: no se puede cambiar después. Es informativa: no cambia el veredicto APTO; señala dónde mirar, con las mismas reglas para todos los campos.';
+      $('riesgoPie').textContent = T('Así estaba cada parcela en el momento de sellar este lote','This is how each plot stood when this lot was sealed') + (t ? ' (' + t.toISOString().slice(0,16).replace('T',' ') + ' UTC)' : '') +
+        T('. Forma parte del paquete sellado: no se puede cambiar después. Es informativa: no cambia el veredicto APTO; señala dónde mirar, con las mismas reglas para todos los campos.',
+          '. It is part of the sealed package: it cannot be changed afterwards. It is informative: it does not change the ELIGIBLE verdict; it points to where to look, with the same rules for every field.');
     } else {
       $('cardRiesgo').classList.add('oculto');
     }
@@ -421,14 +459,14 @@ h1{font-family:'Playfair Display',serif;font-weight:400;font-size:clamp(26px,4vw
     $('listaParcelas').innerHTML = lista.map(function(x){
       var id = Number(x.activoIdOnchain);
       var verif = id >= VERIFICABLE_DESDE
-        ? '<a href="verificar.html?id=' + encodeURIComponent(id) + '" target="_blank" rel="noopener">VERIFICAR #' + esc(id) + ' →</a>'
+        ? '<a href="' + VERIF_PAG + '?id=' + encodeURIComponent(id) + '" target="_blank" rel="noopener">' + T('VERIFICAR #','VERIFY #') + esc(id) + ' →</a>'
         : '#' + esc(id);
       var periodo = x.deforestacion && x.deforestacion.periodo ? ' · ' + esc(x.deforestacion.periodo) : '';
       return '<div class="parcela">' +
-        '<div class="parcela-top"><span class="parcela-n">' + esc(x.nombreActivo || ('Parcela #' + id)) + '</span>' +
+        '<div class="parcela-top"><span class="parcela-n">' + esc(x.nombreActivo || (T('Parcela #','Plot #') + id)) + '</span>' +
         '<span class="parcela-t">' + num(x.toneladas) + ' t</span></div>' +
-        '<div class="parcela-m"><span class="chip">SIN DEFORESTACIÓN' + periodo + '</span>' + verif + '</div>' +
-        '<div class="parcela-h">prueba satelital ' + esc(corto(x.origenPaqueteHash)) + ' · declaración ' + esc(corto(x.declaracionHash)) + ' · atribución ' + esc(corto(x.atribucionHash)) + '</div>' +
+        '<div class="parcela-m"><span class="chip">' + T('SIN DEFORESTACIÓN','DEFORESTATION-FREE') + periodo + '</span>' + verif + '</div>' +
+        '<div class="parcela-h">' + T('prueba satelital ','satellite proof ') + esc(corto(x.origenPaqueteHash)) + T(' · declaración ',' · declaration ') + esc(corto(x.declaracionHash)) + T(' · atribución ',' · attribution ') + esc(corto(x.atribucionHash)) + '</div>' +
       '</div>';
     }).join('');
   }
@@ -436,7 +474,7 @@ h1{font-family:'Playfair Display',serif;font-weight:400;font-size:clamp(26px,4vw
   $('btnVerificar').addEventListener('click', function(){
     var c = $('codigoInput').value.trim();
     if (/^[A-Za-z0-9][A-Za-z0-9._-]{2,63}$/.test(c)) verificar(c);
-    else mostrarEstado('mal', '✕', 'Código inválido', 'Ingresá el código del lote tal como figura en el certificado.');
+    else mostrarEstado('mal', '✕', T('Código inválido','Invalid code'), T('Ingresá el código del lote tal como figura en el certificado.','Enter the lot code exactly as it appears on the certificate.'));
   });
   $('codigoInput').addEventListener('keydown', function(e){ if (e.key === 'Enter') $('btnVerificar').click(); });
 

@@ -395,6 +395,9 @@
     /* EPI no debe tapar la hoja de abajo en celular */
     .epi-bubble, .epi-panel { bottom: 14px; }
   }
+  /* AJUSTE 25/10 · botón de idioma */
+  .lang-link { font-family: var(--mono); font-size: 10px; letter-spacing: 1.5px; color: #E5C870; border: 1px solid rgba(229,200,112,0.4); background: none; padding: 3px 8px; margin-left: auto; cursor: pointer; border-radius: 3px; align-self: center; }
+  .lang-link:hover { border-color: #E5C870; }
 </style>
 </head>
 <body>
@@ -405,12 +408,12 @@
   <!-- ── AGREGADO: barra superior de progreso ── -->
   <div id="topbar">
     <div id="steps">
-      <div class="st on" data-s="1"><span class="b">1</span><span class="t">Dibujar</span><span class="bar"></span></div>
-      <div class="st" data-s="2"><span class="b">2</span><span class="t">Firmar</span><span class="bar"></span></div>
-      <div class="st" data-s="3"><span class="b">3</span><span class="t">Pagar</span><span class="bar"></span></div>
-      <div class="st" data-s="4"><span class="b">4</span><span class="t">Certificado</span></div>
+      <div class="st on" data-s="1"><span class="b">1</span><span class="t" data-en="Draw">Dibujar</span><span class="bar"></span></div>
+      <div class="st" data-s="2"><span class="b">2</span><span class="t" data-en="Sign">Firmar</span><span class="bar"></span></div>
+      <div class="st" data-s="3"><span class="b">3</span><span class="t" data-en="Pay">Pagar</span><span class="bar"></span></div>
+      <div class="st" data-s="4"><span class="b">4</span><span class="t" data-en="Certificate">Certificado</span></div>
     </div>
-    <div class="who">Hola, <b id="whoName">invitado</b><span id="whoInvitado">MODO PRUEBA</span><a href="#" id="logoutLink">salir</a></div>
+    <div class="who"><span data-en="Hi,">Hola,</span> <b id="whoName">invitado</b><span id="whoInvitado" data-en="TRIAL MODE">MODO PRUEBA</span><a href="#" id="logoutLink">salir</a></div>
   </div>
 
   <div id="panel">
@@ -419,26 +422,26 @@
       <div class="grabber"></div>
       <div class="peekRow">
         <div class="peekArea">
-          <span class="peekLabel">SUPERFICIE</span>
+          <span class="peekLabel" data-en="AREA">SUPERFICIE</span>
           <span id="peekArea">— <small>ha</small></span>
         </div>
         <div class="peekBtns">
-          <button id="peekUndo" class="peekBtn" type="button" disabled>Deshacer</button>
-          <button id="peekConfirm" class="peekBtn primary" type="button" disabled>Confirmar</button>
+          <button id="peekUndo" class="peekBtn" type="button" disabled data-en="Undo">Deshacer</button>
+          <button id="peekConfirm" class="peekBtn primary" type="button" disabled data-en="Confirm">Confirmar</button>
         </div>
       </div>
     </div>
 
-    <div class="brand"><b>EPIMELEIA</b><span>MAPA DEL ACTIVO</span></div>
-    <p class="subtitle">Dibujá el contorno real de tu terreno sobre la imagen del satélite. Este dibujo es la ubicación que se va a certificar.</p>
+    <div class="brand"><b>EPIMELEIA</b><span data-en="ASSET MAP">MAPA DEL ACTIVO</span><button class="lang-link" id="langBtn" type="button" onclick="cambiarIdioma()">EN</button></div>
+    <p class="subtitle" data-en="Draw the real outline of your land over the satellite image. This drawing is the location that will be certified.">Dibujá el contorno real de tu terreno sobre la imagen del satélite. Este dibujo es la ubicación que se va a certificar.</p>
 
     <div class="search-row">
-      <input id="search" type="text" placeholder="Buscá tu lugar (dirección, ciudad…)" aria-label="Buscar lugar" />
-      <button id="searchBtn" type="button" aria-label="Buscar">Ir</button>
+      <input id="search" type="text" placeholder="Buscá tu lugar (dirección, ciudad…)" aria-label="Buscar lugar" data-en-ph="Search your place (address, city…)" data-en-aria="Search place" />
+      <button id="searchBtn" type="button" aria-label="Buscar" data-en-aria="Search" data-en="Go">Ir</button>
     </div>
 
     <div id="drawing">
-      <p class="step" id="hint">
+      <p class="step" id="hint" data-en="<b>1.</b> Zoom in until you see your land.<br /><b>2.</b> Tap <b>Draw outline</b>.<br /><b>3.</b> Mark each boundary by tapping the map (at least 3 points).<br /><b>4.</b> When it looks right, tap <b>Confirm asset</b>.">
         <b>1.</b> Acercate hasta ver tu terreno.<br />
         <b>2.</b> Tocá <b>Dibujar contorno</b>.<br />
         <b>3.</b> Marcá cada límite tocando el mapa (mínimo 3 puntos).<br />
@@ -446,114 +449,114 @@
       </p>
 
       <div class="readout">
-        <div class="label">SUPERFICIE</div>
+        <div class="label" data-en="AREA">SUPERFICIE</div>
         <div class="value" id="areaValue">— <small>ha</small></div>
-        <div class="sub" id="vtxSub">Todavía no dibujaste nada.</div>
+        <div class="sub" id="vtxSub" data-en="You have not drawn anything yet.">Todavía no dibujaste nada.</div>
       </div>
 
       <div class="btns">
-        <button class="action" id="drawBtn" type="button">Dibujar contorno</button>
-        <button class="action" id="undoBtn" type="button" disabled>Deshacer último punto</button>
-        <button class="action" id="clearBtn" type="button" disabled>Borrar y empezar de nuevo</button>
-        <button class="action primary" id="confirmBtn" type="button" disabled>Confirmar activo</button>
+        <button class="action" id="drawBtn" type="button" data-en="Draw outline">Dibujar contorno</button>
+        <button class="action" id="undoBtn" type="button" disabled data-en="Undo last point">Deshacer último punto</button>
+        <button class="action" id="clearBtn" type="button" disabled data-en="Clear and start over">Borrar y empezar de nuevo</button>
+        <button class="action primary" id="confirmBtn" type="button" disabled data-en="Confirm asset">Confirmar activo</button>
       </div>
 
-      <div class="warn" id="warnBig">El área marcada es muy grande. ¿Seguro que es esto? Podés seguir igual, o borrar y ajustar.</div>
+      <div class="warn" id="warnBig" data-en="The marked area is very large. Are you sure this is it? You can continue anyway, or clear and adjust.">El área marcada es muy grande. ¿Seguro que es esto? Podés seguir igual, o borrar y ajustar.</div>
 
       <div id="coordManual">
-        <div class="cm-sep"><span>o cargá tus coordenadas exactas</span></div>
-        <p class="cm-nota">Dibujar y cargar coordenadas certifican con el <b>mismo rigor</b>. El dibujo es una aproximación visual; las coordenadas definen el terreno con precisión y la exactitud del dato queda de tu lado. Para EUDR, recomendamos cargar coordenadas.</p>
+        <div class="cm-sep"><span data-en="or load your exact coordinates">o cargá tus coordenadas exactas</span></div>
+        <p class="cm-nota" data-en="Drawing and loading coordinates certify with the <b>same rigor</b>. The drawing is a visual approximation; coordinates define the land precisely and the accuracy of the data is on your side. For the EUDR, we recommend loading coordinates.">Dibujar y cargar coordenadas certifican con el <b>mismo rigor</b>. El dibujo es una aproximación visual; las coordenadas definen el terreno con precisión y la exactitud del dato queda de tu lado. Para EUDR, recomendamos cargar coordenadas.</p>
 
-        <textarea id="cmTexto" placeholder="Pegá tu polígono en GeoJSON, o una lista de coordenadas (una por línea, formato: latitud, longitud)"></textarea>
+        <textarea id="cmTexto" placeholder="Pegá tu polígono en GeoJSON, o una lista de coordenadas (una por línea, formato: latitud, longitud)" data-en-ph="Paste your polygon as GeoJSON, or a list of coordinates (one per line, format: latitude, longitude)"></textarea>
 
         <div class="cm-row">
-          <label class="cm-file" for="cmArchivo">Subir archivo (.geojson / .kml)</label>
+          <label class="cm-file" for="cmArchivo" data-en="Upload file (.geojson / .kml)">Subir archivo (.geojson / .kml)</label>
           <input id="cmArchivo" type="file" accept=".geojson,.json,.kml" hidden />
         </div>
         <div class="cm-filename" id="cmFilename"></div>
 
-        <button class="action primary" id="cmUsar" type="button">Usar estas coordenadas →</button>
+        <button class="action primary" id="cmUsar" type="button" data-en="Use these coordinates →">Usar estas coordenadas →</button>
         <div class="cm-msg" id="cmMsg"></div>
       </div>
     </div>
 
     <div id="confirmed">
-      <div class="lock-head"><span class="dot"></span> CONTORNO CONFIRMADO</div>
-      <p class="step" style="border-color: rgba(74,222,128,0.4);">Este es el lugar que se va a certificar. Queda fijo: el sistema lo usa tal cual, sin recalcular ni redondear.</p>
+      <div class="lock-head"><span class="dot"></span> <span data-en="OUTLINE CONFIRMED">CONTORNO CONFIRMADO</span></div>
+      <p class="step" style="border-color: rgba(74,222,128,0.4);" data-en="This is the place that will be certified. It stays fixed: the system uses it as is, without recalculating or rounding.">Este es el lugar que se va a certificar. Queda fijo: el sistema lo usa tal cual, sin recalcular ni redondear.</p>
       <div class="readout">
-        <div class="label">SUPERFICIE CONFIRMADA</div>
+        <div class="label" data-en="CONFIRMED AREA">SUPERFICIE CONFIRMADA</div>
         <div class="value" id="areaValueLocked">— <small>ha</small></div>
         <div class="sub" id="vtxSubLocked"></div>
       </div>
       <!-- ── AGREGADO: identidad del activo ── -->
       <div id="identidad">
         <div class="campo">
-          <label for="actNombre">Nombre de este activo</label>
-          <input id="actNombre" type="text" placeholder="Ej.: Campo Pergamino, Cuenca Norte…" autocomplete="off" />
-          <div class="nota">Así lo vas a reconocer entre tus activos, y así aparece en el certificado.</div>
+          <label for="actNombre" data-en="Name of this asset">Nombre de este activo</label>
+          <input id="actNombre" type="text" placeholder="Ej.: Campo Pergamino, Cuenca Norte…" data-en-ph="E.g.: Pergamino Field, North Basin…" autocomplete="off" />
+          <div class="nota" data-en="This is how you will recognize it among your assets, and how it appears on the certificate.">Así lo vas a reconocer entre tus activos, y así aparece en el certificado.</div>
         </div>
         <div class="campo">
-          <label for="actTipo">Tipo de recurso</label>
+          <label for="actTipo" data-en="Resource type">Tipo de recurso</label>
           <select id="actTipo">
-            <option value="">Elegí qué estás certificando…</option>
-            <option>Bosque / forestación</option>
-            <option>Campo / vegetación agrícola</option>
-            <option>Cuenca hídrica / cuerpo de agua</option>
-            <option>Minería / suelo intervenido</option>
-            <option>Glaciar / reserva de hielo</option>
-            <option>Industria / instalaciones</option>
-            <option>Otro</option>
+            <option value="" data-en="Choose what you are certifying…">Elegí qué estás certificando…</option>
+            <option value="Bosque / forestación" data-en="Forest / forestry">Bosque / forestación</option>
+            <option value="Campo / vegetación agrícola" data-en="Field / agricultural vegetation">Campo / vegetación agrícola</option>
+            <option value="Cuenca hídrica / cuerpo de agua" data-en="Watershed / water body">Cuenca hídrica / cuerpo de agua</option>
+            <option value="Minería / suelo intervenido" data-en="Mining / disturbed land">Minería / suelo intervenido</option>
+            <option value="Glaciar / reserva de hielo" data-en="Glacier / ice reserve">Glaciar / reserva de hielo</option>
+            <option value="Industria / instalaciones" data-en="Industry / facilities">Industria / instalaciones</option>
+            <option value="Otro" data-en="Other">Otro</option>
           </select>
-          <div class="nota">Define qué mide el satélite: no es lo mismo medir agua que vegetación.</div>
+          <div class="nota" data-en="It defines what the satellite measures: measuring water is not the same as measuring vegetation.">Define qué mide el satélite: no es lo mismo medir agua que vegetación.</div>
         </div>
       </div>
 
       <!-- LA ACCIÓN PRINCIPAL — arriba y visible -->
       <div id="continueWrap">
-        <button class="action primary" id="continueBtn" type="button">CONFIRMAR Y CONTINUAR →</button>
+        <button class="action primary" id="continueBtn" type="button" data-en="CONFIRM AND CONTINUE →">CONFIRMAR Y CONTINUAR →</button>
       </div>
-      <div class="continue-hint">Al confirmar, tu activo queda registrado con este contorno.</div>
+      <div class="continue-hint" data-en="When you confirm, your asset is registered with this outline.">Al confirmar, tu activo queda registrado con este contorno.</div>
 
       <div class="btns">
-        <button class="action" id="editBtn" type="button">Volver a dibujar</button>
+        <button class="action" id="editBtn" type="button" data-en="Draw again">Volver a dibujar</button>
       </div>
 
       <!-- Info técnica: al final, para quien la quiera ver -->
-      <div class="coords-label" style="margin-top:18px;">COORDENADAS (LO QUE LEE EL SISTEMA · GeoJSON)</div>
+      <div class="coords-label" style="margin-top:18px;" data-en="COORDINATES (WHAT THE SYSTEM READS · GeoJSON)">COORDENADAS (LO QUE LEE EL SISTEMA · GeoJSON)</div>
       <div class="coords" id="coordsOut" tabindex="0"></div>
     </div>
 
     <!-- ── Estación 2 · confirmación de firma (breve) ── -->
     <div class="estacion-msg" id="est-firmar">
-      <div class="k">Estación 2 · Firmado ✓</div>
-      <h3>Activo registrado y deslinde aceptado ✓</h3>
-      <p>Tu activo quedó registrado y firmaste los términos de aceptación.</p>
+      <div class="k" data-en="Step 2 · Signed ✓">Estación 2 · Firmado ✓</div>
+      <h3 data-en="Asset registered and terms accepted ✓">Activo registrado y deslinde aceptado ✓</h3>
+      <p data-en="Your asset was registered and you signed the terms of acceptance.">Tu activo quedó registrado y firmaste los términos de aceptación.</p>
     </div>
 
     <!-- ── Estación 3 · el precio y el pago ── -->
     <div id="est-pagar">
-      <div class="k">Estación 3 · Pago</div>
-      <h3>Tu plan según la superficie</h3>
+      <div class="k" data-en="Step 3 · Payment">Estación 3 · Pago</div>
+      <h3 data-en="Your plan by area">Tu plan según la superficie</h3>
 
-      <div id="precioCargando">Calculando tu plan…</div>
+      <div id="precioCargando" data-en="Calculating your plan…">Calculando tu plan…</div>
 
       <div id="precioError"></div>
 
       <div id="precioCaja" style="display:none;">
         <div class="fila">
-          <span class="et">Superficie certificada</span>
+          <span class="et" data-en="Certified area">Superficie certificada</span>
           <span class="va" id="pcSuperficie">—</span>
         </div>
         <div class="fila">
-          <span class="et">Tu plan</span>
+          <span class="et" data-en="Your plan">Tu plan</span>
           <span class="tier" id="pcTier">—</span>
         </div>
         <div class="fila" style="margin-top:12px;">
-          <span class="et">Precio</span>
+          <span class="et" data-en="Price">Precio</span>
           <span class="monto" id="pcMonto">—</span>
         </div>
 
-        <div class="gratis" id="pcGratis">
+        <div class="gratis" id="pcGratis" data-en="The first month is free. Billing starts in the second month.">
           El primer mes es sin cargo. El cobro empieza en el segundo mes.
         </div>
 
@@ -561,10 +564,10 @@
         <div class="legal" id="pcLegal"></div>
       </div>
 
-      <button class="action primary" id="pagarBtn" type="button" style="display:none;">
+      <button class="action primary" id="pagarBtn" type="button" style="display:none;" data-en="SUBSCRIBE →">
         SUSCRIBIRME →
       </button>
-      <div id="pagarNota" style="display:none;">
+      <div id="pagarNota" style="display:none;" data-en="We will take you to PayPal to leave your payment method.<br>You can cancel the subscription whenever you want.">
         Te vamos a llevar a PayPal para que dejes tu método de pago.<br>
         Podés cancelar la suscripción cuando quieras.
       </div>
@@ -589,19 +592,19 @@
 <div id="deslindeModal">
   <div class="box">
     <div class="head">
-      <div class="k">Estación 2 · Deslinde</div>
-      <h3>Términos de aceptación</h3>
-      <p>Leé los términos antes de continuar. Al aceptar, tu activo queda registrado con esta firma. Sin aceptación no se registra el activo.</p>
+      <div class="k" data-en="Step 2 · Disclaimer">Estación 2 · Deslinde</div>
+      <h3 data-en="Terms of acceptance">Términos de aceptación</h3>
+      <p data-en="Read the terms before continuing. By accepting, your asset is registered with this signature. Without acceptance the asset is not registered.">Leé los términos antes de continuar. Al aceptar, tu activo queda registrado con esta firma. Sin aceptación no se registra el activo.</p>
     </div>
-    <div class="texto" id="deslindeTexto">Cargando términos…</div>
+    <div class="texto" id="deslindeTexto" data-en="Loading terms…">Cargando términos…</div>
     <div class="foot">
       <label class="check">
         <input type="checkbox" id="deslindeCheck" />
-        <span>He leído y acepto los términos de aceptación de EPIMELEIA.</span>
+        <span data-en="I have read and accept the EPIMELEIA terms of acceptance.">He leído y acepto los términos de aceptación de EPIMELEIA.</span>
       </label>
       <div class="botones">
-        <button class="cancelar" id="deslindeCancelar" type="button">Volver</button>
-        <button class="firmar" id="deslindeFirmar" type="button" disabled>Firmar y registrar →</button>
+        <button class="cancelar" id="deslindeCancelar" type="button" data-en="Back">Volver</button>
+        <button class="firmar" id="deslindeFirmar" type="button" disabled data-en="Sign and register →">Firmar y registrar →</button>
       </div>
     </div>
   </div>
@@ -613,11 +616,11 @@
      que el script founder lo siga vigilando por offsetParent. -->
 <div id="coordinarModal">
   <div class="box">
-    <button class="modal-x" id="coordinarCerrar" type="button" aria-label="Cerrar">✕</button>
+    <button class="modal-x" id="coordinarCerrar" type="button" aria-label="Cerrar" data-en-aria="Close">✕</button>
     <div class="head">
-      <div class="k">Caso a medida</div>
-      <h3>El protocolo se adapta a tu necesidad</h3>
-      <p>Este menú lo armás vos, según lo que necesites.</p>
+      <div class="k" data-en="Tailored case">Caso a medida</div>
+      <h3 data-en="The protocol adapts to your needs">El protocolo se adapta a tu necesidad</h3>
+      <p data-en="You build this menu yourself, according to what you need.">Este menú lo armás vos, según lo que necesites.</p>
     </div>
     <div class="cuerpo">
       <div id="est-coordinar">
@@ -627,29 +630,29 @@
              oferta es la misma para todos; lo único propio de cada página
              es a quién le habla. -->
         <div class="opt-card a">
-          <div class="opt-k">01 · Hacia atrás</div>
-          <div class="opt-t">Solo deforestación · EUDR</div>
-          <div class="opt-d">El chequeo histórico de tu territorio, sellado en blockchain. El respaldo de tu Declaración de Diligencia Debida. Una prueba inapelable hacia atrás.</div>
+          <div class="opt-k" data-en="01 · Looking back">01 · Hacia atrás</div>
+          <div class="opt-t" data-en="Deforestation only · EUDR">Solo deforestación · EUDR</div>
+          <div class="opt-d" data-en="The historical check of your land, sealed on blockchain. The backing for your Due Diligence Statement. Irrefutable proof looking back.">El chequeo histórico de tu territorio, sellado en blockchain. El respaldo de tu Declaración de Diligencia Debida. Una prueba inapelable hacia atrás.</div>
         </div>
         <div class="opt-card a">
-          <div class="opt-k">02 · Hacia adelante</div>
-          <div class="opt-t">Seguimiento continuo</div>
-          <div class="opt-d">El satélite observa tu activo cada quincena, hacia adelante, y sella cada lectura. Recibís avisos de lo que pasa. Un guardián que no duerme.</div>
+          <div class="opt-k" data-en="02 · Going forward">02 · Hacia adelante</div>
+          <div class="opt-t" data-en="Continuous monitoring">Seguimiento continuo</div>
+          <div class="opt-d" data-en="The satellite observes your asset every two weeks, going forward, and seals every reading. You get alerts about what happens. A guardian that never sleeps.">El satélite observa tu activo cada quincena, hacia adelante, y sella cada lectura. Recibís avisos de lo que pasa. Un guardián que no duerme.</div>
         </div>
         <div class="opt-card b">
-          <div class="opt-k">03 · Atrás + adelante</div>
-          <div class="opt-t">Cobertura completa · EUDR + seguimiento</div>
-          <div class="opt-d">Las dos cosas: la prueba histórica para la EUDR y el seguimiento continuo hacia adelante. La cobertura completa, del pasado al futuro.</div>
+          <div class="opt-k" data-en="03 · Back + forward">03 · Atrás + adelante</div>
+          <div class="opt-t" data-en="Full coverage · EUDR + monitoring">Cobertura completa · EUDR + seguimiento</div>
+          <div class="opt-d" data-en="Both: the historical proof for the EUDR and continuous monitoring going forward. Full coverage, from past to future.">Las dos cosas: la prueba histórica para la EUDR y el seguimiento continuo hacia adelante. La cobertura completa, del pasado al futuro.</div>
         </div>
-        <p class="opt-ayuda">¿No sabés cuál te conviene? <b>Escribinos y lo definimos juntos.</b></p>
+        <p class="opt-ayuda" data-en="Not sure which one suits you? <b>Write to us and we will define it together.</b>">¿No sabés cuál te conviene? <b>Escribinos y lo definimos juntos.</b></p>
 
         <!-- ── Contacto ── -->
-        <p class="coord-sub">Contanos qué necesitás y armamos tu caso, con el mejor modo de pago (transferencia, anticipado o débito).</p>
+        <p class="coord-sub" data-en="Tell us what you need and we will build your case, with the best payment method (transfer, prepayment or direct debit).">Contanos qué necesitás y armamos tu caso, con el mejor modo de pago (transferencia, anticipado o débito).</p>
         <div class="coord-canales">
           <a class="coord-mail" href="mailto:info@epimeleia.world?subject=Consulta%20certificaci%C3%B3n%20EUDR%20-%20mi%20caso">✉ info@epimeleia.world</a>
           <a class="coord-wa" href="https://wa.me/5491158004028?text=Hola%2C%20consulto%20por%20la%20certificaci%C3%B3n%20EUDR%20de%20mi%20territorio." target="_blank" rel="noopener">✆ WhatsApp · +54 11 5800-4028</a>
         </div>
-        <p class="coord-alt">También podés escribir a <a href="mailto:alfredocarbone29@gmail.com">alfredocarbone29@gmail.com</a></p>
+        <p class="coord-alt" data-en="You can also write to <a href=&quot;mailto:alfredocarbone29@gmail.com&quot;>alfredocarbone29@gmail.com</a>">También podés escribir a <a href="mailto:alfredocarbone29@gmail.com">alfredocarbone29@gmail.com</a></p>
 
         <!-- ATAJO FOUNDER (espejo del de est-pagar, para sellar en modo conversado) -->
         <div id="founderAtajo2" style="display:none; margin-top:18px; padding-top:16px; border-top:1px solid rgba(255,255,255,0.12);">
@@ -668,39 +671,78 @@
 <!-- ── AGREGADO (AJUSTE 41): cartel de "necesitás una cuenta" ── -->
 <div id="registroModal">
   <div class="box">
-    <div class="k">CASI LISTO</div>
-    <h3>Para certificar esto de verdad, necesitás una cuenta</h3>
-    <p>Es gratis y toma un minuto. <strong id="registroActivoNombre">Tu activo</strong> ya está guardado — cuando vuelvas, vas a estar exactamente acá, sin dibujar de nuevo.</p>
+    <div class="k" data-en="ALMOST THERE">CASI LISTO</div>
+    <h3 data-en="To certify this for real, you need an account">Para certificar esto de verdad, necesitás una cuenta</h3>
+    <p><span data-en="It is free and takes a minute.">Es gratis y toma un minuto.</span> <strong id="registroActivoNombre">Tu activo</strong> <span data-en="is already saved — when you come back, you will be exactly here, without drawing again.">ya está guardado — cuando vuelvas, vas a estar exactamente acá, sin dibujar de nuevo.</span></p>
     <div class="botones">
-      <a class="action primary" id="registroIrBtn" href="cuenta.html">Crear cuenta gratis →</a>
-      <button class="action" id="registroVolverBtn" type="button">Seguir mirando</button>
+      <a class="action primary" id="registroIrBtn" href="cuenta.html" data-en="Create a free account →">Crear cuenta gratis →</a>
+      <button class="action" id="registroVolverBtn" type="button" data-en="Keep looking">Seguir mirando</button>
     </div>
-    <div class="fine">No se te va a cobrar nada por crear la cuenta.</div>
+    <div class="fine" data-en="You will not be charged anything for creating the account.">No se te va a cobrar nada por crear la cuenta.</div>
   </div>
 </div>
 
 <!-- ── AGREGADO (AJUSTE 41): EPI, portado de plataforma.html ── -->
-<button class="epi-bubble" id="epiBubble" onclick="abrirEpi()" aria-label="Hablar con EPI">
+<button class="epi-bubble" id="epiBubble" onclick="abrirEpi()" aria-label="Hablar con EPI" data-en-aria="Talk to EPI">
   <svg viewBox="0 0 24 24"><path class="spark-lg" d="M12 2l1.6 5.2L19 9l-5.4 1.8L12 16l-1.6-5.2L5 9l5.4-1.8z"/><path class="spark-sm" d="M18.5 14l.7 2.3 2.3.7-2.3.7-.7 2.3-.7-2.3-2.3-.7 2.3-.7z"/></svg>
 </button>
 <div class="epi-panel" id="epiPanel">
   <div class="epi-top">
     <div class="epi-top-l">
       <svg class="epi-top-ico" viewBox="0 0 24 24"><path class="spark-lg" d="M12 2l1.6 5.2L19 9l-5.4 1.8L12 16l-1.6-5.2L5 9l5.4-1.8z"/><path class="spark-sm" d="M18.5 14l.7 2.3 2.3.7-2.3.7-.7 2.3-.7-2.3-2.3-.7 2.3-.7z"/></svg>
-      <div><div class="epi-top-name">EPI</div><div class="epi-top-sub">RESPONDE TUS DUDAS</div></div>
+      <div><div class="epi-top-name">EPI</div><div class="epi-top-sub" data-en="ANSWERS YOUR QUESTIONS">RESPONDE TUS DUDAS</div></div>
     </div>
     <button class="epi-close" onclick="cerrarEpi()">✕</button>
   </div>
   <div class="epi-msgs" id="epiMsgs"></div>
   <div class="epi-input">
     <div class="epi-input-row">
-      <textarea id="epiText" placeholder="Escribí tu consulta…" rows="1"></textarea>
+      <textarea id="epiText" placeholder="Escribí tu consulta…" data-en-ph="Type your question…" rows="1"></textarea>
       <button class="epi-send" onclick="epiEnviar()">↑</button>
     </div>
-    <div class="epi-hint">EPI SOLO EXPLICA · NO REALIZA TU ADHESIÓN</div>
+    <div class="epi-hint" data-en="EPI ONLY EXPLAINS · IT DOES NOT SIGN YOU UP">EPI SOLO EXPLICA · NO REALIZA TU ADHESIÓN</div>
   </div>
 </div>
 
+<script>
+/* ══ AJUSTE 25/10 · IDIOMA (español / inglés) ══
+   Una sola página, dos idiomas. Se elige así: ?lang=en en la dirección,
+   o lo último que eligió esta persona, o si llegó desde una página en
+   inglés (…-en.html). El botón ES/EN de arriba cambia en el momento.
+   Lo que se manda al servidor (tipo de recurso, cultivo, país) NO cambia
+   con el idioma: solo cambia lo que se lee en pantalla. */
+var LANG = (function(){
+  try {
+    var q = new URLSearchParams(location.search).get('lang');
+    if (q === 'en' || q === 'es') { localStorage.setItem('epi_lang', q); return q; }
+    var g = localStorage.getItem('epi_lang');
+    if (g === 'en' || g === 'es') return g;
+  } catch (e) {}
+  if (/-en\.html/.test(document.referrer || '')) return 'en';
+  return 'es';
+})();
+var LOC = LANG === 'en' ? 'en-US' : 'es-AR';
+// T('texto en castellano', 'English text') → devuelve el del idioma elegido
+function T(es, en){ return LANG === 'en' ? en : es; }
+function aplicarIdioma(){
+  if (LANG !== 'en') return;
+  document.documentElement.lang = 'en';
+  document.title = 'EPIMELEIA · Asset map';
+  document.querySelectorAll('[data-en]').forEach(function(el){ el.innerHTML = el.getAttribute('data-en'); });
+  document.querySelectorAll('[data-en-ph]').forEach(function(el){ el.placeholder = el.getAttribute('data-en-ph'); });
+  document.querySelectorAll('[data-en-aria]').forEach(function(el){ el.setAttribute('aria-label', el.getAttribute('data-en-aria')); });
+  var b = document.getElementById('langBtn'); if (b) b.textContent = 'ES';
+}
+function cambiarIdioma(){
+  var nuevo = LANG === 'en' ? 'es' : 'en';
+  try { localStorage.setItem('epi_lang', nuevo); } catch (e) {}
+  // Conserva lo que ya traiga la dirección (origen, etc.). La vuelta de PayPal
+  // ya borró sus datos de la dirección al procesarse, así que no se repite.
+  var u = new URL(location.href); u.searchParams.set('lang', nuevo);
+  location.href = u.toString();
+}
+aplicarIdioma();
+</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
 
@@ -778,8 +820,8 @@
   }
   function haText(m2) {
     var ha = m2 / 10000;
-    if (ha >= 100) return ha.toLocaleString('es-AR', { maximumFractionDigits: 0 });
-    return ha.toLocaleString('es-AR', { maximumFractionDigits: 2 });
+    if (ha >= 100) return ha.toLocaleString(LOC, { maximumFractionDigits: 0 });
+    return ha.toLocaleString(LOC, { maximumFractionDigits: 2 });
   }
 
   function buildFC(color) {
@@ -803,7 +845,8 @@
   function refreshPanel() {
     var m2 = points.length >= 3 ? geodesicArea(points) : 0;
     areaValue.innerHTML = (points.length >= 3 ? haText(m2) : '—') + ' <small>ha</small>';
-    vtxSub.textContent = points.length + ' punto' + (points.length === 1 ? '' : 's') + ' marcados' + (points.length < 3 ? ' · faltan al menos ' + (3 - points.length) : '') + '.';
+    vtxSub.textContent = T(points.length + ' punto' + (points.length === 1 ? '' : 's') + ' marcados' + (points.length < 3 ? ' · faltan al menos ' + (3 - points.length) : '') + '.',
+                           points.length + ' point' + (points.length === 1 ? '' : 's') + ' marked' + (points.length < 3 ? ' · at least ' + (3 - points.length) + ' more needed' : '') + '.');
     undoBtn.disabled = points.length === 0; clearBtn.disabled = points.length === 0; confirmBtn.disabled = points.length < 3;
     warnBig.style.display = (m2 / 10000 > BIG_HA) ? 'block' : 'none';
 
@@ -830,7 +873,8 @@
   drawBtn.addEventListener('click', function () {
     drawing = true; drawBtn.disabled = true;
     map.getCanvas().style.cursor = 'crosshair';
-    hint.innerHTML = '<b>Dibujando.</b> Tocá el mapa para marcar cada límite. Necesitás al menos 3 puntos. Cuando esté bien, tocá <b>Confirmar activo</b>.';
+    hint.innerHTML = T('<b>Dibujando.</b> Tocá el mapa para marcar cada límite. Necesitás al menos 3 puntos. Cuando esté bien, tocá <b>Confirmar activo</b>.',
+                       '<b>Drawing.</b> Tap the map to mark each boundary. You need at least 3 points. When it looks right, tap <b>Confirm asset</b>.');
     if (esMovil()) bajarHoja();
   });
 
@@ -845,9 +889,10 @@
     if (map.getLayer('draw-fill')) { map.setPaintProperty('draw-fill', 'fill-color', '#00f0ff'); map.setPaintProperty('draw-line', 'line-color', '#00f0ff'); }
     refreshSource();
     drawBtn.disabled = false;
-    areaValue.innerHTML = '— <small>ha</small>'; vtxSub.textContent = 'Todavía no dibujaste nada.';
+    areaValue.innerHTML = '— <small>ha</small>'; vtxSub.textContent = T('Todavía no dibujaste nada.', 'You have not drawn anything yet.');
     undoBtn.disabled = true; clearBtn.disabled = true; confirmBtn.disabled = true; warnBig.style.display = 'none';
-    hint.innerHTML = '<b>1.</b> Acercate hasta ver tu terreno.<br /><b>2.</b> Tocá <b>Dibujar contorno</b>.<br /><b>3.</b> Marcá cada límite tocando el mapa (mínimo 3 puntos).<br /><b>4.</b> Cuando esté bien, tocá <b>Confirmar activo</b>.';
+    hint.innerHTML = T('<b>1.</b> Acercate hasta ver tu terreno.<br /><b>2.</b> Tocá <b>Dibujar contorno</b>.<br /><b>3.</b> Marcá cada límite tocando el mapa (mínimo 3 puntos).<br /><b>4.</b> Cuando esté bien, tocá <b>Confirmar activo</b>.',
+                       '<b>1.</b> Zoom in until you see your land.<br /><b>2.</b> Tap <b>Draw outline</b>.<br /><b>3.</b> Mark each boundary by tapping the map (at least 3 points).<br /><b>4.</b> When it looks right, tap <b>Confirm asset</b>.');
     el('peekArea').innerHTML = '— <small>ha</small>';
     el('peekUndo').disabled = true; el('peekConfirm').disabled = true;
     if (esMovil()) subirHoja();
@@ -862,7 +907,7 @@
 
     var m2 = geodesicArea(points);
     areaValueLocked.innerHTML = haText(m2) + ' <small>ha</small>';
-    vtxSubLocked.textContent = points.length + ' puntos · contorno cerrado';
+    vtxSubLocked.textContent = points.length + T(' puntos · contorno cerrado', ' points · closed outline');
     coordsOut.textContent = JSON.stringify(geojson, null, 2);
 
     confirmed = true; drawing = false;
@@ -904,16 +949,16 @@
 
   function validarAnillo(ring) {
     if (!Array.isArray(ring) || ring.length < 3) {
-      throw new Error('Se necesitan al menos 3 coordenadas.');
+      throw new Error(T('Se necesitan al menos 3 coordenadas.', 'At least 3 coordinates are needed.'));
     }
     var pts = [];
     for (var i = 0; i < ring.length; i++) {
       var c = ring[i];
-      if (!Array.isArray(c) || c.length < 2) throw new Error('Coordenada inválida en la posición ' + (i + 1) + '.');
+      if (!Array.isArray(c) || c.length < 2) throw new Error(T('Coordenada inválida en la posición ' + (i + 1) + '.', 'Invalid coordinate at position ' + (i + 1) + '.'));
       var lng = Number(c[0]), lat = Number(c[1]);
-      if (!isFinite(lng) || !isFinite(lat)) throw new Error('Hay un valor que no es un número (posición ' + (i + 1) + ').');
-      if (lat < -90 || lat > 90)   throw new Error('Latitud fuera de rango (' + lat + '). Si pegaste GeoJSON, el orden es longitud, latitud.');
-      if (lng < -180 || lng > 180) throw new Error('Longitud fuera de rango (' + lng + ').');
+      if (!isFinite(lng) || !isFinite(lat)) throw new Error(T('Hay un valor que no es un número (posición ' + (i + 1) + ').', 'There is a value that is not a number (position ' + (i + 1) + ').'));
+      if (lat < -90 || lat > 90)   throw new Error(T('Latitud fuera de rango (' + lat + '). Si pegaste GeoJSON, el orden es longitud, latitud.', 'Latitude out of range (' + lat + '). If you pasted GeoJSON, the order is longitude, latitude.'));
+      if (lng < -180 || lng > 180) throw new Error(T('Longitud fuera de rango (' + lng + ').', 'Longitude out of range (' + lng + ').'));
       pts.push({ lng: lng, lat: lat });
     }
     return pts;
@@ -925,15 +970,15 @@
       var f = g.features.filter(function (x) {
         return x && x.geometry && (x.geometry.type === 'Polygon' || x.geometry.type === 'MultiPolygon');
       })[0];
-      if (!f) throw new Error('El GeoJSON no tiene ningún polígono.');
+      if (!f) throw new Error(T('El GeoJSON no tiene ningún polígono.', 'The GeoJSON has no polygon.'));
       g = f.geometry;
     } else if (g.type === 'Feature') {
       g = g.geometry;
     }
-    if (!g || !g.type) throw new Error('No se reconoce el formato GeoJSON.');
+    if (!g || !g.type) throw new Error(T('No se reconoce el formato GeoJSON.', 'The GeoJSON format is not recognized.'));
     if (g.type === 'Polygon')      return g.coordinates[0];
     if (g.type === 'MultiPolygon') return g.coordinates[0][0];
-    throw new Error('La geometría no es un polígono (es ' + g.type + ').');
+    throw new Error(T('La geometría no es un polígono (es ' + g.type + ').', 'The geometry is not a polygon (it is ' + g.type + ').'));
   }
 
   function ringDeLista(texto) {
@@ -946,13 +991,13 @@
       var lat = Number(partes[0]), lng = Number(partes[1]);
       ring.push([lng, lat]);
     });
-    if (ring.length < 3) throw new Error('Poné al menos 3 coordenadas, una por línea, con el formato: latitud, longitud.');
+    if (ring.length < 3) throw new Error(T('Poné al menos 3 coordenadas, una por línea, con el formato: latitud, longitud.', 'Enter at least 3 coordinates, one per line, in the format: latitude, longitude.'));
     return ring;
   }
 
   function ringDeKML(texto) {
     var m = texto.match(/<coordinates>([\s\S]*?)<\/coordinates>/i);
-    if (!m) throw new Error('El archivo KML no tiene coordenadas reconocibles.');
+    if (!m) throw new Error(T('El archivo KML no tiene coordenadas reconocibles.', 'The KML file has no recognizable coordinates.'));
     var ring = [];
     m[1].trim().split(/\s+/).forEach(function (tupla) {
       var p = tupla.split(',');
@@ -960,20 +1005,20 @@
       var lng = Number(p[0]), lat = Number(p[1]);
       ring.push([lng, lat]);
     });
-    if (ring.length < 3) throw new Error('El KML no tiene un polígono con suficientes puntos.');
+    if (ring.length < 3) throw new Error(T('El KML no tiene un polígono con suficientes puntos.', 'The KML does not have a polygon with enough points.'));
     return ring;
   }
 
   function parsearCoordenadas(texto, esKml) {
     texto = (texto || '').trim();
-    if (!texto) throw new Error('Pegá tus coordenadas o subí un archivo.');
+    if (!texto) throw new Error(T('Pegá tus coordenadas o subí un archivo.', 'Paste your coordinates or upload a file.'));
     if (esKml || /<kml|<coordinates>/i.test(texto)) return ringDeKML(texto);
     if (texto.charAt(0) === '{' || texto.charAt(0) === '[') {
       var obj;
-      try { obj = JSON.parse(texto); } catch (e) { throw new Error('El GeoJSON tiene un error de formato (JSON inválido).'); }
+      try { obj = JSON.parse(texto); } catch (e) { throw new Error(T('El GeoJSON tiene un error de formato (JSON inválido).', 'The GeoJSON has a format error (invalid JSON).')); }
       if (Array.isArray(obj)) {
         if (obj.length && Array.isArray(obj[0])) return obj;
-        throw new Error('No se reconoce ese formato de coordenadas.');
+        throw new Error(T('No se reconoce ese formato de coordenadas.', 'That coordinate format is not recognized.'));
       }
       return ringDeGeoJSON(obj);
     }
@@ -988,7 +1033,7 @@
       if (!a || !b || a[0] !== b[0] || a[1] !== b[1]) ring = ring.concat([[ring[0][0], ring[0][1]]]);
       pts = validarAnillo(ring);
     } catch (e) {
-      cmError(e.message || 'No se pudieron leer las coordenadas.');
+      cmError(e.message || T('No se pudieron leer las coordenadas.', 'The coordinates could not be read.'));
       return;
     }
 
@@ -1009,7 +1054,7 @@
 
     function pintar() {
       pintarConfirmado(geojson);
-      cmOk('Coordenadas cargadas. Revisá en el mapa que el contorno caiga sobre tu terreno, y confirmá.');
+      cmOk(T('Coordenadas cargadas. Revisá en el mapa que el contorno caiga sobre tu terreno, y confirmá.', 'Coordinates loaded. Check on the map that the outline falls on your land, and confirm.'));
       el('cmTexto').value = '';
       el('cmFilename').textContent = '';
       el('cmMsg').className = 'cm-msg';
@@ -1025,11 +1070,11 @@
   el('cmArchivo').addEventListener('change', function (ev) {
     var file = ev.target.files && ev.target.files[0];
     if (!file) return;
-    el('cmFilename').textContent = 'Archivo: ' + file.name;
+    el('cmFilename').textContent = T('Archivo: ' + file.name, 'File: ' + file.name);
     var esKml = /\.kml$/i.test(file.name);
     var reader = new FileReader();
     reader.onload = function () { usarCoordenadas(String(reader.result || ''), esKml); };
-    reader.onerror = function () { cmError('No se pudo leer el archivo.'); };
+    reader.onerror = function () { cmError(T('No se pudo leer el archivo.', 'The file could not be read.')); };
     reader.readAsText(file);
     ev.target.value = '';
   });
@@ -1038,8 +1083,8 @@
     var q = el('search').value.trim(); if (!q) return;
     fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + encodeURIComponent(q), { headers: { 'Accept': 'application/json' } })
       .then(function (r) { return r.json(); })
-      .then(function (d) { if (d && d.length) map.flyTo({ center: [parseFloat(d[0].lon), parseFloat(d[0].lat)], zoom: 15 }); else alert('No encontré ese lugar. Probá con otro nombre, o acercate a mano con el mapa.'); })
-      .catch(function () { alert('No pude buscar ahora. Podés acercarte a mano con el mapa igual.'); });
+      .then(function (d) { if (d && d.length) map.flyTo({ center: [parseFloat(d[0].lon), parseFloat(d[0].lat)], zoom: 15 }); else alert(T('No encontré ese lugar. Probá con otro nombre, o acercate a mano con el mapa.', 'I could not find that place. Try another name, or zoom in by hand on the map.')); })
+      .catch(function () { alert(T('No pude buscar ahora. Podés acercarte a mano con el mapa igual.', 'I could not search right now. You can still zoom in by hand on the map.')); });
   }
   el('searchBtn').addEventListener('click', doSearch);
   el('search').addEventListener('keydown', function (e) { if (e.key === 'Enter') doSearch(); });
@@ -1077,9 +1122,9 @@
 
     MODO_INVITADO = !CLIENTE.cliente_id;
 
-    el('whoName').textContent = MODO_INVITADO ? 'invitado' : (CLIENTE.nombre || 'cliente');
+    el('whoName').textContent = MODO_INVITADO ? T('invitado', 'guest') : (CLIENTE.nombre || T('cliente', 'client'));
     el('whoInvitado').style.display = MODO_INVITADO ? 'inline-block' : 'none';
-    el('logoutLink').textContent = MODO_INVITADO ? 'crear cuenta' : 'salir';
+    el('logoutLink').textContent = MODO_INVITADO ? T('crear cuenta', 'create account') : T('salir', 'sign out');
   }
   cargarCliente();
 
@@ -1113,13 +1158,13 @@
     pintarConfirmado(borrador.geojson);
     el('actNombre').value = borrador.nombre || '';
     el('actTipo').value   = borrador.tipo || '';
-    toast('Volviste con tu contorno guardado. Revisalo y confirmá para seguir.');
+    toast(T('Volviste con tu contorno guardado. Revisalo y confirmá para seguir.', 'You are back with your saved outline. Review it and confirm to continue.'));
   }
 
   function mostrarRegistro() {
     guardarBorrador();
     var nombre = el('actNombre').value.trim();
-    el('registroActivoNombre').textContent = nombre ? '"' + nombre + '"' : 'Tu activo';
+    el('registroActivoNombre').textContent = nombre ? '"' + nombre + '"' : T('Tu activo', 'Your asset');
     el('registroModal').classList.add('show');
   }
   el('registroVolverBtn').addEventListener('click', function () {
@@ -1129,23 +1174,31 @@
     guardarBorrador();
   });
 
-  var DESLINDE_TEXTO =
+  var DESLINDE_TEXTO_ES =
 'EPIMELEIA — Protocolo de Notaría Ambiental — Términos de Aceptación (v3.0.0)\n\n' +
 '1. EPIMELEIA actúa exclusivamente como notario técnico. Observa, a través de imágenes satelitales Sentinel-2 provistas por la Agencia Espacial Europea (Copernicus), el estado ambiental del área geográfica (el "Activo") definida por el Cliente, y registra esa observación en la blockchain de Polygon como evidencia inmutable.\n\n' +
 '2. Las imágenes satelitales y las mediciones derivadas de ellas reflejan lo que el satélite observó en una fecha determinada. Su interpretación y cualquier decisión basada en ellas son responsabilidad exclusiva del Cliente. EPIMELEIA no garantiza ningún resultado ambiental en particular, ni audita, avala ni certifica la conducta del Cliente respecto del Activo.\n\n' +
 '3. El Cliente reconoce y acepta el registro on-chain como la fuente de verdad definitiva. Una vez sellado, un registro no puede ser alterado por nadie, incluidos EPIMELEIA y el propio Cliente.\n\n' +
 '4. El Cliente declara tener el derecho de solicitar la observación del Activo, y es el único responsable de los límites geográficos (el polígono) que define.\n\n' +
 '5. EPIMELEIA se reserva el derecho de incorporar mejoras y nuevas fuentes satelitales al protocolo, sin alterar los registros ya sellados.';
+  var DESLINDE_TEXTO_EN =
+'EPIMELEIA — Environmental Notary Protocol — Terms of Acceptance (v3.0.0)\n\n' +
+'1. EPIMELEIA acts exclusively as a technical notary. Through Sentinel-2 satellite images provided by the European Space Agency (Copernicus), it observes the environmental state of the geographic area (the "Asset") defined by the Client, and records that observation on the Polygon blockchain as immutable evidence.\n\n' +
+'2. The satellite images and the measurements derived from them reflect what the satellite observed on a given date. Their interpretation and any decision based on them are the sole responsibility of the Client. EPIMELEIA does not guarantee any particular environmental outcome, nor does it audit, endorse or certify the Client\'s conduct regarding the Asset.\n\n' +
+'3. The Client acknowledges and accepts the on-chain record as the definitive source of truth. Once sealed, a record cannot be altered by anyone, including EPIMELEIA and the Client.\n\n' +
+'4. The Client declares having the right to request observation of the Asset, and is solely responsible for the geographic boundaries (the polygon) it defines.\n\n' +
+'5. EPIMELEIA reserves the right to add improvements and new satellite sources to the protocol, without altering records already sealed. The Spanish version of these terms prevails.';
+  var DESLINDE_TEXTO = T(DESLINDE_TEXTO_ES, DESLINDE_TEXTO_EN);
 
   var activoPendiente = null;
 
   el('continueBtn').addEventListener('click', function () {
-    if (!geojsonConfirmado) { toast('Primero confirmá el contorno.', true); return; }
+    if (!geojsonConfirmado) { toast(T('Primero confirmá el contorno.', 'First confirm the outline.'), true); return; }
 
     var nombreActivo = el('actNombre').value.trim();
     var tipoActivo   = el('actTipo').value;
-    if (!nombreActivo) { toast('Ponele un nombre a este activo.', true); el('actNombre').focus(); return; }
-    if (!tipoActivo)   { toast('Elegí qué tipo de recurso es.', true); el('actTipo').focus(); return; }
+    if (!nombreActivo) { toast(T('Ponele un nombre a este activo.', 'Give this asset a name.'), true); el('actNombre').focus(); return; }
+    if (!tipoActivo)   { toast(T('Elegí qué tipo de recurso es.', 'Choose what type of resource it is.'), true); el('actTipo').focus(); return; }
 
     var ring = geojsonConfirmado.geometry.coordinates[0];
     var props = geojsonConfirmado.properties || {};
@@ -1195,7 +1248,7 @@
     }
 
     var fbtn = el('deslindeFirmar');
-    fbtn.disabled = true; fbtn.textContent = 'Registrando…';
+    fbtn.disabled = true; fbtn.textContent = T('Registrando…', 'Registering…');
 
     activoPendiente.aceptado = true;
     var nombreActivo = activoPendiente.nombre;
@@ -1209,7 +1262,7 @@
     .then(function (data) {
       if (data && data.ok) {
         el('deslindeModal').classList.remove('show');
-        toast('✓ "' + nombreActivo + '" quedó registrado y firmado.');
+        toast(T('✓ "' + nombreActivo + '" quedó registrado y firmado.', '✓ "' + nombreActivo + '" was registered and signed.'));
         pasoHecho(1); pasoHecho(2); paso(3);
         confirmedView.style.display = 'none';
         el('est-firmar').style.display = 'block';
@@ -1226,13 +1279,13 @@
           mostrarPrecio(idActivo, haActivo);
         }
       } else {
-        toast('No se pudo registrar: ' + ((data && data.error) || 'error'), true);
-        fbtn.disabled = false; fbtn.textContent = 'Firmar y registrar →';
+        toast(T('No se pudo registrar: ', 'Could not register: ') + ((data && data.error) || 'error'), true);
+        fbtn.disabled = false; fbtn.textContent = T('Firmar y registrar →', 'Sign and register →');
       }
     })
     .catch(function () {
-      toast('No se pudo conectar con el servidor.', true);
-      fbtn.disabled = false; fbtn.textContent = 'Firmar y registrar →';
+      toast(T('No se pudo conectar con el servidor.', 'Could not connect to the server.'), true);
+      fbtn.disabled = false; fbtn.textContent = T('Firmar y registrar →', 'Sign and register →');
     });
   });
 
@@ -1265,13 +1318,13 @@
 
         if (!p.ok) {
           el('precioError').style.display = 'block';
-          el('precioError').textContent = p.motivo || 'No se pudo calcular el precio.';
+          el('precioError').textContent = p.motivo || T('No se pudo calcular el precio.', 'The price could not be calculated.');
           return;
         }
 
-        el('pcSuperficie').textContent = Number(p.superficieHa).toLocaleString('es-AR', { maximumFractionDigits: 2 }) + ' ha';
+        el('pcSuperficie').textContent = Number(p.superficieHa).toLocaleString(LOC, { maximumFractionDigits: 2 }) + ' ha';
         el('pcTier').textContent = p.tier.nombre;
-        el('pcMonto').innerHTML = 'USD ' + p.precioMensualUSD + ' <small>/ mes</small>';
+        el('pcMonto').innerHTML = 'USD ' + p.precioMensualUSD + ' <small>' + T('/ mes', '/ month') + '</small>';
         el('pcLegal').textContent = p.leyendaImpuestos || '';
 
         if (p.enTolerancia && p.nota) {
@@ -1290,15 +1343,15 @@
       .catch(function () {
         el('precioCargando').style.display = 'none';
         el('precioError').style.display = 'block';
-        el('precioError').textContent = 'No se pudo calcular el precio. Probá de nuevo en un momento.';
+        el('precioError').textContent = T('No se pudo calcular el precio. Probá de nuevo en un momento.', 'The price could not be calculated. Try again in a moment.');
       });
   }
 
   el('pagarBtn').addEventListener('click', function () {
-    if (!datosPago) { toast('Falta calcular el precio.', true); return; }
+    if (!datosPago) { toast(T('Falta calcular el precio.', 'The price still needs to be calculated.'), true); return; }
 
     var btn = el('pagarBtn');
-    btn.disabled = true; btn.textContent = 'Preparando el pago…';
+    btn.disabled = true; btn.textContent = T('Preparando el pago…', 'Preparing the payment…');
 
     fetch('/api/crear-suscripcion', {
       method: 'POST',
@@ -1315,13 +1368,13 @@
       if (data && data.ok && data.approvalUrl) {
         window.location.href = data.approvalUrl;
       } else {
-        toast('No se pudo iniciar el pago: ' + ((data && data.error) || 'error'), true);
-        btn.disabled = false; btn.textContent = 'SUSCRIBIRME →';
+        toast(T('No se pudo iniciar el pago: ', 'Could not start the payment: ') + ((data && data.error) || 'error'), true);
+        btn.disabled = false; btn.textContent = T('SUSCRIBIRME →', 'SUBSCRIBE →');
       }
     })
     .catch(function () {
-      toast('No se pudo conectar con el servidor.', true);
-      btn.disabled = false; btn.textContent = 'SUSCRIBIRME →';
+      toast(T('No se pudo conectar con el servidor.', 'Could not connect to the server.'), true);
+      btn.disabled = false; btn.textContent = T('SUSCRIBIRME →', 'SUBSCRIBE →');
     });
   });
 
@@ -1329,10 +1382,10 @@
     var params = new URLSearchParams(window.location.search);
     var estado = params.get('suscripcion');
     if (estado === 'ok') {
-      toast('✓ Suscripción confirmada. Tu activo entra al protocolo.');
+      toast(T('✓ Suscripción confirmada. Tu activo entra al protocolo.', '✓ Subscription confirmed. Your asset joins the protocol.'));
       pasoHecho(1); pasoHecho(2); pasoHecho(3); paso(4);
     } else if (estado === 'cancelada') {
-      toast('Cancelaste el pago. Tu activo quedó registrado, podés suscribirte cuando quieras.', true);
+      toast(T('Cancelaste el pago. Tu activo quedó registrado, podés suscribirte cuando quieras.', 'You cancelled the payment. Your asset is registered; you can subscribe whenever you want.'), true);
     }
   })();
 
@@ -1344,7 +1397,8 @@
     el('epiPanel').classList.add('open');
     el('epiBubble').classList.add('hidden');
     if (!el('epiMsgs').hasChildNodes()) {
-      epiMsg('agent', 'Hola. Soy EPI. Estoy para explicarte cualquier cosa que no se entienda de cómo funciona EPIMELEIA.\n\nPreguntame lo que quieras — qué se puede observar, cómo funciona el mes de cortesía, qué es eso de que nadie puede modificar el dato.');
+      epiMsg('agent', T('Hola. Soy EPI. Estoy para explicarte cualquier cosa que no se entienda de cómo funciona EPIMELEIA.\n\nPreguntame lo que quieras — qué se puede observar, cómo funciona el mes de cortesía, qué es eso de que nadie puede modificar el dato.',
+      'Hi. I am EPI. I am here to explain anything about how EPIMELEIA works that is not clear.\n\nAsk me anything — what can be observed, how the drawing and the free preview work, what it means that no one can modify the data. I answer in English.'));
     }
   };
   window.cerrarEpi = function () {
@@ -1355,7 +1409,7 @@
     var c = el('epiMsgs');
     var w = document.createElement('div'); w.className = 'emsg ' + rol;
     var html = texto.replace(/\n\n/g, '</p><p>').replace(/^/, '<p>').replace(/$/, '</p>');
-    w.innerHTML = '<div class="emsg-av ' + rol + '">' + (rol === 'agent' ? 'EP' : 'VOS') + '</div><div class="emsg-b ' + rol + '">' + html + '</div>';
+    w.innerHTML = '<div class="emsg-av ' + rol + '">' + (rol === 'agent' ? 'EP' : T('VOS', 'YOU')) + '</div><div class="emsg-b ' + rol + '">' + html + '</div>';
     c.appendChild(w); c.scrollTop = c.scrollHeight;
     return w;
   }
@@ -1381,7 +1435,7 @@
         textoEpi = data.content.filter(function (b) { return b.type === 'text'; }).map(function (b) { return b.text; }).join('\n').trim();
       }
       if (!textoEpi) {
-        textoEpi = 'Disculpá, tuve un problema para responder. Probá de nuevo en un momento, o escribí a info@epimeleia.world.';
+        textoEpi = T('Disculpá, tuve un problema para responder. Probá de nuevo en un momento, o escribí a info@epimeleia.world.', 'Sorry, I had a problem answering. Please try again in a moment, or write to info@epimeleia.world.');
       }
       var debeCerrar = textoEpi.includes('[[FIN_CHARLA]]');
       textoEpi = textoEpi.replace(/\[\[FIN_CHARLA\]\]/g, '').trim();
@@ -1393,11 +1447,11 @@
         epiCerrada = true;
         var box = el('epiText');
         box.disabled = true;
-        box.placeholder = 'Conversación finalizada.';
+        box.placeholder = T('Conversación finalizada.', 'Conversation ended.');
       }
     } catch (e) {
       pensando.remove();
-      epiMsg('agent', 'No pude conectarme en este momento. Revisá tu conexión y probá de nuevo, o escribí a info@epimeleia.world.');
+      epiMsg('agent', T('No pude conectarme en este momento. Revisá tu conexión y probá de nuevo, o escribí a info@epimeleia.world.', 'I could not connect right now. Check your connection and try again, or write to info@epimeleia.world.'));
     } finally {
       epiPensando = false;
     }
@@ -1471,10 +1525,10 @@
      elijas viaja al sellador: producto (01/02/03), meses de seguimiento,
      cultivo y país. Si cambiás algo después del simulacro, vuelve a pedir
      simulacro: se sella exactamente lo que probaste. */
-  var PAISES = [['ARG','Argentina'],['BOL','Bolivia'],['BRA','Brasil'],['CHL','Chile'],['COL','Colombia'],
-    ['CRI','Costa Rica'],['ECU','Ecuador'],['GTM','Guatemala'],['HND','Honduras'],['MEX','México'],
-    ['PRY','Paraguay'],['PER','Perú'],['URY','Uruguay'],['CIV','Costa de Marfil'],['ETH','Etiopía'],
-    ['GHA','Ghana'],['KEN','Kenia'],['UGA','Uganda'],['IDN','Indonesia'],['VNM','Vietnam']];
+  var PAISES = [['ARG','Argentina'],['BOL','Bolivia'],['BRA',T('Brasil','Brazil')],['CHL','Chile'],['COL','Colombia'],
+    ['CRI','Costa Rica'],['ECU','Ecuador'],['GTM','Guatemala'],['HND','Honduras'],['MEX',T('México','Mexico')],
+    ['PRY','Paraguay'],['PER',T('Perú','Peru')],['URY','Uruguay'],['CIV',T('Costa de Marfil','Côte d\'Ivoire')],['ETH',T('Etiopía','Ethiopia')],
+    ['GHA','Ghana'],['KEN',T('Kenia','Kenya')],['UGA','Uganda'],['IDN','Indonesia'],['VNM','Vietnam']];
   var ESTILO_SEL = 'width:100%; font-family:monospace; font-size:12px; padding:10px; margin-bottom:8px; background:rgba(0,0,0,0.45); color:#E8E4DA; border:1px solid rgba(255,255,255,0.18); border-radius:4px;';
 
   function esCampo() {
@@ -1483,24 +1537,24 @@
   }
 
   function opcionesHTML(s) {
-    var p = '<option value="">País del campo…</option>';
+    var p = '<option value="">' + T('País del campo…', 'Country of the field…') + '</option>';
     for (var i = 0; i < PAISES.length; i++) p += '<option value="' + PAISES[i][0] + '">' + PAISES[i][1] + '</option>';
     return '' +
       '<select id="fProducto' + s + '" style="' + ESTILO_SEL + '">' +
-        '<option value="atras">01 · Hacia atrás — solo deforestación EUDR</option>' +
-        '<option value="adelante">02 · Hacia adelante — seguimiento quincenal</option>' +
-        '<option value="ambos">03 · Atrás + adelante — cobertura completa</option>' +
+        '<option value="atras">' + T('01 · Hacia atrás — solo deforestación EUDR', '01 · Looking back — EUDR deforestation only') + '</option>' +
+        '<option value="adelante">' + T('02 · Hacia adelante — seguimiento quincenal', '02 · Going forward — biweekly monitoring') + '</option>' +
+        '<option value="ambos">' + T('03 · Atrás + adelante — cobertura completa', '03 · Back + forward — full coverage') + '</option>' +
       '</select>' +
       '<select id="fMeses' + s + '" style="' + ESTILO_SEL + ' display:none;">' +
-        '<option value="">¿Cuántos meses de seguimiento?</option>' +
-        '<option value="3">3 meses</option><option value="6">6 meses</option>' +
-        '<option value="12">12 meses</option><option value="24">24 meses</option><option value="36">36 meses</option>' +
+        '<option value="">' + T('¿Cuántos meses de seguimiento?', 'How many months of monitoring?') + '</option>' +
+        '<option value="3">3 ' + T('meses','months') + '</option><option value="6">6 ' + T('meses','months') + '</option>' +
+        '<option value="12">12 ' + T('meses','months') + '</option><option value="24">24 ' + T('meses','months') + '</option><option value="36">36 ' + T('meses','months') + '</option>' +
       '</select>' +
       '<div id="fCampo' + s + '" style="display:none;">' +
         '<select id="fCultivo' + s + '" style="' + ESTILO_SEL + '">' +
-          '<option value="ninguno">Cultivo · ninguno / no EUDR</option>' +
-          '<option value="soja">Soja</option><option value="cafe">Café</option><option value="cacao">Cacao</option>' +
-          '<option value="palma">Palma</option><option value="caucho">Caucho</option>' +
+          '<option value="ninguno">' + T('Cultivo · ninguno / no EUDR', 'Crop · none / not EUDR') + '</option>' +
+          '<option value="soja">' + T('Soja','Soy') + '</option><option value="cafe">' + T('Café','Coffee') + '</option><option value="cacao">' + T('Cacao','Cocoa') + '</option>' +
+          '<option value="palma">' + T('Palma','Oil palm') + '</option><option value="caucho">' + T('Caucho','Rubber') + '</option>' +
         '</select>' +
         '<select id="fPais' + s + '" style="' + ESTILO_SEL + '">' + p + '</select>' +
       '</div>';
@@ -1532,15 +1586,15 @@
     var meses   = document.getElementById('fMeses' + s).value;
     var cultivo = esCampo() ? document.getElementById('fCultivo' + s).value : 'ninguno';
     var pais    = esCampo() ? document.getElementById('fPais' + s).value : '';
-    if (prod.value !== 'atras' && !meses) return { error: 'Elegí cuántos meses de seguimiento contrató el cliente.' };
-    if (cultivo !== 'ninguno' && !pais) return { error: 'Con cultivo hace falta el país del campo (para calcular la capacidad).' };
+    if (prod.value !== 'atras' && !meses) return { error: T('Elegí cuántos meses de seguimiento contrató el cliente.', 'Choose how many months of monitoring.') };
+    if (cultivo !== 'ninguno' && !pais) return { error: T('Con cultivo hace falta el país del campo (para calcular la capacidad).', 'With a crop, the country of the field is needed (to calculate capacity).') };
     return { producto: prod.value, meses: prod.value === 'atras' ? null : Number(meses), cultivo: cultivo, pais: pais || null };
   }
 
   function resumen(o) {
-    var n = { atras: '01 · Hacia atrás', adelante: '02 · Hacia adelante', ambos: '03 · Atrás + adelante' };
+    var n = { atras: T('01 · Hacia atrás', '01 · Looking back'), adelante: T('02 · Hacia adelante', '02 · Going forward'), ambos: T('03 · Atrás + adelante', '03 · Back + forward') };
     var t = n[o.producto] || o.producto;
-    if (o.meses) t += ' · ' + o.meses + ' meses';
+    if (o.meses) t += ' · ' + o.meses + T(' meses', ' months');
     if (o.cultivo && o.cultivo !== 'ninguno') t += ' · ' + o.cultivo + ' (' + o.pais + ')';
     return t;
   }
@@ -1549,13 +1603,13 @@
      Sale del histórico de Global Forest Watch: NO depende de las nubes.
      Se muestra siempre que exista, haya o no imagen óptica. */
   function textoDeforestacion(d) {
-    if (!d) return '\nDeforestación (EUDR): sin chequeo disponible para este campo.\n';
+    if (!d) return T('\nDeforestación (EUDR): sin chequeo disponible para este campo.\n', '\nDeforestation (EUDR): no check available for this field.\n');
     var p = d.periodo ? ' (' + d.periodo + ')' : '';
     if (d.hubo) {
-      return '\nDEFORESTACIÓN (EUDR): DETECTADA' +
+      return T('\nDEFORESTACIÓN (EUDR): DETECTADA', '\nDEFORESTATION (EUDR): DETECTED') +
         (d.totalHectareas != null ? ' · ' + d.totalHectareas + ' ha' : '') + p + '\n';
     }
-    return '\nDEFORESTACIÓN (EUDR): NO DETECTADA' + p + '\n';
+    return T('\nDEFORESTACIÓN (EUDR): NO DETECTADA', '\nDEFORESTATION (EUDR): NOT DETECTED') + p + '\n';
   }
 
   /* ── SIMPLE-3: el panel del CLIENTE, dentro de "Caso a medida" ──
@@ -1565,14 +1619,14 @@
      eligió, y el founder la sella después de charlar el pago. */
   function nombreActivo() {
     var n = document.getElementById('actNombre');
-    return (n && n.value.trim()) || 'mi campo';
+    return (n && n.value.trim()) || T('mi campo', 'my field');
   }
 
   function pedidoTexto(o) {
-    var t = 'Hola, quiero certificar el activo "' + nombreActivo() + '"';
+    var t = T('Hola, quiero certificar el activo "', 'Hello, I want to certify the asset "') + nombreActivo() + '"';
     var id = getActivoId();
     if (id) t += ' (ref. ' + id + ')';
-    t += '. Producto elegido: ' + resumen(o) + '.';
+    t += T('. Producto elegido: ', '. Chosen product: ') + resumen(o) + '.';
     return t;
   }
 
@@ -1583,11 +1637,11 @@
     var linea = document.getElementById('cliPedido');
     if (o.error) { if (linea) linea.textContent = o.error; return; }
     var txt = pedidoTexto(o);
-    if (mail) mail.href = 'mailto:info@epimeleia.world?subject=' + encodeURIComponent('Pedido de certificación - ' + nombreActivo()) + '&body=' + encodeURIComponent(txt);
+    if (mail) mail.href = 'mailto:info@epimeleia.world?subject=' + encodeURIComponent(T('Pedido de certificación - ', 'Certification request - ') + nombreActivo()) + '&body=' + encodeURIComponent(txt);
     if (wa)   wa.href   = 'https://wa.me/5491158004028?text=' + encodeURIComponent(txt);
     if (linea) linea.textContent = o.producto === 'atras'
-      ? 'Tu pedido: ' + resumen(o) + '. Mirá tu campo desde el satélite: si se ve, lo pagás acá y se sella al instante. También podés escribirnos.'
-      : 'Tu pedido: ' + resumen(o) + '. Mandalo por mail o WhatsApp y lo activamos.';
+      ? T('Tu pedido: ', 'Your order: ') + resumen(o) + T('. Mirá tu campo desde el satélite: si se ve, lo pagás acá y se sella al instante. También podés escribirnos.', '. See your field from the satellite: if it is visible, you pay here and it is sealed instantly. You can also write to us.')
+      : T('Tu pedido: ', 'Your order: ') + resumen(o) + T('. Mandalo por mail o WhatsApp y lo activamos.', '. Send it by email or WhatsApp and we will activate it.');
     mostrarPagar(_vistaOk);
   }
 
@@ -1608,8 +1662,8 @@
       caja.id = 'cliPagarCaja';
       caja.style.cssText = 'display:none; margin-top:12px; padding:14px; border:1px solid rgba(95,173,95,0.55); border-radius:8px; background:rgba(95,173,95,0.07); text-align:center;';
       caja.innerHTML =
-        '<button id="cliPagarBtn" type="button" style="width:100%; font-size:13px; font-weight:700; letter-spacing:0.04em; padding:14px; background:#5FAD5F; color:#04121a; border:none; cursor:pointer; border-radius:5px;">PAGAR ' + PRECIO_EUDR_TXT + ' Y CERTIFICAR &rarr;</button>' +
-        '<div style="font-family:monospace; font-size:10.5px; color:#9fb0c9; line-height:1.6; margin-top:9px;">Pago único con PayPal (tarjeta o cuenta PayPal). Al confirmar, tu campo se sella en blockchain y te llega el certificado por mail.</div>' +
+        '<button id="cliPagarBtn" type="button" style="width:100%; font-size:13px; font-weight:700; letter-spacing:0.04em; padding:14px; background:#5FAD5F; color:#04121a; border:none; cursor:pointer; border-radius:5px;">' + T('PAGAR ', 'PAY ') + PRECIO_EUDR_TXT + T(' Y CERTIFICAR', ' AND CERTIFY') + ' &rarr;</button>' +
+        '<div style="font-family:monospace; font-size:10.5px; color:#9fb0c9; line-height:1.6; margin-top:9px;">' + T('Pago único con PayPal (tarjeta o cuenta PayPal). Al confirmar, tu campo se sella en blockchain y te llega el certificado por mail.', 'One-time payment with PayPal (card or PayPal account). Once confirmed, your field is sealed on blockchain and you receive the certificate by email.') + '</div>' +
         '<div id="cliPagarOut" style="display:none; font-family:monospace; font-size:11px; color:#E8E4DA; margin-top:10px; white-space:pre-wrap;"></div>';
       var out = document.getElementById('cliOut');
       if (out && out.parentNode) out.parentNode.insertBefore(caja, out.nextSibling); else panel.appendChild(caja);
@@ -1626,12 +1680,12 @@
     var o = leerOpciones('C');
     if (o.error) { out.textContent = o.error; return; }
     var supa = initSupa(), activoId = getActivoId();
-    if (!supa || !activoId) { out.textContent = 'Primero registrá tu campo (Firmar y registrar).'; return; }
+    if (!supa || !activoId) { out.textContent = T('Primero registrá tu campo (Firmar y registrar).', 'First register your field (Sign and register).'); return; }
     var ses = await supa.auth.getSession();
     var tk = ses && ses.data && ses.data.session ? ses.data.session.access_token : null;
-    if (!tk) { out.textContent = 'Entrá a tu cuenta para pagar.'; return; }
+    if (!tk) { out.textContent = T('Entrá a tu cuenta para pagar.', 'Sign in to your account to pay.'); return; }
     btn.disabled = true;
-    out.textContent = 'Confirmando con el satélite que tu campo se puede sellar hoy… y preparando el pago.';
+    out.textContent = T('Confirmando con el satélite que tu campo se puede sellar hoy… y preparando el pago.', 'Confirming with the satellite that your field can be sealed today… and preparing the payment.');
     try {
       var r = await fetch('/api/crear-suscripcion', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -1640,15 +1694,15 @@
       });
       var d = await r.json();
       if (d.ok && d.approvalUrl) {
-        out.textContent = 'Te llevamos a PayPal…';
+        out.textContent = T('Te llevamos a PayPal…', 'Taking you to PayPal…');
         window.location.href = d.approvalUrl;
         return;
       }
       out.textContent = d.tipo === 'medicion'
-        ? 'Hoy el satélite no puede sellar tu campo (' + (d.error || 'nubes') + '). No se te cobra nada. Probá en unos días o escribinos.'
-        : 'No se pudo: ' + (d.error || 'probá en un momento.');
+        ? T('Hoy el satélite no puede sellar tu campo (', 'Today the satellite cannot seal your field (') + (d.error || T('nubes', 'clouds')) + T('). No se te cobra nada. Probá en unos días o escribinos.', '). You are not charged. Try again in a few days or write to us.')
+        : T('No se pudo: ', 'Could not: ') + (d.error || T('probá en un momento.', 'try again in a moment.'));
     } catch (e) {
-      out.textContent = 'No se pudo contactar al servidor. Probá de nuevo.';
+      out.textContent = T('No se pudo contactar al servidor. Probá de nuevo.', 'Could not contact the server. Try again.');
     }
     btn.disabled = false;
   });
@@ -1665,21 +1719,21 @@
     var caja = document.createElement('div');
     caja.style.cssText = 'position:fixed; inset:0; z-index:9000; background:rgba(2,6,10,0.88); display:flex; align-items:center; justify-content:center; padding:20px;';
     caja.innerHTML = '<div style="max-width:520px; width:100%; background:#08121a; border:1px solid rgba(0,240,255,0.35); border-radius:10px; padding:24px; font-family:monospace; color:#E8E4DA; font-size:12.5px; line-height:1.7;">' +
-      '<div style="font-size:10px; letter-spacing:0.2em; color:#00F0FF; margin-bottom:12px;">EPIMELEIA · TU PAGO</div>' +
+      '<div style="font-size:10px; letter-spacing:0.2em; color:#00F0FF; margin-bottom:12px;">EPIMELEIA · ' + T('TU PAGO', 'YOUR PAYMENT') + '</div>' +
       '<div id="pagoTxt" style="white-space:pre-wrap;"></div>' +
-      '<button id="pagoCerrar" type="button" style="margin-top:16px; width:100%; padding:12px; background:transparent; color:#00F0FF; border:1px solid #00F0FF; border-radius:5px; cursor:pointer; font-weight:700;">CERRAR</button></div>';
+      '<button id="pagoCerrar" type="button" style="margin-top:16px; width:100%; padding:12px; background:transparent; color:#00F0FF; border:1px solid #00F0FF; border-radius:5px; cursor:pointer; font-weight:700;">' + T('CERRAR', 'CLOSE') + '</button></div>';
     document.body.appendChild(caja);
     var txt = caja.querySelector('#pagoTxt');
     caja.querySelector('#pagoCerrar').onclick = function () { caja.remove(); };
     try { history.replaceState(null, '', window.location.pathname); } catch (e) {}
 
     if (pago === 'cancelado') {
-      txt.textContent = 'Cancelaste el pago. No se te cobró nada.\nTu campo quedó registrado: podés pagarlo cuando quieras.';
+      txt.textContent = T('Cancelaste el pago. No se te cobró nada.\nTu campo quedó registrado: podés pagarlo cuando quieras.', 'You cancelled the payment. You were not charged.\nYour field is registered: you can pay whenever you want.');
       return;
     }
-    if (!orderId || !activoId) { txt.textContent = 'No se recibió la orden de PayPal. Si se te cobró, escribinos a info@epimeleia.world.'; return; }
+    if (!orderId || !activoId) { txt.textContent = T('No se recibió la orden de PayPal. Si se te cobró, escribinos a info@epimeleia.world.', 'The PayPal order was not received. If you were charged, write to info@epimeleia.world.'); return; }
 
-    txt.textContent = 'Confirmando tu pago y sellando tu campo en blockchain…\nPuede tardar hasta un minuto. No cierres esta página.';
+    txt.textContent = T('Confirmando tu pago y sellando tu campo en blockchain…\nPuede tardar hasta un minuto. No cierres esta página.', 'Confirming your payment and sealing your field on blockchain…\nIt can take up to a minute. Do not close this page.');
 
     (async function () {
       var tk = null;
@@ -1690,35 +1744,35 @@
         }
         if (!tk) await new Promise(function (r) { setTimeout(r, 500); });
       }
-      if (!tk) { txt.textContent = 'Entrá a tu cuenta para confirmar el pago (no se te cobró todavía).'; return; }
+      if (!tk) { txt.textContent = T('Entrá a tu cuenta para confirmar el pago (no se te cobró todavía).', 'Sign in to your account to confirm the payment (you have not been charged yet).'); return; }
       try {
         var r = await fetch('/api/crear-suscripcion', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ modo: 'capturar', orderId: orderId, activoId: activoId, token: tk })
         });
         var d = await r.json();
-        if (!d.ok) { txt.textContent = 'X ' + (d.error || 'No se pudo confirmar el pago.') + '\n\nCualquier duda: info@epimeleia.world'; return; }
+        if (!d.ok) { txt.textContent = 'X ' + (d.error || T('No se pudo confirmar el pago.', 'The payment could not be confirmed.')) + T('\n\nCualquier duda: info@epimeleia.world', '\n\nAny questions: info@epimeleia.world'); return; }
         if (d.sellado) {
-          var t = '✓ PAGO RECIBIDO Y CAMPO SELLADO\n\n';
-          if (d.onchain != null) t += 'Tu campo es el #' + d.onchain + ' en la cadena.\n';
-          if (d.deforestacion) t += 'Deforestación (EUDR): ' + (d.deforestacion.hubo ? 'DETECTADA' : 'NO DETECTADA') + (d.deforestacion.periodo ? ' (' + d.deforestacion.periodo + ')' : '') + '\n';
-          if (d.capacidad && d.capacidad.declarada) t += 'Techo de producción: ' + d.capacidad.capacidadAnual + ' t/año\n';
-          t += '\nTe llega el certificado por mail.';
+          var t = T('✓ PAGO RECIBIDO Y CAMPO SELLADO\n\n', '✓ PAYMENT RECEIVED AND FIELD SEALED\n\n');
+          if (d.onchain != null) t += T('Tu campo es el #', 'Your field is #') + d.onchain + T(' en la cadena.\n', ' on the chain.\n');
+          if (d.deforestacion) t += T('Deforestación (EUDR): ', 'Deforestation (EUDR): ') + (d.deforestacion.hubo ? 'DETECTADA' : 'NO DETECTADA') + (d.deforestacion.periodo ? ' (' + d.deforestacion.periodo + ')' : '') + '\n';
+          if (d.capacidad && d.capacidad.declarada) t += T('Techo de producción: ', 'Production ceiling: ') + d.capacidad.capacidadAnual + T(' t/año\n', ' t/year\n');
+          t += T('\nTe llega el certificado por mail.', '\nYou will receive the certificate by email.');
           txt.textContent = t;
           var box = txt.parentNode;
           if (d.onchain != null) {
-            var a1 = document.createElement('a'); a1.href = 'verificar.html?id=' + d.onchain; a1.textContent = 'Ver mi campo en Verificar →';
+            var a1 = document.createElement('a'); a1.href = T('verificar.html', 'verificar-en.html') + '?id=' + d.onchain; a1.textContent = T('Ver mi campo en Verificar →', 'See my field in Verify →');
             a1.style.cssText = 'display:block; margin-top:12px; color:#5FAD5F;'; box.insertBefore(a1, box.lastChild);
           }
           if (d.polygonscan) {
-            var a2 = document.createElement('a'); a2.href = d.polygonscan; a2.target = '_blank'; a2.rel = 'noopener'; a2.textContent = 'Ver el sello en Polygonscan →';
+            var a2 = document.createElement('a'); a2.href = d.polygonscan; a2.target = '_blank'; a2.rel = 'noopener'; a2.textContent = T('Ver el sello en Polygonscan →', 'See the seal on Polygonscan →');
             a2.style.cssText = 'display:block; margin-top:6px; color:#8FB0DA;'; box.insertBefore(a2, box.lastChild);
           }
         } else {
-          txt.textContent = '✓ PAGO RECIBIDO\n\n' + (d.mensaje || 'El sello de tu campo se completa en las próximas horas y te llega el certificado por mail.');
+          txt.textContent = T('✓ PAGO RECIBIDO\n\n', '✓ PAYMENT RECEIVED\n\n') + (d.mensaje || T('El sello de tu campo se completa en las próximas horas y te llega el certificado por mail.', 'The seal of your field is completed in the next few hours and you will receive the certificate by email.'));
         }
       } catch (e) {
-        txt.textContent = 'No se pudo contactar al servidor. Recargá esta página en un momento: no se cobra dos veces.\n(Si el problema sigue: info@epimeleia.world)';
+        txt.textContent = T('No se pudo contactar al servidor. Recargá esta página en un momento: no se cobra dos veces.\n(Si el problema sigue: info@epimeleia.world)', 'Could not contact the server. Reload this page in a moment: you will not be charged twice.\n(If the problem continues: info@epimeleia.world)');
       }
     })();
   })();
@@ -1732,9 +1786,9 @@
       panel.id = 'cliPanel';
       panel.style.cssText = 'margin:14px 0 18px; padding:16px; border:1px solid rgba(0,240,255,0.35); border-radius:9px; background:rgba(0,240,255,0.04);';
       panel.innerHTML =
-        '<div style="font-family:monospace; font-size:9px; letter-spacing:0.2em; color:#00F0FF; text-transform:uppercase; text-align:center; margin-bottom:10px;">ARMÁ TU PEDIDO</div>' +
+        '<div style="font-family:monospace; font-size:9px; letter-spacing:0.2em; color:#00F0FF; text-transform:uppercase; text-align:center; margin-bottom:10px;">' + T('ARMÁ TU PEDIDO', 'BUILD YOUR ORDER') + '</div>' +
         opcionesHTML('C') +
-        '<button id="cliVerBtn" type="button" style="width:100%; font-size:12px; font-weight:700; padding:12px; background:transparent; color:#00F0FF; border:1px solid #00F0FF; cursor:pointer; border-radius:4px; margin-top:4px;">VER MI CAMPO DESDE EL SATÉLITE (GRATIS) &rarr;</button>' +
+        '<button id="cliVerBtn" type="button" style="width:100%; font-size:12px; font-weight:700; padding:12px; background:transparent; color:#00F0FF; border:1px solid #00F0FF; cursor:pointer; border-radius:4px; margin-top:4px;">' + T('VER MI CAMPO DESDE EL SATÉLITE (GRATIS)', 'SEE MY FIELD FROM THE SATELLITE (FREE)') + ' &rarr;</button>' +
         '<div id="cliOut" style="display:none; font-family:monospace; font-size:11px; line-height:1.7; color:#9fb0c9; background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.1); padding:12px; margin-top:10px; white-space:pre-wrap; word-break:break-word;"></div>' +
         '<div id="cliPedido" style="font-family:monospace; font-size:10.5px; color:#E8E4DA; text-align:center; margin-top:12px; line-height:1.6;"></div>';
       var ref = coord.querySelector('.coord-sub');
@@ -1754,13 +1808,13 @@
     var btn = ev.target, out = document.getElementById('cliOut');
     out.style.display = 'block';
     var supa = initSupa(), activoId = getActivoId();
-    if (!supa) { out.textContent = 'No se pudo cargar. Recargá la página.'; return; }
-    if (!activoId) { out.textContent = 'Primero registrá tu campo (Firmar y registrar).'; return; }
+    if (!supa) { out.textContent = T('No se pudo cargar. Recargá la página.', 'Could not load. Reload the page.'); return; }
+    if (!activoId) { out.textContent = T('Primero registrá tu campo (Firmar y registrar).', 'First register your field (Sign and register).'); return; }
     var ses = await supa.auth.getSession();
     var token = ses && ses.data && ses.data.session ? ses.data.session.access_token : null;
-    if (!token) { out.textContent = 'Entrá a tu cuenta para ver tu campo.'; return; }
+    if (!token) { out.textContent = T('Entrá a tu cuenta para ver tu campo.', 'Sign in to your account to see your field.'); return; }
     btn.disabled = true;
-    out.textContent = 'Mirando tu campo desde el satélite… un momento.';
+    out.textContent = T('Mirando tu campo desde el satélite… un momento.', 'Looking at your field from the satellite… one moment.');
     try {
       var r = await fetch(PUENTE_SELLO, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -1773,28 +1827,28 @@
         // SIMPLE-4: sin pasada limpia NO es una falla. Se dice tal cual, sin sonar a error.
         if (d.tipo === 'medicion') {
           out.textContent = textoDeforestacion(d.deforestacion).replace(/^\n/, '') +
-            '\nImagen satelital de hoy: sin vista despejada de tu campo.\n' +
+            T('\nImagen satelital de hoy: sin vista despejada de tu campo.\n', '\nToday\'s satellite image: no clear view of your field.\n') +
             (d.error ? '(' + d.error + ')\n' : '') +
-            '\nNo es una falla: es el clima. EPIMELEIA no muestra lo que el satélite no vio.' +
-            '\nEl chequeo de deforestación sale del histórico satelital y no depende de las nubes.' +
-            '\n\nEscribinos y lo coordinamos.';
+            T('\nNo es una falla: es el clima. EPIMELEIA no muestra lo que el satélite no vio.', '\nIt is not a failure: it is the weather. EPIMELEIA does not show what the satellite did not see.') +
+            T('\nEl chequeo de deforestación sale del histórico satelital y no depende de las nubes.', '\nThe deforestation check comes from the satellite history and does not depend on clouds.') +
+            T('\n\nEscribinos y lo coordinamos.', '\n\nWrite to us and we will coordinate it.');
         } else if (d.tipo === 'limite') {
           out.textContent = d.error;
         } else {
-          out.textContent = 'No se pudo: ' + (d.error || 'probá en un momento.');
+          out.textContent = T('No se pudo: ', 'Could not: ') + (d.error || T('probá en un momento.', 'try again in a moment.'));
         }
       }
       else {
         var t = textoDeforestacion(d.deforestacion).replace(/^\n/, '') + '\n';
-        t += 'Lo que ve el satélite hoy sobre "' + (d.activo || nombreActivo()) + '"\n';
-        if (d.fechaPasada) t += 'Pasada: ' + d.fechaPasada + '\n';
-        if (d.calidad != null) t += 'Calidad de la lectura: ' + d.calidad + '%\n';
+        t += T('Lo que ve el satélite hoy sobre "', 'What the satellite sees today over "') + (d.activo || nombreActivo()) + '"\n';
+        if (d.fechaPasada) t += T('Pasada: ', 'Pass: ') + d.fechaPasada + '\n';
+        if (d.calidad != null) t += T('Calidad de la lectura: ', 'Reading quality: ') + d.calidad + '%\n';
         if (d.mediciones) for (var i = 0; i < d.mediciones.length; i++) { var m = d.mediciones[i]; t += '  · ' + m.etiqueta + ': ' + m.valor + ' (' + m.interpretacion + ')\n'; }
-        t += '\nEsto es una vista previa: todavía no se selló nada.\nPara certificarlo, pagalo acá abajo o mandanos tu pedido por mail o WhatsApp.';
+        t += T('\nEsto es una vista previa: todavía no se selló nada.\nPara certificarlo, pagalo acá abajo o mandanos tu pedido por mail o WhatsApp.', '\nThis is a preview: nothing has been sealed yet.\nTo certify it, pay for it below or send us your order by email or WhatsApp.');
         out.textContent = t;
       }
     } catch (e) {
-      out.textContent = 'No se pudo contactar al servidor. Probá de nuevo.';
+      out.textContent = T('No se pudo contactar al servidor. Probá de nuevo.', 'Could not contact the server. Try again.');
     } finally { btn.disabled = false; }
   });
 
