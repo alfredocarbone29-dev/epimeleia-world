@@ -1674,8 +1674,10 @@ aplicarIdioma();
   }
 
   document.addEventListener('click', async function (ev) {
-    if (!ev.target || ev.target.id !== 'cliPagarBtn') return;
-    var btn = ev.target, out = document.getElementById('cliPagarOut');
+    // closest(): si el navegador traduce la página, el clic cae en un <font> dentro del botón
+    var btn = ev.target && ev.target.closest ? ev.target.closest('#cliPagarBtn') : null;
+    if (!btn) return;
+    var out = document.getElementById('cliPagarOut');
     out.style.display = 'block';
     var o = leerOpciones('C');
     if (o.error) { out.textContent = o.error; return; }
@@ -1804,8 +1806,9 @@ aplicarIdioma();
   }
 
   document.addEventListener('click', async function (ev) {
-    if (!ev.target || ev.target.id !== 'cliVerBtn') return;
-    var btn = ev.target, out = document.getElementById('cliOut');
+    var btn = ev.target && ev.target.closest ? ev.target.closest('#cliVerBtn') : null;
+    if (!btn) return;
+    var out = document.getElementById('cliOut');
     out.style.display = 'block';
     var supa = initSupa(), activoId = getActivoId();
     if (!supa) { out.textContent = T('No se pudo cargar. Recargá la página.', 'Could not load. Reload the page.'); return; }
@@ -1859,8 +1862,8 @@ aplicarIdioma();
   }, 1000);
 
   document.addEventListener('click', async function (ev) {
-    var btn = ev.target;
-    if (!btn || (btn.id !== 'founderCertBtn' && btn.id !== 'founderCertBtn2')) return;
+    var btn = ev.target && ev.target.closest ? ev.target.closest('#founderCertBtn, #founderCertBtn2') : null;
+    if (!btn) return;
 
     var out = document.getElementById(btn.id === 'founderCertBtn2' ? 'founderCertOut2' : 'founderCertOut');
     out.style.display = 'block';
