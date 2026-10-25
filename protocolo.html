@@ -1604,13 +1604,23 @@ aplicarIdioma();
     var n = { atras: T('01 · Hacia atrás', '01 · Looking back'), adelante: T('02 · Hacia adelante', '02 · Going forward'), ambos: T('03 · Atrás + adelante', '03 · Back + forward') };
     var t = n[o.producto] || o.producto;
     if (o.meses) t += ' · ' + o.meses + T(' meses', ' months');
-    if (o.cultivo && o.cultivo !== 'ninguno') t += ' · ' + o.cultivo + ' (' + o.pais + ')';
+    if (o.cultivo && o.cultivo !== 'ninguno') {
+      // AJUSTE 25/10: nombre legible del cultivo y del país (el valor interno no cambia)
+      var nc = { soja: T('Soja','Soy'), cafe: T('Café','Coffee'), cacao: T('Cacao','Cocoa'), palma: T('Palma','Oil palm'), caucho: T('Caucho','Rubber') };
+      var selP = document.querySelector('select[id^="fPais"] option[value="' + o.pais + '"]');
+      t += ' · ' + (nc[o.cultivo] || o.cultivo) + ' (' + (selP ? selP.textContent : o.pais) + ')';
+    }
     return t;
   }
 
   /* ── DEF-1: el veredicto de deforestación, en una línea clara ──
      Sale del histórico de Global Forest Watch: NO depende de las nubes.
      Se muestra siempre que exista, haya o no imagen óptica. */
+  // AJUSTE 25/10: '2026-09-22T00:00:00Z' → '22 sept 2026' / 'Sep 22, 2026'
+  function fechaLinda(v) {
+    var f = new Date(v); if (isNaN(f.getTime())) return v;
+    return f.toLocaleDateString(LANG === 'en' ? 'en-US' : 'es-AR', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
+  }
   function textoDeforestacion(d) {
     if (!d) return T('\nDeforestación (EUDR): sin chequeo disponible para este campo.\n', '\nDeforestation (EUDR): no check available for this field.\n');
     var p = d.periodo ? ' (' + d.periodo + ')' : '';
@@ -1854,7 +1864,7 @@ aplicarIdioma();
         // AJUSTE 25/10: la vista previa confirma que se puede certificar, sin
         // adelantar el resultado. El veredicto y las mediciones van en el certificado sellado.
         var t = T('✓ El satélite puede ver tu campo "', '✓ The satellite can see your field "') + (d.activo || nombreActivo()) + '"\n';
-        if (d.fechaPasada) t += T('Pasada disponible: ', 'Available pass: ') + d.fechaPasada + '\n';
+        if (d.fechaPasada) t += T('Pasada disponible: ', 'Available pass: ') + fechaLinda(d.fechaPasada) + '\n';
         if (d.calidad != null) t += T('Calidad de la lectura: ', 'Reading quality: ') + d.calidad + '%\n';
         t += T('\nSe puede certificar. Al pagar, en un minuto recibís el certificado sellado en Polygon con:\n  · el chequeo de deforestación desde 2020\n  · el mapa oficial de bosques 2020 de la UE\n  · las mediciones del satélite\n  · las coordenadas para TRACES\n',
                '\nIt can be certified. After payment, within a minute you receive the certificate sealed on Polygon with:\n  · the deforestation check since 2020\n  · the EU official 2020 forest map\n  · the satellite measurements\n  · the coordinates for TRACES\n');
