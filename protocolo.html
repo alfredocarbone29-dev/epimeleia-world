@@ -1838,11 +1838,11 @@ aplicarIdioma();
       if (!d.ok) {
         // SIMPLE-4: sin pasada limpia NO es una falla. Se dice tal cual, sin sonar a error.
         if (d.tipo === 'medicion') {
-          out.textContent = textoDeforestacion(d.deforestacion).replace(/^\n/, '') +
-            T('\nImagen satelital de hoy: sin vista despejada de tu campo.\n', '\nToday\'s satellite image: no clear view of your field.\n') +
-            (d.error ? '(' + d.error + ')\n' : '') +
+          // AJUSTE 25/10: la vista previa NO adelanta el resultado (deforestación,
+          // mediciones). Solo dice si el satélite puede ver el campo hoy.
+          out.textContent = T('Imagen satelital de hoy: sin vista despejada de tu campo.\n', 'Today\'s satellite image: no clear view of your field.\n') +
             T('\nNo es una falla: es el clima. EPIMELEIA no muestra lo que el satélite no vio.', '\nIt is not a failure: it is the weather. EPIMELEIA does not show what the satellite did not see.') +
-            T('\nEl chequeo de deforestación sale del histórico satelital y no depende de las nubes.', '\nThe deforestation check comes from the satellite history and does not depend on clouds.') +
+            T('\nEl chequeo de deforestación igual se puede hacer: sale del histórico satelital y no depende de las nubes.', '\nThe deforestation check can still be done: it comes from the satellite history and does not depend on clouds.') +
             T('\n\nEscribinos y lo coordinamos.', '\n\nWrite to us and we will coordinate it.');
         } else if (d.tipo === 'limite') {
           out.textContent = d.error;
@@ -1851,12 +1851,14 @@ aplicarIdioma();
         }
       }
       else {
-        var t = textoDeforestacion(d.deforestacion).replace(/^\n/, '') + '\n';
-        t += T('Lo que ve el satélite hoy sobre "', 'What the satellite sees today over "') + (d.activo || nombreActivo()) + '"\n';
-        if (d.fechaPasada) t += T('Pasada: ', 'Pass: ') + d.fechaPasada + '\n';
+        // AJUSTE 25/10: la vista previa confirma que se puede certificar, sin
+        // adelantar el resultado. El veredicto y las mediciones van en el certificado sellado.
+        var t = T('✓ El satélite puede ver tu campo "', '✓ The satellite can see your field "') + (d.activo || nombreActivo()) + '"\n';
+        if (d.fechaPasada) t += T('Pasada disponible: ', 'Available pass: ') + d.fechaPasada + '\n';
         if (d.calidad != null) t += T('Calidad de la lectura: ', 'Reading quality: ') + d.calidad + '%\n';
-        if (d.mediciones) for (var i = 0; i < d.mediciones.length; i++) { var m = d.mediciones[i]; t += '  · ' + m.etiqueta + ': ' + m.valor + ' (' + m.interpretacion + ')\n'; }
-        t += T('\nEsto es una vista previa: todavía no se selló nada.\nPara certificarlo, pagalo acá abajo o mandanos tu pedido por mail o WhatsApp.', '\nThis is a preview: nothing has been sealed yet.\nTo certify it, pay for it below or send us your order by email or WhatsApp.');
+        t += T('\nSe puede certificar. Al pagar, en un minuto recibís el certificado sellado en Polygon con:\n  · el chequeo de deforestación desde 2020\n  · el mapa oficial de bosques 2020 de la UE\n  · las mediciones del satélite\n  · las coordenadas para TRACES\n',
+               '\nIt can be certified. After payment, within a minute you receive the certificate sealed on Polygon with:\n  · the deforestation check since 2020\n  · the EU official 2020 forest map\n  · the satellite measurements\n  · the coordinates for TRACES\n');
+        t += T('\nTodavía no se selló nada. Para certificarlo, pagalo acá abajo o mandanos tu pedido por mail o WhatsApp.', '\nNothing has been sealed yet. To certify it, pay for it below or send us your order by email or WhatsApp.');
         out.textContent = t;
       }
     } catch (e) {
