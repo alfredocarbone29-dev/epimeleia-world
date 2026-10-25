@@ -219,16 +219,26 @@ body::after {
 .founder-out .link { color:var(--glacier); }
 .founder-hint { font-family:'JetBrains Mono',monospace; font-size:8px; letter-spacing:1px; color:var(--dim); margin-top:10px; line-height:1.6; }
 
+/* ── AJUSTE 25/10 · ojito para ver la contraseña + botón de idioma ── */
+.pw-wrap { position:relative; }
+.pw-wrap .field-input { padding-right:48px; }
+.pw-eye { position:absolute; right:6px; top:50%; transform:translateY(-50%); width:36px; height:36px; background:none; border:none; cursor:pointer; color:var(--muted); display:flex; align-items:center; justify-content:center; transition:color .2s; }
+.pw-eye:hover { color:var(--white); }
+.pw-eye svg { width:19px; height:19px; }
+.pw-eye.on { color:var(--glacier); }
+.pw-eye.on svg path { stroke-dasharray:none; }
+.lang-link { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:1.5px; color:var(--gold2); text-decoration:none; border:1px solid rgba(229,200,112,0.35); padding:5px 9px; margin-left:12px; cursor:pointer; background:none; }
+.lang-link:hover { border-color:var(--gold2); }
 </style>
 </head>
 <body>
 
 <!-- ══════════════ BARRA SUPERIOR ══════════════ -->
 <div class="topbar">
-  <a class="topbar-brand" href="#" onclick="irA('login');return false;"><b>EPIMELEIA</b> · TU CUENTA</a>
+  <div style="display:flex;align-items:center;"><a class="topbar-brand" href="#" onclick="irA('login');return false;"><b>EPIMELEIA</b> · <span data-en="YOUR ACCOUNT">TU CUENTA</span></a><button class="lang-link" id="langBtn" onclick="cambiarIdioma()" type="button">EN</button></div>
   <div class="topbar-actions" id="topbarActions">
-    <button class="nav-link" onclick="irA('login')">INICIÁ SESIÓN</button>
-    <button class="nav-link primary" onclick="irA('registro')">REGISTRARSE</button>
+    <button class="nav-link" onclick="irA('login')" data-en="SIGN IN">INICIÁ SESIÓN</button>
+    <button class="nav-link primary" onclick="irA('registro')" data-en="SIGN UP">REGISTRARSE</button>
   </div>
 </div>
 
@@ -237,38 +247,42 @@ body::after {
   <!-- ═════════ PANTALLA: REGISTRO ═════════ -->
   <div class="screen" id="screen-registro">
     <div class="auth-card">
-      <div class="auth-eyebrow">CREAR TU CUENTA</div>
-      <h1 class="auth-title">Sumate al <em>archivo vivo</em> del planeta</h1>
-      <p class="auth-sub">Con estos datos creás tu cuenta. El resto (teléfono, país, la ubicación del recurso a certificar) lo completás después, dentro de tu espacio.</p>
+      <div class="auth-eyebrow" data-en="CREATE YOUR ACCOUNT">CREAR TU CUENTA</div>
+      <h1 class="auth-title" data-en="Join the planet's <em>living archive</em>">Sumate al <em>archivo vivo</em> del planeta</h1>
+      <p class="auth-sub" data-en="These details create your account. The rest (phone, country, the location of the resource to certify) you fill in later, inside your space.">Con estos datos creás tu cuenta. El resto (teléfono, país, la ubicación del recurso a certificar) lo completás después, dentro de tu espacio.</p>
 
       <div class="field">
-        <label class="field-label" for="rNombre">NOMBRE</label>
-        <input class="field-input" id="rNombre" type="text" placeholder="Tu nombre" autocomplete="off">
+        <label class="field-label" for="rNombre" data-en="NAME">NOMBRE</label>
+        <input class="field-input" id="rNombre" type="text" placeholder="Tu nombre" data-en-ph="Your name" autocomplete="off">
       </div>
       <div class="field">
-        <label class="field-label" for="rOrg">ORGANIZACIÓN / COMPAÑÍA</label>
-        <input class="field-input" id="rOrg" type="text" placeholder="Nombre de tu organización" autocomplete="off">
+        <label class="field-label" for="rOrg" data-en="ORGANIZATION / COMPANY">ORGANIZACIÓN / COMPAÑÍA</label>
+        <input class="field-input" id="rOrg" type="text" placeholder="Nombre de tu organización" data-en-ph="Your organization's name" autocomplete="off">
       </div>
       <div class="field">
-        <label class="field-label" for="rEmail">CORREO ELECTRÓNICO</label>
-        <input class="field-input" id="rEmail" type="email" placeholder="nombre@tuorganizacion.com" autocomplete="off">
+        <label class="field-label" for="rEmail" data-en="EMAIL">CORREO ELECTRÓNICO</label>
+        <input class="field-input" id="rEmail" type="email" placeholder="nombre@tuorganizacion.com" data-en-ph="name@yourorganization.com" autocomplete="off">
       </div>
       <div class="field">
-        <label class="field-label" for="rPass">CONTRASEÑA</label>
-        <input class="field-input" id="rPass" type="password" placeholder="Mínimo 8 caracteres" autocomplete="new-password">
+        <label class="field-label" for="rPass" data-en="PASSWORD">CONTRASEÑA</label>
+        <div class="pw-wrap"><input class="field-input" id="rPass" type="password" placeholder="Mínimo 8 caracteres" data-en-ph="At least 8 characters" autocomplete="new-password"><button type="button" class="pw-eye" onclick="verClave(this)" aria-label="Mostrar contraseña" data-en-aria="Show password"><svg viewBox="0 0 24 24" fill="none"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.6"/></svg></button></div>
+      </div>
+      <div class="field">
+        <label class="field-label" for="rPass2" data-en="REPEAT YOUR PASSWORD">REPETÍ TU CONTRASEÑA</label>
+        <div class="pw-wrap"><input class="field-input" id="rPass2" type="password" placeholder="La misma otra vez" data-en-ph="The same one again" autocomplete="new-password"><button type="button" class="pw-eye" onclick="verClave(this)" aria-label="Mostrar contraseña" data-en-aria="Show password"><svg viewBox="0 0 24 24" fill="none"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.6"/></svg></button></div>
       </div>
 
       <div class="msg-box" id="msgRegistro"></div>
-      <button class="btn-main" id="btnRegistro" onclick="registrar()">CREAR CUENTA</button>
+      <button class="btn-main" id="btnRegistro" onclick="registrar()" data-en="CREATE ACCOUNT">CREAR CUENTA</button>
 
-      <div class="or-sep"><span>O</span></div>
+      <div class="or-sep"><span data-en="OR">O</span></div>
       <button class="btn-social" onclick="entrarConGoogle()">
         <svg class="g-mark" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
-        Continuar con Google
+        <span data-en="Continue with Google">Continuar con Google</span>
       </button>
 
       <div class="auth-foot">
-        ¿Ya tenés cuenta? <a onclick="irA('login')">Iniciá sesión</a>
+        <span data-en="Already have an account?">¿Ya tenés cuenta?</span> <a onclick="irA('login')" data-en="Sign in">Iniciá sesión</a>
       </div>
     </div>
   </div>
@@ -276,31 +290,31 @@ body::after {
   <!-- ═════════ PANTALLA: LOGIN ═════════ -->
   <div class="screen active" id="screen-login">
     <div class="auth-card">
-      <div class="auth-eyebrow">INICIÁ SESIÓN</div>
-      <h1 class="auth-title">Entrá a <em>tu espacio</em></h1>
-      <p class="auth-sub">Accedé a tus datos, tu compañía y la ubicación de lo que estás certificando.</p>
+      <div class="auth-eyebrow" data-en="SIGN IN">INICIÁ SESIÓN</div>
+      <h1 class="auth-title" data-en="Enter <em>your space</em>">Entrá a <em>tu espacio</em></h1>
+      <p class="auth-sub" data-en="Access your details, your company and the location of what you are certifying.">Accedé a tus datos, tu compañía y la ubicación de lo que estás certificando.</p>
 
       <div class="field">
-        <label class="field-label" for="lEmail">CORREO ELECTRÓNICO</label>
-        <input class="field-input" id="lEmail" type="email" placeholder="nombre@tuorganizacion.com" autocomplete="off">
+        <label class="field-label" for="lEmail" data-en="EMAIL">CORREO ELECTRÓNICO</label>
+        <input class="field-input" id="lEmail" type="email" placeholder="nombre@tuorganizacion.com" data-en-ph="name@yourorganization.com" autocomplete="off">
       </div>
       <div class="field">
-        <label class="field-label" for="lPass">CONTRASEÑA</label>
-        <input class="field-input" id="lPass" type="password" placeholder="Tu contraseña" autocomplete="off">
+        <label class="field-label" for="lPass" data-en="PASSWORD">CONTRASEÑA</label>
+        <div class="pw-wrap"><input class="field-input" id="lPass" type="password" placeholder="Tu contraseña" data-en-ph="Your password" autocomplete="current-password"><button type="button" class="pw-eye" onclick="verClave(this)" aria-label="Mostrar contraseña" data-en-aria="Show password"><svg viewBox="0 0 24 24" fill="none"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.6"/></svg></button></div>
       </div>
 
       <div class="msg-box" id="msgLogin"></div>
-      <button class="btn-main" id="btnLogin" onclick="ingresar()">ENTRAR</button>
+      <button class="btn-main" id="btnLogin" onclick="ingresar()" data-en="SIGN IN">ENTRAR</button>
 
-      <div class="or-sep"><span>O</span></div>
+      <div class="or-sep"><span data-en="OR">O</span></div>
       <button class="btn-social" onclick="entrarConGoogle()">
         <svg class="g-mark" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
-        Continuar con Google
+        <span data-en="Continue with Google">Continuar con Google</span>
       </button>
 
       <div class="auth-foot">
-        ¿No tenés cuenta? <a onclick="irA('registro')">Registrate</a><br>
-        <a onclick="irA('olvide')">Olvidé mi contraseña</a>
+        <span data-en="Don't have an account?">¿No tenés cuenta?</span> <a onclick="irA('registro')" data-en="Sign up">Registrate</a><br>
+        <a onclick="irA('olvide')" data-en="I forgot my password">Olvidé mi contraseña</a>
       </div>
     </div>
   </div>
@@ -308,20 +322,20 @@ body::after {
   <!-- ═════════ PANTALLA: OLVIDÉ CONTRASEÑA ═════════ -->
   <div class="screen" id="screen-olvide">
     <div class="auth-card">
-      <div class="auth-eyebrow">RECUPERAR ACCESO</div>
-      <h1 class="auth-title">Olvidaste tu <em>contraseña</em></h1>
-      <p class="auth-sub">Ingresá tu correo y te enviamos un enlace para crear una nueva.</p>
+      <div class="auth-eyebrow" data-en="RECOVER ACCESS">RECUPERAR ACCESO</div>
+      <h1 class="auth-title" data-en="Forgot your <em>password</em>">Olvidaste tu <em>contraseña</em></h1>
+      <p class="auth-sub" data-en="Enter your email and we will send you a link to create a new one.">Ingresá tu correo y te enviamos un enlace para crear una nueva.</p>
 
       <div class="field">
-        <label class="field-label" for="oEmail">CORREO ELECTRÓNICO</label>
-        <input class="field-input" id="oEmail" type="email" placeholder="nombre@tuorganizacion.com" autocomplete="off">
+        <label class="field-label" for="oEmail" data-en="EMAIL">CORREO ELECTRÓNICO</label>
+        <input class="field-input" id="oEmail" type="email" placeholder="nombre@tuorganizacion.com" data-en-ph="name@yourorganization.com" autocomplete="off">
       </div>
 
       <div class="msg-box" id="msgOlvide"></div>
-      <button class="btn-main" id="btnOlvide" onclick="recuperar()">ENVIAR ENLACE</button>
+      <button class="btn-main" id="btnOlvide" onclick="recuperar()" data-en="SEND LINK">ENVIAR ENLACE</button>
 
       <div class="auth-foot">
-        <a onclick="irA('login')">Volver a iniciar sesión</a>
+        <a onclick="irA('login')" data-en="Back to sign in">Volver a iniciar sesión</a>
       </div>
     </div>
   </div>
@@ -332,35 +346,35 @@ body::after {
        ningún lado y el cliente quedaba sin poder recuperar el acceso. -->
   <div class="screen" id="screen-nueva-clave">
     <div class="auth-card">
-      <div class="auth-eyebrow">RECUPERAR ACCESO</div>
-      <h1 class="auth-title">Creá tu <em>nueva contraseña</em></h1>
-      <p class="auth-sub">Escribí una contraseña nueva para tu cuenta. Con eso vas a poder entrar de nuevo.</p>
+      <div class="auth-eyebrow" data-en="RECOVER ACCESS">RECUPERAR ACCESO</div>
+      <h1 class="auth-title" data-en="Create your <em>new password</em>">Creá tu <em>nueva contraseña</em></h1>
+      <p class="auth-sub" data-en="Type a new password for your account. With it you will be able to sign in again.">Escribí una contraseña nueva para tu cuenta. Con eso vas a poder entrar de nuevo.</p>
 
       <div class="field">
-        <label class="field-label" for="nClave">NUEVA CONTRASEÑA</label>
-        <input class="field-input" id="nClave" type="password" placeholder="Mínimo 8 caracteres" autocomplete="new-password">
+        <label class="field-label" for="nClave" data-en="NEW PASSWORD">NUEVA CONTRASEÑA</label>
+        <div class="pw-wrap"><input class="field-input" id="nClave" type="password" placeholder="Mínimo 8 caracteres" data-en-ph="At least 8 characters" autocomplete="new-password"><button type="button" class="pw-eye" onclick="verClave(this)" aria-label="Mostrar contraseña" data-en-aria="Show password"><svg viewBox="0 0 24 24" fill="none"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.6"/></svg></button></div>
       </div>
 
       <div class="field">
-        <label class="field-label" for="nClave2">REPETILA</label>
-        <input class="field-input" id="nClave2" type="password" placeholder="La misma otra vez" autocomplete="new-password">
+        <label class="field-label" for="nClave2" data-en="REPEAT IT">REPETILA</label>
+        <div class="pw-wrap"><input class="field-input" id="nClave2" type="password" placeholder="La misma otra vez" data-en-ph="The same one again" autocomplete="new-password"><button type="button" class="pw-eye" onclick="verClave(this)" aria-label="Mostrar contraseña" data-en-aria="Show password"><svg viewBox="0 0 24 24" fill="none"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.6"/></svg></button></div>
       </div>
 
       <div class="msg-box" id="msgNuevaClave"></div>
-      <button class="btn-main" id="btnNuevaClave" onclick="cambiarClave()">GUARDAR CONTRASEÑA</button>
+      <button class="btn-main" id="btnNuevaClave" onclick="cambiarClave()" data-en="SAVE PASSWORD">GUARDAR CONTRASEÑA</button>
     </div>
   </div>
 
   <!-- ═════════ PANTALLA: REVISÁ TU CORREO (post-registro) ═════════ -->
   <div class="screen" id="screen-verifica">
     <div class="auth-card">
-      <div class="auth-eyebrow">CASI LISTO</div>
-      <h1 class="auth-title">Revisá tu <em>correo</em></h1>
-      <p class="auth-sub" id="verificaTexto">Te enviamos un enlace de confirmación. Abrilo para activar tu cuenta y después entrá con tu correo y contraseña.</p>
-      <div class="notice">
+      <div class="auth-eyebrow" data-en="ALMOST THERE">CASI LISTO</div>
+      <h1 class="auth-title" data-en="Check your <em>email</em>">Revisá tu <em>correo</em></h1>
+      <p class="auth-sub" id="verificaTexto" data-en="We sent you a confirmation link. Open it to activate your account, then sign in with your email and password.">Te enviamos un enlace de confirmación. Abrilo para activar tu cuenta y después entrá con tu correo y contraseña.</p>
+      <div class="notice" data-en="<b>Didn't get it?</b> It can take a few minutes or land in spam. Check your junk folder.">
         <b>¿No llegó?</b> Puede tardar unos minutos o estar en spam. Revisá la carpeta de correo no deseado.
       </div>
-      <button class="btn-main" onclick="irA('login')">YA CONFIRMÉ · IR A INICIAR SESIÓN</button>
+      <button class="btn-main" onclick="irA('login')" data-en="I CONFIRMED · GO TO SIGN IN">YA CONFIRMÉ · IR A INICIAR SESIÓN</button>
     </div>
   </div>
 
@@ -369,21 +383,21 @@ body::after {
     <div class="account">
       <div class="account-head">
         <div>
-          <div class="welcome-eyebrow">TU ESPACIO EN EL ARCHIVO</div>
-          <div class="welcome-name">Bienvenido, <em id="accNombre">—</em></div>
+          <div class="welcome-eyebrow" data-en="YOUR SPACE IN THE ARCHIVE">TU ESPACIO EN EL ARCHIVO</div>
+          <div class="welcome-name"><span data-en="Welcome,">Bienvenido,</span> <em id="accNombre">—</em></div>
         </div>
         <div class="account-status">
-          <span class="dot"></span><span id="accEstadoCuenta">Cuenta activa</span><br>
+          <span class="dot"></span><span id="accEstadoCuenta" data-en="Account active">Cuenta activa</span><br>
           <span id="accEmailLogin" style="color:var(--dim);">—</span>
         </div>
       </div>
 
       <!-- ── AGREGADO: la acción principal — ir al motor a certificar ── -->
       <div class="certificar-block">
-        <div class="cb-eyebrow">GRABAR EN LA CADENA</div>
-        <div class="cb-title">Certificá un <em>activo</em></div>
-        <div class="cb-sub">Dibujá el contorno de tu recurso sobre el satélite y grabá su estado ambiental de forma permanente. La ubicación exacta la vas a marcar vos en el mapa.</div>
-        <button class="btn-certificar" onclick="irAlMotor()">DIBUJAR Y CERTIFICAR →</button>
+        <div class="cb-eyebrow" data-en="RECORD ON THE CHAIN">GRABAR EN LA CADENA</div>
+        <div class="cb-title" data-en="Certify an <em>asset</em>">Certificá un <em>activo</em></div>
+        <div class="cb-sub" data-en="Draw the outline of your resource over the satellite image and record its environmental state permanently. You will mark the exact location yourself on the map (the map is in Spanish).">Dibujá el contorno de tu recurso sobre el satélite y grabá su estado ambiental de forma permanente. La ubicación exacta la vas a marcar vos en el mapa.</div>
+        <button class="btn-certificar" onclick="irAlMotor()" data-en="DRAW AND CERTIFY →">DIBUJAR Y CERTIFICAR →</button>
       </div>
 
       <!-- ══ MI CARTERA · solo visible para el founder (reconoce tu email) ══ -->
@@ -394,48 +408,48 @@ body::after {
         <a class="founder-btn real" href="panel.html" style="display:inline-block;text-decoration:none;">ABRIR MI CARTERA →</a>
       </div>
 
-      <div class="panel-label">TUS DATOS · TOCÁ PARA EDITAR Y GUARDÁ AL FINAL</div>
+      <div class="panel-label" data-en="YOUR DETAILS · TAP TO EDIT AND SAVE AT THE END">TUS DATOS · TOCÁ PARA EDITAR Y GUARDÁ AL FINAL</div>
       <div class="data-grid">
         <div>
-          <label class="field-label" for="aNombre">NOMBRE</label>
-          <input class="field-input" id="aNombre" type="text" placeholder="Tu nombre">
+          <label class="field-label" for="aNombre" data-en="NAME">NOMBRE</label>
+          <input class="field-input" id="aNombre" type="text" placeholder="Tu nombre" data-en-ph="Your name">
         </div>
         <div>
-          <label class="field-label" for="aApellido">APELLIDO</label>
-          <input class="field-input" id="aApellido" type="text" placeholder="Tu apellido">
+          <label class="field-label" for="aApellido" data-en="LAST NAME">APELLIDO</label>
+          <input class="field-input" id="aApellido" type="text" placeholder="Tu apellido" data-en-ph="Your last name">
         </div>
         <div class="full">
-          <label class="field-label" for="aEmailContacto">CORREO DE CONTACTO</label>
-          <input class="field-input" id="aEmailContacto" type="email" placeholder="Puede ser el mismo del registro u otro">
-          <div class="hint-inline">Este es el correo donde querés recibir avisos y certificaciones. Puede ser distinto al de tu inicio de sesión.</div>
+          <label class="field-label" for="aEmailContacto" data-en="CONTACT EMAIL">CORREO DE CONTACTO</label>
+          <input class="field-input" id="aEmailContacto" type="email" placeholder="Puede ser el mismo del registro u otro" data-en-ph="Can be your sign-up email or another one">
+          <div class="hint-inline" data-en="This is the email where you want to receive alerts and certifications. It can differ from your sign-in email.">Este es el correo donde querés recibir avisos y certificaciones. Puede ser distinto al de tu inicio de sesión.</div>
         </div>
         <div>
-          <label class="field-label" for="aMovil">NÚMERO MÓVIL</label>
+          <label class="field-label" for="aMovil" data-en="MOBILE NUMBER">NÚMERO MÓVIL</label>
           <input class="field-input" id="aMovil" type="tel" placeholder="+54 …">
         </div>
         <div>
-          <label class="field-label" for="aCompania">COMPAÑÍA</label>
-          <input class="field-input" id="aCompania" type="text" placeholder="Nombre de tu organización">
+          <label class="field-label" for="aCompania" data-en="COMPANY">COMPAÑÍA</label>
+          <input class="field-input" id="aCompania" type="text" placeholder="Nombre de tu organización" data-en-ph="Your organization's name">
         </div>
         <div>
-          <label class="field-label" for="aPais">PAÍS / REGIÓN</label>
-          <input class="field-input" id="aPais" type="text" placeholder="Dónde está tu organización">
+          <label class="field-label" for="aPais" data-en="COUNTRY / REGION">PAÍS / REGIÓN</label>
+          <input class="field-input" id="aPais" type="text" placeholder="Dónde está tu organización" data-en-ph="Where your organization is based">
         </div>
         <div>
-          <label class="field-label" for="aUbicacionRecurso">UBICACIÓN DEL RECURSO A CERTIFICAR</label>
-          <input class="field-input" id="aUbicacionRecurso" type="text" placeholder="Ej.: Cuenca del Nilo, Medio Oriente">
-          <div class="hint-inline">Dónde está lo que vas a certificar — puede estar en otro lugar del mundo que tu organización. No son las coordenadas exactas.</div>
+          <label class="field-label" for="aUbicacionRecurso" data-en="LOCATION OF THE RESOURCE TO CERTIFY">UBICACIÓN DEL RECURSO A CERTIFICAR</label>
+          <input class="field-input" id="aUbicacionRecurso" type="text" placeholder="Ej.: Cuenca del Nilo, Medio Oriente" data-en-ph="E.g.: Nile Basin, Middle East">
+          <div class="hint-inline" data-en="Where the thing you will certify is — it may be somewhere else in the world from your organization. These are not exact coordinates.">Dónde está lo que vas a certificar — puede estar en otro lugar del mundo que tu organización. No son las coordenadas exactas.</div>
         </div>
       </div>
 
       <div class="msg-box" id="msgCuenta"></div>
       <div class="save-row">
-        <button class="btn-save" id="btnGuardar" onclick="guardarDatos()">GUARDAR CAMBIOS</button>
+        <button class="btn-save" id="btnGuardar" onclick="guardarDatos()" data-en="SAVE CHANGES">GUARDAR CAMBIOS</button>
       </div>
 
       <div class="account-actions">
-        <button class="ghost-btn" onclick="cerrarSesion()">CERRAR SESIÓN</button>
-        <button class="ghost-btn" onclick="irA('olvide')">CAMBIAR CONTRASEÑA</button>
+        <button class="ghost-btn" onclick="cerrarSesion()" data-en="SIGN OUT">CERRAR SESIÓN</button>
+        <button class="ghost-btn" onclick="irA('olvide')" data-en="CHANGE PASSWORD">CAMBIAR CONTRASEÑA</button>
       </div>
     </div>
   </div>
@@ -458,6 +472,47 @@ const REDIRECT_URL = window.location.origin + window.location.pathname;
 
 let supa = null;
 let supabaseListo = false;
+
+/* ══ AJUSTE 25/10 · IDIOMA (español / inglés) ══
+   Una sola página, dos idiomas. Se elige así: ?lang=en en la dirección,
+   o lo último que eligió esta persona, o si llegó desde una página en
+   inglés (…-en.html). El botón ES/EN de arriba cambia en el momento. */
+const LANG = (function(){
+  try {
+    const q = new URLSearchParams(location.search).get('lang');
+    if (q === 'en' || q === 'es') { localStorage.setItem('epi_lang', q); return q; }
+    const g = localStorage.getItem('epi_lang');
+    if (g === 'en' || g === 'es') return g;
+  } catch (e) {}
+  if (/-en\.html/.test(document.referrer || '')) return 'en';
+  return 'es';
+})();
+// T('texto en castellano', 'English text') → devuelve el del idioma elegido
+function T(es, en){ return LANG === 'en' ? en : es; }
+function aplicarIdioma(){
+  if (LANG !== 'en') return;
+  document.documentElement.lang = 'en';
+  document.title = 'EPIMELEIA — Your account';
+  document.querySelectorAll('[data-en]').forEach(el => { el.innerHTML = el.dataset.en; });
+  document.querySelectorAll('[data-en-ph]').forEach(el => { el.placeholder = el.dataset.enPh; });
+  document.querySelectorAll('[data-en-aria]').forEach(el => { el.setAttribute('aria-label', el.dataset.enAria); });
+  const b = document.getElementById('langBtn'); if (b) b.textContent = 'ES';
+}
+function cambiarIdioma(){
+  const nuevo = LANG === 'en' ? 'es' : 'en';
+  try { localStorage.setItem('epi_lang', nuevo); } catch (e) {}
+  const u = new URL(location.href); u.searchParams.set('lang', nuevo);
+  location.href = u.toString();
+}
+// Ojito: muestra u oculta lo que se escribe en la contraseña
+function verClave(btn){
+  const inp = btn.parentElement.querySelector('input');
+  const ver = inp.type === 'password';
+  inp.type = ver ? 'text' : 'password';
+  btn.classList.toggle('on', ver);
+  btn.setAttribute('aria-label', ver ? T('Ocultar contraseña','Hide password') : T('Mostrar contraseña','Show password'));
+}
+aplicarIdioma();
 
 // Arranca el cliente de Supabase (si ya pegaste las credenciales)
 (function initSupabase(){
@@ -491,7 +546,7 @@ function mostrarMsg(id, texto, tipo) {
 
 function chequearSupabase(msgId) {
   if (!supabaseListo) {
-    mostrarMsg(msgId, 'Falta conectar Supabase. Pegá la URL y la anon key arriba en el archivo para activar esto.', 'err');
+    mostrarMsg(msgId, T('Falta conectar Supabase. Pegá la URL y la anon key arriba en el archivo para activar esto.','The service is not connected yet. Please try again later.'), 'err');
     return false;
   }
   return true;
@@ -503,15 +558,17 @@ async function registrar() {
   const org    = document.getElementById('rOrg').value.trim();
   const email  = document.getElementById('rEmail').value.trim().toLowerCase();
   const pass   = document.getElementById('rPass').value;
+  const pass2  = document.getElementById('rPass2').value;
 
-  if (!nombre)            { return mostrarMsg('msgRegistro', 'Escribí tu nombre.', 'err'); }
-  if (!org)               { return mostrarMsg('msgRegistro', 'Escribí tu organización.', 'err'); }
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { return mostrarMsg('msgRegistro', 'Ingresá un correo válido.', 'err'); }
-  if (pass.length < 8)    { return mostrarMsg('msgRegistro', 'La contraseña necesita al menos 8 caracteres.', 'err'); }
+  if (!nombre)            { return mostrarMsg('msgRegistro', T('Escribí tu nombre.','Enter your name.'), 'err'); }
+  if (!org)               { return mostrarMsg('msgRegistro', T('Escribí tu organización.','Enter your organization.'), 'err'); }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { return mostrarMsg('msgRegistro', T('Ingresá un correo válido.','Enter a valid email.'), 'err'); }
+  if (pass.length < 8)    { return mostrarMsg('msgRegistro', T('La contraseña necesita al menos 8 caracteres.','The password needs at least 8 characters.'), 'err'); }
+  if (pass !== pass2)     { return mostrarMsg('msgRegistro', T('Las dos contraseñas no coinciden. Escribilas de nuevo (podés tocar el ojito para verlas).','The two passwords do not match. Type them again (tap the eye to see them).'), 'err'); }
   if (!chequearSupabase('msgRegistro')) return;
 
   const btn = document.getElementById('btnRegistro');
-  btn.disabled = true; btn.textContent = 'CREANDO CUENTA…';
+  btn.disabled = true; btn.textContent = T('CREANDO CUENTA…','CREATING ACCOUNT…');
 
   const { data, error } = await supa.auth.signUp({
     email: email,
@@ -522,14 +579,15 @@ async function registrar() {
     }
   });
 
-  btn.disabled = false; btn.textContent = 'CREAR CUENTA';
+  btn.disabled = false; btn.textContent = T('CREAR CUENTA','CREATE ACCOUNT');
 
   if (error) {
     return mostrarMsg('msgRegistro', traducirError(error.message), 'err');
   }
   // Todo ok → mandar a "revisá tu correo"
   document.getElementById('verificaTexto').textContent =
-    'Te enviamos un enlace de confirmación a ' + email + '. Abrilo para activar tu cuenta, y después entrá con tu correo y contraseña.';
+    T('Te enviamos un enlace de confirmación a ' + email + '. Abrilo para activar tu cuenta, y después entrá con tu correo y contraseña.',
+      'We sent a confirmation link to ' + email + '. Open it to activate your account, then sign in with your email and password.');
   irA('verifica');
 }
 
@@ -538,16 +596,16 @@ async function ingresar() {
   const email = document.getElementById('lEmail').value.trim().toLowerCase();
   const pass  = document.getElementById('lPass').value;
 
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { return mostrarMsg('msgLogin', 'Ingresá un correo válido.', 'err'); }
-  if (!pass)              { return mostrarMsg('msgLogin', 'Escribí tu contraseña.', 'err'); }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { return mostrarMsg('msgLogin', T('Ingresá un correo válido.','Enter a valid email.'), 'err'); }
+  if (!pass)              { return mostrarMsg('msgLogin', T('Escribí tu contraseña.','Enter your password.'), 'err'); }
   if (!chequearSupabase('msgLogin')) return;
 
   const btn = document.getElementById('btnLogin');
-  btn.disabled = true; btn.textContent = 'ENTRANDO…';
+  btn.disabled = true; btn.textContent = T('ENTRANDO…','SIGNING IN…');
 
   const { data, error } = await supa.auth.signInWithPassword({ email: email, password: pass });
 
-  btn.disabled = false; btn.textContent = 'ENTRAR';
+  btn.disabled = false; btn.textContent = T('ENTRAR','SIGN IN');
 
   if (error) { return mostrarMsg('msgLogin', traducirError(error.message), 'err'); }
   await cargarCuenta();
@@ -556,18 +614,18 @@ async function ingresar() {
 /* ── OLVIDÉ CONTRASEÑA ── */
 async function recuperar() {
   const email = document.getElementById('oEmail').value.trim().toLowerCase();
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { return mostrarMsg('msgOlvide', 'Ingresá un correo válido.', 'err'); }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { return mostrarMsg('msgOlvide', T('Ingresá un correo válido.','Enter a valid email.'), 'err'); }
   if (!chequearSupabase('msgOlvide')) return;
 
   const btn = document.getElementById('btnOlvide');
-  btn.disabled = true; btn.textContent = 'ENVIANDO…';
+  btn.disabled = true; btn.textContent = T('ENVIANDO…','SENDING…');
 
   const { error } = await supa.auth.resetPasswordForEmail(email, { redirectTo: REDIRECT_URL });
 
-  btn.disabled = false; btn.textContent = 'ENVIAR ENLACE';
+  btn.disabled = false; btn.textContent = T('ENVIAR ENLACE','SEND LINK');
 
   if (error) { return mostrarMsg('msgOlvide', traducirError(error.message), 'err'); }
-  mostrarMsg('msgOlvide', 'Listo. Si ese correo tiene una cuenta, te llegó el enlace. Revisá tu bandeja (y spam).', 'ok');
+  mostrarMsg('msgOlvide', T('Listo. Si ese correo tiene una cuenta, te llegó el enlace. Revisá tu bandeja (y spam).','Done. If that email has an account, the link is on its way. Check your inbox (and spam).'), 'ok');
 }
 
 /* ── IR AL MOTOR A CERTIFICAR ── */
@@ -600,7 +658,7 @@ async function cargarCuenta() {
 
   // Datos que ya vienen con el usuario (metadata)
   const meta = user.user_metadata || {};
-  document.getElementById('accNombre').textContent = meta.nombre || 'colega';
+  document.getElementById('accNombre').textContent = meta.nombre || T('colega','colleague');
   document.getElementById('accEmailLogin').textContent = user.email;
 
   // Rellenar el formulario editable con lo que haya guardado
@@ -755,7 +813,7 @@ async function founderSellar(ejecutar) {
 async function guardarDatos() {
   if (!chequearSupabase('msgCuenta')) return;
   const btn = document.getElementById('btnGuardar');
-  btn.disabled = true; btn.textContent = 'GUARDANDO…';
+  btn.disabled = true; btn.textContent = T('GUARDANDO…','SAVING…');
 
   const datos = {
     nombre:            document.getElementById('aNombre').value.trim(),
@@ -769,11 +827,11 @@ async function guardarDatos() {
 
   const { error } = await supa.auth.updateUser({ data: datos });
 
-  btn.disabled = false; btn.textContent = 'GUARDAR CAMBIOS';
+  btn.disabled = false; btn.textContent = T('GUARDAR CAMBIOS','SAVE CHANGES');
 
   if (error) { return mostrarMsg('msgCuenta', traducirError(error.message), 'err'); }
-  document.getElementById('accNombre').textContent = datos.nombre || 'colega';
-  mostrarMsg('msgCuenta', 'Cambios guardados.', 'ok');
+  document.getElementById('accNombre').textContent = datos.nombre || T('colega','colleague');
+  mostrarMsg('msgCuenta', T('Cambios guardados.','Changes saved.'), 'ok');
   setTimeout(()=>{ const m=document.getElementById('msgCuenta'); m.textContent=''; m.className='msg-box'; }, 2500);
 }
 
@@ -786,7 +844,7 @@ async function cerrarSesion() {
 /* ── Botón Google: inicia el ingreso con Google ── */
 async function entrarConGoogle() {
   if (!supabaseListo) {
-    alert('Falta conectar Supabase para usar Google.');
+    alert(T('Falta conectar Supabase para usar Google.','Google sign-in is not available yet.'));
     return;
   }
   const { error } = await supa.auth.signInWithOAuth({
@@ -796,19 +854,19 @@ async function entrarConGoogle() {
     }
   });
   if (error) {
-    alert('No se pudo iniciar con Google. Probá de nuevo en un momento.');
+    alert(T('No se pudo iniciar con Google. Probá de nuevo en un momento.','Could not sign in with Google. Please try again in a moment.'));
   }
 }
 
 /* ── Traducir los errores de Supabase al castellano ── */
 function traducirError(msg) {
   msg = (msg || '').toLowerCase();
-  if (msg.includes('already registered') || msg.includes('already exists')) return 'Ya existe una cuenta con ese correo. Probá iniciar sesión.';
-  if (msg.includes('invalid login')) return 'Correo o contraseña incorrectos.';
-  if (msg.includes('email not confirmed')) return 'Todavía no confirmaste tu correo. Revisá tu bandeja (y spam).';
-  if (msg.includes('password')) return 'La contraseña no cumple los requisitos (mínimo 8 caracteres).';
-  if (msg.includes('rate limit') || msg.includes('too many')) return 'Demasiados intentos. Esperá un momento y probá de nuevo.';
-  return 'No se pudo completar. Intentá de nuevo en un momento.';
+  if (msg.includes('already registered') || msg.includes('already exists')) return T('Ya existe una cuenta con ese correo. Probá iniciar sesión.','An account with that email already exists. Try signing in.');
+  if (msg.includes('invalid login')) return T('Correo o contraseña incorrectos.','Wrong email or password.');
+  if (msg.includes('email not confirmed')) return T('Todavía no confirmaste tu correo. Revisá tu bandeja (y spam).','You have not confirmed your email yet. Check your inbox (and spam).');
+  if (msg.includes('password')) return T('La contraseña no cumple los requisitos (mínimo 8 caracteres).','The password does not meet the requirements (at least 8 characters).');
+  if (msg.includes('rate limit') || msg.includes('too many')) return T('Demasiados intentos. Esperá un momento y probá de nuevo.','Too many attempts. Wait a moment and try again.');
+  return T('No se pudo completar. Intentá de nuevo en un momento.','Could not complete it. Try again in a moment.');
 }
 
 /* ── AJUSTE 42 · guardar la nueva contraseña ──
@@ -816,15 +874,15 @@ function traducirError(msg) {
    sesión especial de recuperación, así que updateUser({password}) le cambia
    la clave. No pide la vieja: el enlace del mail ES la prueba de identidad. */
 async function cambiarClave(){
-  if (!supabaseListo) { return mostrarMsg('msgNuevaClave', 'Falta conectar Supabase.', 'err'); }
+  if (!supabaseListo) { return mostrarMsg('msgNuevaClave', T('Falta conectar Supabase.','The service is not connected yet.'), 'err'); }
 
   const c1 = (document.getElementById('nClave').value || '');
   const c2 = (document.getElementById('nClave2').value || '');
 
-  if (c1.length < 8)  { return mostrarMsg('msgNuevaClave', 'La contraseña debe tener al menos 8 caracteres.', 'err'); }
-  if (c1 !== c2)      { return mostrarMsg('msgNuevaClave', 'Las dos contraseñas no coinciden.', 'err'); }
+  if (c1.length < 8)  { return mostrarMsg('msgNuevaClave', T('La contraseña debe tener al menos 8 caracteres.','The password must have at least 8 characters.'), 'err'); }
+  if (c1 !== c2)      { return mostrarMsg('msgNuevaClave', T('Las dos contraseñas no coinciden.','The two passwords do not match.'), 'err'); }
 
-  mostrarMsg('msgNuevaClave', 'Guardando…', 'ok');
+  mostrarMsg('msgNuevaClave', T('Guardando…','Saving…'), 'ok');
   const btn = document.getElementById('btnNuevaClave');
   if (btn) btn.disabled = true;
 
@@ -837,12 +895,12 @@ async function cambiarClave(){
     // vencimiento). Se le explica sin tecnicismos.
     const msg = (error.message || '').toLowerCase();
     if (msg.includes('expired') || msg.includes('invalid') || msg.includes('session')) {
-      return mostrarMsg('msgNuevaClave', 'El enlace venció o ya se usó. Pedí uno nuevo desde "Olvidaste tu contraseña".', 'err');
+      return mostrarMsg('msgNuevaClave', T('El enlace venció o ya se usó. Pedí uno nuevo desde "Olvidaste tu contraseña".','The link expired or was already used. Request a new one from "Forgot your password".'), 'err');
     }
-    return mostrarMsg('msgNuevaClave', 'No se pudo guardar. Probá de nuevo o pedí un enlace nuevo.', 'err');
+    return mostrarMsg('msgNuevaClave', T('No se pudo guardar. Probá de nuevo o pedí un enlace nuevo.','Could not save it. Try again or request a new link.'), 'err');
   }
 
-  mostrarMsg('msgNuevaClave', '¡Listo! Tu contraseña quedó cambiada. Entrando…', 'ok');
+  mostrarMsg('msgNuevaClave', T('¡Listo! Tu contraseña quedó cambiada. Entrando…','Done! Your password was changed. Signing you in…'), 'ok');
   // Ya quedó logueado con la sesión de recuperación → lo llevamos a su cuenta.
   setTimeout(async () => { await cargarCuenta(); }, 1200);
 }
