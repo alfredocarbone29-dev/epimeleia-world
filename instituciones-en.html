@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- Google tag (gtag.js) — EPIMELEIA Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-JKB0L91JHH"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-JKB0L91JHH');
+  </script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Immutable environmental proof for green finance — EPIMELEIA Institutions</title>
+
+<!-- Postal de compartir (Open Graph + Twitter) -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="EPIMELEIA">
+<meta property="og:title" content="EPIMELEIA — Institutions">
+<meta property="og:description" content="See and prove the real state of what matters to you, without anyone being able to alter it.">
+<meta property="og:image" content="https://www.epimeleia.world/image_d8f5651c.png">
+<meta property="og:url" content="https://www.epimeleia.world/instituciones-en.html">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="EPIMELEIA — Institutions">
+<meta name="twitter:description" content="See and prove the real state of what matters to you, without anyone being able to alter it.">
+<meta name="twitter:image" content="https://www.epimeleia.world/image_d8f5651c.png">
+<meta name="description" content="Satellite evidence sealed and unalterable on blockchain, verifiable by third parties. Proof that the data was not altered, for banks, funds and green bond issuers.">
+<meta name="robots" content="index, follow">
+<link rel="alternate" hreflang="es" href="https://www.epimeleia.world/instituciones.html">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@300;400;500;600&family=IBM+Plex+Serif:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* tinta institucional — frío, no la calidez del productor */
+  --ink:#070B14; --ink2:#0B111E; --ink3:#101827; --card:#0E1524;
+  --line:rgba(150,170,205,0.11); --line2:rgba(150,170,205,0.18);
+  --bone:#EAEEF6; --steel:#8C99B2; --slate:#5A6987;
+  --dim:#3F4B63; --muted:#8C99B2;
+  --azure:#8FB0DA;         /* acento de autoridad · links, estructura */
+  --azure-dim:#5E7BA6;
+  --sealed:#5FA588;        /* verde de "sellado" · guiño al padre, usado con cuentagotas */
+  --rust:#C07E5C;          /* exposición / riesgo · hairline, nunca ruidoso */
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  background:
+    radial-gradient(ellipse 60% 50% at 82% -5%, rgba(143,176,218,0.06) 0%, transparent 55%),
+    radial-gradient(ellipse 50% 40% at 5% 100%, rgba(95,165,136,0.045) 0%, transparent 60%),
+    var(--ink);
+  color:var(--bone); font-family:'IBM Plex Sans',system-ui,sans-serif; font-size:17px; line-height:1.65;
+  -webkit-font-smoothing:antialiased;
+}
+/* pauta de ledger — reglado tenue vertical, refuerza "registro" */
+body::before{
+  content:''; position:fixed; inset:0; z-index:0; pointer-events:none; opacity:0.5;
+  background-image:linear-gradient(90deg, rgba(150,170,205,0.025) 1px, transparent 1px);
+  background-size:clamp(48px,7vw,96px) 100%;
+}
+main,.topbar,footer{position:relative; z-index:1;}
+.wrap{max-width:1120px; margin:0 auto; padding-left:clamp(20px,5vw,56px); padding-right:clamp(20px,5vw,56px);}
+.rule{height:1px; background:var(--line); max-width:1120px; margin:0 auto;}
+.mono{font-family:'IBM Plex Mono',monospace;}
+
+/* ── TOPBAR ── */
+.topbar{position:sticky; top:0; z-index:50; background:rgba(7,11,20,0.86); backdrop-filter:blur(18px); border-bottom:1px solid var(--line);}
+.topbar-in{display:flex; align-items:center; justify-content:space-between; gap:16px; padding:16px clamp(20px,5vw,56px);}
+.mark{display:flex; align-items:baseline; gap:11px;}
+.mark b{font-family:'IBM Plex Sans',sans-serif; font-weight:600; font-size:15px; letter-spacing:4px; color:var(--bone);}
+.mark span{font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:3px; color:var(--azure);}
+.topbar-r{display:flex; align-items:center; gap:10px;}
+.topbar-link{font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:1.5px; color:var(--steel); text-decoration:none; padding:9px 12px; border:1px solid transparent; transition:color .2s,border-color .2s;}
+.topbar-link:hover{color:var(--bone); border-color:var(--line2);}
+.topbar-cta{font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:1.5px; color:var(--ink); background:var(--azure); text-decoration:none; padding:10px 16px; transition:background .2s;}
+.topbar-cta:hover{background:var(--bone);}
+@media(max-width:640px){ .topbar-link.hide-sm{display:none;} }
+
+/* ── HERO (tesis: la carga de la prueba) ── */
+.hero{padding:clamp(64px,11vw,132px) 0 clamp(48px,7vw,80px);}
+.hero-eyebrow{font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:4px; color:var(--azure); margin-bottom:28px;}
+.hero-h1{font-family:'IBM Plex Serif',Georgia,serif; font-weight:400; font-size:clamp(34px,6vw,68px); line-height:1.08; letter-spacing:-0.5px; color:var(--bone); max-width:15ch;}
+.hero-h1 em{font-style:italic; color:var(--azure);}
+.hero-lead{font-size:clamp(17px,1.8vw,21px); line-height:1.6; color:var(--steel); max-width:60ch; margin-top:30px;}
+.hero-lead strong{color:var(--bone); font-weight:500;}
+/* strip de autenticación — firma del diseño */
+.authstrip{display:flex; flex-wrap:wrap; align-items:stretch; margin-top:44px; border:1px solid var(--line2); max-width:760px;}
+.authstrip .seg{flex:1 1 auto; padding:14px 18px; border-right:1px solid var(--line); font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:1.5px; color:var(--steel); display:flex; align-items:center; gap:9px; white-space:nowrap;}
+.authstrip .seg:last-child{border-right:none;}
+.authstrip .seg b{color:var(--bone); font-weight:500;}
+.livedot{width:6px; height:6px; border-radius:50%; background:var(--sealed); box-shadow:0 0 8px var(--sealed); animation:blink 2.6s ease-in-out infinite; flex-shrink:0;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.35;}}
+@media(max-width:680px){ .authstrip .seg{flex-basis:100%; border-right:none; border-bottom:1px solid var(--line);} .authstrip .seg:last-child{border-bottom:none;} }
+
+/* ── SECCIÓN genérica ── */
+.sec{padding:clamp(56px,8vw,104px) 0;}
+.kicker{font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:3px; color:var(--azure); margin-bottom:18px;}
+.sec-h2{font-family:'IBM Plex Serif',Georgia,serif; font-weight:400; font-size:clamp(25px,3.6vw,42px); line-height:1.18; color:var(--bone); max-width:22ch;}
+.sec-h2.center{margin-left:auto; margin-right:auto; text-align:center; max-width:26ch;}
+.sec-intro{font-size:clamp(16px,1.6vw,19px); color:var(--steel); line-height:1.65; max-width:64ch; margin-top:22px;}
+.sec-intro.center{margin-left:auto; margin-right:auto; text-align:center;}
+
+/* ── EL TERRENO CAMBIÓ (grid de 3 hechos) ── */
+.shift{display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--line); border:1px solid var(--line); margin-top:clamp(36px,5vw,56px);}
+.shift-cell{background:var(--ink2); padding:clamp(26px,3vw,40px) clamp(22px,2.4vw,32px); display:flex; flex-direction:column; gap:16px;}
+.shift-n{font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:2px; color:var(--azure-dim);}
+.shift-t{font-family:'IBM Plex Sans',sans-serif; font-weight:600; font-size:clamp(18px,2vw,22px); color:var(--bone); line-height:1.25;}
+.shift-d{font-size:15px; color:var(--steel); line-height:1.6;}
+.shift-stat{font-family:'IBM Plex Mono',monospace; font-size:13px; color:var(--bone); padding-top:14px; border-top:1px solid var(--line); display:flex; align-items:baseline; gap:8px;}
+.shift-stat .big{font-family:'IBM Plex Serif',serif; font-size:clamp(24px,3vw,32px); color:var(--rust);}
+.shift-foot{text-align:center; max-width:70ch; margin:clamp(34px,4vw,48px) auto 0; font-family:'IBM Plex Serif',serif; font-style:italic; font-size:clamp(17px,1.9vw,22px); color:var(--steel); line-height:1.5;}
+.shift-foot b{color:var(--bone); font-style:normal; font-weight:500;}
+
+/* ── LO QUE RECIBE (bloque oscuro + lista) ── */
+.deliver{display:grid; grid-template-columns:1.05fr 1fr; gap:clamp(30px,5vw,64px); align-items:center;}
+.deliver-list{display:flex; flex-direction:column; gap:2px;}
+.deliver-item{padding:20px 0; border-bottom:1px solid var(--line); display:grid; grid-template-columns:auto 1fr; gap:16px; align-items:start;}
+.deliver-item:first-child{border-top:1px solid var(--line);}
+.deliver-k{font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:1px; color:var(--azure); padding-top:3px;}
+.deliver-v{font-size:16px; color:var(--bone); line-height:1.55;}
+.deliver-v span{color:var(--steel);}
+/* exhibit — anexo probatorio (firma visual, versión institucional del certificado) */
+.exhibit{background:var(--card); border:1px solid var(--line2); box-shadow:0 30px 70px rgba(0,0,0,0.5); position:relative;}
+.exhibit::before{content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,var(--azure),transparent 70%);}
+.exhibit-top{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:16px 22px; border-bottom:1px solid var(--line);}
+.exhibit-tag{font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:2.5px; color:var(--steel);}
+.exhibit-ref{font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:1px; color:var(--dim);}
+.exhibit-body{padding:22px;}
+.exhibit-row{display:grid; grid-template-columns:1fr auto; gap:6px 14px; padding:11px 0; border-bottom:1px solid var(--line); align-items:baseline;}
+.exhibit-row:last-of-type{border-bottom:none;}
+.exhibit-rk{font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:1.5px; color:var(--steel);}
+.exhibit-rv{font-family:'IBM Plex Sans',sans-serif; font-size:15px; color:var(--bone); text-align:right;}
+.exhibit-rv.mono{font-family:'IBM Plex Mono',monospace; font-size:11px; word-break:break-all;}
+.exhibit-seal{margin-top:16px; background:var(--ink); border:1px solid var(--line); padding:16px 18px;}
+.exhibit-seal-tag{font-family:'IBM Plex Mono',monospace; font-size:8px; letter-spacing:2px; color:var(--sealed); display:flex; align-items:center; gap:8px; margin-bottom:10px;}
+.exhibit-seal-line{font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--steel); line-height:1.7; word-break:break-all;}
+.exhibit-seal-line b{color:var(--azure); font-weight:400;}
+.exhibit-verify{display:inline-block; margin-top:12px; font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:1.5px; color:var(--ink); background:var(--azure); text-decoration:none; padding:9px 15px;}
+.exhibit-cap{text-align:center; font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:1.5px; color:var(--dim); margin-top:18px;}
+
+/* ── POR QUÉ ES DEFENDIBLE ── */
+.why{display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--line); border:1px solid var(--line); margin-top:clamp(36px,5vw,56px);}
+.why-cell{background:var(--ink2); padding:clamp(26px,3vw,38px) clamp(22px,2.4vw,30px);}
+.why-k{font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:2px; color:var(--azure); margin-bottom:16px;}
+.why-t{font-family:'IBM Plex Sans',sans-serif; font-weight:600; font-size:clamp(17px,1.9vw,21px); color:var(--bone); margin-bottom:12px; line-height:1.25;}
+.why-d{font-size:15px; color:var(--steel); line-height:1.62;}
+.why-d b{color:var(--bone); font-weight:500;}
+
+/* ── DÓNDE ENCAJA ── */
+.fit{border:1px solid var(--line2); background:var(--ink2); padding:clamp(30px,4.5vw,56px); margin-top:clamp(30px,4vw,44px);}
+.fit-grid{display:grid; grid-template-columns:1fr 1fr; gap:clamp(24px,4vw,48px);}
+.fit-block h4{font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:2px; color:var(--azure); margin-bottom:12px;}
+.fit-block p{font-size:15.5px; color:var(--steel); line-height:1.65;}
+.fit-block p b{color:var(--bone); font-weight:500;}
+.fit-note{margin-top:clamp(28px,4vw,40px); padding-top:clamp(24px,3vw,32px); border-top:1px solid var(--line); font-family:'IBM Plex Serif',serif; font-style:italic; font-size:clamp(16px,1.7vw,20px); color:var(--bone); line-height:1.5; text-align:center; max-width:66ch; margin-left:auto; margin-right:auto;}
+
+/* ── PRECIO / ESCALA ── */
+.price-lead{text-align:center; max-width:60ch; margin:0 auto clamp(38px,5vw,52px);}
+.price-lead .kicker{margin-bottom:14px;}
+.scale{display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--line); border:1px solid var(--line); max-width:920px; margin:0 auto;}
+.scale-cell{background:var(--ink2); padding:clamp(26px,3vw,38px) clamp(22px,2.4vw,30px);}
+.scale-tier{font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:2.5px; color:var(--azure); margin-bottom:14px;}
+.scale-for{font-size:14px; color:var(--steel); line-height:1.5; margin-bottom:20px; min-height:42px;}
+.scale-num{font-family:'IBM Plex Serif',serif; font-size:clamp(26px,3.6vw,40px); color:var(--bone); line-height:1;}
+.scale-num small{font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--steel); letter-spacing:1px;}
+.scale-sub{font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:1px; color:var(--dim); margin-top:10px;}
+.scale-note{max-width:760px; margin:clamp(30px,4vw,42px) auto 0; text-align:center; font-size:15.5px; color:var(--steel); line-height:1.7;}
+.scale-note b{color:var(--bone); font-weight:500;}
+.pencil{display:inline-block; font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:1.5px; color:var(--rust); border:1px solid rgba(192,126,92,0.4); padding:6px 12px; margin-top:18px;}
+
+/* ── QUÉ SOMOS / QUÉ NO ── */
+.frame{display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--line); border:1px solid var(--line); max-width:900px; margin:clamp(32px,4vw,44px) auto 0;}
+.frame-cell{background:var(--ink2); padding:clamp(26px,3vw,36px);}
+.frame-k{font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:2px; margin-bottom:14px;}
+.frame-cell.is .frame-k{color:var(--sealed);}
+.frame-cell.no .frame-k{color:var(--rust);}
+.frame-cell p{font-size:15.5px; color:var(--steel); line-height:1.62;}
+.frame-cell p b{color:var(--bone); font-weight:500;}
+
+/* ── OPCIONES (las tres formas · idénticas en todo el sitio) ──
+   Mismo trío y mismo TEXTO que el index, eudr y plataforma. El contenido
+   de las opciones no cambia entre páginas; sí su piel, adaptada acá a la
+   paleta institucional (azure / bone / steel). No reescribir el texto. */
+.opt-list{display:flex; flex-direction:column; gap:10px; max-width:720px; margin:0 auto; text-align:left;}
+.opt{display:flex; gap:16px; background:var(--ink2); border:1px solid var(--line2); padding:18px 20px; align-items:flex-start;}
+.opt.combo{background:var(--card); border-color:rgba(143,176,218,0.38);}
+.opt-k{flex-shrink:0; font-family:'IBM Plex Mono',monospace; font-size:15px; letter-spacing:1px; color:var(--azure-dim); width:26px; line-height:1.4;}
+.opt.combo .opt-k{color:var(--azure);}
+.opt-name{font-family:'IBM Plex Sans',sans-serif; font-weight:600; font-size:17px; color:var(--bone); line-height:1.25;}
+.opt.combo .opt-name{color:var(--azure);}
+.opt-desc{font-size:14px; color:var(--steel); line-height:1.55; margin-top:6px;}
+
+/* ── PUERTA / CIERRE ── */
+.door{text-align:center; padding:clamp(64px,9vw,120px) 0; border-top:1px solid var(--line);}
+.door-kicker{font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:3px; color:var(--azure); margin-bottom:22px;}
+.door-h2{font-family:'IBM Plex Serif',serif; font-weight:400; font-size:clamp(26px,4vw,46px); color:var(--bone); line-height:1.2; max-width:20ch; margin:0 auto 20px;}
+.door-h2 em{font-style:italic; color:var(--azure);}
+.door-sub{font-size:clamp(16px,1.7vw,19px); color:var(--steel); max-width:56ch; margin:0 auto clamp(34px,4vw,44px); line-height:1.6;}
+.door-cta{display:inline-block; font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:2.5px; color:var(--ink); background:var(--azure); text-decoration:none; padding:19px 44px; transition:background .2s, transform .15s;}
+.door-cta:hover{background:var(--bone); transform:translateY(-1px);}
+.door-note{font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:1.5px; color:var(--dim); margin-top:18px;}
+
+/* ── FOOTER ── */
+footer{border-top:1px solid var(--line); background:var(--ink);}
+.foot-in{display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:20px; padding:clamp(36px,5vw,56px) clamp(20px,5vw,56px); max-width:1120px; margin:0 auto;}
+.foot-l{display:flex; flex-direction:column; gap:8px;}
+.foot-l .m{font-family:'IBM Plex Sans',sans-serif; font-weight:600; letter-spacing:4px; font-size:14px; color:var(--bone);}
+.foot-l .s{font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:2px; color:var(--dim);}
+.foot-mail{font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:1px; color:var(--azure); text-decoration:none; border:1px solid var(--line2); padding:13px 20px; transition:border-color .2s,color .2s;}
+.foot-mail:hover{border-color:var(--azure); color:var(--bone);}
+
+/* ── EPI (adaptado a la paleta institucional · azure) ── */
+.epi-bubble{position:fixed; right:clamp(16px,3vw,32px); bottom:clamp(16px,3vw,32px); z-index:60; width:58px; height:58px; border-radius:50%; background:radial-gradient(circle at 35% 30%, var(--ink3), var(--card)); border:1px solid rgba(143,176,218,0.4); cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 6px 26px rgba(0,0,0,0.55); transition:transform .25s ease; animation:epiPulse 3.4s ease-in-out infinite;}
+.epi-bubble:hover{transform:scale(1.08);}
+@keyframes epiPulse{0%,100%{box-shadow:0 6px 26px rgba(0,0,0,0.55), 0 0 0 0 rgba(143,176,218,0.28);}50%{box-shadow:0 6px 26px rgba(0,0,0,0.55), 0 0 0 10px rgba(143,176,218,0);}}
+.epi-bubble svg{width:25px; height:25px;}
+.epi-bubble .spark-lg{fill:var(--azure);}
+.epi-bubble .spark-sm{fill:var(--sealed);}
+.epi-bubble.hidden{opacity:0; pointer-events:none; transform:scale(0.6);}
+.epi-panel{position:fixed; right:clamp(16px,3vw,32px); bottom:clamp(16px,3vw,32px); z-index:61; width:min(380px, calc(100vw - 32px)); height:min(560px, calc(100vh - 64px)); background:var(--ink); border:1px solid var(--line2); display:none; flex-direction:column; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,0.65); animation:epiOpen .28s cubic-bezier(.2,.8,.2,1);}
+.epi-panel.open{display:flex;}
+@keyframes epiOpen{from{opacity:0; transform:translateY(16px) scale(.97);}to{opacity:1; transform:translateY(0) scale(1);}}
+.epi-top{flex-shrink:0; padding:16px 18px; border-bottom:1px solid var(--line); display:flex; align-items:center; justify-content:space-between; background:rgba(11,17,30,0.7);}
+.epi-top-l{display:flex; align-items:center; gap:10px;}
+.epi-top-ico{width:26px; height:26px;}
+.epi-top-ico .spark-lg{fill:var(--azure);}
+.epi-top-ico .spark-sm{fill:var(--sealed);}
+.epi-top-name{font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:3px; color:var(--bone);}
+.epi-top-sub{font-family:'IBM Plex Mono',monospace; font-size:7px; letter-spacing:1px; color:var(--dim); margin-top:2px;}
+.epi-close{background:none; border:none; color:var(--dim); font-size:16px; cursor:pointer; font-family:'IBM Plex Mono',monospace; transition:color .2s;}
+.epi-close:hover{color:var(--bone);}
+.epi-msgs{flex:1; overflow-y:auto; padding:20px 16px; display:flex; flex-direction:column; gap:16px;}
+.epi-msgs::-webkit-scrollbar{width:2px;}
+.epi-msgs::-webkit-scrollbar-thumb{background:var(--dim);}
+.emsg{display:flex; gap:9px; animation:msgIn .3s ease;}
+@keyframes msgIn{from{opacity:0; transform:translateY(8px);}to{opacity:1; transform:translateY(0);}}
+.emsg.user{flex-direction:row-reverse;}
+.emsg-av{width:22px; height:22px; flex-shrink:0; border:1px solid var(--line2); display:flex; align-items:center; justify-content:center; font-family:'IBM Plex Mono',monospace; font-size:6px; margin-top:2px;}
+.emsg-av.agent{color:var(--azure); background:var(--ink2);}
+.emsg-av.user{color:var(--steel); background:var(--ink3);}
+.emsg-b{max-width:calc(100% - 34px); padding:12px 14px; font-size:15px; line-height:1.6; border:1px solid;}
+.emsg-b.agent{background:var(--ink2); border-color:var(--line); color:var(--bone);}
+.emsg-b.user{background:var(--ink3); border-color:var(--line2); color:var(--steel);}
+.epi-input{flex-shrink:0; padding:14px 16px; border-top:1px solid var(--line); background:rgba(7,11,20,0.7);}
+.epi-input-row{display:flex; gap:8px; align-items:flex-end;}
+.epi-input textarea{flex:1; background:var(--ink2); border:1px solid var(--line2); color:var(--bone); font-family:'IBM Plex Sans',sans-serif; font-size:15px; padding:11px 13px; outline:none; resize:none; min-height:44px; max-height:110px; line-height:1.5; transition:border-color .2s;}
+.epi-input textarea:focus{border-color:var(--azure);}
+.epi-input textarea::placeholder{color:var(--dim);}
+.epi-send{width:44px; height:44px; flex-shrink:0; background:var(--azure); border:none; color:var(--ink); font-size:16px; cursor:pointer; transition:background .2s;}
+.epi-send:hover{background:var(--bone);}
+.epi-hint{font-family:'IBM Plex Mono',monospace; font-size:7px; letter-spacing:1px; color:var(--dim); text-align:center; margin-top:9px;}
+
+/* ══════════════════════════════════════════════════════════════════
+   BOTÓN FLOTANTE · PROBAR EL MAPA EN MODO INVITADO  (AGREGADO)
+   Abajo a la IZQUIERDA (EPI queda a la derecha). Lleva a protocolo.html.
+   Paleta azul institucional. Nada más se tocó.
+   ══════════════════════════════════════════════════════════════════ */
+.mapa-float{position:fixed; left:clamp(16px,3vw,32px); bottom:clamp(16px,3vw,32px); z-index:60; display:flex; align-items:center; gap:12px; max-width:min(78vw,310px); background:var(--azure); color:var(--ink); text-decoration:none; padding:13px 18px; box-shadow:0 8px 30px rgba(0,0,0,0.55); transition:background .2s, transform .2s; animation:mapaFloatIn .5s ease both;}
+.mapa-float:hover{background:var(--bone); transform:translateY(-2px);}
+@keyframes mapaFloatIn{from{opacity:0; transform:translateY(14px);}to{opacity:1; transform:translateY(0);}}
+.mapa-float-ico{flex-shrink:0; display:flex;}
+.mapa-float-ico svg{width:22px; height:22px;}
+.mapa-float-txt{display:flex; flex-direction:column; line-height:1.2; min-width:0;}
+.mapa-float-txt b{font-family:'IBM Plex Serif',serif; font-size:14.5px; font-weight:500;}
+.mapa-float-txt small{font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:0.4px; opacity:0.78; margin-top:3px;}
+.mapa-float:focus-visible{outline:2px solid var(--bone); outline-offset:3px;}
+@media(max-width:520px){ .mapa-float{ max-width:66vw; padding:11px 14px; gap:9px; left:14px; bottom:14px; } .mapa-float-txt b{ font-size:12.5px; } .mapa-float-txt small{ font-size:8px; } .mapa-float-ico svg{ width:19px; height:19px; } }
+@media(prefers-reduced-motion:reduce){ .mapa-float{ animation:none; } }
+
+a:focus-visible, .topbar-cta:focus-visible, .door-cta:focus-visible{outline:2px solid var(--azure); outline-offset:3px;}
+@media(max-width:860px){
+  .deliver{grid-template-columns:1fr;} .fit-grid{grid-template-columns:1fr;}
+  .shift{grid-template-columns:1fr;} .why{grid-template-columns:1fr;} .scale{grid-template-columns:1fr;}
+  .frame{grid-template-columns:1fr;}
+}
+@media(prefers-reduced-motion:reduce){ *{animation:none!important; transition:none!important;} html{scroll-behavior:auto;} }
+
+/* ══ BOTÓN FLOTANTE · TU OFICINA (idéntico en EUDR, Plataforma e Instituciones) ══
+   Arriba de EPI, a la derecha. Colores fijos para que se vea igual en las tres. */
+.ofi-float{position:fixed; right:clamp(16px,3vw,32px); bottom:calc(clamp(16px,3vw,32px) + 72px); z-index:60; display:flex; align-items:center; gap:10px; background:#F4F0E8; color:#070B0A; text-decoration:none; padding:11px 16px 11px 13px; border-radius:30px; box-shadow:0 8px 30px rgba(0,0,0,0.55); font-family:'JetBrains Mono','IBM Plex Mono',monospace; transition:transform .2s, background .2s;}
+.ofi-float:hover{background:#FFFFFF; transform:translateY(-2px);}
+.ofi-float svg{width:20px; height:20px; flex-shrink:0;}
+.ofi-float-txt{display:flex; flex-direction:column; line-height:1.15;}
+.ofi-float-txt b{font-size:11px; letter-spacing:2px; font-weight:600;}
+.ofi-float-txt small{font-size:8.5px; letter-spacing:0.3px; opacity:0.7; margin-top:3px;}
+.ofi-float:focus-visible{outline:2px solid #5FAD5F; outline-offset:3px;}
+@media(max-width:520px){ .ofi-float{ right:14px; bottom:84px; width:60px; padding:9px 0 8px; border-radius:16px; flex-direction:column; gap:4px; } .ofi-float-txt b{ font-size:7.5px; letter-spacing:1px; } .ofi-float-txt small{ display:none; } }
+.lang-link{font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:1.5px; color:var(--azure); text-decoration:none; border:1px solid var(--line2); padding:5px 9px; margin-left:4px;}
+.lang-link:hover{border-color:var(--azure); color:var(--bone);}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-in">
+    <div class="mark"><b>EPIMELEIA</b><span>INSTITUTIONS</span><a class="lang-link" href="instituciones.html" hreflang="es" aria-label="Versión en español">ES</a></div>
+    <div class="topbar-r">
+      <a class="topbar-link hide-sm" href="index-en.html">← SEE EPIMELEIA</a>
+      <a class="topbar-cta" href="cuenta.html?origen=instituciones">INSTITUTIONAL SIGN-UP</a>
+    </div>
+  </div>
+</div>
+
+<main>
+
+<!-- HERO · tesis: la carga de la prueba se dio vuelta -->
+<section class="hero">
+  <div class="wrap">
+    <div class="hero-eyebrow">FOR BANKS · FUNDS · GREEN BOND ISSUERS</div>
+    <h1 class="hero-h1">Declaring it used to be enough. Today you have to <em>prove it</em>.</h1>
+    <p class="hero-lead">The burden of proof has flipped. Before a regulator or an auditor, it is no longer enough to claim an asset is green: you have to demonstrate it, with evidence that <strong>no one could have touched</strong>. That is exactly what we deliver — the same satellite, the same immutability as the rest of EPIMELEIA, at portfolio scale.</p>
+    <div class="authstrip">
+      <div class="seg"><span class="livedot"></span> <b>SATELLITE PROOF</b></div>
+      <div class="seg">SEALED ON-CHAIN</div>
+      <div class="seg">VERIFIABLE BY YOUR REGULATOR</div>
+      <div class="seg"><b>WITHOUT TRUSTING US</b></div>
+    </div>
+  </div>
+</section>
+
+<div class="rule"></div>
+
+<!-- EL TERRENO CAMBIÓ -->
+<section class="sec">
+  <div class="wrap">
+    <div class="kicker">WHY NOW</div>
+    <h2 class="sec-h2">The ground a financial institution operates on has already changed</h2>
+    <p class="sec-intro">We are not the ones bringing these problems. They are the new rules of green finance — and anyone already living them knows what we mean.</p>
+    <div class="shift">
+      <div class="shift-cell">
+        <div class="shift-n">01</div>
+        <div class="shift-t">A declaration is no longer enough</div>
+        <div class="shift-d">The legal weight has reversed: now the institution has to prove its green claim is valid, rather than a third party having to show it is false. Without traceable evidence, a claim is a liability.</div>
+        <div class="shift-stat"><span class="big">↺</span> BURDEN OF PROOF · REVERSED</div>
+      </div>
+      <div class="shift-cell">
+        <div class="shift-n">02</div>
+        <div class="shift-t">Greenwashing now has a price</div>
+        <div class="shift-d">Regulators have moved from guidance to sanctions. A misleading ESG claim is no longer an abstract reputational risk: it has become fines, investigations and market exposure.</div>
+        <div class="shift-stat"><span class="big">€25M</span> ONE ASSET MANAGER · ONE CLAIM</div>
+      </div>
+      <div class="shift-cell">
+        <div class="shift-n">03</div>
+        <div class="shift-t">Traditional verification is slow and expensive</div>
+        <div class="shift-d">A manual audit takes between 12 and 24 months and depends on someone traveling, inspecting and signing. Digital verification with satellite data cuts that operating cost drastically.</div>
+        <div class="shift-stat"><span class="big">−50/70%</span> VERIFICATION COST</div>
+      </div>
+    </div>
+    <p class="shift-foot">The question is no longer whether you will need the proof. It is <b>whether you will have it the day someone asks for it</b>.</p>
+  </div>
+</section>
+
+<div class="rule"></div>
+
+<!-- LO QUE RECIBE + EXHIBIT -->
+<section class="sec">
+  <div class="wrap">
+    <div class="kicker">THE PROOF, IN PRACTICE</div>
+    <h2 class="sec-h2" style="margin-bottom:clamp(36px,5vw,52px);">What an institution receives</h2>
+    <div class="deliver">
+      <div class="deliver-list">
+        <div class="deliver-item"><div class="deliver-k">01</div><div class="deliver-v"><b>Satellite</b> proof, from the European source Copernicus · Sentinel-2. <span>We neither take nor edit it: we receive it and record it as it arrives.</span></div></div>
+        <div class="deliver-item"><div class="deliver-k">02</div><div class="deliver-v"><b>Sealed on Polygon</b>, dated, and impossible to alter afterwards. <span>Not by the client, not by the issuer, not by us. There is no edit button.</span></div></div>
+        <div class="deliver-item"><div class="deliver-k">03</div><div class="deliver-v"><b>Verifiable by anyone</b> — including your regulator — without having to trust EPIMELEIA. <span>The proof checks itself, against the chain.</span></div></div>
+        <div class="deliver-item"><div class="deliver-k">04</div><div class="deliver-v"><b>At portfolio scale:</b> every financed asset, observed pass after pass, with an alert when something changes. <span>Continuous monitoring, not a one-off snapshot.</span></div></div>
+      </div>
+      <!-- EXHIBIT · anexo probatorio (dato real: perito moreno · 2/8/2026) -->
+      <div>
+        <div class="exhibit">
+          <div class="exhibit-top">
+            <span class="exhibit-tag">EVIDENCE EXHIBIT</span>
+            <span class="exhibit-ref">EXH. 001 · PORTFOLIO</span>
+          </div>
+          <div class="exhibit-body">
+            <div class="exhibit-row"><span class="exhibit-rk">OBSERVED ASSET</span><span class="exhibit-rv">perito moreno · ID 5</span></div>
+            <div class="exhibit-row"><span class="exhibit-rk">OBSERVATION</span><span class="exhibit-rv">Sentinel-2 · pass 29 JUL 2026</span></div>
+            <div class="exhibit-row"><span class="exhibit-rk">READING QUALITY</span><span class="exhibit-rv mono">53%</span></div>
+            <div class="exhibit-seal">
+              <div class="exhibit-seal-tag"><span class="livedot"></span> IMMUTABLE SEAL · THIRD-PARTY VERIFIABLE</div>
+              <div class="exhibit-seal-line">
+                <b>Evidence hash</b><br>0xb7ec531476e4a968a46f6dcfcb917e84e8499f5cb551705d66c764683d3ebdf6<br>
+                <b>Contract</b> · 0xf59BCFB98Ba9e05dC82d44E508d90917AF8bbc93 · Polygon Mainnet<br>
+                <b>Sealed</b> · block #91317931
+              </div>
+              <a class="exhibit-verify" href="https://polygonscan.com/tx/0xa3344ad6404ce2cc5f25c189c5826e7a1a9f71e47b4f965e62ff230ccdc53a2a" target="_blank" rel="noopener">VERIFY ON POLYGONSCAN →</a>
+            </div>
+          </div>
+        </div>
+        <div class="exhibit-cap">REAL EVIDENCE · NOT A MOCK-UP</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="rule"></div>
+
+<!-- POR QUÉ ES DEFENDIBLE (el argumento de por qué elegirnos) -->
+<section class="sec">
+  <div class="wrap">
+    <div class="kicker" style="text-align:center;">WHY INSTITUTIONS CHOOSE US</div>
+    <h2 class="sec-h2 center">We don't sell the data. We sell the proof your defense depends on.</h2>
+    <div class="why">
+      <div class="why-cell">
+        <div class="why-k">NEUTRAL RECORD</div>
+        <div class="why-t">We are not the auditor. We are the proven fact.</div>
+        <div class="why-d">We do not judge whether an asset is good or bad. We leave <b>the fact on record</b>, dated, so your risk team or your verifier can form their judgment on evidence that is already locked down.</div>
+      </div>
+      <div class="why-cell">
+        <div class="why-k">NO GOING BACK</div>
+        <div class="why-t">No one touches it. Not even us.</div>
+        <div class="why-d">In litigation or a review, the date and state of an asset <b>do not depend on our word</b>. They depend on the chain, which is public and cannot be edited. That is the difference between a promise and a proof.</div>
+      </div>
+      <div class="why-cell">
+        <div class="why-k">CONSERVATIVE RIGOR</div>
+        <div class="why-t">When the satellite cannot see, that is recorded too.</div>
+        <div class="why-d">If clouds or a failure prevent observation, that gap is recorded anyway: we call it an <b>opacity gap</b>. We do not invent data to fill gaps. It is exactly the rigor that MRV integrity demands.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="rule"></div>
+
+<!-- DÓNDE ENCAJA -->
+<section class="sec">
+  <div class="wrap">
+    <div class="kicker">WHERE IT FITS IN YOUR STRUCTURE</div>
+    <h2 class="sec-h2">We don't replace your process. We give it the evidence it lacks today.</h2>
+    <div class="fit">
+      <div class="fit-grid">
+        <div class="fit-block">
+          <h4>FOR THOSE WHO FINANCE</h4>
+          <p>A bank or fund with a green portfolio: you monitor every financed asset and prove to your regulator that your book is genuinely green — with an auditable trail that <b>does not depend on anyone confirming it</b>.</p>
+        </div>
+        <div class="fit-block">
+          <h4>FOR THOSE WHO REPORT</h4>
+          <p>A green bond issuer or anyone reporting to investors: traceable evidence, year after year, that backs your impact report and <b>keeps your market access open</b> without exposure to a greenwashing accusation.</p>
+        </div>
+      </div>
+      <p class="fit-note">We are the immutable proof layer that your Second Party Opinion, your report and your monitoring rest on. Lower verification cost, higher defensibility.</p>
+    </div>
+  </div>
+</section>
+
+<div class="rule"></div>
+
+<!-- ESCALA / CÓMO SE ARMA (sin precios · conversado) -->
+<section class="sec">
+  <div class="wrap">
+    <div class="price-lead">
+      <div class="kicker">INSTITUTIONAL SCALE</div>
+      <h2 class="sec-h2 center">There is no off-the-shelf rate. There is a case, and we build it with you.</h2>
+      <p class="sec-intro center">The satellite does not discriminate, and the door is the same for everyone. The only thing that changes is scale — and scale is <b>how many assets need certifying</b>. We do not charge by the hectare or from a price list: every green book is different, and the scope is defined in conversation, case by case.</p>
+    </div>
+    <p class="scale-note"><b>Every asset receives the same, regardless of portfolio size:</b> satellite observation sealed on-chain, a biweekly report and a quarterly close, an opacity gap recorded when the satellite cannot see, and public third-party verification. The only thing that changes is <b>volume</b> — and we size that with you.</p>
+    <p class="scale-note">A bank does not compare against what a farmer pays: it compares against an audit costing tens of thousands that takes months. Against that, this is precise, fast and verifiable. The exact scope, implementation and terms <b>are agreed in a conversation</b>, based on your portfolio and your needs.</p>
+    <div style="text-align:center; margin-top:clamp(26px,3.5vw,36px);">
+      <a class="foot-mail" href="mailto:info@epimeleia.world?subject=EPIMELEIA%20institutional%20inquiry">✉ LET'S TALK · INFO@EPIMELEIA.WORLD</a>
+    </div>
+  </div>
+</section>
+
+<div class="rule"></div>
+
+<!-- QUÉ SOMOS / QUÉ NO -->
+<section class="sec">
+  <div class="wrap">
+    <div class="kicker" style="text-align:center;">NO FINE PRINT</div>
+    <h2 class="sec-h2 center">What we are, and what we are not.</h2>
+    <div class="frame">
+      <div class="frame-cell is">
+        <div class="frame-k">WHAT WE ARE</div>
+        <p><b>The provider of immutable evidence.</b> Satellite proof, sealed, dated and impossible to retouch, that feeds your process and stands up to review. Neutral, verifiable and at portfolio scale.</p>
+      </div>
+      <div class="frame-cell no">
+        <div class="frame-k">WHAT WE ARE NOT</div>
+        <p><b>We are not an accredited verifier.</b> Your SPO provides the accreditation; we provide the immutable proof. We do not compete with your verifier — we give it the data it lacks today.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="rule"></div>
+
+<!-- LAS TRES FORMAS DE CERTIFICAR · IDÉNTICAS EN TODO EL SITIO ──
+     Mismo trío y mismo texto que el index, eudr y plataforma. Si cambia una
+     palabra acá, cambia en todas. La oferta es la misma para todos; lo único
+     propio de esta página es a quién le habla (framing institucional). -->
+<section class="sec">
+  <div class="wrap">
+    <div class="kicker" style="text-align:center;">THE SAME OFFER · AT PORTFOLIO SCALE</div>
+    <h2 class="sec-h2 center">Three ways to certify. The same for everyone.</h2>
+    <p class="sec-intro center" style="margin-bottom:clamp(36px,5vw,52px);">The offer is identical across the platform. For an institution, these three apply to the portfolio — scope and volume are sized with you.</p>
+    <div class="opt-list">
+      <div class="opt">
+        <div class="opt-k">01</div>
+        <div><div class="opt-name">Deforestation only · EUDR</div><div class="opt-desc">The historical check of your land, sealed on blockchain. The backing for your Due Diligence Statement. Irrefutable proof looking back.</div></div>
+      </div>
+      <div class="opt">
+        <div class="opt-k">02</div>
+        <div><div class="opt-name">Continuous monitoring</div><div class="opt-desc">The satellite observes your asset every two weeks, going forward, and seals every reading. You get alerts about what happens. A guardian that never sleeps.</div></div>
+      </div>
+      <div class="opt combo">
+        <div class="opt-k">03</div>
+        <div><div class="opt-name">Full coverage · EUDR + monitoring</div><div class="opt-desc">Both: the historical proof for the EUDR and continuous monitoring going forward. Full coverage, from past to future.</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PUERTA / CIERRE -->
+<section class="door">
+  <div class="wrap">
+    <div class="door-kicker">EVERYONE COMES IN THROUGH THE SAME DOOR</div>
+    <h2 class="door-h2">The satellite does not discriminate. <em>Neither does EPIMELEIA.</em></h2>
+    <p class="door-sub">The same door, the same satellite, the same proof. The only thing that changes is the scale of what is at stake.</p>
+    <a class="door-cta" href="cuenta.html?origen=instituciones">INSTITUTIONAL SIGN-UP →</a>
+    <div class="door-note">OR WRITE TO US AT INFO@EPIMELEIA.WORLD</div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="foot-in">
+    <div class="foot-l">
+      <span class="m">EPIMELEIA</span>
+      <span class="s">INSTITUTIONS · POLYGON MAINNET · 2026</span>
+    </div>
+    <a class="foot-mail" href="mailto:info@epimeleia.world">✉ INFO@EPIMELEIA.WORLD</a>
+  </div>
+</footer>
+
+</main>
+
+<!-- BOTÓN FLOTANTE · PROBAR EL MAPA EN MODO INVITADO (AGREGADO) -->
+<a class="mapa-float" href="protocolo.html?origen=instituciones" aria-label="Draw and certify your resource on the map, without signing up">
+  <span class="mapa-float-ico">
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 21.5s7-5.7 7-11.5a7 7 0 1 0-14 0c0 5.8 7 11.5 7 11.5z" fill="currentColor" opacity="0.22"/>
+      <path d="M12 21.5s7-5.7 7-11.5a7 7 0 1 0-14 0c0 5.8 7 11.5 7 11.5z" stroke="currentColor" stroke-width="1.6"/>
+      <circle cx="12" cy="10" r="2.5" fill="currentColor"/>
+    </svg>
+  </span>
+  <span class="mapa-float-txt">
+    <b>Draw and certify your resource</b>
+    <small>Live demo · map in Spanish →</small>
+  </span>
+</a>
+
+<!-- EPI BURBUJA (adaptado a la paleta institucional) -->
+<button class="epi-bubble" id="epiBubble" onclick="abrirEpi()" aria-label="Talk to EPI">
+  <svg viewBox="0 0 24 24">
+    <path class="spark-lg" d="M12 2l1.6 5.2L19 9l-5.4 1.8L12 16l-1.6-5.2L5 9l5.4-1.8z"/>
+    <path class="spark-sm" d="M18.5 14l.7 2.3 2.3.7-2.3.7-.7 2.3-.7-2.3-2.3-.7 2.3-.7z"/>
+  </svg>
+</button>
+
+<!-- EPI PANEL -->
+<div class="epi-panel" id="epiPanel">
+  <div class="epi-top">
+    <div class="epi-top-l">
+      <svg class="epi-top-ico" viewBox="0 0 24 24">
+        <path class="spark-lg" d="M12 2l1.6 5.2L19 9l-5.4 1.8L12 16l-1.6-5.2L5 9l5.4-1.8z"/>
+        <path class="spark-sm" d="M18.5 14l.7 2.3 2.3.7-2.3.7-.7 2.3-.7-2.3-2.3-.7 2.3-.7z"/>
+      </svg>
+      <div><div class="epi-top-name">EPI</div><div class="epi-top-sub">ANSWERS YOUR QUESTIONS</div></div>
+    </div>
+    <button class="epi-close" onclick="cerrarEpi()">✕</button>
+  </div>
+  <div class="epi-msgs" id="epiMsgs"></div>
+  <div class="epi-input">
+    <div class="epi-input-row">
+      <textarea id="epiText" placeholder="Type your question…" rows="1"></textarea>
+      <button class="epi-send" onclick="epiEnviar()">↑</button>
+    </div>
+    <div class="epi-hint">EPI ONLY EXPLAINS · IT DOES NOT SIGN YOU UP</div>
+  </div>
+</div>
+
+<script>
+/* ─── EPI (conectado a /api/chat · solo conversa) ─── */
+/* Memoria SOLO de la charla abierta: vive mientras la página está abierta. */
+let epiHistorial = [];
+let epiPensando = false;
+let epiCerrada = false;
+
+function abrirEpi(){
+  document.getElementById('epiPanel').classList.add('open');
+  document.getElementById('epiBubble').classList.add('hidden');
+  if(!document.getElementById('epiMsgs').hasChildNodes()){
+    epiMsg('agent', 'Hi. I am EPI. I am here to explain how EPIMELEIA works for an institution.\n\nAsk me anything — what immutable proof is, how it is verified against the chain, how it fits with your SPO or your report. I answer in English.');
+  }
+}
+function cerrarEpi(){
+  document.getElementById('epiPanel').classList.remove('open');
+  document.getElementById('epiBubble').classList.remove('hidden');
+}
+function epiMsg(rol, texto){
+  const c = document.getElementById('epiMsgs');
+  const w = document.createElement('div'); w.className='emsg '+rol;
+  const html = texto.replace(/\n\n/g,'</p><p>').replace(/^/,'<p>').replace(/$/,'</p>');
+  w.innerHTML = `<div class="emsg-av ${rol}">${rol==='agent'?'EP':'YOU'}</div><div class="emsg-b ${rol}">${html}</div>`;
+  c.appendChild(w); c.scrollTop = c.scrollHeight;
+  return w;
+}
+async function epiEnviar(){
+  const t = document.getElementById('epiText');
+  const v = t.value.trim();
+  if(!v || epiPensando || epiCerrada) return;
+  epiMsg('user', v);
+  epiHistorial.push({ role:'user', content:v });
+  t.value=''; t.style.height='auto';
+  epiPensando = true;
+  const pensando = epiMsg('agent', '…');
+  try {
+    const resp = await fetch('/api/chat', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify({ messages: epiHistorial })
+    });
+    const data = await resp.json();
+    pensando.remove();
+    let textoEpi = '';
+    if (data && Array.isArray(data.content)) {
+      textoEpi = data.content.filter(b => b.type === 'text').map(b => b.text).join('\n').trim();
+    }
+    if (!textoEpi) {
+      textoEpi = 'Sorry, I had a problem answering. Please try again in a moment, or write to info@epimeleia.world.';
+    }
+    const debeCerrar = textoEpi.includes('[[FIN_CHARLA]]');
+    textoEpi = textoEpi.replace(/\[\[FIN_CHARLA\]\]/g, '').trim();
+    if (textoEpi) {
+      epiMsg('agent', textoEpi);
+      epiHistorial.push({ role:'assistant', content:textoEpi });
+    }
+    if (debeCerrar) {
+      epiCerrada = true;
+      const box = document.getElementById('epiText');
+      box.disabled = true;
+      box.placeholder = 'Conversation ended.';
+    }
+  } catch (e) {
+    pensando.remove();
+    epiMsg('agent', 'I could not connect right now. Check your connection and try again, or write to info@epimeleia.world.');
+  } finally {
+    epiPensando = false;
+  }
+}
+document.getElementById('epiText').addEventListener('keydown', e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); epiEnviar(); } });
+document.getElementById('epiText').addEventListener('input', function(){ this.style.height='auto'; this.style.height=Math.min(this.scrollHeight,110)+'px'; });
+
+/* ─── EPI acompaña el scroll (sutil) ─── */
+let lastY = window.scrollY;
+window.addEventListener('scroll', ()=>{
+  const b = document.getElementById('epiBubble');
+  if (document.getElementById('epiPanel').classList.contains('open')) return;
+  const y = window.scrollY;
+  b.style.transform = y > lastY ? 'translateY(4px)' : 'translateY(-4px)';
+  clearTimeout(window._epiT);
+  window._epiT = setTimeout(()=>{ b.style.transform=''; }, 200);
+  lastY = y;
+}, { passive:true });
+</script>
+
+<!-- BOTÓN FLOTANTE · TU OFICINA (idéntico en EUDR, Plataforma e Instituciones) -->
+<a class="ofi-float" href="oficina.html" aria-label="Your office: your plots, lots and balances">
+  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect x="4" y="10" width="16" height="11" rx="1.5" stroke="currentColor" stroke-width="1.7"/>
+    <path d="M8 10V7a4 4 0 0 1 8 0v3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+    <circle cx="12" cy="15.5" r="1.6" fill="currentColor"/>
+  </svg>
+  <span class="ofi-float-txt"><b>YOUR OFFICE</b><small>Your lots and balances →</small></span>
+</a>
+</body>
+</html>

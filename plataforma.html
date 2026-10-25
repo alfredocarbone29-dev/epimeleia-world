@@ -26,6 +26,7 @@
 <meta name="twitter:image" content="https://www.epimeleia.world/image_d8f5651c.png">
 <meta name="description" content="Dibujá tu terreno sobre el satélite y sellá su estado ambiental de forma permanente, inalterable y verificable por terceros. Prueba real, sin intermediarios, en cuatro pasos.">
 <meta name="robots" content="index, follow">
+<link rel="alternate" hreflang="en" href="https://www.epimeleia.world/plataforma-en.html">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,700;1,400&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,400&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
@@ -448,13 +449,15 @@ section { position:relative; }
 .ofi-float-txt small{font-size:8.5px; letter-spacing:0.3px; opacity:0.7; margin-top:3px;}
 .ofi-float:focus-visible{outline:2px solid #5FAD5F; outline-offset:3px;}
 @media(max-width:520px){ .ofi-float{ right:14px; bottom:84px; width:60px; padding:9px 0 8px; border-radius:16px; flex-direction:column; gap:4px; } .ofi-float-txt b{ font-size:7.5px; letter-spacing:1px; } .ofi-float-txt small{ display:none; } }
+.lang-link { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:1.5px; color:var(--gold2); text-decoration:none; border:1px solid rgba(229,200,112,0.35); padding:5px 9px; border-radius:3px; margin-left:14px; }
+.lang-link:hover { border-color:var(--gold2); }
 </style>
 </head>
 <body>
 
 <!-- TOPBAR (barra chica · volver al inicio) -->
 <div class="topbar">
-  <div class="brand"><a href="index.html" style="color:var(--white);text-decoration:none;">← VER EPIMELEIA</a> <span>· PLATAFORMA</span></div>
+  <div class="brand"><a href="index.html" style="color:var(--white);text-decoration:none;">← VER EPIMELEIA</a> <span>· PLATAFORMA</span><a class="lang-link" href="plataforma-en.html" hreflang="en" aria-label="English version">EN</a></div>
   <nav class="topnav">
     <button onclick="abrir('comoFunciona')">CÓMO FUNCIONA</button>
     <button class="nav-prueba" onclick="irA('prueba')">LA PRUEBA</button>
@@ -958,4 +961,4 @@ window.addEventListener('scroll', ()=>{
   <span class="ofi-float-txt"><b>TU OFICINA</b><small>Tus lotes y saldos →</small></span>
 </a>
 </body>
-</html>
+</html>

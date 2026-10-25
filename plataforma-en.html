@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- Google tag (gtag.js) — EPIMELEIA Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-JKB0L91JHH"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-JKB0L91JHH');
+  </script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Certify your field, forest or water with satellite proof — EPIMELEIA</title>
+
+<!-- Postal de compartir (Open Graph + Twitter) -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="EPIMELEIA">
+<meta property="og:title" content="EPIMELEIA — For producers">
+<meta property="og:description" content="See and prove the real state of what matters to you, without anyone being able to alter it.">
+<meta property="og:image" content="https://www.epimeleia.world/image_d8f5651c.png">
+<meta property="og:url" content="https://www.epimeleia.world/plataforma-en.html">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="EPIMELEIA — For producers">
+<meta name="twitter:description" content="See and prove the real state of what matters to you, without anyone being able to alter it.">
+<meta name="twitter:image" content="https://www.epimeleia.world/image_d8f5651c.png">
+<meta name="description" content="Draw your land over the satellite image and seal its environmental state permanently, tamper-proof and verifiable by third parties. Real proof, no intermediaries, in four steps.">
+<meta name="robots" content="index, follow">
+<link rel="alternate" hreflang="es" href="https://www.epimeleia.world/plataforma.html">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,700;1,400&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,400&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --void:#040904; --deep:#080E08; --surface:#0C130C; --panel:#101810; --card:#141C14;
+  --line:rgba(255,255,255,0.055); --line2:rgba(255,255,255,0.09);
+  --text:#E8E4DA; --muted:#7E8C7E; --dim:#445844;
+  --green:#4A8A4A; --emerald:#5FAD5F; --teal:#3A8A7A; --gold:#C8A84B; --gold2:#E5C870; --white:#F4F0E8;
+  --amber:#C89A4A; --azure:#8FB0DA;
+  /* certificado (parchment, fiel al documento real) */
+  --cert-bg:#F4F0E8; --cert-ink:#1B2C1B; --cert-green:#2D4A2D; --cert-gold:#B8963F;
+  --cert-muted:#6B7A6B; --cert-line:rgba(27,44,27,0.14); --cert-seal:#0F1F0F;
+}
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+body {
+  background:
+    radial-gradient(ellipse 70% 50% at 15% 8%, rgba(58,138,122,0.07) 0%, transparent 55%),
+    radial-gradient(ellipse 55% 45% at 88% 92%, rgba(74,138,74,0.05) 0%, transparent 55%),
+    var(--deep);
+  color:var(--text); font-family:'Crimson Pro',Georgia,serif; font-size:18px; line-height:1.7;
+  min-height:100vh; -webkit-font-smoothing:antialiased;
+}
+body::after {
+  content:''; position:fixed; inset:0; z-index:9999; pointer-events:none;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+}
+section { position:relative; }
+.divider { height:1px; background:var(--line); max-width:1180px; margin:0 auto; }
+
+/* ─── TOPBAR ─── */
+.topbar {
+  position:sticky; top:0; z-index:100;
+  display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:16px;
+  padding:20px clamp(20px,5vw,64px);
+  background:rgba(4,9,4,0.86); backdrop-filter:blur(20px); border-bottom:1px solid var(--line);
+}
+.brand { font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:5px; color:var(--white); }
+.brand span { color:var(--dim); }
+.topnav { display:flex; flex-wrap:wrap; gap:8px; }
+.topnav button {
+  font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:1.5px;
+  color:var(--muted); background:transparent; border:1px solid transparent;
+  padding:9px 13px; cursor:pointer; transition:color .2s, border-color .2s;
+}
+.topnav button:hover { color:var(--text); border-color:var(--line2); }
+.topnav .nav-prueba { color:var(--emerald); border-color:rgba(95,173,95,0.25); }
+.topnav .nav-prueba:hover { border-color:var(--emerald); }
+.topnav .nav-gratis { color:var(--gold2); border-color:rgba(200,168,75,0.25); }
+.topnav .nav-gratis:hover { border-color:var(--gold); }
+
+/* ─── HERO ─── */
+.hero { max-width:1080px; margin:0 auto; padding:clamp(64px,12vw,140px) clamp(24px,5vw,64px) clamp(48px,8vw,88px); text-align:center; }
+.hero-mark { font-family:'Playfair Display',serif; font-weight:400; font-size:clamp(46px,11vw,120px); letter-spacing:clamp(6px,2vw,22px); color:var(--white); line-height:1; }
+.hero-welcome { font-family:'JetBrains Mono',monospace; font-size:clamp(9px,1.2vw,12px); letter-spacing:6px; color:var(--teal); margin-top:22px; }
+.hero-rule { width:64px; height:1px; background:var(--dim); margin:34px auto; }
+.hero-lead { font-family:'Playfair Display',serif; font-weight:400; font-style:italic; font-size:clamp(25px,3.8vw,44px); line-height:1.3; color:var(--white); max-width:860px; margin:0 auto; }
+.hero-lead em { font-style:italic; color:var(--emerald); }
+.hero-plain { font-size:clamp(17px,1.7vw,20px); color:rgba(232,228,218,0.7); max-width:660px; margin:32px auto 0; line-height:1.7; }
+.hero-proofline { display:inline-flex; align-items:center; gap:10px; margin-top:38px; font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:2px; color:var(--muted); border:1px solid var(--line2); padding:12px 20px; cursor:pointer; transition:border-color .2s, color .2s; background:transparent; }
+.hero-proofline:hover { border-color:var(--emerald); color:var(--text); }
+.hero-proofline .dot { width:6px; height:6px; border-radius:50%; background:var(--emerald); animation:blink 2.5s ease-in-out infinite; }
+.hero-proofline span { color:var(--emerald); }
+
+/* ─── BIFURCACIÓN (dos caminos) ─── */
+.bifurca { max-width:880px; margin:clamp(46px,7vw,74px) auto 0; }
+.bifurca-lead { font-family:'Playfair Display',serif; font-style:italic; font-size:clamp(18px,2.3vw,25px); color:var(--white); line-height:1.4; max-width:640px; margin:0 auto clamp(28px,4vw,40px); }
+.bifurca-lead span { color:var(--emerald); font-style:normal; }
+.bifurca-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; text-align:left; }
+.camino { display:block; background:var(--card); border:1px solid var(--line2); padding:clamp(26px,3vw,38px) clamp(24px,2.6vw,32px); cursor:pointer; text-decoration:none; font-family:inherit; width:100%; position:relative; transition:border-color .2s, background .2s, transform .15s; }
+.camino:hover { transform:translateY(-3px); background:var(--panel); }
+.camino-k { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:2px; margin-bottom:16px; }
+.camino-name { font-family:'Playfair Display',serif; font-size:clamp(20px,2.5vw,28px); color:var(--white); line-height:1.12; margin-bottom:12px; }
+.camino-sub { font-size:14.5px; color:rgba(232,228,218,0.6); line-height:1.5; min-height:42px; }
+.camino-arrow { font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:1px; margin-top:20px; }
+.camino.prod:hover { border-color:var(--emerald); }
+.camino.prod .camino-k, .camino.prod .camino-arrow { color:var(--emerald); }
+.camino.bancos { background:linear-gradient(150deg, var(--card), rgba(143,176,218,0.06)); }
+.camino.bancos:hover { border-color:var(--azure); }
+.camino.bancos .camino-k, .camino.bancos .camino-arrow { color:var(--azure); }
+.camino-ia { position:absolute; top:clamp(20px,2.4vw,26px); right:clamp(20px,2.4vw,26px); display:inline-flex; align-items:center; gap:6px; font-family:'JetBrains Mono',monospace; font-size:8px; letter-spacing:1px; color:var(--muted); border:1px solid var(--line2); padding:5px 9px; }
+.camino-ia svg { width:11px; height:11px; }
+.camino-ia .spark-lg { fill:var(--emerald); }
+.camino-ia .spark-sm { fill:var(--gold2); }
+.camino.bancos .camino-ia .spark-lg { fill:var(--azure); }
+@media(max-width:640px){ .bifurca-grid { grid-template-columns:1fr; } }
+
+/* ─── SECCIÓN genérica ─── */
+.sec { max-width:1080px; margin:0 auto; padding:clamp(52px,8vw,96px) clamp(24px,5vw,64px); }
+.sec-narrow { max-width:1000px; }
+.eyebrow { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:3px; color:var(--teal); }
+.head { text-align:center; margin-bottom:clamp(32px,5vw,52px); }
+.head .eyebrow { margin-bottom:16px; }
+.head-title { font-family:'Playfair Display',serif; font-weight:400; font-size:clamp(24px,3.6vw,42px); color:var(--white); line-height:1.2; max-width:820px; margin:0 auto; }
+.head-title em { font-style:italic; color:var(--emerald); }
+.head-sub { font-size:clamp(16px,1.7vw,19px); color:rgba(232,228,218,0.62); max-width:620px; margin:22px auto 0; line-height:1.7; }
+
+/* ─── CÓMO FUNCIONA (pasos) ─── */
+.steps { display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--line); border:1px solid var(--line); max-width:980px; margin:0 auto; }
+.step { background:var(--deep); padding:clamp(26px,3.2vw,38px) clamp(20px,2.2vw,30px); text-align:left; }
+.step-k { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:2px; color:var(--teal); margin-bottom:14px; }
+.step-t { font-family:'Playfair Display',serif; font-size:clamp(19px,2.1vw,24px); color:var(--white); margin-bottom:10px; }
+.step-d { font-size:15.5px; color:rgba(232,228,218,0.62); line-height:1.6; }
+.antip { max-width:780px; margin:clamp(44px,6vw,72px) auto 0; text-align:center; padding:clamp(30px,4vw,44px) clamp(24px,4vw,44px); border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
+.antip p { font-family:'Playfair Display',serif; font-style:italic; font-size:clamp(20px,2.5vw,29px); color:var(--white); line-height:1.4; }
+.antip span { color:var(--teal); font-style:normal; }
+
+/* ─── CUATRO CLICKS ─── */
+.cc-steps { display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:var(--line); border:1px solid var(--line); }
+.cc-step { background:var(--deep); padding:clamp(24px,2.6vw,32px) clamp(16px,1.8vw,24px); text-align:left; }
+.cc-num { font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:1px; color:var(--teal); margin-bottom:16px; }
+.cc-ico { font-size:26px; line-height:1; margin-bottom:14px; }
+.cc-step-t { font-family:'Playfair Display',serif; font-size:clamp(17px,1.8vw,21px); color:var(--white); margin-bottom:8px; }
+.cc-step-d { font-size:14.5px; color:rgba(232,228,218,0.6); line-height:1.55; }
+.cc-nofriction { display:flex; flex-wrap:wrap; justify-content:center; gap:10px; margin-top:clamp(32px,5vw,44px); }
+.cc-tag { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:1px; color:var(--muted); border:1px solid var(--line2); padding:11px 16px; }
+.cc-tag span { color:var(--emerald); }
+.cc-close { max-width:660px; margin:clamp(34px,5vw,48px) auto 0; text-align:center; font-family:'Playfair Display',serif; font-style:italic; font-size:clamp(18px,2.2vw,26px); color:var(--white); line-height:1.35; }
+
+/* ─── GUARDIA VIVA ─── */
+.gv-statement { font-family:'Playfair Display',serif; font-style:italic; font-weight:400; font-size:clamp(27px,4.4vw,50px); line-height:1.22; color:var(--white); max-width:800px; margin:0 auto; text-align:center; }
+.gv-statement span { font-style:normal; color:var(--emerald); }
+.gv-lead { font-size:clamp(16px,1.7vw,19px); color:rgba(232,228,218,0.68); line-height:1.7; max-width:620px; margin:28px auto 0; text-align:center; }
+.pasadas { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; margin:clamp(44px,6vw,64px) auto 0; }
+.pasada { display:flex; flex-direction:column; align-items:center; gap:8px; padding:0 clamp(10px,2vw,22px); }
+.pasada-dot { width:9px; height:9px; border-radius:50%; background:var(--emerald); }
+.pasada.alert .pasada-dot { background:var(--amber); animation:ping 2.4s ease-in-out infinite; }
+@keyframes ping { 0%,100%{box-shadow:0 0 0 0 rgba(200,154,74,0.45);} 50%{box-shadow:0 0 0 8px rgba(200,154,74,0);} }
+.pasada-date { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:1px; color:var(--muted); }
+.pasada.alert .pasada-date { color:var(--amber); }
+.pasada-line { flex:1; min-width:20px; height:1px; background:var(--line2); align-self:center; margin-top:-18px; }
+.pasadas-cap { text-align:center; font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:2px; color:var(--dim); margin-top:20px; }
+.gv-arrow { text-align:center; font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:2px; color:var(--teal); margin:clamp(36px,5vw,52px) 0 20px; }
+.alerta { max-width:540px; margin:0 auto; background:var(--panel); border:1px solid var(--line2); border-left:2px solid var(--amber); padding:22px 24px; box-shadow:0 16px 44px rgba(0,0,0,0.45); }
+.alerta-top { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:16px; padding-bottom:14px; border-bottom:1px solid var(--line); }
+.alerta-from { display:flex; align-items:center; gap:9px; }
+.alerta-livedot { width:6px; height:6px; border-radius:50%; background:var(--emerald); animation:blink 2.5s ease-in-out infinite; }
+@keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+.alerta-fromtext { font-family:'JetBrains Mono',monospace; font-size:8px; letter-spacing:2px; color:var(--muted); }
+.alerta-time { font-family:'JetBrains Mono',monospace; font-size:8px; letter-spacing:1px; color:var(--dim); }
+.alerta-subject { font-family:'Playfair Display',serif; font-size:clamp(18px,2vw,22px); color:var(--white); line-height:1.3; margin-bottom:10px; }
+.alerta-body { font-size:15px; color:rgba(232,228,218,0.66); line-height:1.6; }
+.alerta-foot { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:18px; padding-top:14px; border-top:1px solid var(--line); }
+.alerta-seal { font-family:'JetBrains Mono',monospace; font-size:8px; letter-spacing:1px; color:var(--emerald); }
+.alerta-link { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:1px; color:var(--teal); }
+.gv-close { max-width:640px; margin:clamp(38px,6vw,58px) auto 0; text-align:center; font-family:'Playfair Display',serif; font-style:italic; font-size:clamp(19px,2.4vw,28px); color:var(--white); line-height:1.35; }
+.gv-close span { font-style:normal; color:var(--teal); }
+.amigo { max-width:720px; margin:clamp(30px,4vw,44px) auto 0; text-align:center; padding-top:clamp(28px,4vw,40px); border-top:1px solid var(--line); font-size:clamp(17px,1.8vw,21px); color:rgba(232,228,218,0.78); line-height:1.75; font-style:italic; }
+.amigo strong { color:var(--white); font-weight:600; font-style:normal; }
+
+/* ─── DIFERENCIAL ─── */
+.dif-statement { font-family:'Playfair Display',serif; font-style:italic; font-weight:400; font-size:clamp(28px,4.6vw,54px); line-height:1.2; color:var(--white); max-width:900px; margin:0 auto; text-align:center; }
+.dif-statement span { font-style:normal; color:var(--emerald); }
+.dif-intro { font-size:clamp(16px,1.7vw,19px); color:rgba(232,228,218,0.68); line-height:1.7; max-width:680px; margin:30px auto 0; text-align:center; }
+.opa-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:1px; background:var(--line); max-width:860px; margin:clamp(40px,6vw,64px) auto 0; text-align:left; }
+.opa-cell { background:var(--deep); padding:clamp(24px,3vw,36px); }
+.opa-tag { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:2px; color:var(--teal); margin-bottom:14px; }
+.opa-text { font-size:clamp(15px,1.3vw,17px); color:rgba(232,228,218,0.72); line-height:1.65; }
+.opa-text strong { color:var(--white); font-weight:600; }
+.opa-foot { text-align:center; font-family:'Playfair Display',serif; font-style:italic; font-size:clamp(16px,1.5vw,21px); color:var(--muted); margin-top:clamp(32px,4vw,44px); }
+.dif-close { max-width:720px; margin:clamp(38px,6vw,56px) auto 0; text-align:center; padding-top:clamp(32px,4vw,44px); border-top:1px solid var(--line); font-size:clamp(16px,1.6vw,19px); color:rgba(232,228,218,0.74); line-height:1.7; }
+.dif-close strong { color:var(--white); font-weight:600; }
+
+/* ─── LA PRUEBA (certificado real + registro on-chain) ─── */
+.prueba { max-width:1080px; margin:0 auto; padding:clamp(52px,8vw,96px) clamp(24px,5vw,64px); }
+.prueba .head-title em { color:var(--gold2); }
+.cert-wrap { max-width:720px; margin:0 auto; }
+.cert-shell { position:relative; }
+.cert-shell::before { content:''; position:absolute; inset:0; transform:translate(10px,12px); background:var(--card); border:1px solid var(--line); z-index:0; }
+.cert { position:relative; z-index:1; background:var(--cert-bg); color:var(--cert-ink); border:1px solid rgba(27,44,27,0.18); padding:clamp(26px,4.5vw,44px); box-shadow:0 30px 70px rgba(0,0,0,0.55); }
+.cert-brand { font-family:'Playfair Display',serif; font-size:clamp(22px,3vw,30px); letter-spacing:clamp(4px,1vw,10px); color:var(--cert-ink); }
+.cert-brand-sub { font-family:'JetBrains Mono',monospace; font-size:8px; letter-spacing:3px; color:var(--cert-gold); margin-top:6px; }
+.cert-rule { height:1px; background:var(--cert-line); margin:18px 0 22px; }
+.cert-title { font-family:'Playfair Display',serif; font-size:clamp(24px,3.8vw,38px); color:var(--cert-ink); line-height:1.12; }
+.cert-obs { font-family:'Playfair Display',serif; font-style:italic; font-size:clamp(14px,1.6vw,17px); color:var(--cert-muted); margin-top:8px; }
+.cert-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:20px 18px; margin-top:26px; }
+.cert-field-k { font-family:'JetBrains Mono',monospace; font-size:8px; letter-spacing:2px; color:var(--cert-muted); margin-bottom:5px; }
+.cert-field-v { font-family:'Crimson Pro',serif; font-size:15px; color:var(--cert-ink); line-height:1.3; }
+.cert-field-v.mono { font-family:'JetBrains Mono',monospace; font-size:11px; word-break:break-all; }
+.cert-seen { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:2px; color:var(--cert-muted); margin:30px 0 14px; display:flex; align-items:center; gap:12px; }
+.cert-seen::after { content:''; flex:1; height:1px; background:var(--cert-line); }
+.cert-metrics { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.cert-metric { border:1px solid var(--cert-line); border-left:3px solid var(--cert-green); padding:16px 18px; background:rgba(255,255,255,0.35); }
+.cert-metric-k { font-family:'JetBrains Mono',monospace; font-size:8px; letter-spacing:1.5px; color:var(--cert-muted); margin-bottom:8px; }
+.cert-metric-v { font-family:'JetBrains Mono',monospace; font-size:clamp(26px,4vw,34px); color:var(--cert-ink); letter-spacing:1px; line-height:1; }
+.cert-metric-d { font-family:'Playfair Display',serif; font-style:italic; font-size:13px; color:var(--cert-muted); margin-top:8px; }
+.cert-metric-tags { display:flex; gap:6px; margin-top:12px; }
+.cert-metric-tags span { font-family:'JetBrains Mono',monospace; font-size:8px; letter-spacing:1px; padding:4px 8px; }
+.cert-metric-tags .medido { background:var(--cert-green); color:var(--cert-bg); }
+.cert-metric-tags .calidad { border:1px solid var(--cert-line); color:var(--cert-muted); }
+.cert-meta { display:grid; grid-template-columns:repeat(4,1fr); border:1px solid var(--cert-line); margin-top:16px; }
+.cert-meta div { padding:12px 14px; border-right:1px solid var(--cert-line); }
+.cert-meta div:last-child { border-right:none; }
+.cert-meta-k { font-family:'JetBrains Mono',monospace; font-size:7px; letter-spacing:1.5px; color:var(--cert-muted); margin-bottom:5px; }
+.cert-meta-v { font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--cert-ink); }
+.cert-seal { background:var(--cert-seal); margin-top:22px; padding:clamp(20px,3vw,28px); display:grid; grid-template-columns:auto 1fr; gap:20px; align-items:center; }
+.cert-seal-stamp { width:90px; height:90px; border:1px solid rgba(184,150,63,0.4); border-radius:50%; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; flex-shrink:0; }
+.cert-seal-stamp .epi { font-family:'JetBrains Mono',monospace; font-size:14px; letter-spacing:2px; color:var(--gold2); }
+.cert-seal-stamp .inm { font-family:'JetBrains Mono',monospace; font-size:6px; letter-spacing:2px; color:rgba(184,150,63,0.7); margin-top:4px; }
+.cert-seal-body { min-width:0; }
+.cert-seal-tag { font-family:'JetBrains Mono',monospace; font-size:8px; letter-spacing:2px; color:rgba(184,150,63,0.85); }
+.cert-seal-title { font-family:'Playfair Display',serif; font-size:clamp(16px,2vw,20px); color:var(--cert-bg); margin:8px 0 12px; }
+.cert-seal-line { font-family:'JetBrains Mono',monospace; font-size:10px; color:rgba(244,240,232,0.62); line-height:1.7; word-break:break-all; }
+.cert-seal-line b { color:rgba(184,150,63,0.85); font-weight:400; }
+.cert-seal-btn { display:inline-block; margin-top:14px; font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:1.5px; color:var(--cert-seal); background:var(--gold2); text-decoration:none; padding:12px 20px; transition:background .2s; }
+.cert-seal-btn:hover { background:var(--gold); }
+.cert-foot { display:flex; flex-wrap:wrap; justify-content:space-between; gap:10px; margin-top:20px; padding-top:14px; border-top:1px solid var(--cert-line); font-family:'JetBrains Mono',monospace; font-size:8px; letter-spacing:1px; color:var(--cert-muted); }
+.cert-caption { text-align:center; font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:2px; color:var(--dim); margin-top:22px; }
+.evid-pair { display:grid; grid-template-columns:1fr 1fr; gap:18px; max-width:940px; margin:0 auto; }
+.evid { background:var(--cert-bg); color:var(--cert-ink); border:1px solid rgba(27,44,27,0.18); padding:clamp(22px,3vw,30px); box-shadow:0 24px 56px rgba(0,0,0,0.5); display:flex; flex-direction:column; }
+.evid-brand { font-family:'Playfair Display',serif; font-size:18px; letter-spacing:5px; color:var(--cert-ink); }
+.evid-brand-sub { font-family:'JetBrains Mono',monospace; font-size:7px; letter-spacing:2px; color:var(--cert-gold); margin-top:5px; }
+.evid-rule { height:1px; background:var(--cert-line); margin:16px 0 18px; }
+.evid-eyebrow { font-family:'JetBrains Mono',monospace; font-size:8px; letter-spacing:2px; color:var(--cert-muted); margin-bottom:8px; }
+.evid-name { font-family:'Playfair Display',serif; font-size:clamp(20px,2.4vw,26px); color:var(--cert-ink); line-height:1.1; }
+.evid-obs { font-family:'Playfair Display',serif; font-style:italic; font-size:13px; color:var(--cert-muted); margin-top:6px; }
+.evid-id { font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--cert-muted); margin-top:6px; }
+.evid-msg { font-size:14.5px; color:var(--cert-ink); line-height:1.6; margin:16px 0; }
+.evid-meta { display:grid; grid-template-columns:repeat(3,1fr); border:1px solid var(--cert-line); margin-bottom:16px; }
+.evid-meta div { padding:9px 10px; border-right:1px solid var(--cert-line); }
+.evid-meta div:last-child { border-right:none; }
+.evid-meta-k { font-family:'JetBrains Mono',monospace; font-size:7px; letter-spacing:1px; color:var(--cert-muted); margin-bottom:4px; }
+.evid-meta-v { font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--cert-ink); }
+.evid-seal { background:var(--cert-seal); padding:18px 18px; margin-top:auto; }
+.evid-seal-tag { font-family:'JetBrains Mono',monospace; font-size:7px; letter-spacing:2px; color:rgba(184,150,63,0.85); }
+.evid-seal-title { font-family:'Playfair Display',serif; font-size:15px; color:var(--cert-bg); margin:8px 0 10px; }
+.evid-seal-note { font-size:12px; color:rgba(244,240,232,0.72); line-height:1.6; margin-bottom:10px; }
+.evid-seal-line { font-family:'JetBrains Mono',monospace; font-size:9px; color:rgba(244,240,232,0.6); line-height:1.7; word-break:break-all; }
+.evid-seal-line b { color:rgba(184,150,63,0.85); font-weight:400; }
+.evid-seal-btn { display:inline-block; margin-top:12px; font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:1px; color:var(--cert-seal); background:var(--gold2); text-decoration:none; padding:11px 16px; transition:background .2s; }
+.evid-seal-btn:hover { background:var(--gold); }
+@media(max-width:720px){ .evid-pair { grid-template-columns:1fr; } }
+.ledger-head { text-align:center; margin:clamp(52px,7vw,80px) auto clamp(28px,4vw,40px); }
+.ledger-head .eyebrow { margin-bottom:14px; }
+.ledger-head h3 { font-family:'Playfair Display',serif; font-size:clamp(20px,2.6vw,28px); color:var(--white); line-height:1.25; max-width:680px; margin:0 auto; }
+.ledger { max-width:860px; margin:0 auto; border:1px solid var(--line); }
+.ledger-row { display:grid; grid-template-columns:auto 1fr auto auto; gap:16px; align-items:center; padding:18px clamp(16px,2.4vw,26px); border-bottom:1px solid var(--line); background:var(--deep); transition:background .2s; }
+.ledger-row:last-child { border-bottom:none; }
+.ledger-row:hover { background:var(--surface); }
+.ledger-id { font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--dim); width:34px; }
+.ledger-name { font-family:'Playfair Display',serif; font-size:clamp(16px,1.8vw,19px); color:var(--white); text-transform:capitalize; }
+.ledger-date { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:1px; color:var(--muted); text-align:right; }
+.ledger-link { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:1px; color:var(--teal); text-decoration:none; white-space:nowrap; border:1px solid var(--line2); padding:8px 12px; transition:border-color .2s, color .2s; }
+.ledger-link:hover { border-color:var(--teal); color:var(--emerald); }
+.ledger-cap { text-align:center; font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:1px; color:var(--dim); margin-top:18px; line-height:1.7; }
+.ledger-cap a { color:var(--muted); text-decoration:none; }
+.ledger-cap a:hover { color:var(--text); }
+.prueba-close { max-width:680px; margin:clamp(40px,6vw,58px) auto 0; text-align:center; padding-top:clamp(32px,4vw,44px); border-top:1px solid var(--line); font-family:'Playfair Display',serif; font-style:italic; font-size:clamp(18px,2.3vw,27px); color:var(--white); line-height:1.35; }
+.prueba-close span { font-style:normal; color:var(--gold2); }
+
+/* ─── QUÉ ESTÁ EN JUEGO ─── */
+.qj-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--line); border:1px solid var(--line); }
+.qj-cell { background:var(--deep); padding:clamp(26px,3vw,36px) clamp(20px,2.2vw,28px); display:flex; flex-direction:column; gap:14px; }
+.qj-tag { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:2px; color:var(--teal); }
+.qj-scene { font-family:'Playfair Display',serif; font-size:clamp(18px,2vw,22px); color:var(--white); line-height:1.3; }
+.qj-fact { font-size:15px; color:rgba(232,228,218,0.64); line-height:1.62; }
+.qj-conseq { font-size:14.5px; color:rgba(232,228,218,0.82); line-height:1.55; padding-top:12px; border-top:1px solid var(--line); }
+.qj-conseq strong { color:var(--white); font-weight:600; }
+.qj-close { max-width:700px; margin:clamp(38px,6vw,54px) auto 0; text-align:center; padding-top:clamp(30px,4vw,42px); border-top:1px solid var(--line); font-size:clamp(16px,1.7vw,20px); color:rgba(232,228,218,0.72); line-height:1.7; }
+.qj-close strong { color:var(--white); font-weight:600; }
+
+/* ─── RECURSOS ─── */
+.recursos-sub { font-size:15px; color:rgba(232,228,218,0.55); margin-top:12px; font-style:italic; }
+.recursos-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:10px; }
+.recurso { background:var(--card); border:1px solid var(--line2); padding:26px 24px; cursor:pointer; text-align:left; width:100%; font-family:inherit; display:flex; flex-direction:column; gap:14px; transition:border-color .2s, background .2s, transform .15s; }
+.recurso:hover { border-color:var(--teal); background:var(--panel); transform:translateY(-2px); }
+.recurso-ico { font-size:28px; line-height:1; }
+.recurso-name { font-family:'Playfair Display',serif; font-size:20px; color:var(--white); }
+.recurso-hint { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:1px; color:var(--muted); line-height:1.5; }
+.recurso.comodin { border-color:rgba(200,168,75,0.3); background:linear-gradient(140deg,var(--card),rgba(200,168,75,0.05)); }
+.recurso.comodin:hover { border-color:var(--gold); }
+.recurso.comodin .recurso-name { color:var(--gold2); }
+.recurso.comodin .recurso-ico { color:var(--gold); }
+
+/* ─── OPCIONES (las tres formas · idénticas en todo el sitio) ─── */
+/* Mismo componente y mismo texto que el index, eudr e instituciones.
+   El satélite no discrimina: la oferta es la misma en toda página; lo
+   único que cambia es a quién le hablamos alrededor. No reescribir el
+   texto de las opciones acá: debe coincidir palabra por palabra. */
+.opt-list { display:flex; flex-direction:column; gap:10px; margin:0 auto; max-width:720px; text-align:left; }
+.opt { display:flex; gap:14px; background:var(--card); border:1px solid var(--line2); padding:16px 18px; align-items:flex-start; }
+.opt.combo { background:linear-gradient(150deg, rgba(95,173,95,0.1), var(--card) 60%); border-color:rgba(95,173,95,0.3); }
+.opt-k { flex-shrink:0; font-family:'JetBrains Mono',monospace; font-size:16px; color:var(--dim); width:24px; line-height:1.3; }
+.opt.combo .opt-k { color:var(--emerald); }
+.opt-name { font-family:'Playfair Display',serif; font-size:18px; color:var(--white); line-height:1.15; }
+.opt.combo .opt-name { color:var(--emerald); }
+.opt-desc { font-size:13.5px; color:rgba(232,228,218,0.6); line-height:1.5; margin-top:5px; }
+
+/* ─── PUERTA / ADHERIRSE ─── */
+.door { text-align:center; padding:clamp(56px,9vw,104px) clamp(24px,5vw,64px); border-top:1px solid var(--line); }
+.door-eyebrow { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:3px; color:var(--teal); margin-bottom:20px; }
+.door-lead { font-family:'Playfair Display',serif; font-size:clamp(24px,3.6vw,40px); color:var(--white); line-height:1.25; max-width:640px; margin:0 auto 34px; }
+.door-btn { font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:3px; color:var(--void); background:var(--gold2); border:none; padding:20px 46px; cursor:pointer; transition:background .2s, transform .15s; }
+.door-btn:hover { background:var(--gold); transform:translateY(-1px); }
+.door-note { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:1px; color:var(--dim); margin-top:18px; }
+
+/* ─── FOOTER / CONTACTO ─── */
+.footer { border-top:1px solid var(--line); background:var(--void); }
+.footer-in { max-width:820px; margin:0 auto; padding:clamp(52px,8vw,96px) clamp(24px,5vw,64px); text-align:center; }
+.footer-eyebrow { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:4px; color:var(--teal); margin-bottom:24px; }
+.footer-lead { font-family:'Playfair Display',serif; font-style:italic; font-size:clamp(28px,4.4vw,50px); color:var(--white); line-height:1.2; margin-bottom:18px; }
+.footer-sub { font-size:clamp(17px,1.8vw,21px); color:rgba(232,228,218,0.66); max-width:520px; margin:0 auto 40px; line-height:1.6; }
+.footer-mail { display:inline-flex; align-items:center; gap:12px; font-family:'JetBrains Mono',monospace; font-size:clamp(13px,1.6vw,16px); letter-spacing:1px; color:var(--void); background:var(--gold2); border:none; padding:20px 40px; cursor:pointer; transition:background .2s, transform .15s; }
+.footer-mail:hover { background:var(--gold); transform:translateY(-1px); }
+/* canales de contacto (mail + whatsapp) */
+.footer-canales { display:flex; flex-wrap:wrap; gap:12px; justify-content:center; align-items:center; }
+.footer-wa { display:inline-flex; align-items:center; gap:12px; font-family:'JetBrains Mono',monospace; font-size:clamp(13px,1.6vw,16px); letter-spacing:1px; color:var(--white); background:transparent; border:1px solid var(--emerald); padding:20px 40px; cursor:pointer; text-decoration:none; transition:background .2s, color .2s, transform .15s; }
+.footer-wa:hover { background:var(--emerald); color:var(--void); transform:translateY(-1px); }
+.footer-alt { font-size:14px; color:rgba(232,228,218,0.55); margin-top:16px; }
+.footer-alt a { color:var(--muted); text-decoration:underline; }
+.footer-alt a:hover { color:var(--text); }
+.footer-secondary { display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin-top:34px; }
+.footer-btn { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:2px; color:var(--muted); background:transparent; border:1px solid var(--line2); padding:12px 18px; cursor:pointer; transition:border-color .2s, color .2s; }
+.footer-btn:hover { border-color:var(--teal); color:var(--text); }
+.footer-fine { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:1px; color:var(--dim); line-height:2; margin-top:44px; padding-top:32px; border-top:1px solid var(--line); }
+.footer-fine a { color:var(--muted); text-decoration:none; }
+.footer-fine a:hover { color:var(--text); }
+
+/* ─── EPI BURBUJA ─── */
+.epi-bubble { position:fixed; right:clamp(16px,3vw,32px); bottom:clamp(16px,3vw,32px); z-index:400; width:60px; height:60px; border-radius:50%; background:radial-gradient(circle at 35% 30%, var(--panel), var(--surface)); border:1px solid rgba(95,173,95,0.35); cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 6px 26px rgba(0,0,0,0.5); transition:transform .25s ease, box-shadow .3s ease, opacity .3s ease; animation:epiPulse 3.4s ease-in-out infinite; }
+.epi-bubble:hover { transform:scale(1.08); }
+@keyframes epiPulse { 0%,100%{box-shadow:0 6px 26px rgba(0,0,0,0.5), 0 0 0 0 rgba(95,173,95,0.28);} 50%{box-shadow:0 6px 26px rgba(0,0,0,0.5), 0 0 0 10px rgba(95,173,95,0);} }
+.epi-bubble svg { width:26px; height:26px; }
+.epi-bubble .spark-lg { fill:var(--emerald); }
+.epi-bubble .spark-sm { fill:var(--gold2); }
+.epi-bubble.hidden { opacity:0; pointer-events:none; transform:scale(0.6); }
+.epi-panel { position:fixed; right:clamp(16px,3vw,32px); bottom:clamp(16px,3vw,32px); z-index:401; width:min(380px, calc(100vw - 32px)); height:min(560px, calc(100vh - 64px)); background:var(--void); border:1px solid var(--line2); display:none; flex-direction:column; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,0.6); animation:epiOpen .28s cubic-bezier(.2,.8,.2,1); }
+.epi-panel.open { display:flex; }
+@keyframes epiOpen { from{opacity:0; transform:translateY(16px) scale(.97);} to{opacity:1; transform:translateY(0) scale(1);} }
+.epi-top { flex-shrink:0; padding:16px 18px; border-bottom:1px solid var(--line); display:flex; align-items:center; justify-content:space-between; background:rgba(4,9,4,0.6); }
+.epi-top-l { display:flex; align-items:center; gap:10px; }
+.epi-top-ico { width:26px; height:26px; }
+.epi-top-ico .spark-lg { fill:var(--emerald); }
+.epi-top-ico .spark-sm { fill:var(--gold2); }
+.epi-top-name { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:3px; color:var(--text); }
+.epi-top-sub { font-family:'JetBrains Mono',monospace; font-size:7px; letter-spacing:1px; color:var(--dim); margin-top:2px; }
+.epi-close { background:none; border:none; color:var(--dim); font-size:16px; cursor:pointer; font-family:'JetBrains Mono',monospace; transition:color .2s; }
+.epi-close:hover { color:var(--text); }
+.epi-msgs { flex:1; overflow-y:auto; padding:20px 16px; display:flex; flex-direction:column; gap:16px; }
+.epi-msgs::-webkit-scrollbar { width:2px; }
+.epi-msgs::-webkit-scrollbar-thumb { background:var(--dim); }
+.emsg { display:flex; gap:9px; animation:msgIn .3s ease; }
+@keyframes msgIn { from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);} }
+.emsg.user { flex-direction:row-reverse; }
+.emsg-av { width:22px; height:22px; flex-shrink:0; border:1px solid var(--line2); display:flex; align-items:center; justify-content:center; font-family:'JetBrains Mono',monospace; font-size:6px; margin-top:2px; }
+.emsg-av.agent { color:var(--emerald); background:var(--surface); }
+.emsg-av.user { color:var(--muted); background:var(--panel); }
+.emsg-b { max-width:calc(100% - 34px); padding:12px 14px; font-size:15px; line-height:1.6; border:1px solid; }
+.emsg-b.agent { background:var(--surface); border-color:var(--line); color:var(--text); }
+.emsg-b.user { background:var(--panel); border-color:var(--line2); color:rgba(232,228,218,0.75); }
+.epi-input { flex-shrink:0; padding:14px 16px; border-top:1px solid var(--line); background:rgba(4,9,4,0.7); }
+.epi-input-row { display:flex; gap:8px; align-items:flex-end; }
+.epi-input textarea { flex:1; background:var(--surface); border:1px solid var(--line2); color:var(--text); font-family:'Crimson Pro',serif; font-size:15px; padding:11px 13px; outline:none; resize:none; min-height:44px; max-height:110px; line-height:1.5; transition:border-color .2s; }
+.epi-input textarea:focus { border-color:var(--teal); }
+.epi-input textarea::placeholder { color:var(--dim); font-style:italic; }
+.epi-send { width:44px; height:44px; flex-shrink:0; background:var(--white); border:none; color:var(--void); font-size:16px; cursor:pointer; transition:background .2s; }
+.epi-send:hover { background:var(--gold2); }
+.epi-hint { font-family:'JetBrains Mono',monospace; font-size:7px; letter-spacing:1px; color:var(--dim); text-align:center; margin-top:9px; }
+
+/* ─── ADHERIRSE FLOTANTE ─── */
+.adh-float { position:fixed; left:clamp(16px,3vw,32px); bottom:clamp(16px,3vw,32px); z-index:400; display:inline-flex; align-items:center; gap:9px; font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:2px; color:var(--void); background:var(--gold2); border:none; padding:15px 22px; cursor:pointer; box-shadow:0 8px 30px rgba(0,0,0,0.5); transition:background .2s, transform .2s; }
+.adh-float:hover { background:var(--gold); transform:translateY(-2px); }
+.adh-float svg { width:14px; height:14px; }
+.adh-float .spark-lg { fill:var(--void); }
+.adh-float .spark-sm { fill:var(--void); }
+@media(max-width:520px){ .adh-float { font-size:10px; padding:13px 16px; letter-spacing:1px; } }
+
+/* ─── MODALES ─── */
+.overlay { display:none; position:fixed; inset:0; z-index:500; background:rgba(4,9,4,0.93); backdrop-filter:blur(8px); overflow-y:auto; padding:40px 20px; }
+.overlay.active { display:flex; align-items:flex-start; justify-content:center; }
+.modal { background:var(--panel); border:1px solid var(--line2); max-width:620px; width:100%; padding:clamp(28px,5vw,48px); position:relative; margin-top:20px; }
+.modal-close { position:absolute; top:18px; right:22px; background:none; border:none; color:var(--dim); font-size:17px; cursor:pointer; font-family:'JetBrains Mono',monospace; transition:color .2s; }
+.modal-close:hover { color:var(--white); }
+.modal-eyebrow { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:3px; color:var(--teal); margin-bottom:14px; }
+.modal-title { font-family:'Playfair Display',serif; font-weight:400; font-size:clamp(23px,3.5vw,30px); color:var(--white); margin-bottom:24px; padding-bottom:18px; border-bottom:1px solid var(--line); }
+.modal-body { font-size:15.5px; color:rgba(232,228,218,0.62); line-height:1.8; }
+.modal-body p { margin-bottom:13px; }
+.modal-body strong { color:var(--text); font-weight:600; }
+.modal-body h4 { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:2px; color:var(--muted); margin:22px 0 8px; }
+.modal-body .applies { background:var(--card); border:1px solid var(--line); border-left:2px solid var(--teal); padding:14px 18px; margin-top:16px; font-size:14.5px; }
+.modal-body .applies strong { color:var(--teal); }
+.faq-item { border-bottom:1px solid var(--line); }
+.faq-q { width:100%; text-align:left; background:none; border:none; cursor:pointer; padding:16px 0; display:flex; justify-content:space-between; gap:14px; align-items:baseline; font-family:'Crimson Pro',serif; font-size:16px; color:var(--text); }
+.faq-ico { font-family:'JetBrains Mono',monospace; color:var(--teal); flex-shrink:0; transition:transform .2s; }
+.faq-item.open .faq-ico { transform:rotate(45deg); }
+.faq-a { max-height:0; overflow:hidden; transition:max-height .3s ease; font-size:14.5px; color:rgba(232,228,218,0.6); line-height:1.7; }
+.faq-item.open .faq-a { max-height:400px; padding-bottom:16px; }
+.soon .modal { max-width:460px; text-align:center; }
+.soon .modal-title { border-bottom:none; padding-bottom:0; margin-bottom:16px; }
+.soon-ico { font-size:40px; color:var(--gold); margin-bottom:8px; }
+
+@media(max-width:820px){ .cert-grid { grid-template-columns:repeat(2,1fr); } .cert-seal { grid-template-columns:1fr; text-align:center; } .cert-seal-stamp { margin:0 auto; } .cert-seal-line { text-align:left; } }
+@media(max-width:780px){ .qj-grid { grid-template-columns:1fr; } }
+@media(max-width:760px){ .steps { grid-template-columns:1fr; } .cc-steps { grid-template-columns:repeat(2,1fr); } .topnav { display:none; } .cert-meta { grid-template-columns:repeat(2,1fr); } .cert-meta div:nth-child(2){ border-right:none; } .ledger-row { grid-template-columns:1fr auto; gap:8px 12px; } .ledger-id { display:none; } .ledger-date { grid-column:1; text-align:left; } }
+@media(max-width:720px){ .opa-grid { grid-template-columns:1fr; } }
+@media(max-width:600px){ .pasada-line { display:none; } .pasadas { gap:14px; } .cert-metrics { grid-template-columns:1fr; } }
+@media(max-width:440px){ .cc-steps { grid-template-columns:1fr; } .cert-grid { grid-template-columns:1fr; } }
+@media(prefers-reduced-motion: reduce){ *, *::before, *::after { animation:none !important; transition:none !important; } html { scroll-behavior:auto; } }
+
+/* BOTÓN FLOTANTE · PROBAR EL MAPA EN MODO INVITADO */
+.mapa-float { position:fixed; left:clamp(16px,3vw,32px); bottom:clamp(78px,calc(3vw + 62px),96px); z-index:400; display:flex; align-items:center; gap:12px; max-width:min(78vw,310px); background:var(--gold2); color:var(--void); text-decoration:none; padding:13px 18px; box-shadow:0 8px 30px rgba(0,0,0,0.55); transition:background .2s, transform .2s; animation:mapaFloatIn .5s ease both; }
+.mapa-float:hover { background:var(--gold); transform:translateY(-2px); }
+@keyframes mapaFloatIn { from{opacity:0; transform:translateY(14px);} to{opacity:1; transform:translateY(0);} }
+.mapa-float-ico { flex-shrink:0; display:flex; }
+.mapa-float-ico svg { width:22px; height:22px; }
+.mapa-float-txt { display:flex; flex-direction:column; line-height:1.2; min-width:0; }
+.mapa-float-txt b { font-family:'Playfair Display',serif; font-size:14.5px; font-weight:600; }
+.mapa-float-txt small { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:0.4px; opacity:0.82; margin-top:3px; }
+.mapa-float:focus-visible { outline:2px solid var(--white); outline-offset:3px; }
+@media(max-width:520px){ .mapa-float { max-width:66vw; padding:11px 14px; gap:9px; left:14px; bottom:72px; } .mapa-float-txt b{ font-size:12.5px; } .mapa-float-txt small{ font-size:8px; } .mapa-float-ico svg{ width:19px; height:19px; } }
+@media(prefers-reduced-motion: reduce){ .mapa-float{ animation:none; } }
+
+/* ══ BOTÓN FLOTANTE · TU OFICINA (idéntico en EUDR, Plataforma e Instituciones) ══
+   Arriba de EPI, a la derecha. Colores fijos para que se vea igual en las tres. */
+.ofi-float{position:fixed; right:clamp(16px,3vw,32px); bottom:calc(clamp(16px,3vw,32px) + 72px); z-index:60; display:flex; align-items:center; gap:10px; background:#F4F0E8; color:#070B0A; text-decoration:none; padding:11px 16px 11px 13px; border-radius:30px; box-shadow:0 8px 30px rgba(0,0,0,0.55); font-family:'JetBrains Mono','IBM Plex Mono',monospace; transition:transform .2s, background .2s;}
+.ofi-float:hover{background:#FFFFFF; transform:translateY(-2px);}
+.ofi-float svg{width:20px; height:20px; flex-shrink:0;}
+.ofi-float-txt{display:flex; flex-direction:column; line-height:1.15;}
+.ofi-float-txt b{font-size:11px; letter-spacing:2px; font-weight:600;}
+.ofi-float-txt small{font-size:8.5px; letter-spacing:0.3px; opacity:0.7; margin-top:3px;}
+.ofi-float:focus-visible{outline:2px solid #5FAD5F; outline-offset:3px;}
+@media(max-width:520px){ .ofi-float{ right:14px; bottom:84px; width:60px; padding:9px 0 8px; border-radius:16px; flex-direction:column; gap:4px; } .ofi-float-txt b{ font-size:7.5px; letter-spacing:1px; } .ofi-float-txt small{ display:none; } }
+.lang-link { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:1.5px; color:var(--gold2); text-decoration:none; border:1px solid rgba(229,200,112,0.35); padding:5px 9px; border-radius:3px; margin-left:14px; }
+.lang-link:hover { border-color:var(--gold2); }
+</style>
+</head>
+<body>
+
+<!-- TOPBAR (barra chica · volver al inicio) -->
+<div class="topbar">
+  <div class="brand"><a href="index-en.html" style="color:var(--white);text-decoration:none;">← SEE EPIMELEIA</a> <span>· PLATFORM</span><a class="lang-link" href="plataforma.html" hreflang="es" aria-label="Versión en español">ES</a></div>
+  <nav class="topnav">
+    <button onclick="abrir('comoFunciona')">HOW IT WORKS</button>
+    <button class="nav-prueba" onclick="irA('prueba')">THE PROOF</button>
+    <button onclick="abrir('faqs')">FAQ</button>
+  </nav>
+</div>
+
+<!-- CUATRO CLICKS -->
+<section class="sec sec-narrow">
+  <div class="head">
+    <div class="eyebrow">FROM AN IDEA TO THE SATELLITE</div>
+    <h2 class="head-title">In <em>four clicks</em> you are connected to a satellite</h2>
+    <p class="head-sub">No software to install. No crypto wallet. No technicians. The heavy engineering works behind the scenes — you just choose and confirm.</p>
+  </div>
+  <div class="cc-steps">
+    <div class="cc-step"><div class="cc-num">01</div><div class="cc-ico">🔍</div><div class="cc-step-t">Find the place</div><div class="cc-step-d">A field, a river, a plant. You find it on the map.</div></div>
+    <div class="cc-step"><div class="cc-num">02</div><div class="cc-ico">✏️</div><div class="cc-step-t">Mark the outline</div><div class="cc-step-d">Draw the boundaries of what you want to observe. In seconds.</div></div>
+    <div class="cc-step"><div class="cc-num">03</div><div class="cc-ico">✓</div><div class="cc-step-t">Confirm</div><div class="cc-step-d">Review it and give the OK. The satellite now has your coordinates.</div></div>
+    <div class="cc-step"><div class="cc-num">04</div><div class="cc-ico">🛰</div><div class="cc-step-t">You are connected</div><div class="cc-step-d">From then on, the satellite observes and every result is written to the blockchain.</div></div>
+  </div>
+  <div class="cc-nofriction">
+    <div class="cc-tag"><span>✓</span> NOTHING TO INSTALL</div>
+    <div class="cc-tag"><span>✓</span> NO CRYPTO WALLET</div>
+    <div class="cc-tag"><span>✓</span> NO TECHNICIANS</div>
+    <div class="cc-tag"><span>✓</span> EUROPEAN SATELLITE DATA · COPERNICUS</div>
+  </div>
+  <p class="cc-close">We already solved the hard part. On your side, it takes four taps.</p>
+</section>
+
+<div class="divider"></div>
+
+<!-- GUARDIA VIVA -->
+<section class="sec">
+  <div class="eyebrow" style="text-align:center;margin-bottom:24px;">THE GUARD THAT NEVER SLEEPS</div>
+  <p class="gv-statement">The satellite doesn't look just once. It looks, and comes back, and comes back — <span>even while you are busy with something else</span>.</p>
+  <p class="gv-lead">Each pass compares what is new with what came before. If something changed, it records it. And if that change deserves your attention, it alerts you.</p>
+</section>
+
+<div class="divider"></div>
+
+<!-- DIFERENCIAL -->
+<section class="sec sec-narrow" style="text-align:center;">
+  <div class="eyebrow" style="margin-bottom:26px;">WHAT SETS US APART</div>
+  <p class="dif-statement">We don't sell the data. We sell <span>the proof that no one touched it</span>.</p>
+  <p class="dif-intro">Anyone can get a satellite image. What you can't buy elsewhere is having that image recorded in a way that no one — not you, not us, not the satellite — can alter afterwards.</p>
+  <div class="opa-grid">
+    <div class="opa-cell"><div class="opa-tag">WHEN THERE IS AN OBSERVATION</div><p class="opa-text">The satellite sees, records, and the result is <strong>written to the blockchain</strong>. No one can change it afterwards — not the client, not us.</p></div>
+    <div class="opa-cell"><div class="opa-tag">WHEN THERE ISN'T</div><p class="opa-text">If clouds or a failure block the view, that gap is written down too: we call it an <strong>opacity gap</strong>. It is not a penalty — it is the contract working.</p></div>
+  </div>
+  <p class="opa-foot">Missing data is data too. And it cannot be hidden or invented either.</p>
+  <p class="dif-close">That is why, when it matters, <strong>no one will be able to dispute the facts</strong>: that the river changed course, that the land was occupied before or after, that the area was still intact. The proof remains, dated, and it does not depend on anyone confirming it.</p>
+</section>
+
+<div class="divider"></div>
+
+<!-- ══════════ LA PRUEBA (certificado real + registro on-chain) ══════════ -->
+<section class="prueba" id="prueba">
+  <div class="head">
+    <div class="eyebrow" style="color:var(--gold2);">NOT A PROMISE · ALREADY WORKING</div>
+    <h2 class="head-title">This is not a mock-up. It is a <em>real</em> certificate, sealed on-chain.</h2>
+    <p class="head-sub">This is what a client receives. The same numbers the satellite measured, the same fingerprint that was recorded. Verifiable by anyone, without asking our permission.</p>
+  </div>
+
+  <div class="cert-wrap" style="max-width:940px;">
+    <div class="evid-pair">
+
+      <article class="evid">
+        <div class="evid-brand">EPIMELEIA</div>
+        <div class="evid-brand-sub">DIGITAL ENVIRONMENTAL NOTARY · POLYGON MAINNET</div>
+        <div class="evid-rule"></div>
+        <div class="evid-eyebrow">SEALED BIWEEKLY EVIDENCE</div>
+        <div class="evid-name">perito moreno</div>
+        <div class="evid-obs">Satellite observation · two-week window 2/6 · pass of 29 Jul 2026</div>
+        <div class="evid-id">Asset ID: 5</div>
+        <p class="evid-msg">In this two-week window the satellite observed <strong>perito moreno</strong> and the reading was sealed on Polygon. Visibility was partial, but enough to seal: the record is just as firm and verifiable.</p>
+        <div class="evid-meta">
+          <div><div class="evid-meta-k">SATELLITE</div><div class="evid-meta-v">Sentinel-2 L2A</div></div>
+          <div><div class="evid-meta-k">SOURCE</div><div class="evid-meta-v">ESA · Copernicus</div></div>
+          <div><div class="evid-meta-k">QUALITY</div><div class="evid-meta-v">53%</div></div>
+        </div>
+        <div class="evid-seal">
+          <div class="evid-seal-tag">PUBLIC PROOF · VERIFIABLE BY ANYONE</div>
+          <div class="evid-seal-title">No one touched this data. And it can be proven.</div>
+          <div class="evid-seal-line">
+            <b>Evidence fingerprint</b><br>0xb7ec531476e4a968a46f6dcfcb917e84e8499f5cb551705d66c764683d3ebdf6<br>
+            <b>Contract</b> · 0xf59BCFB98Ba9e05dC82d44E508d90917AF8bbc93 · Polygon Mainnet<br>
+            <b>Sealed</b> · block #91317931
+          </div>
+          <a class="evid-seal-btn" href="https://polygonscan.com/tx/0xa3344ad6404ce2cc5f25c189c5826e7a1a9f71e47b4f965e62ff230ccdc53a2a" target="_blank" rel="noopener">VERIFY ON POLYGONSCAN →</a>
+        </div>
+      </article>
+
+      <article class="evid">
+        <div class="evid-brand">EPIMELEIA</div>
+        <div class="evid-brand-sub">DIGITAL ENVIRONMENTAL NOTARY · POLYGON MAINNET</div>
+        <div class="evid-rule"></div>
+        <div class="evid-eyebrow">BIWEEKLY REPORT</div>
+        <div class="evid-name">quiulacocha</div>
+        <div class="evid-obs">Two-week window 2/6 · Q3 · 2026</div>
+        <div class="evid-id">Asset ID: 8</div>
+        <p class="evid-msg">In this two-week window no usable observation of <strong>quiulacocha</strong> was obtained. There is no penalty: it resumes in the next window. And everything sealed before remains public and verifiable on-chain.</p>
+        <div class="evid-seal">
+          <div class="evid-seal-tag">PUBLIC RECORD · VERIFIABLE BY ANYONE</div>
+          <div class="evid-seal-title">In this two-week window was recorded exactly as it was.</div>
+          <p class="evid-seal-note">What the satellite was able to seal before is recorded and cannot be altered. The truth is always on the chain.</p>
+          <div class="evid-seal-line">
+            <b>Contract</b> · 0xf59BCFB98Ba9e05dC82d44E508d90917AF8bbc93 · Polygon Mainnet
+          </div>
+          <a class="evid-seal-btn" href="https://polygonscan.com/address/0xf59BCFB98Ba9e05dC82d44E508d90917AF8bbc93" target="_blank" rel="noopener">SEE THE ON-CHAIN HISTORY →</a>
+        </div>
+      </article>
+
+    </div>
+    <p class="cert-caption">TWO REAL NOTICES FROM THE PROTOCOL · NOT A MADE-UP EXAMPLE</p>
+  </div>
+
+  <div class="ledger-head">
+    <div class="eyebrow" style="color:var(--gold2);">THE PUBLIC RECORD</div>
+    <h3>These assets are already written on Polygon. Tap any of them and verify it yourself.</h3>
+  </div>
+  <div class="ledger" id="ledger"></div>
+  <p class="ledger-cap">
+    ALL ISSUED FROM THE SAME PROTOCOL WALLET · POLYGON MAINNET<br>
+    <a href="https://polygonscan.com/address/0xD8F60cE55020197a98Ab00B31ecF394E65Ca87d4" target="_blank" rel="noopener">SEE ALL ON-CHAIN ACTIVITY →</a>
+  </p>
+
+  <p class="prueba-close">Anyone can make a promise. <span>Few can show you the proof, dated, impossible to retouch.</span></p>
+</section>
+
+<div class="divider"></div>
+
+<!-- QUÉ ESTÁ EN JUEGO -->
+<section class="sec">
+  <div class="head">
+    <div class="eyebrow">WHAT IS AT STAKE</div>
+    <h2 class="head-title">Today, in many places, proof is no longer optional</h2>
+    <p class="head-sub" style="font-style:italic;">We didn't invent these problems. This is how the world works now — those already living it know what we mean.</p>
+  </div>
+  <div class="qj-grid">
+    <div class="qj-cell"><div class="qj-tag">EXPORTING</div><div class="qj-scene">Selling to Europe without proof of origin</div><div class="qj-fact">The European Union requires exporters of soy, beef, timber or coffee to show that their product does not come from deforested land. A signed statement is no longer enough: they ask for traceable evidence.</div><div class="qj-conseq"><strong>Without that proof, the goods don't get in.</strong></div></div>
+    <div class="qj-cell"><div class="qj-tag">FINANCING</div><div class="qj-scene">Applying for a green loan</div><div class="qj-fact">Banks and funds finance environmental projects, but they increasingly demand verifiable data that what they finance is real. A folder full of promises, with no traceable record, does not get past the credit committee.</div><div class="qj-conseq"><strong>With proof in hand, the conversation changes.</strong></div></div>
+    <div class="qj-cell"><div class="qj-tag">DEFENDING YOURSELF</div><div class="qj-scene">Being accused, and unable to prove otherwise</div><div class="qj-fact">Someone says you polluted a river, or occupied a piece of land, on a given date. Without a dated record that no one can forge, it is your word against theirs.</div><div class="qj-conseq"><strong>With the proof, there is nothing to argue.</strong></div></div>
+  </div>
+  <p class="qj-close">None of this is a threat we bring. It is the ground you are already standing on. All we do is <strong>make sure you arrive with the proof, not empty-handed</strong>.</p>
+</section>
+
+<div class="divider"></div>
+
+<!-- RECURSOS -->
+<section class="sec">
+  <div class="head">
+    <div class="eyebrow">WHAT YOU CAN PUT UNDER OBSERVATION</div>
+    <h2 class="head-title">If it leaves a footprint on the land, it can be certified</h2>
+    <p class="recursos-sub">Tap any of them to see how it works</p>
+  </div>
+  <div class="recursos-grid" id="recGrid"></div>
+</section>
+
+<div class="divider"></div>
+
+<!-- LAS TRES FORMAS DE CERTIFICAR · IDÉNTICAS EN TODO EL SITIO ──
+     Mismo trío y mismo texto que el index, eudr e instituciones. Si cambia
+     una palabra acá, cambia en todas. La oferta es la misma para todos; lo
+     único propio de esta página es a quién le habla. -->
+<section class="sec sec-narrow" style="text-align:center;">
+  <div class="eyebrow" style="margin-bottom:16px;">YOUR CHOICE · BASED ON YOUR NEEDS</div>
+  <h2 class="head-title" style="margin-bottom:clamp(28px,4vw,40px);">Three ways to certify your resource</h2>
+  <div class="opt-list">
+    <div class="opt">
+      <div class="opt-k">01</div>
+      <div><div class="opt-name">Deforestation only · EUDR</div><div class="opt-desc">The historical check of your land, sealed on blockchain. The backing for your Due Diligence Statement. Irrefutable proof looking back.</div></div>
+    </div>
+    <div class="opt">
+      <div class="opt-k">02</div>
+      <div><div class="opt-name">Continuous monitoring</div><div class="opt-desc">The satellite observes your asset every two weeks, going forward, and seals every reading. You get alerts about what happens. A guardian that never sleeps.</div></div>
+    </div>
+    <div class="opt combo">
+      <div class="opt-k">03</div>
+      <div><div class="opt-name">Full coverage · EUDR + monitoring</div><div class="opt-desc">Both: the historical proof for the EUDR and continuous monitoring going forward. Full coverage, from past to future.</div></div>
+    </div>
+  </div>
+  <p class="qj-close" style="margin-top:clamp(28px,4vw,40px);border-top:none;padding-top:0;">Not sure which one suits you? <strong>Write to us and we'll decide together.</strong></p>
+</section>
+
+<!-- PUERTA / ADHERIRSE -->
+<section class="door">
+  <div class="door-eyebrow">WHENEVER YOU WANT TO START</div>
+  <p class="door-lead">Choose your first asset, and we'll arrange how to put it under observation.</p>
+  <button class="door-btn" onclick="adherir()">JOIN THE PROTOCOL →</button>
+  <div class="door-note">TRY IT ON THE MAP FIRST · NO SIGN-UP</div>
+</section>
+
+<!-- FOOTER / CONTACTO -->
+<footer class="footer">
+  <div class="footer-in">
+    <div class="footer-eyebrow">THERE IS SOMEONE ON THE OTHER SIDE</div>
+    <p class="footer-lead">Would you rather talk to a person?</p>
+    <p class="footer-sub">You are not alone in front of a screen. Tell us what you need and we will build your case — a real human answers, no forms, no runaround.</p>
+    <div class="footer-canales">
+      <button class="footer-mail" onclick="copiarEmail(this)">✉ info@epimeleia.world</button>
+      <a class="footer-wa" href="https://wa.me/5491158004028?text=Hello%2C%20I%20would%20like%20to%20ask%20about%20EPIMELEIA." target="_blank" rel="noopener">✆ WhatsApp · +54 11 5800-4028</a>
+    </div>
+    <p class="footer-alt">You can also write to <a href="mailto:alfredocarbone29@gmail.com">alfredocarbone29@gmail.com</a></p>
+    <div class="footer-secondary">
+      <button class="footer-btn" onclick="abrir('terminos')">TERMS OF USE</button>
+      <button class="footer-btn" onclick="abrir('privacidad')">PRIVACY</button>
+    </div>
+    <div class="footer-fine">
+      <a href="https://www.epimeleia.world">www.epimeleia.world</a><br>
+      Polygon Mainnet · 2026 · No ads
+    </div>
+  </div>
+</footer>
+
+<!-- ADHERIRSE FLOTANTE (acompaña toda la página, como EPI) -->
+<button class="adh-float" onclick="adherir()" aria-label="Join the protocol">
+  <svg viewBox="0 0 24 24"><path class="spark-lg" d="M12 2l1.6 5.2L19 9l-5.4 1.8L12 16l-1.6-5.2L5 9l5.4-1.8z"/><path class="spark-sm" d="M18.5 14l.7 2.3 2.3.7-2.3.7-.7 2.3-.7-2.3-2.3-.7 2.3-.7z"/></svg>
+  JOIN THE PROTOCOL
+</button>
+
+<!-- BOTÓN FLOTANTE · PROBAR EL MAPA EN MODO INVITADO -->
+<a class="mapa-float" href="protocolo.html?origen=plataforma" aria-label="Draw and certify your resource on the map, no sign-up">
+  <span class="mapa-float-ico">
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 21.5s7-5.7 7-11.5a7 7 0 1 0-14 0c0 5.8 7 11.5 7 11.5z" fill="currentColor" opacity="0.22"/>
+      <path d="M12 21.5s7-5.7 7-11.5a7 7 0 1 0-14 0c0 5.8 7 11.5 7 11.5z" stroke="currentColor" stroke-width="1.6"/>
+      <circle cx="12" cy="10" r="2.5" fill="currentColor"/>
+    </svg>
+  </span>
+  <span class="mapa-float-txt">
+    <b>Draw and certify your resource</b>
+    <small>Try it live, no sign-up →</small>
+  </span>
+</a>
+
+<!-- EPI BURBUJA -->
+<button class="epi-bubble" id="epiBubble" onclick="abrirEpi()" aria-label="Talk to EPI">
+  <svg viewBox="0 0 24 24">
+    <path class="spark-lg" d="M12 2l1.6 5.2L19 9l-5.4 1.8L12 16l-1.6-5.2L5 9l5.4-1.8z"/>
+    <path class="spark-sm" d="M18.5 14l.7 2.3 2.3.7-2.3.7-.7 2.3-.7-2.3-2.3-.7 2.3-.7z"/>
+  </svg>
+</button>
+
+<!-- EPI PANEL -->
+<div class="epi-panel" id="epiPanel">
+  <div class="epi-top">
+    <div class="epi-top-l">
+      <svg class="epi-top-ico" viewBox="0 0 24 24">
+        <path class="spark-lg" d="M12 2l1.6 5.2L19 9l-5.4 1.8L12 16l-1.6-5.2L5 9l5.4-1.8z"/>
+        <path class="spark-sm" d="M18.5 14l.7 2.3 2.3.7-2.3.7-.7 2.3-.7-2.3-2.3-.7 2.3-.7z"/>
+      </svg>
+      <div><div class="epi-top-name">EPI</div><div class="epi-top-sub">ANSWERS YOUR QUESTIONS</div></div>
+    </div>
+    <button class="epi-close" onclick="cerrarEpi()">✕</button>
+  </div>
+  <div class="epi-msgs" id="epiMsgs"></div>
+  <div class="epi-input">
+    <div class="epi-input-row">
+      <textarea id="epiText" placeholder="Type your question…" rows="1"></textarea>
+      <button class="epi-send" onclick="epiEnviar()">↑</button>
+    </div>
+    <div class="epi-hint">EPI ONLY EXPLAINS · IT DOES NOT SIGN YOU UP</div>
+  </div>
+</div>
+
+<!-- MODAL genérico -->
+<div class="overlay" id="ovModal">
+  <div class="modal">
+    <button class="modal-close" onclick="cerrar('ovModal')">✕</button>
+    <div class="modal-eyebrow" id="mEyebrow"></div>
+    <div class="modal-title" id="mTitle"></div>
+    <div class="modal-body" id="mBody"></div>
+  </div>
+</div>
+
+
+<script>
+/* ─── ACTIVOS REALES ON-CHAIN (datos verificables · Polygon Mainnet) ─── */
+const ONCHAIN = [
+  { id:8, nombre:'quiulacocha',       ts:1785504995, tx:'0x64063d6e0713d74025e6a8ef97ca6e7c73b60c6a57ae50da0c85f65206135fff' },
+  { id:7, nombre:'mesa de los reyes', ts:1785504990, tx:'0xa27ff1128f075003fc293ff569acce7fdcc49a80240e17285fc0034b3b53b33d' },
+  { id:6, nombre:'mar de aral',       ts:1785504986, tx:'0x67eb55fe64915f7d3169588276a88a2e52be88ba28eb8c5217114b40d56f6904' },
+  { id:5, nombre:'perito moreno',     ts:1785461223, tx:'0x9a310482dc390a2f4e9688129d19d12be9b7e6bf1a529220d31b3a37604375e7' }
+];
+(function renderLedger(){
+  const el = document.getElementById('ledger');
+  if (!el) return;
+  const meses = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+  ONCHAIN.forEach(a => {
+    const d = new Date(a.ts * 1000);
+    const fecha = `${String(d.getUTCDate()).padStart(2,'0')} ${meses[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+    const row = document.createElement('a');
+    row.className = 'ledger-row';
+    row.href = 'https://polygonscan.com/tx/' + a.tx;
+    row.target = '_blank';
+    row.rel = 'noopener';
+    row.style.textDecoration = 'none';
+    row.innerHTML =
+      `<span class="ledger-id">#${a.id}</span>` +
+      `<span class="ledger-name">${a.nombre}</span>` +
+      `<span class="ledger-date">REGISTERED ${fecha}</span>` +
+      `<span class="ledger-link">VIEW ON POLYGONSCAN →</span>`;
+    el.appendChild(row);
+  });
+})();
+
+/* ─── SCROLL suave a secciones ─── */
+function irA(id){
+  const el = document.getElementById(id);
+  if (el) el.scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+/* ─── RECURSOS ─── */
+const RECURSOS = {
+  campos:    { ico:'🌾', name:'Farmland', hint:'CROPS · SOIL · ROTATION', body:'<p>The satellite observes the state of the crop, the soil cover and how they change between passes.</p><p>It lets you record how your field looked on a specific date — something no one will be able to dispute later.</p>', applies:'Producers who export and must prove they do not clear land, tenant farmers, and anyone who needs a record of their field\'s condition for a third party.' },
+  bosques:   { ico:'🌿', name:'Forests', hint:'VEGETATION COVER', body:'<p>Vegetation cover and density are measured, and loss or recovery of forest mass is detected from one observation to the next.</p><p>The forest\'s evolution is anchored, with no possible editing.</p>', applies:'Forestry companies, reforestation projects, and anyone exporting to the European Union who needs to prove they do not deforest.' },
+  realstate: { ico:'🏙', name:'Real estate', hint:'LAND · SUBDIVISIONS · CONSTRUCTION', body:'<p>The satellite sees the state of a plot, construction progress and boundaries on a given date.</p><p>It leaves an objective record of the property\'s condition — useful when you have to prove it later.</p>', applies:'Developers, land buyers and sellers, and anyone who needs to document the state of a property in a lawsuit or a dispute with a neighbor.' },
+  cuencas:   { ico:'💧', name:'Watersheds and rivers', hint:'WATER · CHANNELS · SOURCES', body:'<p>Water level and extent, visible turbidity and changes in the channel are recorded.</p><p>If a river changed course, it is documented with a date — no one can tell you later that it was otherwise.</p>', applies:'Companies that draw or discharge water, landowners along waterways, and anyone who needs to prove the state of their water source.' },
+  costas:    { ico:'🌊', name:'Coasts and shores', hint:'EROSION · WATERLINE', body:'<p>The satellite observes how the waterline advances or retreats over a plot, and coastal erosion over time.</p><p>It is on record before the problem is on top of you.</p>', applies:'Owners of coastal or riverside land, and anyone who needs to document how water affects their boundary.' },
+  glaciares: { ico:'🏔', name:'Glaciers', hint:'ICE · RETREAT', body:'<p>The surface of ice and snow and its retreat or advance over time are observed.</p><p>Each pass adds an observation to the glacier\'s history, impossible to retouch.</p>', applies:'High-altitude operations, dams that depend on meltwater, and governments that must prove the state of their glaciers.' },
+  mineria:   { ico:'⛏', name:'Mining', hint:'FOOTPRINT · EXPANSION', body:'<p>The operation\'s footprint on the land is recorded: its extent, waste dumps, ponds, and how that footprint grows.</p><p>The impact is documented over time, with no possible editing.</p>', applies:'Mining companies that need to prove to regulators or investors that their impact stays within what they declared.' },
+  proteg:    { ico:'🛡', name:'Protected areas', hint:'RESERVES · CONSERVATION', body:'<p>The satellite documents that an area remains intact — or that someone touched it, and when.</p><p>Objective proof of its conservation status, defensible before anyone.</p>', applies:'NGOs, foundations, governments and municipalities that must prove a protected area is preserved, or record an intrusion.' },
+  industria: { ico:'🏭', name:'Industry', hint:'FACILITIES · AREA', body:'<p>The extent of the facilities and changes in the occupied area over time are recorded.</p><p>The operation\'s footprint on the land is documented and verifiable.</p>', applies:'Industrial plants, data centers, waste management, and any facility whose footprint must be documented.' },
+  tuyo:      { ico:'✦', name:'Yours', hint:'THE NEXT RECORD', body:'<p>If your activity leaves a footprint on the land — water, vegetation, soil, facilities — it can be certified.</p><p><strong>It could be the next thing on record</strong>, with immutable proof, defensible before governments, banks and funds.</p>', applies:'Any organization whose footprint can be observed from space and needs to have it proven.' }
+};
+const grid = document.getElementById('recGrid');
+Object.entries(RECURSOS).forEach(([key, r]) => {
+  const b = document.createElement('button');
+  b.className = 'recurso' + (key === 'tuyo' ? ' comodin' : '');
+  b.onclick = () => abrirRecurso(key);
+  b.innerHTML = `<span class="recurso-ico">${r.ico}</span><span class="recurso-name">${r.name}</span><span class="recurso-hint">${r.hint}</span>`;
+  grid.appendChild(b);
+});
+function abrirRecurso(key) {
+  const r = RECURSOS[key];
+  document.getElementById('mEyebrow').textContent = r.hint;
+  document.getElementById('mTitle').innerHTML = r.ico + ' ' + r.name;
+  document.getElementById('mBody').innerHTML = r.body + '<div class="applies"><strong>WHERE IT APPLIES:</strong> ' + r.applies + '</div>';
+  document.getElementById('ovModal').classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+
+/* ─── MODALES INFO ─── */
+const INFO = {
+  comoFunciona: { eyebrow:'HOW IT WORKS', title:'Four steps, nothing hidden',
+    body:`<p>You choose what you want to observe — a field, a river, a forest, a plot — and set its boundaries. You choose the satellite: public or private.</p>
+<p>The satellite observes it. The result is certified and written to the blockchain, <strong>without passing through human hands</strong>.</p>
+<p>We regularly tell you what is happening to your asset. And no one can change that information: not you, not EPIMELEIA, not the satellite.</p>
+<h4>NO HASSLE</h4>
+<p>No software to install, no long processes, no crypto wallets to understand. The technology works behind the scenes. You just choose and receive.</p>` },
+  historia: { eyebrow:'OUR STORY', title:'Where we come from',
+    body:`<p>We are a technology project born from something simple: taking care of an asset takes proof, not promises.</p>
+<p>We use satellite observation — from public sources such as Copernicus Sentinel-2, or private ones, as you choose — and record it so that no one can alter it afterwards.</p>
+<p>That is the whole trick, and it is not magic: it is blockchain. Once written, it stays. No exceptions, not even for us.</p>
+<p>We work with companies, farms, governments, municipalities and organizations. With anyone who benefits from having the truth about their asset recorded and at hand.</p>` },
+  marcos: { eyebrow:'WHAT IT OPENS THE DOOR TO', title:'What funds, banks and regulators ask for today',
+    body:`<p>A verifiable environmental track record is the basis of the frameworks that now condition financing and market access. Having the proof, not just the statement, changes the conversation.</p>
+<p>It is especially useful for <strong>banks that finance green projects</strong> and need to prove to their regulators that what they financed is real; for <strong>governments and municipalities</strong>; and for any organization accountable to third parties.</p>
+<h4>ESG</h4><p>The environmental, social and governance criteria used by funds and investors.</p>
+<h4>CBAM · EU</h4><p>The European Union\'s Carbon Border Adjustment Mechanism.</p>
+<h4>GREEN TAXONOMY · EU</h4><p>The European classification of sustainable activities.</p>
+<h4>GRI · TCFD</h4><p>The international standards for sustainability and climate reporting.</p>` },
+  terminos: { eyebrow:'TERMS OF USE', title:'Terms of Use',
+    body:`<h4>WHAT EPIMELEIA IS</h4><p>EPIMELEIA records satellite observation permanently and immutably on blockchain. It is not an auditor or a regulator: it is a neutral record.</p><h4>PERMANENCE</h4><p>Every record written to the blockchain is <strong>permanent and immutable</strong>. There is no deletion mechanism.</p><h4>RESPONSIBILITY</h4><p>Responsibility for the declared data lies with whoever registers the asset.</p><h4>CONTACT</h4><p><strong>info@epimeleia.world</strong></p>` },
+  privacidad: { eyebrow:'PRIVACY', title:'Privacy',
+    body:`<h4>PUBLIC ON BLOCKCHAIN</h4><p>The certification status of each asset is public and verifiable.</p><h4>PRIVATE</h4><p>Exact coordinates, email, company name and contact details are <strong>strictly private</strong>.</p><h4>EMAIL</h4><p>It is stored as a cryptographic hash. The real email never goes on the blockchain.</p><h4>NO SALE OF DATA</h4><p>EPIMELEIA does not sell or share client data with third parties.</p><h4>CONTACT</h4><p><strong>info@epimeleia.world</strong></p>` }
+};
+const FAQS = [
+  { q:'What exactly does EPIMELEIA certify?', a:'That a satellite observed a place, on a date, and recorded what it found. It does not judge whether that is good or bad: it leaves the proof, and each party uses it with whoever needs it.' },
+  { q:'Do I need to install anything or have a crypto wallet?', a:'No. Everything works without installing anything and without a wallet. The blockchain works behind the scenes; you do not operate it.' },
+  { q:'What if the satellite cannot get a clear image?', a:'It is recorded anyway. If clouds block the view, that gap is written down with the same permanence as a successful observation. Missing data is data too.' },
+  { q:'How do I know the image is real and not manipulated?', a:'EPIMELEIA does not take or edit images: it receives them from the satellite source and records them as they arrive. One possible source is Copernicus Sentinel-2, from the European Space Agency.' },
+  { q:'Can a certification be changed afterwards?', a:'No. Not by the client, not by EPIMELEIA. There is no button for that: it is literally impossible.' },
+  { q:'Can anyone see my certifications?', a:'The on-chain record (that something was certified, when, and its hash) is public. Your sensitive data — email, identity, exact coordinates — is private and never goes on the blockchain.' },
+  { q:'Is this the same as a carbon credit?', a:'No. A credit depends on human certifiers. An EPIMELEIA certification is data observed by satellite and written to a chain no one can edit. We do not sell offsets: we sell proof.' },
+  { q:'How is it different from a traditional audit?', a:'An audit depends on someone traveling, inspecting and signing at a single point in time. EPIMELEIA observes continuously, without being on site, and leaves a record that does not depend on anyone\'s signature.' },
+  { q:'Does it work anywhere in the world?', a:'Yes. The satellite orbits the whole planet. The process is the same anywhere.' },
+  { q:'Who is EPI?', a:'The assistant that answers your questions about how EPIMELEIA works. It only explains: it does not decide or sign you up. You do that yourself, on the other side of the door.' }
+];
+function abrir(id) {
+  if (id === 'faqs') { abrirFaqs(); return; }
+  const d = INFO[id]; if (!d) return;
+  document.getElementById('mEyebrow').textContent = d.eyebrow;
+  document.getElementById('mTitle').innerHTML = d.title;
+  document.getElementById('mBody').innerHTML = d.body;
+  document.getElementById('ovModal').classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+function abrirFaqs(){
+  document.getElementById('mEyebrow').textContent='FREQUENTLY ASKED QUESTIONS';
+  document.getElementById('mTitle').innerHTML='What people ask us most';
+  document.getElementById('mBody').innerHTML = FAQS.map((f,i)=>`<div class="faq-item"><button class="faq-q" onclick="toggleFaq(${i})"><span>${f.q}</span><span class="faq-ico">+</span></button><div class="faq-a">${f.a}</div></div>`).join('');
+  document.getElementById('ovModal').classList.add('active');
+  document.body.style.overflow='hidden';
+}
+function toggleFaq(i){ document.querySelectorAll('.faq-item')[i].classList.toggle('open'); }
+
+/* ─── ADHERIRSE (puerta al flujo conversado · sin pago automático) ─── */
+function adherir(){
+  window.location.href = 'cuenta.html?origen=plataforma';
+}
+
+function cerrar(id){ document.getElementById(id).classList.remove('active'); document.body.style.overflow=''; }
+['ovModal'].forEach(id=>{ document.getElementById(id).addEventListener('click', e=>{ if(e.target.id===id) cerrar(id); }); });
+
+/* ─── EMAIL ─── */
+function copiarEmail(el){
+  const original = el.innerHTML;
+  navigator.clipboard.writeText('info@epimeleia.world').then(()=>{ el.innerHTML='✓ copied'; setTimeout(()=>el.innerHTML=original,1600); }).catch(()=>{});
+}
+
+/* ─── EPI (conectado a /api/chat · solo conversa) ─── */
+let epiHistorial = [];
+let epiPensando = false;
+let epiCerrada = false;
+
+function abrirEpi(){
+  document.getElementById('epiPanel').classList.add('open');
+  document.getElementById('epiBubble').classList.add('hidden');
+  if(!document.getElementById('epiMsgs').hasChildNodes()){
+    epiMsg('agent', 'Hi. I am EPI. I am here to explain anything that is unclear about how EPIMELEIA works.\n\nAsk me anything — what can be observed, how the EUDR deforestation check works, or how no one can modify the data once it is sealed. I answer in English.');
+  }
+}
+function cerrarEpi(){
+  document.getElementById('epiPanel').classList.remove('open');
+  document.getElementById('epiBubble').classList.remove('hidden');
+}
+function epiMsg(rol, texto){
+  const c = document.getElementById('epiMsgs');
+  const w = document.createElement('div'); w.className='emsg '+rol;
+  const html = texto.replace(/\n\n/g,'</p><p>').replace(/^/,'<p>').replace(/$/,'</p>');
+  w.innerHTML = `<div class="emsg-av ${rol}">${rol==='agent'?'EP':'YOU'}</div><div class="emsg-b ${rol}">${html}</div>`;
+  c.appendChild(w); c.scrollTop = c.scrollHeight;
+  return w;
+}
+async function epiEnviar(){
+  const t = document.getElementById('epiText');
+  const v = t.value.trim();
+  if(!v || epiPensando || epiCerrada) return;
+  epiMsg('user', v);
+  epiHistorial.push({ role:'user', content:v });
+  t.value=''; t.style.height='auto';
+  epiPensando = true;
+  const pensando = epiMsg('agent', '…');
+  try {
+    const resp = await fetch('/api/chat', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify({ messages: epiHistorial })
+    });
+    const data = await resp.json();
+    pensando.remove();
+    let textoEpi = '';
+    if (data && Array.isArray(data.content)) {
+      textoEpi = data.content.filter(b => b.type === 'text').map(b => b.text).join('\n').trim();
+    }
+    if (!textoEpi) {
+      textoEpi = 'Sorry, I had a problem answering. Please try again in a moment, or write to info@epimeleia.world.';
+    }
+    const debeCerrar = textoEpi.includes('[[FIN_CHARLA]]');
+    textoEpi = textoEpi.replace(/\[\[FIN_CHARLA\]\]/g, '').trim();
+    if (textoEpi) {
+      epiMsg('agent', textoEpi);
+      epiHistorial.push({ role:'assistant', content:textoEpi });
+    }
+    if (debeCerrar) {
+      epiCerrada = true;
+      const box = document.getElementById('epiText');
+      box.disabled = true;
+      box.placeholder = 'Conversation ended.';
+    }
+  } catch (e) {
+    pensando.remove();
+    epiMsg('agent', 'I could not connect right now. Check your connection and try again, or write to info@epimeleia.world.');
+  } finally {
+    epiPensando = false;
+  }
+}
+document.getElementById('epiText').addEventListener('keydown', e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); epiEnviar(); } });
+document.getElementById('epiText').addEventListener('input', function(){ this.style.height='auto'; this.style.height=Math.min(this.scrollHeight,110)+'px'; });
+
+let lastY = window.scrollY;
+window.addEventListener('scroll', ()=>{
+  const b = document.getElementById('epiBubble');
+  if (document.getElementById('epiPanel').classList.contains('open')) return;
+  const y = window.scrollY;
+  b.style.transform = y > lastY ? 'translateY(4px)' : 'translateY(-4px)';
+  clearTimeout(window._epiT);
+  window._epiT = setTimeout(()=>{ b.style.transform=''; }, 200);
+  lastY = y;
+}, { passive:true });
+</script>
+
+<!-- BOTÓN FLOTANTE · TU OFICINA (idéntico en EUDR, Plataforma e Instituciones) -->
+<a class="ofi-float" href="oficina.html" aria-label="Your office: your plots, lots and balances">
+  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect x="4" y="10" width="16" height="11" rx="1.5" stroke="currentColor" stroke-width="1.7"/>
+    <path d="M8 10V7a4 4 0 0 1 8 0v3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+    <circle cx="12" cy="15.5" r="1.6" fill="currentColor"/>
+  </svg>
+  <span class="ofi-float-txt"><b>YOUR OFFICE</b><small>Your lots and balances →</small></span>
+</a>
+</body>
+</html>
